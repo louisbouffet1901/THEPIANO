@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Piano — Parcours classique</title>
+  <meta name="description" content="Parcours guidé de piano classique : technique, interprétation, théorie, lecture à vue et improvisation.">
+  <meta name="theme-color" content="#f7f6f2">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <a class="skip" href="#main">Aller au contenu</a>
+  <div class="app" id="app">
+    <header class="topbar">
+      <button class="icon-btn nav-toggle" id="navToggle" aria-label="Ouvrir le menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+      <a class="brand" href="#/">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="6" width="26" height="20" rx="3"/><path d="M10 6v12M16 6v12M22 6v12"/><rect x="8.2" y="6" width="3.6" height="8" rx=".6" class="bk"/><rect x="20.2" y="6" width="3.6" height="8" rx=".6" class="bk"/></svg>
+        <span>Parcours piano</span>
+      </a>
+      <div class="topbar-spacer"></div>
+      <button class="pill" id="metroPill" aria-label="Métronome rapide" title="Métronome">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l4 18H5L9 3z"/><path d="M12 15l5-8"/></svg>
+        <span id="metroPillLabel">Métronome</span>
+      </button>
+      <button class="pill midi-pill" id="midiPill" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span><span id="midiLabel">Connecter le piano</span>
+      </button>
+    </header>
+    <nav class="sidebar" id="sidebar" aria-label="Navigation principale"></nav>
+    <div class="scrim" id="scrim" hidden></div>
+    <main class="main" id="main" tabindex="-1"></main>
+  </div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <script src="abcjs-basic-min.js" defer></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

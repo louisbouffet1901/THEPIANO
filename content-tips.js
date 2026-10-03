@@ -1,0 +1,51 @@
+// Conseils du jour (page d'accueil) : un par jour, en tournant.
+export const TIPS = [
+  { mod: 'Oreille', html: 'Chante plus souvent que tu ne le crois nécessaire : une note que tu peux chanter juste, tu finiras par la reconnaître.' },
+  { mod: 'Oreille', html: 'Avant chaque série de degrés, chante la tonique juste après la cadence et garde-la en tête pendant toute la question.' },
+  { mod: 'Oreille', html: 'Dix minutes par jour valent mieux qu’une heure le dimanche : l’oreille progresse par répétition, pas par effort ponctuel.' },
+  { mod: 'Oreille', html: 'Rate une question ? Réécoute, chante, puis écoute la résolution : l’erreur devient un repère.' },
+  { mod: 'Oreille', html: 'Dans ta pièce, chante la basse d’une phrase en jouant la main droite : tu entendras enfin ce qui porte l’harmonie.' },
+  { mod: 'Oreille', html: 'Fredonne les mélodies que tu connais en nommant les degrés (« 5, 5, 6, 5, 1, 7… ») : c’est l’entraînement le plus utile qui soit.' },
+  { mod: 'Oreille', html: 'Ta voix est trop grave ou trop aiguë pour la note demandée ? Chante-la à l’octave : seule la hauteur relative compte.' },
+  { mod: 'Théorie', html: 'Chaque fois que tu apprends une notion, cherche-la dans la pièce que tu travailles : c’est là qu’elle prend son sens.' },
+  { mod: 'Théorie', html: 'Une altération accidentelle dans une partition est presque toujours une information : nouvelle sensible, emprunt, modulation.' },
+  { mod: 'Théorie', html: 'Pour trouver la fondamentale d’un accord, range ses notes en tierces superposées : la note du bas de la pile est la fondamentale.' },
+  { mod: 'Théorie', html: 'Écris l’analyse au crayon sous la basse de ta partition : on mémorise bien mieux une harmonie qu’on a nommée.' },
+  { mod: 'Théorie', html: 'Une cadence, c’est la ponctuation : repère les points (cadences parfaites) et les virgules (demi-cadences) de ta pièce, puis respire en conséquence.' },
+  { mod: 'Théorie', html: 'Joue les accords de ta pièce en blocs, sans rythme ni ornement : tu entends le squelette harmonique, et tu le retiens.' },
+  { mod: 'Improvisation', html: 'La pulsation ne s’arrête jamais : mieux vaut une note simple à temps qu’une belle idée en retard.' },
+  { mod: 'Improvisation', html: 'Commence avec trois notes. La contrainte libère : on invente davantage avec peu de matériau.' },
+  { mod: 'Improvisation', html: 'Une « fausse note » se rattrape : glisse d’un demi-ton vers une note de l’accord, et elle devient une note de passage.' },
+  { mod: 'Improvisation', html: 'Le rythme d’abord : un motif rythmique clair, répété et varié, fait tenir une improvisation même avec deux notes.' },
+  { mod: 'Improvisation', html: 'Pense en questions et réponses : une phrase qui s’arrête en suspens, puis une phrase qui conclut sur la tonique.' },
+  { mod: 'Improvisation', html: 'Laisse des silences. Une mélodie qui respire est plus expressive qu’un flot continu de notes.' },
+  { mod: 'Improvisation', html: 'Sur un temps fort, pose une note de l’accord ; entre les temps, circule librement par la gamme.' },
+  { mod: 'Improvisation', html: 'Enregistre-toi une minute, réécoute, garde la meilleure idée et repars d’elle demain.' },
+  { mod: 'Technique', html: 'Lent et juste plutôt que rapide et approximatif : le cerveau apprend exactement ce que tu lui fais répéter.' },
+  { mod: 'Technique', html: 'Entre deux répétitions, relâche complètement la main quelques secondes : la tension s’accumule sans prévenir.' },
+  { mod: 'Technique', html: 'Travaille les passages difficiles en rythmes (long-court, court-long) : ils deviennent réguliers plus vite qu’en jouant égal.' },
+  { mod: 'Technique', html: 'Le poids du bras fait le son ; les doigts le conduisent. Si l’épaule monte, recommence plus lentement.' },
+  { mod: 'Technique', html: 'Change la pédale en écoutant, pas en regardant : relève quand la nouvelle basse sonne, rabaisse aussitôt.' },
+  { mod: 'Lecture', html: 'En lecture à vue, ne t’arrête jamais : un rythme juste avec quelques notes oubliées vaut mieux qu’une lecture hachée.' },
+  { mod: 'Lecture', html: 'Avant de jouer, prends trente secondes : armure, mesure, motifs qui reviennent, passages délicats.' },
+  { mod: 'Lecture', html: 'Lis les intervalles plutôt que les notes : « ça monte d’une tierce » est plus rapide que « mi, sol ».' },
+  { mod: 'Lecture', html: 'Garde les yeux un temps en avance sur tes mains : c’est ce décalage qui permet de jouer sans s’arrêter.' },
+  { mod: 'Interprétation', html: 'Chaque phrase a un sommet. Trouve-le avant de jouer, puis dirige toute la phrase vers lui.' },
+  { mod: 'Interprétation', html: 'Écoute deux versions différentes de ta pièce et note une idée que tu veux emprunter à chacune.' },
+  { mod: 'Interprétation', html: 'Chante la mélodie à voix haute avant de la jouer : tu sauras où respirer, où appuyer, où laisser aller.' },
+  { mod: 'Interprétation', html: 'Rubato : la main droite s’étire, la main gauche garde le temps. Vérifie-le au métronome, main gauche seule.' },
+  { mod: 'Interprétation', html: 'Un thème qui revient ne se joue jamais deux fois pareil : le chemin parcouru l’a changé.' },
+  { mod: 'Pièce', html: 'Commence parfois ton travail par la fin de la pièce : les dernières pages sont souvent les moins travaillées.' },
+  { mod: 'Pièce', html: 'Joue un passage mains séparées les yeux fermés : si tu le peux, tu le connais vraiment.' },
+  { mod: 'Pièce', html: 'Un jour par semaine, joue toute la pièce sans t’arrêter, comme en concert, et enregistre-toi.' },
+  { mod: 'Pièce', html: 'Repère les « points de départ » de ta pièce (début de chaque phrase) : en cas de trou de mémoire, tu sauras où repartir.' },
+  { mod: 'Méthode', html: 'Fixe un objectif précis à chaque séance (« les mesures 17 à 20 à ♩ = 50, mains ensemble ») plutôt qu’une durée.' },
+  { mod: 'Méthode', html: 'Le sommeil consolide ce que tu as travaillé : une courte révision le lendemain matin vaut une longue séance.' },
+  { mod: 'Méthode', html: 'Coche ton plan hebdomadaire au fur et à mesure : voir le chemin parcouru entretient la motivation.' },
+];
+
+/** Conseil du jour : change chaque jour, identique toute la journée. */
+export function dailyTip(date = new Date()) {
+  const day = Math.floor((date - new Date(date.getFullYear(), 0, 0)) / 86400000);
+  return TIPS[(day + date.getFullYear()) % TIPS.length];
+}
