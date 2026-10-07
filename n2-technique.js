@@ -7,7 +7,7 @@ M:3/4
 L:1/16
 K:Fmin clef=bass
 %%barnumbers 1
-"^groupe 1, puis arrêt"(6:4:6C,=B,,C,D,C,=B,, C,8 | "^groupe 2, puis arrêt"(6:4:6C,_B,,A,,G,,F,,=E,, F,,8 | "^groupe 3, puis arrêt"(6:4:6F,,_E,,D,,C,,B,,,A,,, F,,,8 |]`;
+"^groupe 1, puis arrêt"(6:4:6C,=B,,C,D,C,B,, C,8 | "^groupe 2, puis arrêt"(6:4:6C,_B,,A,,G,,F,,=E,, F,,8 | "^groupe 3, puis arrêt"(6:4:6F,,_E,,D,,C,,B,,,A,,, F,,,8 |]`;
 
 // Le même trait en rythmes pointés, puis inversés
 const EX_RHY = `X:1
@@ -15,8 +15,8 @@ M:3/4
 L:1/16
 K:Fmin clef=bass
 %%barnumbers 1
-"^long – bref"C,3=B,, C,3D, C,3=B,, | C,3_B,, A,,3G,, F,,3=E,, | F,,3_E,, D,,3C,, B,,,3A,,, | F,,,12 |
-"^bref – long"C,=B,,3 C,D,3 C,=B,,3 | C,_B,,3 A,,G,,3 F,,=E,,3 | F,,_E,,3 D,,C,,3 B,,,A,,,3 | F,,,12 |]`;
+"^long – bref"C,3=B,, C,3D, C,3B,, | C,3_B,, A,,3G,, F,,3=E,, | F,,3_E,, D,,3C,, B,,,3A,,, | F,,,12 |
+"^bref – long"C,=B,,3 C,D,3 C,B,,3 | C,_B,,3 A,,G,,3 F,,=E,,3 | F,,_E,,3 D,,C,,3 B,,,A,,,3 | F,,,12 |]`;
 
 // Rotation : trémolo d'octave brisée
 const EX_TREM = `X:1
@@ -99,8 +99,8 @@ K:C
 %%score {RH | LH}
 V:RH clef=treble
 V:LH clef=bass
-[V:RH] "^sol 7"!1!G!2!B!3!d!4!f !1!g!2!b!3!d'!4!f' !5!g'f'd'b gfdB | G4 z4 z8 | "^7e diminuée"!1!B!2!d!3!f!4!_a !1!b!2!d'!3!f'!4!_a' !5!b'_a'f'd' b_afd | B4 z4 z8 |]
-[V:LH] !5!G,,!4!B,,!3!D,!2!F, !1!G,!4!B,!3!D!2!F !1!GFDB, G,F,D,B,, | G,,4 z4 z8 | !5!B,,!4!D,!3!F,!2!_A, !1!B,!4!D!3!F!2!_A !1!B_AFD B,_A,F,D, | B,,4 z4 z8 |]`;
+[V:RH] "^sol 7"!1!G!2!B!3!d!4!f !1!g!2!b!3!d'!4!f' !5!g'f'd'b gfdB | G4 z4 z8 | "^7e diminuée"!1!B!2!d!3!f!4!_a !1!b!2!d'!3!f'!4!_a' !5!b'a'f'd' bafd | B4 z4 z8 |]
+[V:LH] !5!G,,!4!B,,!3!D,!2!F, !1!G,!4!B,!3!D!2!F !1!GFDB, G,F,D,B,, | G,,4 z4 z8 | !5!B,,!4!D,!3!F,!2!_A, !1!B,!4!D!3!F!2!_A !1!BAFD B,A,F,D, | B,,4 z4 z8 |]`;
 
 export default [
   {
@@ -251,7 +251,7 @@ ${W.links([W.informance('/content/pages/176-developing-the-left-hand', 'Developi
 <li><b>Des doigts proches et fermes</b> : un doigt mou ne transmet pas une vitesse régulière.</li>
 <li><b>Écouter le timbre</b> : un bon pianissimo reste timbré, il porte au fond de la salle.</li>
 </ul>
-${W.tip('Ton piano numérique', '<p>Le P-145 mesure la vitesse de chaque touche (de 1 à 127), et l’analyseur la lit. Si ton piano propose plusieurs réglages de sensibilité du toucher, garde toujours le même (par défaut, « Medium ») pour que tes mesures restent comparables. Si tu n’as que la pédale forte (celle fournie avec le P-145), la couleur <i>con sordina</i> de Debussy devra venir entièrement des doigts : c’est un excellent entraînement.</p>')}
+${W.tip('Ton piano numérique', '<p>Ton piano numérique mesure la vitesse de chaque touche (de 1 à 127), et l’analyseur la lit. Si ton piano propose plusieurs réglages de sensibilité du toucher, garde toujours le même (le réglage par défaut, par exemple) pour que tes mesures restent comparables. Si tu n’as que la pédale forte, la couleur <i>con sordina</i> de Debussy devra venir entièrement des doigts : c’est un excellent entraînement.</p>')}
 
 <h2>Écoute : Clair de lune, mesures 1 à 4</h2>
 ${W.score({ abc: CLAIR.e1, title: 'Le pianissimo de Debussy', bpm: 40, startBpm: 36, variants: [{ label: 'pp, comme écrit', balance: { rh: 0.6, lh: 0.48 } }, { label: 'mf : trop fort', balance: { rh: 1.08, lh: 0.98 } }], caption: 'Au piano échantillonné, la différence touche aussi le timbre : plus sombre et plus doux en pp.' })}

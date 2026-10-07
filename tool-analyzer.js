@@ -4,6 +4,7 @@ import { midi } from './midi.js';
 import { audio } from './audio.js';
 import { store } from './store.js';
 import { Metronome } from './metronome.js';
+import { corrected } from './latency.js';
 import { deviationBars, lineChart, dotSeries, pedalTimeline, SERIES } from './charts.js';
 
 export const ANALYZER_MODES = {
@@ -40,27 +41,33 @@ export function mountAnalyzer(el, cfg = {}) {
   let silenceTimer = null;
   let metro = null;
   let lastTake = null;
+  const metroPref = { on: !!cfg.withMetronome, bpm: cfg.bpm || 72, sub: cfg.sub || 4 };
 
+  let stopDyn = null; // exercice de nuances en cours (écoute du piano à couper en partant)
   const renderIdle = () => {
+    stopDyn?.(); stopDyn = null;
     body.innerHTML = '';
     results.hidden = true;
     body.append(h('p', { class: 'small mt-0', html: (cfg.help || ANALYZER_MODES[mode].help) }));
-    if (mode === 'dynamics') { renderDynamics(); return; }
+    if (mode === 'dynamics') { stopDyn = renderDynamics(); return; }
     const row = h('div', { class: 'btn-row' });
     const recBtn = h('button', { class: 'btn primary', type: 'button' }, 'Enregistrer');
     recBtn.addEventListener('click', () => (rec ? stopRec(true) : startRec(recBtn)));
     row.append(recBtn);
     // métronome facultatif (régularité)
     if (mode === 'evenness') {
-      const mBtn = h('button', { class: 'btn sm', type: 'button' }, 'Avec métronome');
-      const bpmIn = h('input', { type: 'number', min: 30, max: 220, value: cfg.bpm || 72, style: { width: '76px' } });
-      const subSel = h('select', {}, ...[[1, '♩'], [2, '♫ (2)'], [3, '3'], [4, '♬ (4)'], [6, '6']].map(([v, l]) => h('option', { value: v, selected: (cfg.sub || 4) === v }, l)));
-      let useM = !!cfg.withMetronome;
-      mBtn.classList.toggle('on', useM);
-      mBtn.addEventListener('click', () => { useM = !useM; mBtn.classList.toggle('on', useM); });
+      // réglages du métronome gardés d'une prise à l'autre
+      const mBtn = h('button', { class: 'btn sm', type: 'button', 'aria-pressed': String(metroPref.on) }, 'Avec métronome');
+      const bpmIn = h('input', { type: 'number', min: 30, max: 220, value: metroPref.bpm, style: { width: '76px' } });
+      const subSel = h('select', {}, ...[[1, '♩'], [2, '♫ (2)'], [3, '3'], [4, '♬ (4)'], [6, '6']].map(([v, l]) => h('option', { value: v, selected: metroPref.sub === v }, l)));
+      bpmIn.addEventListener('change', () => { metroPref.bpm = +bpmIn.value || 72; });
+      subSel.addEventListener('change', () => { metroPref.sub = +subSel.value || 4; });
+      mBtn.classList.toggle('on', metroPref.on);
+      mBtn.addEventListener('click', () => { metroPref.on = !metroPref.on; mBtn.classList.toggle('on', metroPref.on); mBtn.setAttribute('aria-pressed', String(metroPref.on)); });
+      const useM = () => metroPref.on;
       row.append(mBtn, h('label', { class: 'field', style: { flexDirection: 'row', alignItems: 'center', gap: '6px' } }, '♩ =', bpmIn), h('label', { class: 'field', style: { flexDirection: 'row', alignItems: 'center', gap: '6px' } }, 'notes par temps', subSel));
       row.dataset.metro = '1';
-      row.getMetro = () => (useM ? { bpm: +bpmIn.value || 72, sub: +subSel.value || 4 } : null);
+      row.getMetro = () => (useM() ? { bpm: +bpmIn.value || 72, sub: +subSel.value || 4 } : null);
     }
     if (mode === 'balance') {
       const split = h('input', { type: 'number', min: 36, max: 84, value: store.get('settings.split') || 60, style: { width: '76px' } });
@@ -72,6 +79,8 @@ export function mountAnalyzer(el, cfg = {}) {
     body._row = row;
   };
 
+  // accès pour les tests automatiques
+  window.__analyzer = { owner: frame, get rec() { return rec; }, get metro() { return metro; } };
   const startRec = (btn) => {
     results.hidden = true;
     rec = { events: [], start: null };
@@ -86,8 +95,8 @@ export function mountAnalyzer(el, cfg = {}) {
     stat.innerHTML = '<span class="rec-dot"></span> Enregistrement… joue maintenant (arrêt automatique après un silence).';
     const push = (type) => ev => {
       if (!rec) return;
-      if (rec.start == null) rec.start = ev.time;
-      rec.events.push({ type, note: ev.note, vel: ev.velocity, down: ev.down, time: ev.time });
+      if (rec.start == null) rec.start = corrected(ev);
+      rec.events.push({ type, note: ev.note, vel: ev.velocity, down: ev.down, time: corrected(ev) });
       clearTimeout(silenceTimer);
       if (!m) silenceTimer = setTimeout(() => { if (rec && midi.active.size === 0) stopRec(true); }, SILENCE_STOP_MS);
     };
@@ -99,7 +108,7 @@ export function mountAnalyzer(el, cfg = {}) {
     clearTimeout(silenceTimer);
     rec.offs.forEach(f => f());
     const take = rec;
-    if (metro) { take.beats = metro.beatLog.map(b => b.perf); metro.stop(); metro = null; }
+    if (metro) { take.beats = (metro.beatLog || []).map(b => b.perf); metro.stop(); metro = null; }
     rec = null;
     renderIdle();
     if (analyze) analyzeTake(take);
@@ -147,6 +156,14 @@ export function mountAnalyzer(el, cfg = {}) {
     const times = groups.map(g => g.time);
     const iois = times.slice(1).map((t, i) => t - times[i]);
     const med = median(iois);
+    // Ce mode mesure l'égalité de notes de même valeur (gamme, arpège, trait). Si les durées varient
+    // beaucoup (rythmes pointés, contretemps, accords tenus), le comparer à l'intervalle moyen n'a pas de sens.
+    const unevenShare = iois.length ? iois.filter(x => x < med * 0.67 || x > med * 1.5).length / iois.length : 0;
+    if (iois.length >= 4 && unevenShare > 0.25) {
+      if (take.beats && take.beats.length > 1 && take.metro) return anGrid(take, groups);
+      results.append(verdict('<b>Ce que tu as joué n’est pas une suite de valeurs égales</b> (rythmes pointés, contretemps, notes tenues…). Ce mode mesure l’égalité des gammes, arpèges et traits : il ne s’applique pas ici. Pour un passage d’une pièce, utilise <b>« Analyser »</b> sous l’extrait : ta prise y est comparée à la partition. Tu peux aussi activer <b>« Avec métronome »</b> : la précision sera mesurée par rapport à la grille des temps.'));
+      return null;
+    }
     const cv = stdev(iois) / (mean(iois) || 1);
     const dev = iois.map(x => (x - med) / med * 100);
     const vels = groups.map(g => Math.max(...g.notes.map(n => n.vel)));
@@ -182,6 +199,42 @@ export function mountAnalyzer(el, cfg = {}) {
     return { cv, vsd };
   }
 
+  /**
+   * Précision par rapport à la grille du métronome, pour n'importe quel rythme (pointés, contretemps…).
+   * La grille retenue est la plus large qui explique les attaques (temps, croches, triolets, doubles croches…) :
+   * une grille plus fine rendrait n'importe quel jeu « précis ».
+   */
+  function anGrid(take, groups) {
+    const beat = 60000 / take.metro.bpm;
+    const t0 = take.beats[0];
+    const chosen = take.metro.sub || 4;
+    const offsFor = sub => { const step = beat / sub; return groups.map(g => { const k = Math.round((g.time - t0) / step); return g.time - (t0 + k * step); }); };
+    // tolérance : 30 ms, ou un cinquième de la subdivision si elle est plus courte (tempo rapide)
+    const tolFor = sub => Math.min(30, beat / sub / 5);
+    const share = (offs, tol) => offs.filter(o => Math.abs(o) <= tol).length / (offs.length || 1);
+    // seulement les diviseurs de la subdivision choisie : une grille plus fine (ou ternaire pour un rythme binaire)
+    // ferait passer pour juste un rythme pointé mal placé
+    const SUBS = [1, 2, 3, 4, 6].filter(sb => chosen % sb === 0);
+    let sub = SUBS.find(sb => share(offsFor(sb), tolFor(sb)) >= 0.85);
+    const fitted = !!sub;
+    if (!sub) sub = chosen;
+    const tol = Math.round(tolFor(sub));
+    const offs = offsFor(sub);
+    const absMed = median(offs.map(Math.abs));
+    const within = share(offs, tol);
+    const meanOff = mean(offs);
+    const SUB_FR = { 1: 'les temps', 2: 'les croches', 3: 'les triolets', 4: 'les doubles croches', 6: 'les sextolets' };
+    results.append(h('div', { class: 'an-grid' },
+      tile(`Notes à ± ${tol} ms de la grille`, fmtPct(within), '', within >= 0.8 ? 'good' : within >= 0.6 ? 'mid' : 'bad'),
+      tile('Écart médian', fmtNum(absMed), 'ms', absMed <= 20 ? 'good' : absMed <= 35 ? 'mid' : 'bad'),
+      tile('Tendance', Math.abs(meanOff) < 12 ? 'au temps' : meanOff < 0 ? 'en avance' : 'en retard', Math.abs(meanOff) < 12 ? '' : `${fmtNum(Math.abs(meanOff))} ms`)));
+    results.append(h('div', { class: 'w-caption mt-2' }, h('b', {}, 'Écart de chaque attaque à la subdivision la plus proche'), ` — bande verte : ± ${tol} ms`));
+    results.append(deviationBars({ values: offs, band: [-tol, tol], unit: ' ms', tips: groups.map((g, i) => `${noteNameFr(g.notes[0].note)} : ${offs[i] > 0 ? '+' : ''}${fmtNum(offs[i])} ms`), title: 'Écarts à la grille', yLabel: 'ms' }));
+    const gridTxt = fitted ? ` Grille : ${SUB_FR[sub] || sub + ' par temps'} (la plus large qui correspond à ton rythme).` : ` Grille : ${SUB_FR[sub] || sub + ' par temps'}, celle que tu as choisie (« notes par temps »).`;
+    results.append(verdict((within >= 0.8 ? '<b>Rythme précis</b> par rapport au métronome.' : `<b>Rythme encore approximatif</b> : ${Math.round((1 - within) * 100)} % des attaques s’écartent de plus de ${tol} ms de la grille.`) + gridTxt + ' Pour juger aussi les durées et les fausses notes d’un passage de pièce, utilise « Analyser » sous l’extrait.'));
+    return { grid: within, sub };
+  }
+
   function anLegato(take) {
     const ons = take.events.filter(e => e.type === 'on').sort((a, b) => a.time - b.time);
     const offs = take.events.filter(e => e.type === 'off');
@@ -214,7 +267,7 @@ export function mountAnalyzer(el, cfg = {}) {
     const ons = take.events.filter(e => e.type === 'on');
     const peds = take.events.filter(e => e.type === 'pedal');
     const groups = groupOnsets(ons, 70);
-    if (!peds.length) { results.append(verdict('Aucun mouvement de pédale reçu. Vérifie que la pédale est branchée sur le piano (prise SUSTAIN).')); return null; }
+    if (!peds.length) { results.append(verdict('Aucun mouvement de pédale reçu. Vérifie que la pédale forte est branchée sur le piano (prise SUSTAIN ou DAMPER selon le modèle).')); return null; }
     const t0 = Math.min(groups[0].time, peds[0].time);
     const changes = [];
     for (let i = 1; i < groups.length; i++) {
@@ -380,5 +433,5 @@ export function mountAnalyzer(el, cfg = {}) {
   }
 
   renderIdle();
-  return () => { if (rec) stopRec(false); metro?.stop(); };
+  return () => { if (rec) stopRec(false); metro?.stop(); stopDyn?.(); if (window.__analyzer && window.__analyzer.owner === frame) delete window.__analyzer; };
 }

@@ -7,13 +7,10 @@ import { sharedMetronome } from './metronome.js';
 import { makeW, mountWidgets, ICONS } from './widgets.js';
 import { keyboard } from './diagrams.js';
 import { toast } from './toast.js';
-import { LEVELS, MODULES, PIECES, lessonById, levelById, allLessons, lessonsOf } from './content-index.js';
-import { mountSight, SIGHT_PRESETS } from './tool-sight.js';
-import { mountQuiz, EAR_PRESETS, THEORY_PRESETS } from './tool-ear.js';
-import { dailyTip } from './content-tips.js';
-import { mountAnalyzer } from './tool-analyzer.js';
-import { mountImprov } from './tool-improv.js';
-import { mountMetronome } from './tool-metronome-ui.js';
+import { ensureAbcjs, mountLazy } from './lazy.js';
+import { initUpdates, checkForUpdate, applyUpdate, hasUpdate, version } from './updates.js';
+import { exportProgress, importProgress, resetAll, needsBackupReminder, postponeReminder, lastBackupLabel, requestPersistence } from './backup.js';
+import { LEVELS, MODULES, PIECES, lessonById, levelById, allLessons, lessonsOf, loadLesson, loadPiece } from './content-index.js';
 
 const main = $('#main');
 const sidebar = $('#sidebar');
@@ -29,6 +26,7 @@ const NI = {
   piece: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
   plan: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
   check: '<path d="M5 12l4 4 10-10"/>',
+  mastery: '<rect x="4" y="7" width="13" height="13" rx="2"/><path d="M8 4h11a1 1 0 0 1 1 1v11"/><path d="M8 13l2.5 2.5L14 11"/>',
   technique: '<path d="M7 20v-6l-3-3 4-7h3l1 4 4-2 3 3-6 5v6"/>',
   interpretation: '<path d="M4 15c3-8 6 4 9-4s5 2 7-1"/><path d="M4 20h16"/>',
   theorie: '<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/><circle cx="10" cy="14" r="2"/>',
@@ -38,6 +36,7 @@ const NI = {
   ear: '<path d="M8 10a4 4 0 1 1 8 0c0 3-3 4-3 7a3 3 0 0 1-5 2"/>',
   oreille: '<path d="M8 10a4 4 0 1 1 8 0c0 3-3 4-3 7a3 3 0 0 1-5 2"/><path d="M11 10a1 1 0 1 1 2 0"/>',
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  rythme: '<path d="M6 17V6l12-2v11"/><circle cx="5" cy="17" r="2"/><circle cx="17" cy="15" r="2"/><path d="M6 10l12-2"/>',
   keys: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v9M12 5v14M16 5v9"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
   lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
@@ -57,26 +56,42 @@ const routes = [
   [/^#\/plan\/(n\d)$/, pagePlan],
   [/^#\/validation\/(n\d)$/, pageValidation],
   [/^#\/outils$/, pageTools],
-  [/^#\/outils\/metronome$/, () => toolPage('Métronome', 'Mesures muettes, accélération progressive, tempo tapé.', el => mountMetronome(el, { title: false }))],
-  [/^#\/outils\/lecture$/, () => toolPage('Lecture à vue', 'Des extraits nouveaux à chaque fois, adaptés à ton niveau. Lis d’abord en silence, puis joue sans t’arrêter.', el => mountSight(el, { preset: currentLevel().id === 'n2' ? 'n2-md' : 'n1-md' }))],
+  [/^#\/outils\/metronome$/, () => toolPage('Métronome', 'Mesures muettes, accélération progressive, tempo tapé.', () => import('./tool-metronome-ui.js').then(m => el => m.mountMetronome(el, { title: false })))],
+  [/^#\/outils\/lecture$/, () => toolPage('Lecture à vue', 'De vrais extraits du répertoire (Bach, Diabelli, Burgmüller, Schumann…), du plus simple au plus avancé. Prépare-toi 30 secondes, puis joue sans t’arrêter : la difficulté s’ajuste à tes résultats.', () => Promise.all([import('./tool-sight.js'), ensureAbcjs()]).then(([m]) => el => m.mountSight(el, { level: store.get('sight.level') || (currentLevel().id === 'n2' ? '2' : '1rh') })))],
+  [/^#\/maitrise$/, () => toolPage('En cours de maîtrise', 'Cinq minutes par jour : les notions des leçons de théorie terminées et l’analyse de tes pièces, revues juste avant de les oublier.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)))],
+  [/^#\/outils\/rythme$/, () => toolPage('Rythme', 'Lire le rythme : compter, subdiviser, placer chaque attaque. Dix niveaux, des noires aux polyrythmies, et les rythmes de tes pièces.', () => Promise.all([import('./tool-rhythm.js'), ensureAbcjs()]).then(([m]) => el => m.mountRhythmPage(el)))],
   [/^#\/outils\/oreille$/, () => pagePresets('oreille')],
   [/^#\/outils\/theorie$/, () => pagePresets('theorie')],
-  [/^#\/outils\/analyseur$/, () => toolPage('Analyseur de jeu', 'Le piano envoie chaque note jouée, avec sa force et sa durée. L’analyseur mesure ce que l’oreille perçoit mal en jouant.', el => mountAnalyzer(el, { modes: ['evenness', 'legato', 'pedal', 'balance', 'voicing', 'dynamics'] }))],
+  [/^#\/outils\/analyseur$/, () => toolPage('Analyse technique', 'Pour les gammes, arpèges et exercices joués sans partition : régularité, legato, pédale, équilibre des mains. Pour un passage de tes pièces, utilise plutôt « Analyser » sous l’extrait : l’analyse compare alors ton jeu à la partition.', () => import('./tool-analyzer.js').then(m => el => m.mountAnalyzer(el, { modes: ['evenness', 'legato', 'pedal', 'balance', 'voicing', 'dynamics'] })))],
   [/^#\/outils\/impro$/, pageImproTool],
   [/^#\/outils\/clavier$/, pageKeyboardTest],
   [/^#\/reglages$/, pageSettings],
 ];
 
+/** Jeton de navigation : une page asynchrone vérifie qu'elle est toujours affichée avant d'écrire. */
+let navToken = 0;
+const stillHere = tok => tok === navToken;
+const showError = e => { console.error(e); main.innerHTML = `<div class="page"><h1>Erreur</h1><p>${esc(e.message || String(e))}</p></div>`; };
+
 function router() {
   const hash = location.hash || '#/';
   cleanup?.();
   cleanup = null;
+  const tok = ++navToken;
   for (const [re, fn] of routes) {
     const m = hash.match(re);
     if (m) {
       main.innerHTML = '';
-      try { cleanup = fn(...m.slice(1)) || null; }
-      catch (e) { console.error(e); main.innerHTML = `<div class="page"><h1>Erreur</h1><p>${esc(e.message)}</p></div>`; }
+      try {
+        const res = fn(...m.slice(1));
+        if (res && typeof res.then === 'function') {
+          // page asynchrone : le nettoyage arrive quand la page est prête
+          let inner = null, gone = false;
+          cleanup = () => { gone = true; try { inner?.(); } catch (e) { /* */ } };
+          res.then(c => { if (gone || !stillHere(tok)) { try { c?.(); } catch (e) { /* */ } } else { inner = c || null; frenchSpacing(main); } })
+            .catch(e => { if (stillHere(tok)) showError(e); });
+        } else cleanup = res || null;
+      } catch (e) { showError(e); }
       renderNav(hash);
       frenchSpacing(main);
       closeNav();
@@ -97,7 +112,7 @@ function renderNav(hash) {
     const active = hash === href || (extra.prefix && hash.startsWith(extra.prefix));
     return `<a class="nav-link${active ? ' active' : ''}${extra.locked ? ' locked' : ''}" href="${href}">${ico(icon)}<span>${esc(label)}</span>${extra.meta ? `<span class="meta">${esc(extra.meta)}</span>` : ''}</a>`;
   };
-  let html = `<div class="nav-section">${link('#/', 'Accueil', 'home')}${link('#/parcours', 'Le parcours', 'map')}</div>`;
+  let html = `<div class="nav-section">${link('#/', 'Accueil', 'home')}${link('#/parcours', 'Le parcours', 'map')}${link('#/maitrise', 'En cours de maîtrise', 'mastery')}</div>`;
   html += `<div class="nav-section"><div class="nav-title">Niveaux</div>`;
   for (const L of LEVELS) {
     if (L.locked) continue;
@@ -121,13 +136,13 @@ function renderNav(hash) {
     html += `</div>`;
   }
   html += `</div><div class="nav-section"><div class="nav-title">Outils</div>`;
-  html += link('#/outils/metronome', 'Métronome', 'metro');
+  html += link('#/outils/rythme', 'Rythme', 'rythme');
   html += link('#/outils/lecture', 'Lecture à vue', 'lecture');
   html += link('#/outils/oreille', 'Oreille', 'ear');
   html += link('#/outils/theorie', 'Théorie', 'theorie');
-  html += link('#/outils/analyseur', 'Analyseur de jeu', 'chart');
   html += link('#/outils/impro', 'Improvisation', 'impro');
-  html += link('#/outils/clavier', 'Test du clavier', 'keys');
+  html += link('#/outils/analyseur', 'Analyse technique', 'chart');
+  html += link('#/outils/metronome', 'Métronome', 'metro');
   html += `</div><div class="nav-section">${link('#/reglages', 'Réglages', 'gear')}</div>`;
   sidebar.innerHTML = html;
 }
@@ -164,14 +179,20 @@ function renderMidi(status, name) {
 }
 const shortName = n => n.length > 22 ? n.slice(0, 20) + '…' : n;
 midi.on('status', renderMidi);
+midi.on('link', kind => {
+  if (kind === 'lost') toast('Piano déconnecté. Vérifie la liaison (Bluetooth : MIDI BLE Connect), puis touche « Connecter le piano ».', 'err', 6000);
+  else if (kind === 'back') toast('Piano reconnecté', 'ok');
+  else if (kind === 'silent') toast('Le piano ne répond plus : la liaison semble interrompue.', 'err', 5000);
+});
 midiPill.addEventListener('click', async () => {
   audio.unlock();
   if (midi.status === 'ready') { location.hash = '#/outils/clavier'; return; }
   if (!midi.supported) { toast('Ce navigateur ne gère pas le MIDI. Utilise Chrome sur Android.', 'err', 4200); return; }
   const ok = await midi.init();
   if (ok) toast(`Piano connecté : ${midi.deviceName}`, 'ok');
-  else if (midi.status === 'nodevice') toast('Aucun appareil MIDI : vérifie le câble USB et que le piano est allumé.', 'err', 4200);
-  else if (midi.status === 'denied') toast('Autorisation MIDI refusée. Réautorise-la dans les réglages du site (cadenas dans la barre d’adresse).', 'err', 5200);
+  else if (midi.status === 'nodevice') toast('Aucun appareil MIDI : vérifie la connexion (câble ou Bluetooth) et que le piano est allumé.', 'err', 4200);
+  else if (midi.status === 'denied') toast('Accès MIDI refusé par le navigateur. Dans Chrome : ⋮ → Paramètres → Paramètres des sites → appareils MIDI : autorise les demandes, puis retouche « Connecter le piano ».', 'err', 8000);
+  else if (midi.status === 'unsupported') toast(`Le navigateur n’a pas pu ouvrir le MIDI (${midi.lastError || 'erreur inconnue'}). Utilise Chrome à jour.`, 'err', 8000);
 });
 
 const metroPill = $('#metroPill'), metroLabel = $('#metroPillLabel');
@@ -286,23 +307,35 @@ function pageHome() {
     </div>
     <div class="section-title"><h2>Cette semaine</h2><span class="small"><a href="#/plan/${L.id}">Semaine ${week} sur ${L.plan.length} — tout le plan</a></span></div>
     <div id="weekBox"></div>
-    <div id="tipBox"></div>
     <div class="section-title"><h2>Outils du quotidien</h2></div>
     <div class="grid cols-2">
+      ${toolCard('#/outils/rythme', 'Rythme', 'Lire et taper des rythmes, dix niveaux, et ceux de tes pièces.')}
+      ${toolCard('#/outils/lecture', 'Lecture à vue', '10 minutes par jour, de vrais extraits à ton niveau, jamais deux fois le même.')}
       ${toolCard('#/outils/oreille', 'Oreille', '10 minutes chaque jour : chanter, reconnaître les degrés, rejouer des mélodies.')}
-      ${toolCard('#/outils/lecture', 'Lecture à vue', '10 minutes par jour, un extrait nouveau à chaque fois.')}
-      ${toolCard('#/outils/theorie', 'Théorie', 'Tous les cours, et des exercices : notes, rythme, gammes, intervalles, accords.')}
-      ${toolCard('#/outils/analyseur', 'Analyseur de jeu', 'Régularité, legato, pédale, équilibre des mains.')}
+      ${toolCard('#/outils/theorie', 'Théorie', 'Tous les cours, et des exercices : notes, gammes, intervalles, accords.')}
+      <a class="card" href="#/maitrise" id="masteryCard"><h3>En cours de maîtrise</h3><p>5 minutes par jour : la théorie des leçons terminées et l’analyse de tes pièces, revues au bon moment.</p></a>
     </div>
     <div id="midiHelp"></div>`;
   main.append(page);
+  if (needsBackupReminder()) {
+    const later = h('button', { class: 'btn ghost sm', type: 'button' }, 'Plus tard');
+    const go = h('button', { class: 'btn sm', type: 'button' }, 'Exporter maintenant');
+    const box = h('div', { class: 'callout tip mt-2' }, h('div', { class: 'c-title', html: ICONS.bulb + 'Sauvegarde ta progression' }),
+      h('p', {}, `Dernière sauvegarde : ${lastBackupLabel()}. Un fichier d’export te protège si les données de Chrome sont effacées.`), h('div', { class: 'btn-row' }, go, later));
+    go.addEventListener('click', async () => { await exportProgress(); box.remove(); toast('Fichier de sauvegarde téléchargé', 'ok'); });
+    later.addEventListener('click', () => { postponeReminder(7); box.remove(); });
+    $('.page-head', page).after(box);
+  }
+  // cartes du jour (calculées à part, sans retarder l'accueil)
+  import('./tool-mastery.js').then(m => m.dueToday()).then(r => {
+    const c = $('#masteryCard', page);
+    if (c && r && r.total) c.querySelector('p').textContent = r.n ? `${r.n} carte${r.n > 1 ? 's' : ''} à revoir aujourd’hui (≈ ${r.minutes} min).` : 'C’est fait pour aujourd’hui. Prochaines cartes demain.';
+  }).catch(() => {});
   const weekBox = $('#weekBox', page);
   if (wk) weekBox.append(weekCard(L, wk, week, true));
-  const tip = dailyTip();
-  $('#tipBox', page).innerHTML = `<div class="card daily-tip mt-2"><span class="ico-b">${ICONS.bulb}</span><div><div class="eyebrow">Conseil du jour · ${esc(tip.mod)}</div><p class="mt-1">${tip.html}</p></div></div>`;
   if (midi.status !== 'ready') {
     $('#midiHelp', page).innerHTML = `<div class="callout tip mt-3"><div class="c-title">${ICONS.bulb}Brancher le piano</div>
-      <ol><li>Relie la tablette à la prise <b>USB TO HOST</b> du P-145 avec un câble <b>USB-C ↔ USB-B</b>.</li>
+      <ol><li>Relie le piano à la tablette. <b>Kawai ES110</b> : en Bluetooth MIDI (connecte d’abord le piano avec l’appli gratuite « MIDI BLE Connect »), ou avec une interface USB-MIDI branchée sur la prise ronde <b>MIDI OUT</b>. Piano avec prise <b>USB TO HOST</b> : câble USB-C ↔ USB-B.</li>
       <li>Ouvre l’appli dans <b>Chrome</b>, puis touche <b>Connecter le piano</b> en haut à droite et accepte l’accès MIDI.</li>
       <li>Vérifie dans <a href="#/outils/clavier">Test du clavier</a> : les touches jouées s’allument.</li></ol></div>`;
   }
@@ -396,8 +429,14 @@ function pageModule(id, mod) {
   main.append(page);
 }
 
-function pageLesson(id) {
-  const l = lessonById(id);
+async function pageLesson(id) {
+  const tok = navToken;
+  const meta = lessonById(id);
+  if (!meta) { location.hash = '#/'; return; }
+  main.append(h('div', { class: 'page' }, h('p', { class: 'w-loading' }, 'Chargement de la leçon…')));
+  const l = await loadLesson(id);
+  if (!stillHere(tok)) return;
+  main.innerHTML = '';
   if (!l) { location.hash = '#/'; return; }
   const L = levelById(l.level);
   const M = MODULES.find(m => m.id === l.module);
@@ -432,13 +471,26 @@ function pageLesson(id) {
   return unmount;
 }
 
-function pagePiece(id) {
-  const P = PIECES[id];
+async function pagePiece(id) {
+  const tok = navToken;
+  if (!PIECES[id]) { location.hash = '#/'; return; }
+  main.append(h('div', { class: 'page' }, h('p', { class: 'w-loading' }, 'Chargement…')));
+  const P = await loadPiece(id);
+  if (!stillHere(tok)) return;
+  main.innerHTML = '';
   if (!P) { location.hash = '#/'; return; }
   const L = LEVELS.find(x => x.pieceIds.includes(id));
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, L ? { label: `Niveau ${L.num}`, href: `#/niveau/${L.id}` } : { label: 'Pièces' }, { label: P.title }]) +
     `<div class="page-head"><h1>${esc(P.title)}</h1><p class="lead">${esc(P.composer)}${P.short ? ' · ' + esc(P.short) : ''}</p><div class="tags">${(P.tags || []).map(t => `<span class="tag ${t.cls || ''}">${esc(t.label)}</span>`).join('')}</div></div>`;
+  if (['op55-1', 'op15-1', 'clair-de-lune'].includes(id)) {
+    const cb = h('input', { type: 'checkbox', checked: !!store.get(`pieces.${id}.byHeart`) });
+    cb.addEventListener('change', () => {
+      store.set(`pieces.${id}.byHeart`, cb.checked);
+      toast(cb.checked ? 'Questions « Qu’est-ce qui vient après ? » ajoutées à En cours de maîtrise' : 'Pièce retirée du par cœur', 'ok', 3500);
+    });
+    page.append(h('label', { class: 'check heart-toggle' }, cb, 'Je l’apprends par cœur', h('span', { class: 'small muted' }, ' — le plan et les enchaînements d’accords s’ajoutent à ', h('a', { href: '#/maitrise' }, 'En cours de maîtrise'), '.')));
+  }
   const body = h('div', { class: 'prose' });
   page.append(body);
   main.append(page);
@@ -508,13 +560,13 @@ function pageValidation(id) {
 
 function pageTools() { location.hash = '#/outils/lecture'; }
 
-function toolPage(title, lead, mountFn) {
+function toolPage(title, lead, load) {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: title }]) + `<div class="page-head"><h1>${esc(title)}</h1><p class="lead">${esc(lead)}</p></div>`;
   const host = h('div', { class: 'w' });
   page.append(host);
   main.append(page);
-  return mountFn(host);
+  return mountLazy(host, load);
 }
 
 /** Index des leçons d'un module, niveau par niveau (pour retrouver les cours en dehors du plan). */
@@ -531,21 +583,25 @@ function moduleIndexHTML(mod) {
 
 const PRESET_PAGES = {
   oreille: {
-    title: 'Oreille', presets: () => EAR_PRESETS, lessonsTitle: 'Le cours d’oreille, leçon par leçon',
+    title: 'Oreille', presets: m => m.EAR_PRESETS, lessonsTitle: 'Le cours d’oreille, leçon par leçon',
     lead: 'Dix minutes chaque jour valent mieux qu’une longue séance par semaine. Les leçons du parcours expliquent chaque étape ; ici, tu retrouves toutes les séries pour t’entraîner librement. Objectif : 80 % du premier coup, deux jours de suite, avant de passer à la série suivante.',
   },
   theorie: {
-    title: 'Théorie', presets: () => THEORY_PRESETS, lessonsTitle: 'Les cours de théorie, chapitre par chapitre',
-    lead: 'Tous les chapitres de théorie des niveaux, dans l’ordre, et des exercices pour réviser : lecture des notes, rythme, gammes, intervalles, accords.',
+    title: 'Théorie', presets: m => m.THEORY_PRESETS, lessonsTitle: 'Les cours de théorie, chapitre par chapitre',
+    lead: 'Tous les chapitres de théorie des niveaux, dans l’ordre, et des exercices pour réviser : lecture des notes, gammes, intervalles, accords. Le rythme a son propre onglet.',
   },
 };
 
-function pagePresets(kind) {
+async function pagePresets(kind) {
+  const tok = navToken;
   const cfg = PRESET_PAGES[kind];
+  const [ear] = await Promise.all([import('./tool-ear.js'), ensureAbcjs()]);
+  if (!stillHere(tok)) return;
+  const mountQuiz = ear.mountQuiz;
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: cfg.title }]) +
     `<div class="page-head"><h1>${esc(cfg.title)}</h1><p class="lead">${esc(cfg.lead)}</p></div>`;
-  const presets = cfg.presets();
+  const presets = cfg.presets(ear);
   const groups = [...new Set(presets.map(q => q.group))];
   const host = h('div', { class: 'w' });
   const list = h('div');
@@ -581,12 +637,12 @@ function pageImproTool() {
   page.append(host);
   page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3"><h2>La méthode, leçon par leçon</h2></div>` + moduleIndexHTML('impro'));
   main.append(page);
-  return mountImprov(host, {});
+  return mountLazy(host, () => import('./tool-improv.js').then(m => el => m.mountImprov(el, {})));
 }
 
 function pageKeyboardTest() {
   const page = h('div', { class: 'page' });
-  page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Test du clavier' }]) +
+  page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Réglages', href: '#/reglages' }, { label: 'Test du clavier' }]) +
     `<div class="page-head"><h1>Test du clavier</h1><p class="lead">Vérifie la connexion : chaque touche jouée doit s’allumer, avec sa force (vélocité) ; la pédale aussi.</p></div>`;
   const frame = h('div', { class: 'w-frame' });
   const body = h('div', { class: 'w-body' });
@@ -617,6 +673,7 @@ function pageKeyboardTest() {
 
 function pageSettings() {
   const s = store.get('settings');
+  const offs = [];
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Réglages' }]) + `<div class="page-head"><h1>Réglages</h1></div>`;
   const card = (title, ...kids) => h('div', { class: 'card', style: { marginBottom: '14px' } }, h('h3', {}, title), ...kids);
@@ -626,17 +683,44 @@ function pageSettings() {
   inSel.addEventListener('change', () => { store.set('settings.midiInput', inSel.value); midi.rebind(); });
   const outSel = h('select', {}, h('option', { value: '' }, 'Premier disponible'), ...midi.outputs.map(o => h('option', { value: o.id, selected: s.midiOutput === o.id }, o.name)));
   outSel.addEventListener('change', () => { store.set('settings.midiOutput', outSel.value); midi.rebind(); });
-  const demoSel = h('select', {}, h('option', { value: 'sampler', selected: s.demoOutput !== 'midi' }, 'La tablette (piano échantillonné)'), h('option', { value: 'midi', selected: s.demoOutput === 'midi' }, 'Le piano (son du P-145, via MIDI)'));
+  const demoSel = h('select', {}, h('option', { value: 'sampler', selected: s.demoOutput !== 'midi' }, 'La tablette (piano échantillonné)'), h('option', { value: 'midi', selected: s.demoOutput === 'midi' }, 'Le piano lui-même (via MIDI)'));
   demoSel.addEventListener('change', () => store.set('settings.demoOutput', demoSel.value));
   const split = h('input', { type: 'number', min: 36, max: 84, value: s.split });
   split.addEventListener('change', () => store.set('settings.split', +split.value));
-  page.append(card('Piano (MIDI)',
-    h('p', { class: 'small' }, midi.status === 'ready' ? `Connecté : ${midi.deviceName}` : 'Non connecté — touche « Connecter le piano » en haut.'),
+  const conn = h('p', { class: 'small' });
+  // Diagnostic de connexion : compteurs et journal (utile si des notes se perdent ou restent bloquées)
+  const diagStats = h('div', { class: 'diag-stats' });
+  const diagLog = h('ol', { class: 'diag-log' });
+  const renderDiag = () => {
+    conn.textContent = midi.status === 'ready' ? `Connecté : ${midi.deviceName}` : 'Non connecté — touche « Connecter le piano » en haut.';
+    const c = midi.counters;
+    const stat = (v, l) => h('div', { class: 'stat' }, h('div', { class: 'l' }, l), h('div', { class: 'v' }, String(v)));
+    diagStats.replaceChildren(
+      stat(c.notes, 'Notes reçues'),
+      stat(c.repairedOffs, 'Relâchements réparés'),
+      stat(c.stuckReleased, 'Notes débloquées'),
+      stat(c.disconnects + c.sensingLost, 'Coupures'));
+    const lines = midi.log.slice(-8).reverse();
+    diagLog.replaceChildren(...(lines.length ? lines.map(l => h('li', {}, h('time', {}, new Date(l.t).toLocaleTimeString('fr-FR')), ' ', l.text))
+      : [h('li', { class: 'muted' }, 'Rien à signaler depuis l’ouverture de l’appli.')]));
+  };
+  renderDiag();
+  const tick = setInterval(renderDiag, 2000);
+  offs.push(() => clearInterval(tick), midi.on('status', renderDiag));
+  const unstick = h('button', { class: 'btn sm', type: 'button' }, 'Débloquer les notes');
+  unstick.addEventListener('click', () => { midi.releaseAll(); renderDiag(); toast('Notes et pédale relâchées', 'ok'); });
+  const diag = h('details', { class: 'mt-2' }, h('summary', {}, 'Diagnostic de la connexion'),
+    h('p', { class: 'small' }, 'Si une note reste bloquée ou si des notes semblent se perdre en Bluetooth, regarde ici ce que l’appli a reçu et réparé. ',
+      midi.sensing ? 'Le piano envoie un signal de présence : une coupure est détectée en une seconde.' : 'Signal de présence du piano : non reçu (normal sur certains pianos ; la coupure est alors détectée à la reconnexion).'),
+    diagStats, diagLog,
+    h('div', { class: 'btn-row' }, unstick, h('a', { class: 'btn sm', href: '#/outils/clavier' }, 'Test du clavier')));
+  page.append(card('Piano (MIDI)', conn,
     h('div', { class: 'grid cols-2' },
       h('label', { class: 'field' }, 'Entrée MIDI', inSel),
       h('label', { class: 'field' }, 'Sortie MIDI', outSel),
       h('label', { class: 'field' }, 'Les démonstrations sont jouées par', demoSel),
-      h('label', { class: 'field' }, 'Séparation main gauche / main droite (n° MIDI, 60 = do3)', split))));
+      h('label', { class: 'field' }, 'Séparation main gauche / main droite (n° MIDI, 60 = do3)', split)),
+    diag));
 
   // Audio
   const vol = h('input', { type: 'range', min: 0, max: 1, step: 0.01, value: s.volume });
@@ -645,67 +729,84 @@ function pageSettings() {
   mvol.addEventListener('input', () => store.set('settings.metroVolume', +mvol.value));
   const echo = h('input', { type: 'checkbox' }); echo.checked = s.echoVirtual !== false;
   echo.addEventListener('change', () => store.set('settings.echoVirtual', echo.checked));
-  const latOut = h('output', {}, `${s.latency} ms`);
-  const lat = h('input', { type: 'range', min: -100, max: 250, step: 5, value: s.latency });
-  lat.addEventListener('input', () => { store.set('settings.latency', +lat.value); latOut.textContent = `${lat.value} ms`; });
-  const calib = h('button', { class: 'btn sm', type: 'button' }, 'Calibrer (8 clics)');
-  const calibInfo = h('span', { class: 'small' });
-  calib.addEventListener('click', () => calibrate(calibInfo, lat, latOut));
+  const calibHost = h('div');
+  const sync = h('details', { class: 'mt-2' }, h('summary', {}, 'Synchronisation avec les clics'),
+    h('p', { class: 'small' }, 'Entre le clic entendu et la note reçue, il y a un petit décalage (Bluetooth, écran, haut-parleurs). Mesure-le une fois pour chaque façon de jouer : le rythme, le mode « en rythme » et l’analyse en tiennent compte.'),
+    calibHost);
+  let calibMounted = false;
+  sync.addEventListener('toggle', () => {
+    if (!sync.open || calibMounted) return;
+    calibMounted = true;
+    offs.push(mountLazy(calibHost, () => import('./tool-rhythm.js').then(m => el => {
+      const a = m.mountCalibration(el);
+      const b = m.mountClickTest(el);
+      return () => { a?.(); b?.(); };
+    })));
+  });
   page.append(card('Son',
     h('label', { class: 'range' }, 'Volume du piano', vol),
     h('label', { class: 'range' }, 'Volume du métronome', mvol),
     h('label', { class: 'check mt-1' }, echo, 'Faire sonner le clavier à l’écran'),
-    h('p', { class: 'small mt-2' }, 'Compensation de latence : décalage entre le clic entendu et la note jouée. Calibre-la une fois (joue une même note en même temps que chacun des 8 clics), elle rend le mode « en rythme » plus juste.'),
-    h('div', { class: 'row' }, h('label', { class: 'range', style: { flex: 1 } }, 'Latence', lat, latOut), calib, calibInfo)));
+    sync));
 
   // Données
   const exp = h('button', { class: 'btn', type: 'button' }, 'Exporter ma progression');
-  exp.addEventListener('click', () => {
-    const blob = new Blob([store.exportJSON()], { type: 'application/json' });
-    const a = h('a', { href: URL.createObjectURL(blob), download: `parcours-piano-${new Date().toISOString().slice(0, 10)}.json` });
-    document.body.append(a); a.click(); a.remove();
+  const backupInfo = h('p', { class: 'small mt-1 mb-0' }, `Dernière sauvegarde : ${lastBackupLabel()}.`);
+  exp.addEventListener('click', async () => {
+    try { await exportProgress(); backupInfo.textContent = `Dernière sauvegarde : ${lastBackupLabel()}.`; toast('Fichier de sauvegarde téléchargé', 'ok'); }
+    catch (e) { toast('Export impossible : ' + e.message, 'err', 5000); }
   });
   const imp = h('input', { type: 'file', accept: 'application/json', hidden: true });
   const impBtn = h('button', { class: 'btn', type: 'button' }, 'Importer');
   impBtn.addEventListener('click', () => imp.click());
   imp.addEventListener('change', async () => {
-    try { store.importJSON(await imp.files[0].text()); toast('Progression importée', 'ok'); router(); }
+    try { await importProgress(await imp.files[0].text()); toast('Progression importée', 'ok'); router(); }
     catch (e) { toast('Fichier non reconnu', 'err'); }
   });
   const reset = h('button', { class: 'btn ghost', type: 'button' }, 'Tout effacer');
-  reset.addEventListener('click', () => { if (confirm('Effacer toute la progression et les réglages ?')) { store.reset(); router(); } });
-  page.append(card('Progression', h('p', { class: 'small' }, 'Ta progression est enregistrée sur cette tablette, dans le navigateur. Exporte-la de temps en temps : vider les données de Chrome l’effacerait.'), h('div', { class: 'btn-row' }, exp, impBtn, imp, reset)));
+  reset.addEventListener('click', async () => { if (confirm('Effacer toute la progression, les réglages, les prises et les partitions importées ?')) { await resetAll(); router(); } });
+  page.append(card('Progression', h('p', { class: 'small' }, 'Ta progression, tes prises, tes analyses et les partitions que tu as importées sont enregistrées sur cette tablette, dans le navigateur. Exporte-les de temps en temps : vider les données de Chrome les effacerait.'), h('div', { class: 'btn-row' }, exp, impBtn, imp, reset), backupInfo));
+
+  // Version et mises à jour
+  const verInfo = h('p', { class: 'small mt-0' }, `Version ${version.app} · ${version.build} · construite le ${new Date(version.built + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`);
+  const verStatus = h('span', { class: 'small' });
+  const verBtn = h('button', { class: 'btn sm', type: 'button' }, hasUpdate() ? 'Installer la nouvelle version' : 'Rechercher une mise à jour');
+  verBtn.addEventListener('click', async () => {
+    if (hasUpdate()) { applyUpdate(); verStatus.textContent = 'Redémarrage…'; return; }
+    verStatus.textContent = 'Recherche…';
+    const r = await checkForUpdate();
+    verStatus.textContent = { available: 'Nouvelle version prête.', uptodate: 'L’appli est à jour.', installing: 'Téléchargement de la nouvelle version…', offline: 'Pas de connexion : réessaie plus tard.', unsupported: 'Mises à jour automatiques indisponibles ici.' }[r] || '';
+    if (r === 'available') verBtn.textContent = 'Installer la nouvelle version';
+  });
+  page.append(card('Version', verInfo, h('div', { class: 'row' }, verBtn, verStatus)));
 
   page.append(card('Sources et licences', h('div', {
     class: 'small', html: `<p>Piano : <b>Salamander Grand Piano</b> d’Alexander Holm (CC BY 3.0), via Tone.js. Partitions : <b>abcjs</b> (MIT). Polices : <b>Inter</b> et <b>Literata</b> (SIL OFL).</p>
     <p>Extraits de Chopin transcrits d’après les éditions LilyPond de <b>Knute Snortum</b> (op. 15 et op. 55, CC BY-SA 4.0) et vérifiés sur l’édition Breitkopf &amp; Härtel ; extraits de Debussy d’après l’édition du Mutopia Project (domaine public). Les extraits sont partagés sous la même licence CC BY-SA 4.0.</p>
+    <p>Courbes de tempo des pianistes de référence : jeu de données <b>MAESTRO v3</b> (Hawthorne et al., Google Magenta, 2019), d’après les enregistrements de l’International Piano-e-Competition, CC BY-NC-SA 4.0. Usage non commercial.</p>
     <p>Liens « Informance » : <a href="${INFORMANCE}" target="_blank" rel="noopener">Practising the Piano Online Academy</a> (abonnement).</p>`,
-  })));
+  }), sightSources()));
   main.append(page);
+  return () => offs.forEach(f => { try { f(); } catch (e) { /* */ } });
 }
 
-function calibrate(info, lat, latOut) {
-  const offsets = [];
-  const bpm = 80, n = 8;
-  audio.ensure().then(() => {
-    const t0 = audio.now() + 0.5;
-    const clicks = [];
-    for (let i = 0; i < n; i++) { audio.click(t0 + i * 60 / bpm, 'beat'); clicks.push(audio.ctxToPerf(t0 + i * 60 / bpm) - (store.get('settings.latency') || 0)); }
-    info.textContent = 'Joue une note avec chaque clic…';
-    const off = midi.on('noteon', e => {
-      const nearest = clicks.reduce((b, c) => Math.abs(c - e.time) < Math.abs(b - e.time) ? c : b, clicks[0]);
-      if (Math.abs(nearest - e.time) < 300) offsets.push(e.time - nearest);
-    });
-    setTimeout(() => {
-      off();
-      if (offsets.length < 4) { info.textContent = 'Pas assez de notes captées : réessaie (piano connecté ?).'; return; }
-      offsets.sort((a, b) => a - b);
-      const med = Math.round(offsets[Math.floor(offsets.length / 2)] / 5) * 5;
-      store.set('settings.latency', med);
-      lat.value = med; latOut.textContent = `${med} ms`;
-      info.textContent = `Latence réglée à ${med} ms.`;
-    }, 500 + n * 60000 / bpm + 600);
+/** Sources des extraits de lecture à vue (attribution des éditions Mutopia), chargées à l'ouverture. */
+function sightSources() {
+  const list = h('div', { class: 'small src-list' });
+  const det = h('details', { class: 'small' }, h('summary', {}, 'Lecture à vue : les sources des extraits'),
+    h('p', {}, 'Les extraits de lecture à vue viennent des éditions LilyPond du Mutopia Project (mutopiaproject.org), dans le domaine public ou sous licence Creative Commons (CC BY, CC BY-SA). Ils ont été convertis et vérifiés note à note par l’appli ; certains sont allégés (accords réduits à la mélodie et à la basse) ou transposés d’une octave, ce qui est indiqué sous l’extrait. Les extraits tirés d’éditions CC BY-SA sont partagés sous la même licence.'), list);
+  det.addEventListener('toggle', async () => {
+    if (!det.open || list.childElementCount) return;
+    const src = (await import('./data-sight-sources.js')).default;
+    const ul = h('ul', {});
+    for (const s of src.slice().sort((a, b) => (a.c + a.t).localeCompare(b.c + b.t, 'fr'))) {
+      ul.append(h('li', {}, `${s.c} · ${s.t}${s.o && !s.t.includes(s.o) ? ' (' + s.o + ')' : ''}${s.pt ? ' · partie ' + s.pt : ''} — `,
+        h('a', { href: `https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=${s.id}`, target: '_blank', rel: 'noopener' }, `Mutopia n° ${s.id}`),
+        `${s.mt ? ', gravure : ' + s.mt : ''}${s.l ? ', ' + s.l : ''}.`));
+    }
+    list.append(ul);
   });
+  return det;
 }
 
 /* ================================================================== */
@@ -715,7 +816,6 @@ window.addEventListener('hashchange', router);
 // Appli mise en arrière-plan (écran éteint, autre appli) : on arrête proprement la lecture en cours.
 document.addEventListener('visibilitychange', () => { if (document.hidden) audio.stopCurrent(); });
 function boot() {
-  if (!window.ABCJS) { setTimeout(boot, 30); return; }
   renderMidi(midi.status, midi.deviceName);
   midi.autoInit();
   if (!location.hash && store.get('lastRoute') && store.get('lastRoute') !== '#/') location.hash = store.get('lastRoute');
@@ -724,6 +824,5 @@ function boot() {
 store.subscribe((path) => { if (path === 'done' || path === '*') renderNav(location.hash || '#/'); });
 boot();
 
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
-}
+initUpdates();
+requestPersistence();

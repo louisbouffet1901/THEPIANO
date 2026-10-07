@@ -5,6 +5,7 @@ import { midi } from './midi.js';
 import { store } from './store.js';
 import { keyboard } from './diagrams.js';
 import { pitch, octaveDiff, sungName } from './pitch.js';
+import { inputLatency } from './latency.js';
 
 const PLAY = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M7 4.5v15l12-7.5-12-7.5z" fill="currentColor"/></svg>';
 
@@ -827,7 +828,7 @@ export function mountQuiz(el, cfg) {
       fb: h('div', { class: 'quiz-feedback' }),
       tipBox: h('div', { class: 'quiz-tip', hidden: true }),
       row: h('div', { class: 'btn-row', style: { marginBottom: '12px' } }),
-      nextBtn: h('button', { class: 'btn primary', type: 'button', hidden: true }, state.i + 1 >= total ? 'Voir le résultat' : 'Question suivante'),
+      nextBtn: h('button', { class: 'btn primary', type: 'button', hidden: true }, state.i + 1 >= total ? (cfg.onFinish ? 'Fin de la série' : 'Voir le résultat') : 'Question suivante'),
     };
     ctx.nextBtn.addEventListener('click', () => { state.i++; next(); });
     ctx.showTip = () => { ctx.tipBox.hidden = false; ctx.tipBox.innerHTML = `<b>Conseil.</b> ${tipFor(cfg.kind, q)}`; };
@@ -1093,10 +1094,10 @@ export function mountQuiz(el, cfg) {
     body.append(beatsBox, pad, fb, tipBox, nextBtn);
     let taps = null, running = false;
     const onTap = (t) => { if (taps) { taps.push(t); pad.classList.add('hit'); setTimeout(() => pad.classList.remove('hit'), 90); } };
-    const offMidi = midi.on('noteon', ev => onTap(ev.time));
-    const padDown = e => { e.preventDefault(); onTap(e.timeStamp > 0 ? e.timeStamp : performance.now()); };
+    const offMidi = midi.on('noteon', ev => onTap(ev.time - inputLatency(ev.source)));
+    const padDown = e => { e.preventDefault(); onTap((e.timeStamp > 0 ? e.timeStamp : performance.now()) - inputLatency('touch')); };
     pad.addEventListener('pointerdown', padDown);
-    const key = e => { if ((e.code === 'Space' || e.code === 'Enter') && running) { e.preventDefault(); onTap(performance.now()); } };
+    const key = e => { if ((e.code === 'Space' || e.code === 'Enter') && running) { e.preventDefault(); onTap(performance.now() - inputLatency('key')); } };
     window.addEventListener('keydown', key);
     addCleanup(() => { offMidi(); window.removeEventListener('keydown', key); });
     const spb = 60 / q.bpm;
@@ -1204,6 +1205,12 @@ export function mountQuiz(el, cfg) {
   const finish = () => {
     clearQuestion();
     const pct = state.ok / total;
+    if (cfg.onFinish) { // série intégrée (révision « En cours de maîtrise ») : le résultat est rendu à l'appelant
+      if (cfg.stat) store.push('stats.ear', { id: cfg.stat, at: Date.now(), pct, total });
+      body.innerHTML = '';
+      cfg.onFinish({ pct, ok: state.ok, solved: state.solved, total });
+      return;
+    }
     body.innerHTML = '';
     body.append(h('div', { class: 'big-score' },
       h('div', {}, h('div', { class: 'v' }, fmtPct(pct)), h('div', { class: 'l' }, 'réussite du premier coup')),
@@ -1265,7 +1272,8 @@ export function mountQuiz(el, cfg) {
   });
   let micOn = false;
   intro.append(go, msg);
-  body.append(intro);
+  if (cfg.autostart && !isSing) { audio.ensure().catch(() => {}); start(); } // pas d'écran d'accueil (révision)
+  else body.append(intro);
   return () => { clearQuestion(); if (micOn) pitch.stop(); };
 }
 
@@ -1294,31 +1302,26 @@ export const EAR_PRESETS = [
   { group: '3 · Mélodies', id: 'echo-bass', title: 'Rejouer une basse (degrés 1, 4, 5, 6)', kind: 'echo', degrees: [1, 4, 5, 6, 8], length: 4, maxStep: 3, count: 8 },
   { group: '3 · Mélodies', id: 'echo-min', title: 'Rejouer 5 notes en mineur', kind: 'echo', mode: 'min', degrees: [1, 2, 3, 4, 5, 6, 7, 8], length: 5, maxStep: 2, count: 8, key: 'random' },
   { group: '3 · Mélodies', id: 'sing-echo', title: 'Rechanter une mélodie', kind: 'sing', task: 'echo', degrees: [1, 2, 3, 4, 5], length: 3, count: 8 },
-  { group: '4 · Rythme', id: 'ry-1', title: 'Noires, blanches, rondes', kind: 'rhythm', cells: ['q', 'h', 'w', 'qr'], count: 8, bpm: 72 },
-  { group: '4 · Rythme', id: 'ry-2', title: 'Avec des croches', kind: 'rhythm', cells: ['q', 'h', 'ee', 'qr'], count: 8, bpm: 72 },
-  { group: '4 · Rythme', id: 'ry-3', title: 'Pointés et syncopes', kind: 'rhythm', cells: ['q', 'ee', 'qd_e', 'e_q_e', 'h'], count: 8, bpm: 66 },
-  { group: '4 · Rythme', id: 'ry-4', title: 'Doubles croches et triolets', kind: 'rhythm', cells: ['q', 'ee', 'ssss', 'e_ss', 'ss_e', 'trip'], count: 8, bpm: 60 },
-  { group: '4 · Rythme', id: 'ry-34', title: 'À trois temps', kind: 'rhythm', meter: 3, cells: ['q', 'h', 'ee', 'qd_e', 'trip'], count: 8, bpm: 66 },
-  { group: '5 · Intervalles', id: 'iv-a', title: 'Tierce majeure, quarte, quinte, octave', kind: 'intervals', set: ['3M', '4J', '5J', '8ve'] },
-  { group: '5 · Intervalles', id: 'iv-b', title: 'Secondes et tierces', kind: 'intervals', set: ['2m', '2M', '3m', '3M'] },
-  { group: '5 · Intervalles', id: 'iv-n1', title: 'De la seconde à la quinte, et l’octave', kind: 'intervals', set: ['2m', '2M', '3m', '3M', '4J', '5J', '8ve'] },
-  { group: '5 · Intervalles', id: 'iv-c', title: 'Sixtes, septièmes, triton', kind: 'intervals', set: ['Triton', '6m', '6M', '7m', '7M', '8ve'] },
-  { group: '5 · Intervalles', id: 'iv-n1-down', title: 'De la seconde à l’octave, en descendant', kind: 'intervals', set: ['2M', '3m', '3M', '4J', '5J', '8ve'], directions: ['down'] },
-  { group: '5 · Intervalles', id: 'iv-harm', title: 'Intervalles harmoniques (notes ensemble)', kind: 'intervals', set: ['3m', '3M', '4J', '5J', '6m', '6M', '8ve'], directions: ['harm'] },
-  { group: '5 · Intervalles', id: 'iv-all', title: 'Tous les intervalles (montants, descendants, harmoniques)', kind: 'intervals', set: ['2m', '2M', '3m', '3M', '4J', 'Triton', '5J', '6m', '6M', '7m', '7M', '8ve'], directions: ['up', 'down', 'harm'] },
-  { group: '5 · Intervalles', id: 'sing-iv', title: 'Chanter une tierce, une quinte, une octave', kind: 'sing', task: 'interval', set: ['3M', '5J', '8ve'], count: 8 },
-  { group: '6 · Accords et cadences', id: 'ch-mm', title: 'Majeur ou mineur ?', kind: 'chords', set: ['M', 'm'] },
-  { group: '6 · Accords et cadences', id: 'ch-n1', title: 'Majeur, mineur, diminué, augmenté', kind: 'chords', set: ['M', 'm', 'dim', 'aug'] },
-  { group: '6 · Accords et cadences', id: 'sing-arp', title: 'Chanter l’arpège (majeur)', kind: 'sing', task: 'seq', seqs: [[1, 3, 5], [5, 3, 1], [1, 3, 5, 8]], count: 6 },
-  { group: '6 · Accords et cadences', id: 'func2', title: 'Après le I : ii, IV, V ou vi ?', kind: 'chordfunc', set: ['ii', 'IV', 'V', 'vi'] },
-  { group: '6 · Accords et cadences', id: 'cad-maj', title: 'Les quatre cadences (majeur)', kind: 'cadences', modes: ['maj'] },
-  { group: '6 · Accords et cadences', id: 'cad-2', title: 'Fin ou suspension ?', kind: 'cadences', set: ['parfaite', 'demi'], labels: { parfaite: 'Fin (parfaite)', demi: 'Suspension (demi-cadence)' } },
-  { group: '6 · Accords et cadences', id: 'cad', title: 'Les quatre cadences', kind: 'cadences' },
-  { group: '6 · Accords et cadences', id: 'func', title: 'Après le I : IV, V ou vi ?', kind: 'chordfunc', set: ['IV', 'V', 'vi'] },
-  { group: '6 · Accords et cadences', id: 'ch-n2', title: 'Accords de septième', kind: 'chords', set: ['7', 'maj7', 'm7', 'hdim7', 'dim7'] },
-  { group: '6 · Accords et cadences', id: 'ch7-a', title: 'Septième de dominante ou septième majeure ?', kind: 'chords', set: ['7', 'maj7'] },
-  { group: '6 · Accords et cadences', id: 'ch7-b', title: 'Trois septièmes', kind: 'chords', set: ['7', 'maj7', 'm7'] },
-  { group: '6 · Accords et cadences', id: 'sc', title: 'Gammes majeures et mineures', kind: 'scales' },
+  { group: '4 · Intervalles', id: 'iv-a', title: 'Tierce majeure, quarte, quinte, octave', kind: 'intervals', set: ['3M', '4J', '5J', '8ve'] },
+  { group: '4 · Intervalles', id: 'iv-b', title: 'Secondes et tierces', kind: 'intervals', set: ['2m', '2M', '3m', '3M'] },
+  { group: '4 · Intervalles', id: 'iv-n1', title: 'De la seconde à la quinte, et l’octave', kind: 'intervals', set: ['2m', '2M', '3m', '3M', '4J', '5J', '8ve'] },
+  { group: '4 · Intervalles', id: 'iv-c', title: 'Sixtes, septièmes, triton', kind: 'intervals', set: ['Triton', '6m', '6M', '7m', '7M', '8ve'] },
+  { group: '4 · Intervalles', id: 'iv-n1-down', title: 'De la seconde à l’octave, en descendant', kind: 'intervals', set: ['2M', '3m', '3M', '4J', '5J', '8ve'], directions: ['down'] },
+  { group: '4 · Intervalles', id: 'iv-harm', title: 'Intervalles harmoniques (notes ensemble)', kind: 'intervals', set: ['3m', '3M', '4J', '5J', '6m', '6M', '8ve'], directions: ['harm'] },
+  { group: '4 · Intervalles', id: 'iv-all', title: 'Tous les intervalles (montants, descendants, harmoniques)', kind: 'intervals', set: ['2m', '2M', '3m', '3M', '4J', 'Triton', '5J', '6m', '6M', '7m', '7M', '8ve'], directions: ['up', 'down', 'harm'] },
+  { group: '4 · Intervalles', id: 'sing-iv', title: 'Chanter une tierce, une quinte, une octave', kind: 'sing', task: 'interval', set: ['3M', '5J', '8ve'], count: 8 },
+  { group: '5 · Accords et cadences', id: 'ch-mm', title: 'Majeur ou mineur ?', kind: 'chords', set: ['M', 'm'] },
+  { group: '5 · Accords et cadences', id: 'ch-n1', title: 'Majeur, mineur, diminué, augmenté', kind: 'chords', set: ['M', 'm', 'dim', 'aug'] },
+  { group: '5 · Accords et cadences', id: 'sing-arp', title: 'Chanter l’arpège (majeur)', kind: 'sing', task: 'seq', seqs: [[1, 3, 5], [5, 3, 1], [1, 3, 5, 8]], count: 6 },
+  { group: '5 · Accords et cadences', id: 'func2', title: 'Après le I : ii, IV, V ou vi ?', kind: 'chordfunc', set: ['ii', 'IV', 'V', 'vi'] },
+  { group: '5 · Accords et cadences', id: 'cad-maj', title: 'Les quatre cadences (majeur)', kind: 'cadences', modes: ['maj'] },
+  { group: '5 · Accords et cadences', id: 'cad-2', title: 'Fin ou suspension ?', kind: 'cadences', set: ['parfaite', 'demi'], labels: { parfaite: 'Fin (parfaite)', demi: 'Suspension (demi-cadence)' } },
+  { group: '5 · Accords et cadences', id: 'cad', title: 'Les quatre cadences', kind: 'cadences' },
+  { group: '5 · Accords et cadences', id: 'func', title: 'Après le I : IV, V ou vi ?', kind: 'chordfunc', set: ['IV', 'V', 'vi'] },
+  { group: '5 · Accords et cadences', id: 'ch-n2', title: 'Accords de septième', kind: 'chords', set: ['7', 'maj7', 'm7', 'hdim7', 'dim7'] },
+  { group: '5 · Accords et cadences', id: 'ch7-a', title: 'Septième de dominante ou septième majeure ?', kind: 'chords', set: ['7', 'maj7'] },
+  { group: '5 · Accords et cadences', id: 'ch7-b', title: 'Trois septièmes', kind: 'chords', set: ['7', 'maj7', 'm7'] },
+  { group: '5 · Accords et cadences', id: 'sc', title: 'Gammes majeures et mineures', kind: 'scales' },
 ];
 
 export const THEORY_PRESETS = [
@@ -1329,9 +1332,6 @@ export const THEORY_PRESETS = [
   { group: 'Lire les notes', id: 'notes-t', title: 'Notes en clé de sol', kind: 'notes', clefs: ['treble'] },
   { group: 'Lire les notes', id: 'notes-b', title: 'Notes en clé de fa', kind: 'notes', clefs: ['bass'] },
   { group: 'Lire les notes', id: 'notes-play', title: 'Notes à jouer au piano (les deux clés)', kind: 'notes', mode: 'play' },
-  { group: 'Rythme et mesure', id: 'mfill', title: 'Compléter la mesure', kind: 'measurefill', values: ['w', 'hd', 'h', 'q', 'e'] },
-  { group: 'Rythme et mesure', id: 'rread-1', title: 'Lire un rythme (noires, blanches, croches)', kind: 'rhythm', task: 'read', cells: ['q', 'h', 'ee', 'qr'], count: 8 },
-  { group: 'Rythme et mesure', id: 'rread-2', title: 'Lire un rythme (pointés, syncopes)', kind: 'rhythm', task: 'read', cells: ['q', 'ee', 'qd_e', 'e_q_e', 'h'], count: 8, bpm: 66 },
   { group: 'Gammes et tonalités', id: 'kdeg', title: 'Les degrés d’une gamme majeure', kind: 'keydegree' },
   { group: 'Gammes et tonalités', id: 'ks-maj', title: 'Armures : tonalités majeures', kind: 'keysig', keys: ['C', 'G', 'D', 'A', 'E', 'B', 'F', 'Bb', 'Eb', 'Ab', 'Db'] },
   { group: 'Gammes et tonalités', id: 'ks-min', title: 'Armures : tonalités mineures', kind: 'keysig', minor: true, keys: ['C', 'G', 'D', 'A', 'E', 'F', 'Bb', 'Eb', 'Ab'] },

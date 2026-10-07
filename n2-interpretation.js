@@ -19,12 +19,12 @@ V:LH3 clef=bass stem=down
 [V:LH2] x4 | (3A,2C2C2 (3A,2C2C2 (3A,2C2C2 | (3A,2B,2B,2 (3G,2B,2B,2 (3G,2B,2B,2 |
 [V:LH3] x4 | "_I"F,12 | "_IV – V7"F,12 |
 [V:RH] (d3e f4 g4 | a12) | (g4 a3g (3g2f2e2 |
-[V:LH1] D4 E4 C4 | C4 ^C4 D4 | =B,4 _B,4 _B,4 |
+[V:LH1] D4 E4 C4 | C4 ^C4 D4 | =B,4 _B,4 B,4 |
 [V:LH2] (3G,2B,2B,2 (3G,2B,2B,2 (3G,2B,2B,2 | (3F,2A,2A,2 (3G,2A,2A,2 (3F,2A,2A,2 | (3F,2G,2G,2 (3F,2G,2G,2 (3E,2G,2G,2 |
 [V:LH3] "_ii7 – V7"F,12 | "_I"F,4 "_V7/vi"E,4 "_vi"D,4 | "_V7/V"D,4 "_iiø7"_D,4 "_V7"C,4 |
 [V:RH] f6 e2 (3d2e2f2) | (e8 (3e2d2A2 | =B8) !p!(3:2:3(c2d3c) |]
 [V:LH1] A,4 A,4 A,4 | ^G,4 A,4 x4 | x4 E4 E4 |]
-[V:LH2] (3E,2F,2F,2 (3D,2F,2F,2 (3D,2F,2F,2 | (3D,2E,2E,2 (3C,2E,2E,2 (3[F,,=B,,A,]2D,2D,2 | (3[E,,=B,,^G,]2=B,2B,2 (3^G,2B,2B,2 (3_B,2C2C2 |]
+[V:LH2] (3E,2F,2F,2 (3D,2F,2F,2 (3D,2F,2F,2 | (3D,2E,2E,2 (3C,2E,2E,2 (3[F,,=B,,A,]2D,2D,2 | (3[E,,=B,,^G,]2=B,2B,2 (3G,2B,2B,2 (3_B,2C2C2 |]
 [V:LH3] "_I"C,4 "_iiø7/iii"=B,,8 | "_V7/iii"=B,,4 "_iii"A,,4 "_iiø7/iii"x4 | "_V/iii"x8 "_V7"G,4 |]`;
 
 // Phrasé guidé par l'harmonie (mesures 0 à 8 ; temps en noires, mesure 1 = temps 1)

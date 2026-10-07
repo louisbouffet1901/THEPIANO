@@ -3,15 +3,58 @@ import { audio } from './audio.js';
 import { midi } from './midi.js';
 import { store } from './store.js';
 import { h, clamp, mean, median } from './util.js';
+import { corrected } from './latency.js';
+
+/** Plage [q0, q1[ (en noires) ou null : filtre d'événements. */
+const inRange = (range, t) => !range || (t >= range[0] - 1e-6 && t < range[1] - 1e-6);
 
 let uid = 0;
 
 
 /**
- * abcjs donne aux petites notes la moitié de la valeur de la note principale (trop long pour une
- * appoggiature brève chez Chopin). On les raccourcit : chaque petite note dure 1/10 de temps,
- * jouée sur le temps, et la note principale récupère le reste de sa valeur.
+ * Petites notes. abcjs leur donne la moitié de la valeur de la note principale (trop long chez Chopin).
+ * - Cas général : jouées vite sur le temps, la note principale juste après (la durée réelle, en secondes,
+ *   est fixée à la lecture : Player.prepare).
+ * - Petites notes qui suivent une trille : c'est sa terminaison ; elles se jouent à la fin de la trille,
+ *   avant le temps, et la note suivante tombe sur le temps.
+ * Chaque petite note garde son rang dans le groupe (gInfo) ; la note principale garde l'origine du groupe (agInfo).
  */
+/**
+ * Liaisons : l'analyseur d'abcjs suit les liaisons note par note dans un accord par leur rang dans l'accord, sans
+ * distinguer les voix ; une liaison peut alors rester sans note d'arrivée (la note liée est rejouée, parfois avec
+ * une fausse altération) et laisser une liaison « en attente » qui absorberait une note plus loin.
+ * On relie chaque départ de liaison à la note suivante de la même voix (même position sur la portée) avant le calcul
+ * des sons ; un départ sans note d'arrivée est ignoré.
+ */
+function repairTies(visual) {
+  const voices = new Map();
+  for (const line of visual.lines || []) {
+    (line.staff || []).forEach((st, si) => (st.voices || []).forEach((voice, vi) => {
+      const key = si + ':' + vi;
+      if (!voices.has(key)) voices.set(key, []);
+      const list = voices.get(key);
+      for (const el of voice) {
+        if (el.el_type !== 'note') continue;
+        if (el.rest && (el.rest.type === 'spacer' || el.rest.type === 'invisible')) continue; // silence invisible (y, x) : la liaison passe par-dessus
+        list.push(el);
+      }
+    }));
+  }
+  for (const els of voices.values()) {
+    for (let i = 0; i < els.length; i++) {
+      const el = els[i];
+      if (!el.pitches) continue;
+      const nx = els[i + 1];
+      for (const p of el.pitches) {
+        if (!p || !p.startTie) continue;
+        const q = nx && nx.pitches ? nx.pitches.find(x => x && x.pitch === p.pitch) : null;
+        if (q) q.endTie = true;
+        else delete p.startTie;
+      }
+    }
+  }
+}
+
 function fixGraces(track) {
   const notes = track.filter(e => e.cmd === 'note');
   for (let i = 0; i < notes.length; i++) {
@@ -21,14 +64,24 @@ function fixGraces(track) {
     while (j < notes.length && notes[j].style === 'grace') { chain.push(notes[j]); j++; }
     const S = chain[0].start;
     const oldEnd = chain.reduce((m, g) => Math.max(m, g.start + g.duration), S);
-    const each = Math.min(0.025, (oldEnd - S) / chain.length);
-    chain.forEach((g, k) => { g.start = S + k * each; g.duration = each * 1.6; });
-    const newEnd = S + chain.length * each;
+    let prev = null;
+    for (let q = i - 1; q >= 0; q--) if (notes[q].style !== 'grace') { prev = notes[q]; break; }
+    const termination = !!(prev && prev.orn && /trill/.test(prev.orn.type) && Math.abs(prev.start + prev.duration - S) < 1e-6);
+    const n = chain.length;
+    const each = Math.min(0.025, (oldEnd - S) / n);
+    chain.forEach((g, k) => {
+      g.start = termination ? S - (n - k) * each : S + k * each;
+      g.duration = each * 1.6;
+      g.gInfo = { S, k, n, termination };
+    });
+    const newEnd = termination ? S : S + n * each;
     for (let k = j; k < notes.length && Math.abs(notes[k].start - oldEnd) < 1e-6; k++) {
       notes[k].duration += notes[k].start - newEnd;
       notes[k].start = newEnd;
-      if (notes[k].orn) notes[k].orn.prefixed = true;
+      notes[k].agInfo = { S, n, termination };
+      if (notes[k].orn) { notes[k].orn.prefixed = true; notes[k].orn.prefixLast = chain[n - 1].pitch; }
     }
+    if (termination && prev) prev.orn.termination = n;
     i = j - 1;
   }
 }
@@ -102,17 +155,20 @@ function rebuildOrnaments(track, ornEls) {
 
 /** Réalise un ornement (secondes) : trille vive, gruppetto, mordants, puis la note tenue. */
 function expandOrnament(e) {
-  const { type, upper, lower, prefixed } = e.orn;
-  const len = e.te - e.ts;
+  const { type, upper, lower, prefixed, prefixLast } = e.orn;
+  const end = e.te - (e.orn.termGap || 0); // place laissée aux notes de terminaison
+  const len = Math.max(0.05, end - e.ts);
   const res = [];
   const add = (pitch, ts, te, k) => res.push({ ...e, pitch, ts, te, vel: k ? e.vel * 0.86 : e.vel, orn: null });
   if (type === 'trill' || type === 'trillh') {
     const step = Math.max(0.055, Math.min(0.11, len / Math.max(2, Math.round(len / 0.085))));
     const n = Math.max(3, Math.floor((len * 0.8) / step));
     let t = e.ts, k = 0;
-    const first = prefixed ? 0 : 1; // sans préfixe : commence sur la note supérieure
-    for (; k < n - 1 && t + step < e.te - 0.05; k++, t += step) add((k + first) % 2 ? upper : e.pitch, t, t + step * 0.95, k);
-    add(e.pitch, t, e.te, k);
+    // Sans préfixe : départ sur la note supérieure. Petites notes qui finissent sur la note principale
+    // (la♮ – si♭ avant une trille sur si♭) : la trille continue sur la note supérieure, sans répéter si♭.
+    const first = prefixed ? (prefixLast === e.pitch ? 1 : 0) : 1;
+    for (; k < n - 1 && t + step < end - 0.05; k++, t += step) add((k + first) % 2 ? upper : e.pitch, t, t + step * 0.95, k);
+    add(e.pitch, t, end, k);
   } else if (type === 'turn') {
     const q = Math.min(0.09, len / 5);
     add(upper, e.ts, e.ts + q, 0); add(e.pitch, e.ts + q, e.ts + 2 * q, 1); add(lower, e.ts + 2 * q, e.ts + 3 * q, 2); add(e.pitch, e.ts + 3 * q, e.te, 3);
@@ -168,6 +224,7 @@ export class Score {
   }
 
   _extract() {
+    repairTies(this.visual);
     const flat = this.visual.setUpAudio({});
     // main de chaque voix : d'après le nom de la voix (LH / MG = main gauche), sinon ordre RH puis LH
     const voiceIds = [...this.abc.matchAll(/^V:\s*([^\s\]]+)/gm)].map(m => m[1]);
@@ -200,6 +257,12 @@ export class Score {
           pitch: ev.pitch, t: ev.start * 4, dur: ev.duration * 4, vol: ev.volume,
           track: ti, hand: tracksMap[ti] || 'rh', char: ev.startChar ?? null,
           orn: ev.orn || null, arp: ev.startChar != null && arpChars.has(ev.startChar),
+          grace: ev.style === 'grace',
+          // petites notes : rang dans le groupe, taille du groupe, début du groupe (noires), terminaison de trille
+          gk: ev.gInfo ? ev.gInfo.k : null, gn: ev.gInfo ? ev.gInfo.n : null,
+          g0: ev.gInfo ? ev.gInfo.S * 4 : ev.agInfo ? ev.agInfo.S * 4 : null,
+          gterm: !!((ev.gInfo && ev.gInfo.termination) || (ev.agInfo && ev.agInfo.termination)),
+          ag: ev.agInfo ? ev.agInfo.n : 0,
         });
       }
     });
@@ -318,15 +381,17 @@ export class Player {
     const qpm = o.qpm || 60;
     const tmap = makeTimeMap(qpm, o.tempoMap);
     const hands = o.hands || 'both';
+    const shift = o.range ? tmap(o.range[0]) : 0; // la lecture commence au début de la plage
     const bal = Object.assign({ rh: 1, lh: 0.8 }, o.balance || {});
-    let evs = this.score.filtered(hands).map(e => {
+    const range = o.range || null;
+    let evs = this.score.filtered(hands).filter(e => inRange(range, e.t)).map(e => {
       // volume abcjs (pp ≈ 45, p ≈ 60, mf ≈ 90, f ≈ 105) → vélocité 50 à 90 : audible sur une tablette, jamais saturé
       let vel = o.flat ? (e.hand === 'rh' ? 72 : 58) : 24 + (e.vol ?? 90) * 0.62;
       vel *= bal[e.hand] ?? 1;
       if (o.trackGain && o.trackGain[e.track] != null) vel *= 0.45 + 0.55 * o.trackGain[e.track];
       if (o.dyn && o.dyn[e.hand]) vel *= piecewise(o.dyn[e.hand], e.t, 1);
-      let ts = tmap(e.t);
-      let te = tmap(e.t + e.dur);
+      let ts = tmap(e.t) - shift;
+      let te = tmap(e.t + e.dur) - shift;
       if (o.rhShift && e.hand === 'rh') {
         const sh = piecewise(o.rhShift, e.t, 0) / 1000;
         ts += sh; te += sh;
@@ -334,15 +399,43 @@ export class Player {
       if (o.legato === false) te = ts + (te - ts) * 0.55;
       return { ...e, vel: clamp(vel, 28, 118), ts, te };
     });
-    // Pédale simulée : chaque note sonne jusqu'au prochain changement de pédale.
+    // Petites notes : vives quel que soit le tempo (≈ 35 à 60 ms chacune), au lieu d'une fraction de temps.
+    const spqAt = q => Math.max(0.15, tmap(q + 0.5) - tmap(q - 0.5));
+    const graceSec = (q, n) => clamp(0.22 * spqAt(q) / n, 0.035, 0.06);
+    const termGaps = [];
+    for (const e of evs) {
+      if (e.g0 == null) continue;
+      const base = tmap(e.g0) - shift;
+      if (e.grace && e.gn) {
+        const gs = graceSec(e.g0, e.gn);
+        e.ts = e.gterm ? base - (e.gn - e.gk) * gs : base + e.gk * gs;
+        e.te = e.ts + gs * 1.3;
+        if (e.gterm && e.gk === 0) termGaps.push({ track: e.track, at: base, gap: e.gn * gs });
+      } else if (e.ag) {
+        const gs = graceSec(e.g0, e.ag);
+        e.ts = e.gterm ? base : base + e.ag * gs;
+      }
+    }
+    // la trille s'arrête juste avant ses notes de terminaison
+    for (const tg of termGaps) {
+      const tr = evs.find(e => e.orn && e.track === tg.track && Math.abs(e.te - tg.at) < 0.03);
+      if (tr) tr.orn = { ...tr.orn, termGap: tg.gap };
+    }
+    // Pédale simulée : chaque note sonne jusqu'au prochain changement de pédale (ou au relâchement écrit).
     if (o.pedal && o.pedal.length && !(this._useMidiOut())) {
-      const changes = o.pedal.map(b => tmap(b));
-      const pedalEnd = o.pedalEnd != null ? tmap(o.pedalEnd) : Infinity;
+      const changes = o.pedal.filter(b => !range || (b >= range[0] - 1e-6 && b <= range[1] + 1e-6)).map(b => tmap(b) - shift);
+      const ups = (o.pedalUp || []).map(b => tmap(b) - shift);
+      const pedalEnd = o.pedalEnd != null ? tmap(o.pedalEnd) - shift : Infinity;
+      if (!changes.length) changes.push(0);
+      const lastBefore = (list, t) => { let v = -Infinity; for (const x of list) if (x <= t + 0.005 && x > v) v = x; return v; };
       for (const e of evs) {
+        if (e.orn) continue; // une trille s'arrête à sa valeur écrite (elle est réalisée plus bas)
         if (e.ts + 1e-6 < changes[0] || e.ts >= pedalEnd) continue;
-        const next = changes.find(c => c > e.ts + 0.01) ?? pedalEnd;
+        if (lastBefore(ups, e.ts) > lastBefore(changes, e.ts)) continue; // pédale relevée à ce moment
+        const nextUp = ups.find(c => c > e.ts + 0.01) ?? Infinity;
+        const next = Math.min(changes.find(c => c > e.ts + 0.01) ?? pedalEnd, nextUp, pedalEnd);
         if (next !== Infinity && next > e.te) e.te = next + 0.01;
-        else if (next === Infinity) e.te = Math.max(e.te, tmap(this.score.totalQ) + 0.6);
+        else if (next === Infinity) e.te = Math.max(e.te, tmap(range ? range[1] : this.score.totalQ) - shift + 0.6);
       }
     }
     // Ornements réalisés selon le tempo ; accords arpégés égrenés du grave à l'aigu.
@@ -360,7 +453,7 @@ export class Player {
       last.set(e.pitch, e);
     }
     this.qpm = qpm;
-    this.tmap = tmap;
+    this.tmap = q => tmap(q) - shift;
     this.prepared = evs;
     this.endTime = evs.reduce((m, e) => Math.max(m, e.te), 0);
     return evs;
@@ -386,7 +479,7 @@ export class Player {
     const spq = 60 / this.qpm;
     if (o.countIn) {
       const beatsIn = Math.round(this.score.barQ / this.score.beatQ);
-      const pickupBeats = this.score.pickupQ / this.score.beatQ;
+      const pickupBeats = (o.range && o.range[0] > 1e-6) ? 0 : this.score.pickupQ / this.score.beatQ;
       const t0 = audio.now() + lead;
       for (let i = 0; i < beatsIn; i++) audio.click(t0 + i * this.score.beatQ * spq, i === 0 ? 'accent' : 'beat');
       countIn = (beatsIn - pickupBeats) * this.score.beatQ * spq;
@@ -403,15 +496,16 @@ export class Player {
       }
     }
     if (useMidi && o.pedal) {
-      for (const b of o.pedal) {
+      for (const b of o.pedal.filter(x => inRange(o.range, x))) {
         const t = this.t0 + this.tmap(b);
         midi.outPedal(false, audio.ctxToPerf(t));
         midi.outPedal(true, audio.ctxToPerf(t + 0.08));
       }
+      for (const b of (o.pedalUp || []).filter(x => inRange(o.range, x))) midi.outPedal(false, audio.ctxToPerf(this.t0 + this.tmap(b)));
       midi.outPedal(false, audio.ctxToPerf(this.t0 + this.endTime));
     }
     if (o.click) {
-      for (const g of beatGrid(this.score)) audio.click(this.t0 + this.tmap(g.q), g.isBar ? 'accent' : 'beat');
+      for (const g of beatGrid(this.score)) if (inRange(o.range, g.q)) audio.click(this.t0 + this.tmap(g.q), g.isBar ? 'accent' : 'beat');
     }
     this._emit('play');
     this._loop();
@@ -466,8 +560,8 @@ export class Player {
 /* ------------------------------------------------------------------ */
 /* Étapes communes aux modes d'entraînement                            */
 /* ------------------------------------------------------------------ */
-function buildSteps(score, hands) {
-  const evs = score.filtered(hands, { noOrnaments: true }).filter(e => e.dur >= 0.12 || e.char != null);
+function buildSteps(score, hands, range = null) {
+  const evs = score.filtered(hands, { noOrnaments: true }).filter(e => (e.dur >= 0.12 || e.char != null) && inRange(range, e.t));
   const steps = [];
   for (const e of evs) {
     const last = steps[steps.length - 1];
@@ -495,7 +589,7 @@ export class Follower {
   }
   start() {
     this.stop();
-    this.steps = buildSteps(this.score, this.opts.hands || 'both');
+    this.steps = buildSteps(this.score, this.opts.hands || 'both', this.opts.range);
     this.i = 0;
     this.errors = 0;
     this.wrongNotes = [];
@@ -504,6 +598,7 @@ export class Follower {
     this.score.clear();
     this._showStep();
     this.offOn = midi.on('noteon', ev => this._onNote(ev));
+    window.__follower = this; // accès de test (automatisation)
   }
   _showStep() {
     const s = this.steps[this.i];
@@ -572,7 +667,9 @@ export class TempoReader {
     const qpm = o.qpm || 60;
     const spq = 60 / qpm;
     const sc = this.score;
-    this.steps = buildSteps(sc, o.hands || 'both');
+    this.steps = buildSteps(sc, o.hands || 'both', o.range);
+    const q0 = o.range ? o.range[0] : 0, q1 = o.range ? o.range[1] : sc.totalQ;
+    this.q0 = q0;
     const expected = [];
     for (const s of this.steps) for (const n of s.notes) expected.push({ pitch: n.pitch, t: s.t, char: n.char });
     this.expected = expected;
@@ -582,21 +679,24 @@ export class TempoReader {
     const beatsIn = Math.round(sc.barQ / sc.beatQ);
     const beatSec = sc.beatQ * spq;
     const t0 = audio.now() + 0.15;
-    for (let i = 0; i < beatsIn; i++) audio.click(t0 + i * beatSec, i === 0 ? 'accent' : 'beat');
-    const startMusic = t0 + beatsIn * beatSec - sc.pickupQ * spq;
+    this.clickNodes = [];
+    for (let i = 0; i < beatsIn; i++) this.clickNodes.push(audio.click(t0 + i * beatSec, i === 0 ? 'accent' : 'beat'));
+    const startMusic = t0 + beatsIn * beatSec - (q0 > 1e-6 ? 0 : sc.pickupQ * spq);
     // clics pendant le morceau
     if (o.click !== false) {
-      for (const g of beatGrid(sc)) audio.click(startMusic + g.q * spq, g.isBar ? 'accent' : 'beat');
+      for (const g of beatGrid(sc)) if (inRange(o.range, g.q)) this.clickNodes.push(audio.click(startMusic + (g.q - q0) * spq, g.isBar ? 'accent' : 'beat'));
     }
     this.zeroPerf = audio.ctxToPerf(startMusic);
     this.spqMs = spq * 1000;
-    this.endPerf = this.zeroPerf + (sc.totalQ + sc.beatQ) * this.spqMs;
-    this.offOn = midi.on('noteon', ev => { if (this.active) this.played.push({ pitch: ev.note, time: ev.time }); });
+    this.endPerf = this.zeroPerf + (q1 - q0 + sc.beatQ) * this.spqMs;
+    // instants de jeu corrigés de la latence de l'entrée (piano, écran…)
+    this.offOn = midi.on('noteon', ev => { if (this.active) this.played.push({ pitch: ev.note, time: corrected(ev) }); });
+    window.__tempoReader = this; // accès de test (automatisation)
     // curseur
     const on = new Set();
     const frame = () => {
       if (!this.active) return;
-      const nowQ = (performance.now() - this.zeroPerf) / this.spqMs;
+      const nowQ = (performance.now() - this.zeroPerf) / this.spqMs + this.q0;
       const cur = new Set();
       for (const s of this.steps) {
         if (nowQ >= s.t && nowQ < s.t + Math.max(0.25, Math.min(1, s.notes[0].dur))) s.chars.forEach(c => cur.add(c));
@@ -616,7 +716,7 @@ export class TempoReader {
     const used = new Set();
     const results = [];
     for (const ex of this.expected) {
-      const target = this.zeroPerf + ex.t * this.spqMs;
+      const target = this.zeroPerf + (ex.t - this.q0) * this.spqMs;
       let best = -1, bestDt = Infinity;
       this.played.forEach((p, i) => {
         if (used.has(i) || p.pitch !== ex.pitch) return;
@@ -647,10 +747,13 @@ export class TempoReader {
     };
     res.accuracy = res.total ? (res.ok + res.late) / res.total : 0;
     res.precision = res.total ? res.ok / res.total : 0;
+    res.items = results.map(r => ({ t: r.t, status: r.status }));
     this.stop(false);
     this.opts.onDone?.(res);
   }
   stop(clear = true) {
+    if (this.active && clear) audio.cancelClicks(this.clickNodes); // arrêt avant la fin : on coupe les clics restants
+    this.clickNodes = [];
     this.active = false;
     cancelAnimationFrame(this.raf);
     this.offOn?.();

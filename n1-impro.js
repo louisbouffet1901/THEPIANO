@@ -3,7 +3,7 @@
 // 2. Le rythme d'abord, puis l'harmonie : notes de l'accord sur les temps forts, arpèges, gammes et broderies.
 // 3. Le style du nocturne : accompagnements, mélodie ornée, question-réponse.
 
-const LH_BASSE_ACCORD = `[V:LH] .F,,2 .[A,CF]2 .C,2 .[A,CF]2 | .D,,2 .[A,DF]2 .A,,2 .[A,DF]2 | .B,,2 .[B,DF]2 .F,,2 .[B,DF]2 | .C,,2 .[B,=EG]2 .G,,2 .[B,=EG]2 | .F,,2 .[A,CF]2 F,,4 |]`;
+const LH_BASSE_ACCORD = `[V:LH] .F,,2 .[A,CF]2 .C,2 .[A,CF]2 | .D,,2 .[A,DF]2 .A,,2 .[A,DF]2 | .B,,2 .[B,DF]2 .F,,2 .[B,DF]2 | .C,,2 .[B,=EG]2 .G,,2 .[B,EG]2 | .F,,2 .[A,CF]2 F,,4 |]`;
 const HEAD = () => `X:1
 M:4/4
 L:1/8
@@ -16,13 +16,13 @@ const ACC_A = `X:1
 M:4/4
 L:1/8
 K:Fmin
-"^i".F,,2 .[A,CF]2 .C,2 .[A,CF]2 | "^VI".D,,2 .[A,DF]2 .A,,2 .[A,DF]2 | "^iv".B,,2 .[B,DF]2 .F,,2 .[B,DF]2 | "^V7".C,,2 .[B,=EG]2 .G,,2 .[B,=EG]2 | "^i".F,,2 .[A,CF]2 F,,4 |]`.replace('K:Fmin', 'K:Fmin clef=bass');
+"^i".F,,2 .[A,CF]2 .C,2 .[A,CF]2 | "^VI".D,,2 .[A,DF]2 .A,,2 .[A,DF]2 | "^iv".B,,2 .[B,DF]2 .F,,2 .[B,DF]2 | "^V7".C,,2 .[B,=EG]2 .G,,2 .[B,EG]2 | "^i".F,,2 .[A,CF]2 F,,4 |]`.replace('K:Fmin', 'K:Fmin clef=bass');
 
 const ACC_B = `X:1
 M:4/4
 L:1/8
 K:Fmin clef=bass
-"^i"(3F,,C,A, (3CA,C, (3F,,C,A, (3CA,C, | "^VI"(3D,,A,,F, (3A,F,A,, (3D,,A,,F, (3A,F,A,, | "^iv"(3B,,,F,,D, (3F,D,F,, (3B,,,F,,D, (3F,D,F,, | "^V7"(3C,,G,,=E, (3B,=E,G,, (3C,,G,,=E, (3B,=E,G,, | "^i"[F,,C,A,]8 |]`;
+"^i"(3F,,C,A, (3CA,C, (3F,,C,A, (3CA,C, | "^VI"(3D,,A,,F, (3A,F,A,, (3D,,A,,F, (3A,F,A,, | "^iv"(3B,,,F,,D, (3F,D,F,, (3B,,,F,,D, (3F,D,F,, | "^V7"(3C,,G,,=E, (3B,E,G,, (3C,,G,,E, (3B,E,G,, | "^i"[F,,C,A,]8 |]`;
 
 const ACC_C = `X:1
 M:4/4
@@ -36,7 +36,7 @@ ${LH_BASSE_ACCORD}`;
 
 const STEP1 = melodyScore(`"^1. squelette"A8 | A8 | F8 | =E8 | F8 |]`);
 const STEP2 = melodyScore(`"^2. un temps sur deux"A2 B2 c2 B2 | F2 A2 d2 c2 | B2 A2 F2 G2 | c2 B2 G2 =E2 | F8 |]`);
-const STEP3 = melodyScore(`"^3. broderies et passages"AG AB c2 B2 | FA dc d2 c2 | Bc BA F2 G2 | cB G=E F2 =E2 | F8 |]`);
+const STEP3 = melodyScore(`"^3. broderies et passages"AG AB c2 B2 | FA dc d2 c2 | Bc BA F2 G2 | cB G=E F2 E2 | F8 |]`);
 const STEP4 = `X:1
 M:4/4
 L:1/16
@@ -45,7 +45,7 @@ K:Fmin
 V:RH clef=treble
 V:LH clef=bass
 [V:RH] "^4. appoggiatures"B8 A4 =B2 c2 | e8 d4 c4 | c8 B4 A2 G2 | A8 G4 F2 =E2 | F16 |]
-[V:LH] .F,,4 .[A,CF]4 .C,4 .[A,CF]4 | .D,,4 .[A,DF]4 .A,,4 .[A,DF]4 | .B,,4 .[B,DF]4 .F,,4 .[B,DF]4 | .C,,4 .[B,=EG]4 .G,,4 .[B,=EG]4 | .F,,4 .[A,CF]4 F,,8 |]`;
+[V:LH] .F,,4 .[A,CF]4 .C,4 .[A,CF]4 | .D,,4 .[A,DF]4 .A,,4 .[A,DF]4 | .B,,4 .[B,DF]4 .F,,4 .[B,DF]4 | .C,,4 .[B,=EG]4 .G,,4 .[B,EG]4 | .F,,4 .[A,CF]4 F,,8 |]`;
 
 const PERIOD = `X:1
 M:4/4
@@ -55,7 +55,7 @@ K:Fmin
 V:RH clef=treble
 V:LH clef=bass
 [V:RH] "^antécédent"(c2 f2 ed c2 | B2 d2 cB A2 | A2 c2 FG A2 | "^demi-cadence"G6) z2 | "^conséquent"(c2 f2 ed c2 | B2 d2 f2 ed | c2 B2 G2 =E2 | "^cadence parfaite"F6) z2 |]
-[V:LH] "_i".F,,2 .[A,CF]2 .C,2 .[A,CF]2 | "_iv".B,,2 .[B,DF]2 .F,,2 .[B,DF]2 | "_i".F,,2 .[A,CF]2 .C,2 .[A,CF]2 | "_V".C,,2 .[G,C=E]2 .G,,2 .[G,C=E]2 | "_i".F,,2 .[A,CF]2 .C,2 .[A,CF]2 | "_iv".B,,2 .[B,DF]2 .F,,2 .[B,DF]2 | "_V7".C,,2 .[B,=EG]2 .G,,2 .[B,=EG]2 | "_i".F,,2 .[A,CF]2 F,,4 |]`;
+[V:LH] "_i".F,,2 .[A,CF]2 .C,2 .[A,CF]2 | "_iv".B,,2 .[B,DF]2 .F,,2 .[B,DF]2 | "_i".F,,2 .[A,CF]2 .C,2 .[A,CF]2 | "_V".C,,2 .[G,C=E]2 .G,,2 .[G,CE]2 | "_i".F,,2 .[A,CF]2 .C,2 .[A,CF]2 | "_iv".B,,2 .[B,DF]2 .F,,2 .[B,DF]2 | "_V7".C,,2 .[B,=EG]2 .G,,2 .[B,EG]2 | "_i".F,,2 .[A,CF]2 F,,4 |]`;
 
 const PEDAL5 = [0, 4, 8, 12, 16];
 

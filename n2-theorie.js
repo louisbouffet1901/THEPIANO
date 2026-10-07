@@ -78,7 +78,7 @@ V:RH clef=treble
 V:T clef=bass stem=up
 V:B clef=bass stem=down
 [V:RH] (c4 | f8 e4 | d4 e4 c4) | (d3e f4 g4 | a12) | (g4 a3g (3g2f2e2 | f6 e2 (3d2e2f2) | (e8 (3e2d2A2 | =B8) (3:2:3(c2d3c) |]
-[V:T] z4 | F4 F4 E4 | D4 E4 C4 | D4 E4 C4 | C4 ^C4 D4 | =B,4 _B,4 _B,4 | A,4 A,4 A,4 | ^G,4 A,8 | ^G,4 E4 E4 |]
+[V:T] z4 | F4 F4 E4 | D4 E4 C4 | D4 E4 C4 | C4 ^C4 D4 | =B,4 _B,4 B,4 | A,4 A,4 A,4 | ^G,4 A,8 | ^G,4 E4 E4 |]
 [V:B] x4 | F,12 | F,12 | F,12 | F,4 E,4 D,4 | D,4 _D,4 C,4 | C,4 =B,,8 | =B,,4 A,,4 F,,4 | E,,8 G,4 |]`;
 
 const SECDOM = `X:1
@@ -354,8 +354,8 @@ K:Fmin
 %%score {RH | LH}
 V:RH clef=treble
 V:LH clef=bass
-[V:RH] f3_g e4 f3_g | e4 e3f d4- | d4 c3d B4- | B6 =A4 G2 |]
-[V:LH] [B,,=D,A,]4 [E,,_G,B,]4 [B,,=D,A,]4 | [E,,_G,B,]4 [A,,C,E,]4 [D,,F,A,]4 | [D,,F,A,]4 [F,,C,E,=A,]4 [B,,D,F,]4 | [B,,D,F,]12 |]`;
+[V:RH] f3_g e4 f3g | e4 e3f d4- | d4 c3d B4- | B6 =A4 G2 |]
+[V:LH] [B,,=D,A,]4 [E,,_G,B,]4 [B,,D,A,]4 | [E,,_G,B,]4 [A,,C,E,]4 [D,,F,A,]4 | [D,,F,A,]4 [F,,C,E,=A,]4 [B,,D,F,]4 | [B,,D,F,]12 |]`;
 
 const AN_RED_45 = {
   key: 'ré♭ majeur, puis retour vers fa',
@@ -413,7 +413,7 @@ K:F
 V:RH clef=treble
 V:LH clef=bass
 [V:RH] c f e | g3 | b2 a | g a f | c g2 |]
-[V:LH] [C,C] [A,CF] [G,CE] | [F,G,=B,_D]2 [E,G,_B,_D] | [_E,G,_B,_D]2 [_E,_G,A,_D] | [_E,G,A,^C] [D,^F,A,=C] [D,=F,G,=B,] | [C,C] [G,B,CF] [B,CE] |]`;
+[V:LH] [C,C] [A,CF] [G,CE] | [F,G,=B,_D]2 [E,G,_B,D] | [_E,G,_B,_D]2 [E,_G,A,D] | [_E,G,A,^C] [D,^F,A,=C] [D,=F,G,=B,] | [C,C] [G,B,CF] [B,CE] |]`;
 
 const AN_RED_15 = {
   key: 'fa majeur',

@@ -56,7 +56,7 @@ ${W.score({ abc: OP55.e8, title: 'Mesures 69 et 70', bpm: 72, startBpm: 40 })}
 
 <h3>La coda (mesures 77 à 101)</h3>
 <p>Molto legato : des triolets de croches tracent de grands arcs au-dessus d’une main gauche qui reprend son pas. À partir de la mesure 89, tout bascule en <b>fa majeur</b> ; les arpèges montent vers l’aigu en accélérant légèrement, puis le choral final pose l’accord de fa majeur, arpégé, avec un point d’orgue.</p>
-${W.score({ abc: OP55.e9, title: 'Mesures 77 à 80', bpm: 60, startBpm: 44, caption: 'Chopin écrit ici des doubles bémols (si𝄫, la𝄫) : ils sonnent comme la et sol.' })}
+${W.score({ abc: OP55.e9, title: 'Mesures 77 à 80', bpm: 60, startBpm: 44, caption: 'Le signe fait de deux bémols accolés (𝄫) est un double bémol : il baisse la note d’un ton. Chopin écrit si𝄫 et la𝄫, qui sonnent la et sol, parce que la mélodie descend par demi-tons (si𝄫 – la♭ – la𝄫 – sol♭). Comme toute altération, il vaut pour toute la mesure.' })}
 ${W.score({ abc: OP55.e10, title: 'Mesures 97 à 101 : le choral final', bpm: 60, startBpm: 50 })}
 
 <h2>Plan de travail sur huit semaines</h2>
@@ -107,6 +107,8 @@ ${W.diagram('form', { total: 5, sections: [
 </ul>
 ${W.tip('Le caractère', '<p>Une valse de salon, mélancolique, pas une valse viennoise de bal : le 1er temps est appuyé mais jamais lourd, et le rubato reste dans la mélodie. Sur l’analyseur « Équilibre », la main droite doit dominer comme dans le nocturne.</p>')}
 ${W.improv({ preset: 'n1-valse', presets: ['n1-valse'], title: 'Te mettre dans le rythme de la valse' })}
+<h2>Ta partition dans l’appli</h2>
+${W.localScore({ piece: 'valse-b150', intro: 'La partition de la valse n’est pas encore intégrée à l’appli. Si tu en as un fichier (par exemple exporté de MuseScore), importe-le : tu pourras travailler et faire analyser chaque passage.' })}
 ${W.listen([
   W.yt('Chopin Waltz A minor B 150', 'Plusieurs versions à comparer', 'Recherche YouTube'),
 ])}
@@ -129,8 +131,11 @@ ${W.links([imslp('Waltz_in_A_minor,_B.150_(Chopin,_Fr%C3%A9d%C3%A9ric)', 'Valse 
 <li><b>La partie centrale</b> : changement complet de toucher, legato, nuance douce, pédale plus présente. Le contraste fait la pièce.</li>
 <li><b>La régularité</b> : une marche ne ralentit pas. Mesure-toi avec l’analyseur de régularité en jouant le motif pointé avec le métronome.</li>
 </ul>
-${W.warn('Droits', '<p>L’œuvre est entrée dans le domaine public en France, mais par prudence l’appli n’en reproduit pas d’extraits : travaille sur ta partition.</p>')}
-${W.analyzer({ mode: 'evenness', title: 'Analyseur — régularité de la marche', help: 'Active le métronome (noire), joue quelques mesures de la marche : l’analyse indique si tu presses ou si tu traînes par rapport au clic.', bpm: 88, sub: 1, withMetronome: true })}
+<h2>Ta partition dans l’appli</h2>
+${W.warn('Pourquoi la partition n’est pas fournie', '<p>Prokofiev est mort en 1953 : l’œuvre est dans le domaine public en France et dans l’Union européenne depuis 2024. Publiée en 1938, elle reste en revanche probablement protégée aux États-Unis jusqu’à fin 2033, et le site de l’appli y est hébergé : l’appli n’en publie donc pas la partition. Tu peux importer la tienne, elle reste sur ta tablette.</p>')}
+${W.localScore({ piece: 'prokofiev-75-6', intro: 'Avec ta partition importée, l’analyse compare ton jeu à ce qui est écrit : le rythme pointé et la main droite à contretemps ne sont plus pris pour des irrégularités, et les fausses notes sont repérées mesure par mesure.' })}
+<p>Sans partition importée, l’analyseur ci-dessous juge seulement ta pulsation par rapport au clic du métronome.</p>
+${W.analyzer({ mode: 'evenness', title: 'Analyseur — régularité de la marche', help: 'Le métronome bat la noire : joue quelques mesures de la marche. L’analyse place chaque attaque sur la grille des temps (le rythme pointé tombe sur les doubles croches) et indique si tu presses ou si tu traînes.', bpm: 88, sub: 4, withMetronome: true })}
 ${W.listen([
   W.yt('Prokofiev Romeo and Juliet op 75 Montagues and Capulets piano', 'Versions pour piano à comparer', 'Recherche YouTube'),
 ])}
@@ -154,6 +159,8 @@ ${W.listen([
 </ul>
 ${W.tip('Lien avec le module d’improvisation', '<p>L’accompagnement en arpèges élargis est exactement celui de l’accompagnateur « arpèges élargis » : improviser dessus t’habituera à cette texture.</p>')}
 ${W.improv({ preset: 'n1-arpege', presets: ['n1-arpege'], title: 'Arpèges élargis' })}
+<h2>Ta partition dans l’appli</h2>
+${W.localScore({ piece: 'liszt-s169', intro: 'La partition de la romance n’est pas encore intégrée à l’appli. Si tu en as un fichier (par exemple exporté de MuseScore), importe-le : tu pourras travailler et faire analyser chaque passage.' })}
 ${W.listen([
   W.yt('Liszt Romance S 169 Leslie Howard', 'Leslie Howard', 'Intégrale Liszt, Hyperion'),
   W.yt('Liszt Romance in E minor S169', 'Autres versions', 'Recherche YouTube'),
@@ -243,7 +250,7 @@ ${W.diagram('form', { total: 72, sections: [
 <h2>Les passages, un par un</h2>
 <h3>Le début (mesures 1 à 4)</h3>
 <p>Les deux mains jouent en clé de sol, <i>pp</i> et <i>con sordina</i> (avec la pédale douce). La mesure à 9/8 est troublée par des <b>duolets</b> (deux notes dans le temps de trois croches) : la musique semble flotter au-dessus de la barre de mesure. La voix supérieure des tierces porte la mélodie.</p>
-${W.score({ abc: CLAIR.e1, title: 'Mesures 1 à 4', bpm: 40, startBpm: 36, caption: 'Debussy n’indique pas de métronome ; le curseur de tempo est en noire pointée (♩. ≈ 40 au début est un bon point de départ). Écoute la main droite seule pour entendre la ligne supérieure.' })}
+${W.score({ abc: CLAIR.e1, title: 'Mesures 1 à 4', bpm: 40, startBpm: 36, caption: 'Debussy n’indique pas de métronome ; le curseur de tempo est en noire pointée (♩. ≈ 40 au début est un bon point de départ). Écoute la main droite seule pour entendre la ligne supérieure. Mesure 2, main gauche : si𝄫 (double bémol, deux bémols accolés) sonne la ; c’est la couleur empruntée à ré♭ mineur.' })}
 
 <h3>Tempo rubato (mesures 15 à 18)</h3>
 <p>Des accords parallèles aux deux mains, au-dessus d’une basse profonde tenue par la pédale. Chaque accord est marqué d’un tiret (<i>tenuto</i>) : appuyé, lié, sans dureté. La voix du haut chante, les autres notes la colorent.</p>

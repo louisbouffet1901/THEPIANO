@@ -109,9 +109,9 @@ ${ROUTINE([
   'Trois minutes : sur l’enregistrement des mesures 1 à 4, tape la pulsation, puis le rythme de la mélodie.',
 ])}
 ${W.metronome({ bpm: 72 })}
-${W.quiz({ kind: 'rhythm', cells: ['q', 'h', 'w', 'qr'], bpm: 72, title: 'Écho rythmique : noires, blanches, rondes', count: 8, stat: 'ry-1' })}
+${W.rhythm({ level: 1, mode: 'echo', bpm: 72, title: 'Écho rythmique : noires, blanches, rondes', stat: 'ry-1' })}
 ${W.tip('Compte pendant l’écoute', '<p>Compte « 1, 2, 3, 4 » à voix basse pendant que le rythme est joué : tu sauras sur quels temps tombent les notes, et tu n’auras plus qu’à les retaper.</p>')}
-${W.quiz({ kind: 'rhythm', cells: ['q', 'h', 'ee', 'qr'], bpm: 72, title: 'Écho rythmique : avec des croches', count: 8, stat: 'ry-2' })}
+${W.rhythm({ level: 2, mode: 'echo', bpm: 72, title: 'Écho rythmique : avec des croches', stat: 'ry-2' })}
 ${W.tip('Chante avant de taper', '<p>Chante le rythme sur « ta » juste après l’avoir entendu, puis tape-le : la voix retient mieux que les mains.</p>')}
 
 <h2>Dans ta pièce</h2>

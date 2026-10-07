@@ -1,40 +1,52 @@
 // Index du parcours : niveaux, modules, pièces, plans hebdomadaires, grilles de validation.
-import N1_TECH from './n1-technique.js';
-import N1_INTERP from './n1-interpretation.js';
-import N1_THEO from './n1-theorie.js';
-import N1_OREILLE from './n1-oreille.js';
-import N1_LECT from './n1-lecture.js';
-import N1_IMPRO from './n1-impro.js';
-import N2_TECH from './n2-technique.js';
-import N2_INTERP from './n2-interpretation.js';
-import N2_THEO from './n2-theorie.js';
-import N2_OREILLE from './n2-oreille.js';
-import N2_LECT from './n2-lecture.js';
-import N2_IMPRO from './n2-impro.js';
-import { PIECE_PAGES } from './content-pieces.js';
+import { LESSONS, PIECES_META } from './content-meta.js';
 
 export const MODULES = [
   { id: 'technique', label: 'Technique', intro: 'Le geste au service du son : posture, poids, legato, pédale, gammes — et surtout une méthode de travail efficace.' },
   { id: 'interpretation', label: 'Interprétation', intro: 'Phrasé, chant, rubato, couleurs : comprendre ce que dit la musique et le faire entendre.' },
   { id: 'theorie', label: 'Théorie', intro: 'Des cours complets, en partant des bases : notes, rythme, gammes, intervalles, accords, fonctions, cadences… Chaque chapitre s’appuie sur le passage de la pièce travaillé la même semaine.' },
   { id: 'oreille', label: 'Oreille', intro: 'Reprendre l’oreille à zéro : grave et aigu, chanter juste, sentir la tonique, reconnaître les degrés, puis les intervalles, les accords et les cadences. Dix minutes chaque jour, avec beaucoup de conseils.' },
-  { id: 'lecture', label: 'Lecture à vue', intro: 'Une méthode et un entraînement quotidien court, avec des extraits toujours nouveaux.' },
+  { id: 'lecture', label: 'Lecture à vue', intro: 'Une méthode et un entraînement quotidien court, sur de vrais extraits du répertoire classés en cinq niveaux, jamais deux fois les mêmes.' },
   { id: 'impro', label: 'Improvisation', intro: 'Apprendre à improviser pas à pas : la pulsation et quelques notes sur un ostinato, puis l’harmonie (notes de l’accord, arpèges, gammes), les formules du nocturne, et enfin le langage classique (cadences, règle de l’octave, schémas) et les formes.' },
 ];
 
-const tag = (lessons, level, module) => lessons.map(l => ({ ...l, level, module }));
+const ALL = LESSONS;
 
-const N1_LESSONS = [
-  ...tag(N1_TECH, 'n1', 'technique'), ...tag(N1_INTERP, 'n1', 'interpretation'), ...tag(N1_THEO, 'n1', 'theorie'), ...tag(N1_OREILLE, 'n1', 'oreille'),
-  ...tag(N1_LECT, 'n1', 'lecture'), ...tag(N1_IMPRO, 'n1', 'impro'),
-];
-const N2_LESSONS = [
-  ...tag(N2_TECH, 'n2', 'technique'), ...tag(N2_INTERP, 'n2', 'interpretation'), ...tag(N2_THEO, 'n2', 'theorie'), ...tag(N2_OREILLE, 'n2', 'oreille'),
-  ...tag(N2_LECT, 'n2', 'lecture'), ...tag(N2_IMPRO, 'n2', 'impro'),
-];
-const ALL = [...N1_LESSONS, ...N2_LESSONS];
+/** Métadonnées des pièces (titre, compositeur…) ; la page complète se charge avec loadPiece(). */
+export const PIECES = PIECES_META;
 
-export const PIECES = PIECE_PAGES;
+/* Contenu chargé à la demande : un module par niveau et par matière. */
+const LOADERS = {
+  'n1:technique': () => import('./n1-technique.js'),
+  'n1:interpretation': () => import('./n1-interpretation.js'),
+  'n1:theorie': () => import('./n1-theorie.js'),
+  'n1:oreille': () => import('./n1-oreille.js'),
+  'n1:lecture': () => import('./n1-lecture.js'),
+  'n1:impro': () => import('./n1-impro.js'),
+  'n2:technique': () => import('./n2-technique.js'),
+  'n2:interpretation': () => import('./n2-interpretation.js'),
+  'n2:theorie': () => import('./n2-theorie.js'),
+  'n2:oreille': () => import('./n2-oreille.js'),
+  'n2:lecture': () => import('./n2-lecture.js'),
+  'n2:impro': () => import('./n2-impro.js'),
+};
+
+/** Leçon complète (avec son texte et ses objectifs). */
+export async function loadLesson(id) {
+  const meta = ALL.find(l => l.id === id);
+  if (!meta) return null;
+  const load = LOADERS[`${meta.level}:${meta.module}`];
+  if (!load) return null;
+  const mod = await load();
+  const full = mod.default.find(l => l.id === id);
+  return full ? { ...full, level: meta.level, module: meta.module } : null;
+}
+
+/** Page complète d'une pièce (texte, extraits, analyse). */
+export async function loadPiece(id) {
+  const mod = await import('./content-pieces.js');
+  return mod.PIECE_PAGES[id] || null;
+}
 
 const ROUTINE = `<p>Pour une séance d’environ 1 h 15 :</p>
 <ul>
@@ -101,7 +113,7 @@ export const LEVELS = [
         { mod: 'Théorie', lesson: 'n1-th-mineur', text: '{l}' },
         { mod: 'Théorie', lesson: 'n1-th-intervalles', text: '{l}' },
         { mod: 'Oreille', lesson: 'n1-or4', text: '{l}' },
-        { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t} « deux mains (mélodie + basses) » : mode attente, puis en rythme.' },
+        { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t} « niveau 2 · deux mains, une note par main » : mode attente, puis en rythme.' },
         { mod: 'Impro', lesson: 'n1-im-accords', text: '{l}' },
       ] },
       { title: 'Assembler', focus: 'Fin du Più mosso, gammes, rubato.', tasks: [
@@ -120,7 +132,7 @@ export const LEVELS = [
         { mod: 'Théorie', lesson: 'n1-th-fonctions', text: '{l}' },
         { mod: 'Théorie', lesson: 'n1-th-cadences', text: '{l}' },
         { mod: 'Oreille', lesson: 'n1-or6', text: '{l}' },
-        { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t} « deux mains (mélodie + accords) » : 5 extraits dans la semaine.' },
+        { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t} « niveau 3 · pièces faciles » : 5 extraits dans la semaine.' },
         { mod: 'Impro', lesson: 'n1-im2', text: '{l}' },
         { mod: 'Compléments', piece: 'liszt-s169', text: '{p} : suite de la mise en place.' },
       ] },
@@ -158,7 +170,7 @@ export const LEVELS = [
       { id: 'th1', group: 'Théorie', text: 'Je lis les notes dans les deux clés et je compte les rythmes du nocturne.', how: 'Outil Théorie, séries « Notes en clé de sol » et « Notes en clé de fa » : 90 % ou plus.' },
       { id: 'th2', group: 'Théorie', text: 'Je construis gammes, intervalles et accords, et je connais les armures jusqu’à quatre altérations.', how: 'Outil Théorie, séries « Intervalles écrits » et « Armures » : 80 % ou plus.' },
       { id: 'th3', group: 'Théorie', text: 'Je nomme les accords et les fonctions (T, SD, D) des mesures 1 à 8 de l’op. 55 n° 1, et je repère les cadences de la pièce.' },
-      { id: 'l1', group: 'Lecture à vue', text: 'Lecture à deux mains (niveau 1) en rythme sans m’arrêter.', how: 'Outil Lecture à vue « deux mains » : 85 % de notes justes à ♩ = 60.' },
+      { id: 'l1', group: 'Lecture à vue', text: 'Lecture à deux mains (niveau 1) en rythme sans m’arrêter.', how: 'Outil Lecture à vue, niveau 2 (deux mains), en rythme : 85 % de notes justes sur cinq extraits de suite.' },
       { id: 'i0', group: 'Improvisation', text: 'J’improvise deux minutes sur un ostinato ou une grille sans m’arrêter, avec un motif rythmique reconnaissable.' },
       { id: 'i1', group: 'Improvisation', text: 'J’improvise huit mesures question–réponse dans le style du nocturne, sans m’arrêter, en m’appuyant sur les notes de l’accord aux temps forts.', how: 'Accompagnateur : au moins 70 % de temps forts sur une note de l’accord.' },
       { id: 'r1', group: 'Interprétation', text: 'Rubato : ma main gauche reste stable quand la main droite s’étire.', how: 'Joue les mesures 1 à 8 avec le métronome à la main gauche seule, puis compare.' },
@@ -205,7 +217,7 @@ export const LEVELS = [
         { mod: 'Technique', lesson: 'n2-t2', text: '{l}' },
         { mod: 'Théorie', lesson: 'n2-th3', text: '{l}' },
         { mod: 'Oreille', lesson: 'n2-or3', text: '{l}' },
-        { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t} « niveau 2 · une main » : 10 minutes par jour.' },
+        { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t}, niveau 3 (pièces faciles), puis niveau 4 quand l’outil te le propose : 10 minutes par jour.' },
         { mod: 'Impro', lesson: 'n2-im-romanesca', text: '{l}' },
       ] },
       { title: 'Le Con fuoco (2)', focus: 'La mélodie à la main gauche ; octaves et accords.', tasks: [
@@ -267,7 +279,7 @@ export const LEVELS = [
       { id: 'th1', group: 'Théorie', text: 'Je repère dans une partition une dominante secondaire, une modulation, une marche, une sixte napolitaine ou augmentée.' },
       { id: 'th2', group: 'Théorie', text: 'Je donne de mémoire le plan de l’op. 15 n° 1 (sections, tonalités, cadences) et je l’explique en jouant.' },
       { id: 'th3', group: 'Théorie', text: 'J’explique les procédés de Clair de lune : accords parallèles, pédales, mode mineur emprunté, passage en do♯ mineur.' },
-      { id: 'l1', group: 'Lecture à vue', text: 'Lecture « niveau 2 » en rythme avec l’option « Regard en avant ».', how: 'Outil Lecture à vue : 80 % de notes justes.' },
+      { id: 'l1', group: 'Lecture à vue', text: 'Lecture à vue niveau 4 (sonatines) en rythme, avec l’option « Regard en avant ».', how: 'Outil Lecture à vue : 80 % de notes justes sur cinq extraits de suite.' },
       { id: 'i0', group: 'Improvisation', text: 'Je joue la cadence et la règle de l’octave dans trois tonalités, et j’enchaîne seize mesures de schémas en improvisant la mélodie.' },
       { id: 'i1', group: 'Improvisation', text: 'J’improvise une forme ABA (fa mineur / la♭ majeur / fa mineur) sans m’arrêter, avec un vrai contraste de caractère.' },
       { id: 'i2', group: 'Improvisation', text: 'J’improvise un prélude sur la basse chromatique descendante, en conduisant les voix par mouvement conjoint.' },

@@ -250,9 +250,10 @@ ${ROUTINE([
 ${W.quiz({ kind: 'echo', degrees: [1, 2, 3, 4, 5, 6, 7, 8], length: 5, maxStep: 2, key: 'random', title: 'Rejouer 5 notes (toutes tonalités)', count: 8, stat: 'echo-8r', goal: 0.7 })}
 ${W.quiz({ kind: 'echo', mode: 'min', degrees: [1, 2, 3, 4, 5, 6, 7, 8], length: 5, maxStep: 2, key: 'random', title: 'Rejouer 5 notes en mineur', count: 8, stat: 'echo-min', goal: 0.7 })}
 ${W.tip('La note perdue', '<p>Si une note t’échappe, garde les autres : rejoue le début et la fin, puis cherche le milieu par élimination. Une dictée se reconstruit, elle ne se devine pas d’un coup.</p>')}
-${W.quiz({ kind: 'rhythm', cells: ['q', 'ee', 'qd_e', 'e_q_e', 'h'], bpm: 66, title: 'Pointés et syncopes', count: 8, stat: 'ry-3' })}
-${W.quiz({ kind: 'rhythm', cells: ['q', 'ee', 'ssss', 'trip'], bpm: 60, title: 'Triolets et doubles croches', count: 8, stat: 'ry-4' })}
-${W.quiz({ kind: 'rhythm', meter: 3, cells: ['q', 'h', 'ee', 'qd_e', 'trip'], bpm: 66, title: 'À trois temps', count: 8, stat: 'ry-34' })}
+${W.rhythm({ level: 3, mode: 'echo', bpm: 66, title: 'Pointés et syncopes', stat: 'ry-3' })}
+${W.rhythm({ level: 7, mode: 'echo', bpm: 60, title: 'Triolets', stat: 'ry-4' })}
+${W.rhythm({ level: 5, mode: 'echo', bpm: 60, title: 'Doubles croches', stat: 'ry-5' })}
+${W.rhythm({ level: 3, meter: '3/4', mode: 'echo', bpm: 66, title: 'À trois temps', stat: 'ry-34' })}
 
 <h2>Dans tes pièces</h2>
 <p>Dans l’Andante de l’op. 15, la main gauche joue des <b>triolets</b> (trois croches par temps) sous une mélodie souvent pointée : tape la pulsation, puis le rythme de la mélodie des mesures 5 et 6, où un triolet apparaît aussi à la main droite. Dans Clair de lune (9/8), chaque temps se divise en trois croches ; un <b>duolet</b> met deux valeurs égales dans le temps de trois : compte « 1-2-3 » et place-les sur « 1 » et sur le milieu du « 2 ». Aux mesures 15 et 17, le premier temps est un duolet (un silence, puis un accord) ; aux mesures 16 et 18, le deuxième temps fait entendre deux accords en duolet.</p>

@@ -24,7 +24,7 @@ export default [
     summary: 'La lecture à vue est une compétence à part : elle se travaille un peu chaque jour, avec des textes nouveaux.',
     goals: ['Préparer une lecture en trente secondes.', 'Jouer sans s’arrêter, en gardant la pulsation.', 'Tirer parti de chaque essai.'],
     body: W => `
-<p>On ne progresse pas en lecture à vue en rejouant des pièces connues : il faut lire du <b>neuf</b>, un peu plus facile que ton répertoire, <b>chaque jour</b>, dix minutes. C’est exactement ce que fait l’outil de lecture : un extrait nouveau à chaque fois, à ton niveau.</p>
+<p>On ne progresse pas en lecture à vue en rejouant des pièces connues : il faut lire du <b>neuf</b>, un peu plus facile que ton répertoire, <b>chaque jour</b>, dix minutes. C’est ce que propose l’outil de lecture : de vrais extraits de pièces (Bach, Diabelli, Burgmüller, Schumann…), classés en cinq niveaux, jamais deux fois le même tant que le niveau n’est pas épuisé. La difficulté suit tes résultats.</p>
 
 <h2>Avant de jouer (30 secondes)</h2>
 <ol>
@@ -48,8 +48,8 @@ export default [
 <h2>Après</h2>
 <p>Rejoue une seule fois, puis demande-toi ce qui a coincé : la lecture des notes, le rythme, l’anticipation ? L’outil garde la trace de tes derniers essais en rythme.</p>
 
-${W.tip('Les deux modes de l’outil', '<p><b>Mode attente</b> : le curseur attend la bonne note. Utile pour une nouvelle tonalité ou une nouvelle clé, mais ce n’est pas encore de la lecture à vue. <b>En rythme</b> (ou « Préparer 30 s puis jouer ») : décompte, métronome, et on ne s’arrête pas. C’est l’entraînement réel.</p>')}
-${W.sight({ preset: 'n1-md', presets: ['n1-md', 'n1-mg'] })}
+${W.tip('Les deux modes de l’outil', '<p><b>Préparer 30 s puis jouer</b> : deux ou trois questions sur l’extrait (tonalité, mesure, motif qui revient, valeur la plus courte), la mesure la plus délicate signalée, puis départ en rythme. Répondre oblige à lire vraiment avant de jouer. <b>Jouer en rythme</b> : décompte, métronome, et on ne s’arrête pas ; seul ce mode fait avancer la difficulté. <b>Mode attente</b> : le curseur attend la bonne note. Utile pour une nouvelle clé ou tonalité, mais ce n’est pas encore de la lecture à vue.</p>')}
+${W.sight({ level: '1rh', levels: ['1rh', '1lh', '2'] })}
 ${W.links([W.informance('/content/pages/198-music-at-sight', 'Music at Sight'), W.informance('/content/pages/136-advanced-sight-reading-curriculum', 'Advanced Sight-Reading Curriculum')], 'Pour aller plus loin')}
 `,
   },
@@ -76,7 +76,7 @@ ${W.quiz({ kind: 'notes', clefs: ['treble'], title: 'Notes en clé de sol', coun
 ${W.quiz({ kind: 'notes', clefs: ['bass'], title: 'Notes en clé de fa', count: 12, stat: 'notes-b' })}
 ${W.quiz({ kind: 'notes', mode: 'play', title: 'Trouver la note au piano (bonne octave)', count: 12, stat: 'notes-play' })}
 ${W.exo('Puis', '<p>Lecture à vue « niveau 1 · main gauche » en mode attente, puis en rythme. La clé de fa est souvent la plus faible : donne-lui autant de temps que la clé de sol.</p>')}
-${W.sight({ preset: 'n1-mg', presets: ['n1-mg', 'n1-md'] })}
+${W.sight({ level: '1lh', levels: ['1lh', '1rh'] })}
 `,
   },
 
@@ -98,7 +98,7 @@ ${W.score({ abc: RHYTHMS, title: 'Cellules rythmiques', bpm: 72, startBpm: 60, h
 <li><b>Syncope</b> : une note attaquée sur une partie faible et tenue sur le temps fort ; le temps fort se sent sans être joué.</li>
 </ul>
 ${W.exo('Exercice', '<p>Tape le rythme d’un extrait de lecture à vue sur le couvercle avant de le jouer. Puis joue-le en rythme, sans t’arrêter.</p>')}
-${W.sight({ preset: 'n1-md', presets: ['n1-md', 'n1-mg', 'n1-2m'] })}
+${W.sight({ level: '1rh', levels: ['1rh', '1lh', '2'] })}
 `,
   },
 
@@ -119,7 +119,7 @@ ${W.sight({ preset: 'n1-md', presets: ['n1-md', 'n1-mg', 'n1-2m'] })}
 <li>Le reste, si possible.</li>
 </ol>
 ${W.tip('Regard en avant', '<p>Coche « Regard en avant » dans l’outil : la mesure que tu joues s’efface, ce qui t’oblige à lire la suivante pendant que tu joues. Déroutant au début, très efficace.</p>')}
-${W.sight({ preset: 'n1-2m', presets: ['n1-2m', 'n1-acc'] })}
+${W.sight({ level: '2', levels: ['2', '3'] })}
 `,
   },
 ];

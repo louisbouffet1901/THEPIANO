@@ -336,7 +336,7 @@ ${W.score({ abc: OP55.e3, title: 'Mesures 13 et 14 : la trille et le quintolet',
 ${W.exo('Exercice 1 — Additionner des durées', '<p>Combien de temps (de noire) durent : une blanche pointée ? une noire pointée suivie d’une croche ? une blanche liée à une noire ? quatre doubles croches ? un triolet de croches ?</p><details><summary>Corrigé</summary><div><p>3 temps ; 1 ½ + ½ = 2 temps ; 2 + 1 = 3 temps ; 1 temps ; 1 temps.</p></div></details>')}
 ${W.exo('Exercice 2 — Le rythme de la pièce', '<p>Tape le rythme de la main droite des mesures 1 à 4 en comptant les temps à voix haute, puis joue-le sur une seule touche, avec le clic de la partition ci-dessus.</p>')}
 ${W.quiz({ kind: 'measurefill', values: ['w', 'hd', 'h', 'q', 'e'], meters: ['4/4', '3/4'], title: 'Compléter la mesure', count: 10, stat: 'mfill' })}
-${W.quiz({ kind: 'rhythm', task: 'read', cells: ['q', 'h', 'ee', 'qr', 'w'], title: 'Lire et taper un rythme', count: 8, stat: 'rread-1' })}
+${W.rhythm({ level: 2, title: 'Lire et taper un rythme', stat: 'rread-1' })}
 `,
   },
 
@@ -388,7 +388,7 @@ ${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4, avec le clic', bpm: 56, startB
 ${W.exo('Exercice 1 — Quel chiffre de mesure ?', '<p>Une mesure contient : (a) une blanche pointée ; (b) deux noires pointées ; (c) une blanche et deux noires. Quel chiffre de mesure convient à chacune : 2/4, 3/4, 4/4 ou 6/8 ?</p><details><summary>Corrigé</summary><div><p>(a) 3 temps de noire : 3/4. (b) Deux temps de noire pointée : 6/8. (c) 2 + 1 + 1 = 4 temps : 4/4.</p></div></details>')}
 ${W.exo('Exercice 2 — Compter en jouant', '<p>Joue les mesures 1 à 4, main gauche seule, en comptant « 1, 2, 3, 4 » à voix haute, avec le clic. Puis main droite seule : où tombe le fa de la mesure 1 ? et le do tenu de la mesure 2 ?</p><details><summary>Corrigé</summary><div><p>Le fa tombe sur le 2e temps de la mesure 1 (le do de la levée occupe le 1er). Le do tenu commence au 3e temps de la mesure 2 et dure jusqu’à la fin du 1er temps de la mesure 3.</p></div></details>')}
 ${W.quiz({ kind: 'measurefill', values: ['hd', 'h', 'q', 'e'], meters: ['2/4', '3/4', '4/4'], title: 'Compléter des mesures à 2/4, 3/4, 4/4', count: 10, stat: 'mfill-2' })}
-${W.quiz({ kind: 'rhythm', task: 'read', meter: 3, cells: ['q', 'h', 'ee', 'qr', 'hd'], title: 'Lire et taper un rythme à 3/4', count: 8, stat: 'rread-3' })}
+${W.rhythm({ level: 2, meter: '3/4', title: 'Lire et taper un rythme à 3/4', stat: 'rread-3' })}
 `,
   },
 

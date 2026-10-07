@@ -161,3 +161,70 @@ export function pedalTimeline({ onsets, pedal, changes, duration, height = 150 }
   withTooltip(host);
   return host;
 }
+
+/**
+ * Plusieurs courbes sur un même axe (ex. ton tempo et celui de la référence, mesure par mesure).
+ * series : [{ name, color, values (null = pas de donnée), dashed }] ; labels : étiquettes de l'axe horizontal.
+ */
+export function multiLine({ series, labels, height = 190, title = '', yMin = null, yMax = null, unit = '', yLabel = '', xLabel = '', baseline = null }) {
+  const W = 680, H = height, L = 46, R = 14, T = 30, B = 30;
+  const all = series.flatMap(s => s.values.filter(v => v != null));
+  if (!all.length) return h('div');
+  const lo = yMin ?? Math.min(...all, baseline ?? Infinity) - 4, hi = yMax ?? Math.max(...all, baseline ?? -Infinity) + 4;
+  const n = labels.length;
+  const x = i => L + (n <= 1 ? (W - L - R) / 2 : i * (W - L - R) / (n - 1));
+  const y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo || 1));
+  let s = '';
+  for (const tv of niceTicks(lo, hi, 4)) {
+    if (tv < lo || tv > hi) continue;
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(tv)}" y2="${y(tv)}" stroke="${GRID}" stroke-width="1"/>`;
+    s += `<text x="${L - 6}" y="${y(tv) + 4}" font-size="11" fill="${TEXT3}" text-anchor="end">${fmtNum(tv)}</text>`;
+  }
+  if (baseline != null && baseline >= lo && baseline <= hi) s += `<line x1="${L}" x2="${W - R}" y1="${y(baseline)}" y2="${y(baseline)}" stroke="${AXIS}" stroke-width="1.5"/>`;
+  const step = Math.max(1, Math.ceil(n / 14));
+  labels.forEach((lb, i) => { if (i % step === 0 || i === n - 1) s += `<text x="${x(i)}" y="${H - 12}" font-size="11" fill="${TEXT3}" text-anchor="middle">${esc(String(lb))}</text>`; });
+  // légende (toujours présente dès deux séries)
+  let lx = L;
+  for (const se of series) {
+    s += `<line x1="${lx}" x2="${lx + 18}" y1="12" y2="12" stroke="${se.color}" stroke-width="2"${se.dashed ? ' stroke-dasharray="5 4"' : ''}/>`;
+    s += `<text x="${lx + 24}" y="16" font-size="12" fill="#4c525c">${esc(se.name)}</text>`;
+    lx += 40 + se.name.length * 6.6;
+  }
+  for (const se of series) {
+    let d = '', pen = false;
+    se.values.forEach((v, i) => { if (v == null) { pen = false; return; } d += `${pen ? 'L' : 'M'}${x(i)} ${y(v)} `; pen = true; });
+    s += `<path d="${d}" fill="none" stroke="${se.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"${se.dashed ? ' stroke-dasharray="5 4"' : ''}/>`;
+    se.values.forEach((v, i) => {
+      if (v == null) return;
+      const tip = `${se.name} — ${labels[i]} : ${fmtNum(v)}${unit}`;
+      s += `<circle cx="${x(i)}" cy="${y(v)}" r="4" fill="${se.color}" stroke="${SURFACE}" stroke-width="2" data-tip="${esc(tip)}"/>`;
+      s += `<circle cx="${x(i)}" cy="${y(v)}" r="11" fill="transparent" data-tip="${esc(tip)}"/>`;
+    });
+  }
+  if (yLabel) s += `<text x="${L}" y="${T - 8 + 22}" font-size="11" fill="${TEXT3}"></text>`;
+  if (xLabel) s += `<text x="${W - R}" y="${H - 1}" font-size="11" fill="${TEXT3}" text-anchor="end">${esc(xLabel)}</text>`;
+  const host = h('div', { class: 'chart', html: frame(W, H, s, title || 'Courbes') });
+  withTooltip(host);
+  return host;
+}
+
+/* Rampe séquentielle (une teinte, du clair au foncé) pour la carte des erreurs. */
+const ERR_RAMP = ['#f3efe6', '#f2d6c2', '#e6ac87', '#cf7a4f', '#a8492a'];
+
+/**
+ * Carte des mesures : une case par mesure, d'autant plus foncée qu'il y a eu d'erreurs.
+ * cells : [{ m, rate (0..1) | null, tip }] ; onPick(m) au toucher.
+ */
+export function measureStrip({ cells, onPick = null, selected = null }) {
+  const host = h('div', { class: 'mstrip', role: 'group', 'aria-label': 'Carte des erreurs par mesure' });
+  for (const c of cells) {
+    const k = c.rate == null ? -1 : c.rate <= 0.001 ? 0 : c.rate < 0.06 ? 1 : c.rate < 0.15 ? 2 : c.rate < 0.3 ? 3 : 4;
+    const b = h('button', { type: 'button', class: 'mcell' + (selected && c.m >= selected[0] && c.m <= selected[1] ? ' sel' : ''), title: c.tip || `m. ${c.m}`, 'aria-label': c.tip || `Mesure ${c.m}` },
+      h('span', { class: 'sw', style: { background: k < 0 ? 'transparent' : ERR_RAMP[k], borderStyle: k < 0 ? 'dashed' : 'solid' } }),
+      h('span', { class: 'mn' }, String(c.m)));
+    if (onPick) b.addEventListener('click', () => onPick(c.m));
+    host.append(b);
+  }
+  return host;
+}
+export { ERR_RAMP };

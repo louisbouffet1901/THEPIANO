@@ -158,18 +158,21 @@ export const audio = {
     osc.connect(g).connect(metroGain);
     osc.start(t);
     osc.stop(t + 0.07);
+    return osc;
   },
+  /** Annule des clics planifiés (arrêt d'un exercice avant la fin). */
+  cancelClicks(list) { for (const o of list || []) { try { o.stop(); } catch (e) { /* déjà joué */ } } },
 
-  /** Convertit un temps du contexte audio en temps performance.now() (ms), latence comprise. */
+  /** Convertit un temps du contexte audio en instant performance.now() (ms) où le son sort des haut-parleurs.
+   *  La latence propre à chaque entrée (piano, écran…) est retirée côté jeu (latency.js). */
   ctxToPerf(t) {
     if (!ctx) return performance.now();
-    const lat = store.get('settings.latency') || 0;
     if (ctx.getOutputTimestamp) {
       const ts = ctx.getOutputTimestamp();
-      if (ts && ts.performanceTime) return ts.performanceTime + (t - ts.contextTime) * 1000 + lat;
+      if (ts && ts.performanceTime) return ts.performanceTime + (t - ts.contextTime) * 1000;
     }
     const outLat = (ctx.outputLatency || ctx.baseLatency || 0);
-    return performance.now() + (t - ctx.currentTime + outLat) * 1000 + lat;
+    return performance.now() + (t - ctx.currentTime + outLat) * 1000;
   },
   perfToCtx(ms) {
     if (!ctx) return 0;

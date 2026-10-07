@@ -62,7 +62,7 @@ ${W.exo('Avant chaque extrait (30 secondes)', `<ol>
 <li>Quelle formule joue la main gauche ?</li>
 <li>Où est le passage qui ne ressemble à rien d’autre ? C’est là que tu devras être le plus attentif.</li>
 </ol>`)}
-${W.sight({ preset: 'n2-md', presets: ['n2-md', 'n2-alb', 'n1-acc'] })}
+${W.sight({ level: '3', levels: ['2', '3', '4'] })}
 ${W.links([W.informance('/content/pages/136-advanced-sight-reading-curriculum', 'Advanced Sight-Reading Curriculum')], 'Pour aller plus loin')}
 `,
   },
@@ -97,7 +97,8 @@ ${W.kbd({ from: 61, to: 73, title: 'Do♯ mineur harmonique (4 dièses)', marks:
 ${W.warn('Les pièges classiques', '<ul><li>La sensible des tonalités mineures : mi♮ en fa mineur, si♮ en do mineur, mi♯ en fa♯ mineur, si♯ en do♯ mineur.</li><li>Une altération qui revient à la mesure suivante sans être réécrite : elle ne vaut plus (sauf liaison).</li><li>Un bécarre qui annule l’armure : il crée souvent une dominante secondaire.</li></ul>')}
 ${W.quiz({ kind: 'keysig', keys: ['D', 'A', 'E', 'Bb', 'Eb', 'Ab'], title: 'Armures jusqu’à quatre altérations (majeur)', count: 10, stat: 'ks-maj' })}
 ${W.quiz({ kind: 'keysig', minor: true, keys: ['D', 'A', 'E', 'Bb', 'Eb', 'Ab'], title: 'Armures jusqu’à quatre altérations (mineur)', count: 10, stat: 'ks-min' })}
-${W.sight({ preset: 'n2-md', presets: ['n2-md', 'n2-alb'] })}
+${W.exo('Lecture à vue dans ces tonalités', '<p>L’outil ci-dessous ne propose ici que des extraits à trois altérations ou plus. Avant chaque extrait : gamme et cadence de la tonalité, puis « Préparer ».</p>')}
+${W.sight({ level: '3', levels: ['1rh', '1lh', '2', '3', '4'], minFifths: 3, title: 'Lecture à vue · trois altérations et plus' })}
 `,
   },
 
@@ -126,7 +127,7 @@ ${W.score({ abc: POLY43, title: 'Quatre contre trois', bpm: 40, startBpm: 32, cl
 <li><b>Le duolet</b> (Clair de lune) : deux notes dans le temps de trois croches, chacune vaut une croche et demie.</li>
 <li><b>Quintolets, septolets</b> (Chopin) : on aligne le départ et l’arrivée sur la main gauche, on répartit les notes entre les deux (voir <a href="#/lecon/n2-i3">les ornements</a>). En lecture à vue, garde la pulsation et place le groupe au mieux : mieux vaut un septolet approximatif qu’un temps perdu.</li>
 </ul>
-${W.sight({ preset: 'n2-md', presets: ['n2-md', 'n2-8'] })}
+${W.sight({ level: '2', levels: ['1rh', '1lh', '2', '3', '4'], compound: true, title: 'Lecture à vue · mesures composées (6/8, 9/8, 12/8)' })}
 `,
   },
 
@@ -148,7 +149,7 @@ ${W.sight({ preset: 'n2-md', presets: ['n2-md', 'n2-8'] })}
 <h2>Les yeux restent sur la partition</h2>
 <p>Chaque regard vers le clavier fait perdre sa place sur la page. Pour les sauts, repère la distance (une octave, une dixième) et sens-la sous la main ; utilise les groupes de deux et trois touches noires comme repères tactiles. Si tu dois regarder, fais-le d’un coup d’œil, en gardant un point de repère sur la page.</p>
 ${W.tip('Lire en rythme', '<p>Le mode « En rythme » (ou « Préparer 30 s puis jouer ») ne s’arrête pas pour toi : c’est l’entraînement le plus proche d’une vraie lecture à vue, comme jouer avec un autre musicien. Vise 80 % de notes justes avec « Regard en avant » coché.</p>')}
-${W.sight({ preset: 'n2-8', presets: ['n2-8', 'n2-alb', 'n2-md'] })}
+${W.sight({ level: '4', levels: ['3', '4', '5'] })}
 ${W.links([W.informance('/content/pages/198-music-at-sight', 'Music at Sight')], 'Pour aller plus loin')}
 `,
   },

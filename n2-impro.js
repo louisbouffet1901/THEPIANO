@@ -64,8 +64,8 @@ V:LH clef=bass
 [V:LH] "_I"C,2 "_V4/3"D,2 | "_V6/5"B,,2 "_I"C,2 | "_V6/5 de IV"E,2 "_IV"F,2 | "_V6/5 de V"^F,2 "_V"G,2 | "_V6/5 de ii"^C,2 "_ii"D,2 | "_V6/5"B,,2 "_I"C,2 |]`;
 
 
-const LH8 = `[V:LH] "_i".F,,2 .[A,CF]2 .C,2 .[A,CF]2 | "_iv".B,,2 .[B,DF]2 .F,,2 .[B,DF]2 | "_V7".C,,2 .[B,=EG]2 .G,,2 .[B,=EG]2 | "_i".F,,2 .[A,CF]2 F,,4 |]`;
-const LH16 = `[V:LH] "_i".F,,4 .[A,CF]4 .C,4 .[A,CF]4 | "_iv".B,,4 .[B,DF]4 .F,,4 .[B,DF]4 | "_V7".C,,4 .[B,=EG]4 .G,,4 .[B,=EG]4 | "_i".F,,4 .[A,CF]4 F,,8 |]`;
+const LH8 = `[V:LH] "_i".F,,2 .[A,CF]2 .C,2 .[A,CF]2 | "_iv".B,,2 .[B,DF]2 .F,,2 .[B,DF]2 | "_V7".C,,2 .[B,=EG]2 .G,,2 .[B,EG]2 | "_i".F,,2 .[A,CF]2 F,,4 |]`;
+const LH16 = `[V:LH] "_i".F,,4 .[A,CF]4 .C,4 .[A,CF]4 | "_iv".B,,4 .[B,DF]4 .F,,4 .[B,DF]4 | "_V7".C,,4 .[B,=EG]4 .G,,4 .[B,EG]4 | "_i".F,,4 .[A,CF]4 F,,8 |]`;
 const head = (L) => `X:1
 M:4/4
 L:${L}
@@ -99,7 +99,7 @@ K:Fmin
 %%score {RH | LH}
 V:RH clef=treble
 V:LH clef=bass
-[V:RH] "^la♭ majeur : I"[Ace]8 | "^fa mineur : V"[Gc=e]4 "^V7"[GB=e]4 | "^i"[FAf]8 |]
+[V:RH] "^la♭ majeur : I"[Ace]8 | "^fa mineur : V"[Gc=e]4 "^V7"[GBe]4 | "^i"[FAf]8 |]
 [V:LH] A,,8 | C,8 | F,,8 |]`;
 
 const LAMENTO = `X:1
