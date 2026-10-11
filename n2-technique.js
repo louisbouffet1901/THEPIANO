@@ -1,5 +1,21 @@
 // Niveau 2 — Technique
-import { OP15, CLAIR } from './content-excerpts.js';
+import { OP15, CLAIR, OP70 } from './content-excerpts.js';
+
+// Arpèges larges à la manière de l'Étude op. 10 n° 1 (do majeur, la mineur) : un groupe de quatre notes par temps
+const ARP_LARGE = `X:1
+M:4/4
+L:1/16
+K:C
+%%score RH
+V:RH clef=treble
+[V:RH] "^1 2 4 5 · 1 2 4 5 …"C,G,CE GceG c'gec GECG, | "_la mineur"A,EAc eac'e' a'e'c'a ecAE |]`;
+const ARP_BLOCS = `X:1
+M:4/4
+L:1/4
+K:C
+%%score RH
+V:RH clef=treble
+[V:RH] "^d’abord en blocs : la forme de la main"[C,G,CE] [Gceg] [c'gec] [GECG,] | [A,EAc] [eac'e'] [a'e'c'a] [ecAE] |]`;
 
 // Trait de la main gauche, mesure 25 du Con fuoco : impulsions (groupe rapide + arrêt)
 const EX_BURST = `X:1
@@ -108,6 +124,12 @@ export default [
     title: 'Méthode pour les passages rapides',
     summary: 'La vitesse ne s’obtient pas en jouant vite plus souvent, mais en organisant le trait en groupes.',
     goals: ['Comprendre pourquoi un trait rapide se joue par groupes.', 'Travailler un trait par impulsions, rythmes et accents déplacés.', 'Monter en tempo sans crispation.'],
+    essentials: [
+      'À vitesse, la main enchaîne des <b>groupes</b> de notes, chacun déclenché par une seule intention.',
+      'Les <b>impulsions</b> : un groupe à la vitesse finale, arrêt sur la première note du suivant, main souple ; puis on allonge.',
+      'Rythmes pointés et accents déplacés révèlent les doigts faibles ; on monte en tempo sans crispation.',
+    ],
+    goal: 'le trait de main gauche de la mesure 25 passe au tempo du Con fuoco, par groupes, sans accroc ni crispation.',
     body: W => `
 <p>À vitesse réelle, le cerveau ne commande plus chaque doigt l’un après l’autre : il enchaîne des <b>groupes</b> de notes, chacun déclenché par une seule intention. Travailler un trait rapide, c’est construire ces groupes, puis les relier. Le terrain d’entraînement de ce niveau : le Con fuoco de l’op. 15 n° 1, où la main gauche dévale le clavier en sextolets (mesure 25).</p>
 
@@ -162,6 +184,12 @@ ${W.links([
     title: 'La rotation de l’avant-bras',
     summary: 'Le geste de base de tous les motifs qui alternent deux côtés de la main : trémolos, basses d’Alberti, doubles notes alternées.',
     goals: ['Comprendre la rotation (pronation et supination).', 'L’appliquer au trémolo, à la basse d’Alberti et aux octaves brisées.', 'Jouer les doubles notes du Con fuoco régulières et sans crispation.'],
+    essentials: [
+      'La <b>rotation</b> de l’avant-bras (comme tourner une clé) porte chaque doigt vers sa touche : trémolos, Alberti, doubles notes alternées.',
+      'Poignet souple, coude libre, doigts fermes qui ne frappent pas.',
+      'Ample et lente au début, la rotation devient presque invisible à vitesse, mais reste la source du geste.',
+    ],
+    goal: 'le trémolo d’octave brisée en sextolets à ♩ = 80 passe à l’analyseur « Régularité » (moins de 8 %), sans fatigue.',
     body: W => `
 <p>Essaie d’alterner très vite do3 et do4, pouce et 5e doigt, en ne bougeant que les doigts : la main se fatigue en quelques secondes. Fais maintenant pivoter l’avant-bras, comme pour tourner une clé dans une serrure : chaque doigt est porté vers sa touche par ce pivotement, presque sans effort. C’est la <b>rotation</b>.</p>
 ${W.diagram('rotation', {}, 'Vers le pouce, c’est la pronation ; vers le 5e doigt, la supination. Le mouvement part de l’avant-bras, le coude reste libre.')}
@@ -205,6 +233,12 @@ ${W.links([
     title: 'La polyphonie de la main gauche',
     summary: 'Une main, trois voix : faire entendre chacune à sa juste place, toutes liées.',
     goals: ['Identifier les trois voix de la main gauche de l’op. 15 n° 1.', 'Tenir une voix au doigt pendant que les autres bougent.', 'Doser chaque voix : basse et voix en noires présentes, triolets murmurés.'],
+    essentials: [
+      'Trois voix dans la main gauche de l’op. 15 : la <b>basse</b> tenue, la <b>voix en noires</b> (un duo avec la main droite), les <b>triolets</b> qui murmurent.',
+      'On travaille <b>par couches</b> : deux voix d’abord, la troisième ensuite.',
+      'Dosage : basse et voix en noires présentes, triolets toujours plus doux.',
+    ],
+    goal: 'à l’écoute de ta main gauche seule (mesures 1 à 8), on suit la basse et la voix en noires, liées, les triolets au second plan.',
     body: W => `
 <p>Dans l’Andante de l’op. 15 n° 1, la main gauche ne se contente pas d’accompagner : elle joue <b>trois voix</b> à la fois. Chopin écrit <i>sempre legato</i> ; le défi est de les lier toutes et de les doser comme trois instruments différents.</p>
 
@@ -240,6 +274,12 @@ ${W.links([W.informance('/content/pages/176-developing-the-left-hand', 'Developi
     title: 'Le pianissimo et la palette des nuances',
     summary: 'Une nuance est une vitesse de touche. Le pianissimo se contrôle, il ne s’espère pas.',
     goals: ['Comprendre ce qui fait varier le volume au piano.', 'Produire un pianissimo égal et timbré.', 'Atteindre à la demande pp, p, mf et f, et doser un crescendo.'],
+    essentials: [
+      'Une nuance est une <b>vitesse de touche</b> : pp, une touche lente mais jusqu’au fond ; f, une touche rapide.',
+      'Le pianissimo part <b>du contact</b> avec la touche : bras porté, doigts proches et fermes.',
+      'Un bon pianissimo reste <b>timbré</b> ; on vise des niveaux précis, pp, p, mf, f.',
+    ],
+    goal: 'à l’analyseur « Nuances », 70 % de notes dans la cible pour pp, p, mf et f.',
     body: W => `
 <p>Le volume d’une note dépend de la <b>vitesse</b> de la touche au moment où le marteau part vers la corde. Un <i>pp</i>, c’est une touche qui descend lentement, mais jusqu’au bout ; un <i>f</i>, une touche rapide. La difficulté du pianissimo est là : si la touche descend trop lentement, la note ne sort pas ; à peine trop vite, elle sonne déjà <i>mf</i>.</p>
 
@@ -276,6 +316,12 @@ ${W.links([W.informance('/content/pages/129-foundations-of-good-technique', 'Fou
     title: 'Octaves et accords',
     summary: 'Une main en forme d’octave, un poignet souple, des accords préparés avant d’être joués.',
     goals: ['Jouer des octaves sans raideur : cadre de la main, poignet souple.', 'Lier la voix supérieure d’une suite d’octaves.', 'Préparer et doser un accord plein.'],
+    essentials: [
+      'Main d’octave : un <b>cadre</b> pouce – 5e (ou 4e sur les noires), doigts du milieu souples, <b>relâchement</b> entre les octaves.',
+      'Octaves légères : du poignet ; lentes et fortes : de l’avant-bras et du bras.',
+      'Dans une mélodie en octaves, la note du <b>haut</b> chante ; un accord se prépare, main en forme, avant d’être joué.',
+    ],
+    goal: 'la gamme de fa mineur en octaves passe régulière à l’analyseur, et la voix supérieure reste liée à l’oreille.',
     body: W => `
 <h2>La main d’octave</h2>
 <ul>
@@ -312,6 +358,12 @@ ${W.links([W.informance('/content/pages/193-getting-to-grips-with-octaves', 'Get
     title: 'Gammes et arpèges du niveau 2',
     summary: 'Les tonalités jusqu’à quatre altérations, la gamme chromatique, les arpèges de septième.',
     goals: ['Connaître les doigtés des gammes jusqu’à quatre altérations.', 'Jouer la gamme chromatique et les arpèges de septième de dominante et de septième diminuée.', 'Atteindre ♩ = 88 en doubles croches, régulier.'],
+    essentials: [
+      'Des doigtés par familles, jusqu’à quatre altérations, plus la gamme chromatique et les arpèges de septième.',
+      'Même méthode qu’au niveau 1 : dix minutes par jour, chaque note écoutée.',
+      'Objectif : ♩ = 88 en doubles croches, régulier.',
+    ],
+    goal: 'l’analyseur « Régularité » mesure moins de 8 % d’irrégularité à ♩ = 88 en doubles croches, dans les gammes du programme.',
     body: W => `
 <p>Toujours dix minutes par jour, en écoutant chaque note. Le programme s’élargit aux tonalités jusqu’à quatre altérations, à la gamme chromatique (indispensable chez Chopin) et aux arpèges de septième, que tu rencontres déjà dans tes pièces.</p>
 
@@ -347,6 +399,42 @@ ${W.score({ abc: EX_ARP7, title: 'Arpèges : sol 7 et septième diminuée sur si
 ${W.analyzer({ mode: 'evenness', title: 'Analyseur — régularité', bpm: 88, sub: 4, help: 'Joue une gamme sur quatre octaves, ou un arpège sur deux octaves. Objectif : irrégularité inférieure à 8 %.' })}
 ${W.metronome({ bpm: 72, beats: 4 })}
 ${W.links([W.informance('/content/pages/40-intermediate-scales-arpeggios', 'Intermediate Scales & Arpeggios')], 'Pour aller plus loin')}
+`,
+  },
+  {
+    id: 'n2-t7', minutes: 25,
+    title: 'Poignet souple : arpèges larges et basses de valse',
+    summary: 'Ouvrir et refermer la main sur plusieurs octaves sans crispation, et faire rebondir la main gauche d’une valse : le poignet comme charnière.',
+    goals: ['Jouer des arpèges sur plusieurs octaves avec un poignet qui guide.', 'Jouer une main gauche de valse sans regarder : basse appuyée, accords légers.'],
+    essentials: [
+      'Le poignet est une <b>charnière souple</b> : il guide la main d’une position à l’autre, au lieu de laisser les doigts s’écarter de force.',
+      'Arpèges larges (l’Étude op. 10 n° 1 en est le modèle) : la main <b>s’ouvre</b> sur le groupe, <b>se referme</b> en se déplaçant, le coude suit la ligne.',
+      'Basse de valse : la main <b>tombe</b> sur la basse (le poids), <b>rebondit</b> vers l’accord (léger), le poignet comme un ressort.',
+    ],
+    goal: 'les arpèges de do majeur et la mineur passent réguliers à l’analyseur (moins de 10 % d’irrégularité), sans douleur, et tu joues la main gauche de la valse (m. 1 à 8) sans regarder le clavier.',
+    body: W => `
+<p>Les grands arpèges de Chopin (l’Étude op. 10 n° 1, les nocturnes à larges arpèges, les basses de valse) ne se jouent pas en écartant les doigts : c’est le <b>poignet</b>, avec l’avant-bras, qui déplace une main détendue d’une position à la suivante. Ici, on prépare ce geste lentement ; l’Étude elle-même viendra plus tard dans le parcours.</p>
+
+<h2>1. La forme, puis le mouvement</h2>
+${W.score({ abc: ARP_BLOCS, title: 'Les arpèges en blocs', bpm: 50, practice: false, hands: false, caption: 'Chaque groupe de quatre notes, plaqué : c’est la forme que prend la main. Entre deux blocs, la main se referme, se déplace, se rouvre, sans que les doigts se crispent.' })}
+${W.score({ abc: ARP_LARGE, title: 'Les mêmes, en arpèges (à la manière de l’op. 10 n° 1)', bpm: 50, startBpm: 40, practice: false, hands: false, caption: 'Doigté 1 – 2 – 4 – 5 dans chaque groupe ; après le 5, la main se déplace d’un bloc vers le pouce suivant. Le poignet décrit de petits cercles : il monte légèrement vers le 5, redescend vers le pouce. En redescendant, même geste à l’envers.' })}
+${W.exo('Exercice — Le poignet qui guide', `<ol>
+<li><b>Blocs</b> (3 min) : plaque chaque groupe, relâche entre deux, en sentant le déplacement du coude.</li>
+<li><b>Arpèges lents</b> (4 min) : ♩ = 40, une croche par note ; vérifie qu’à chaque pouce le poignet est souple (tu pourrais le bouger).</li>
+<li><b>Par impulsions</b> (3 min) : un groupe vite, arrêt sur le pouce suivant, main détendue ; puis deux groupes, puis tout (méthode des <a href="#/lecon/n2-t1">passages rapides</a>).</li>
+</ol>`)}
+${W.analyzer({ mode: 'evenness', title: 'Analyseur — régularité des arpèges', bpm: 60, sub: 4, help: 'Joue l’arpège de do majeur (monté et descente) en doubles croches à ♩ = 60. Objectif : moins de 10 % d’irrégularité, sans tension.' })}
+${W.warn('Douleur = arrêt', '<p>Une gêne au poignet, à l’avant-bras ou entre le pouce et l’index signale un écart forcé : arrête, reprends plus lentement, en blocs, et réduis l’ouverture (sur une octave d’abord).</p>')}
+
+<h2>2. La main gauche d’une valse</h2>
+<p>Basse au premier temps, accords aux deuxième et troisième : la main fait un saut à chaque mesure. Le secret est dans l’ordre des gestes : la main <b>tombe</b> sur la basse avec le poids du bras, <b>rebondit</b> aussitôt vers l’accord (déjà en forme au-dessus des touches), qu’elle joue léger. Les yeux restent sur la partition : on sent la distance.</p>
+${W.score({ abc: OP70.n2, title: 'Valse op. 70 n° 2 (fa mineur), mesures 1 à 8', bpm: 52, startBpm: 40, pedal: [1, 4, 7, 10, 13, 16, 19, 22], pedalUp: [2.9, 5.9, 8.9, 11.9, 14.9, 17.9, 20.9, 23.9], pedalEnd: 25, caption: 'Choisis « MG » pour la main gauche seule. Exercice : la basse seule (sauts), puis basse + accord sans regarder, puis avec la main droite.' })}
+${W.exo('Exercice — Le rebond', `<ol>
+<li><b>Basse seule</b>, yeux fermés : trouve chaque basse au toucher (repère les touches noires).</li>
+<li><b>Basse – accord</b> : sur la basse, laisse tomber le bras ; vers l’accord, le poignet remonte comme un ressort. L’accord est plus léger que la basse.</li>
+<li><b>Avec la pédale</b> de valse (sur la basse, levée avant le troisième temps : voir <a href="#/lecon/n1-t5">la pédale</a>).</li>
+</ol>`)}
+${W.tip('Pour la suite', '<p>Ce même geste (ouvrir, déplacer, refermer) sert dans la <a href="#/piece/liszt-s169">Romance de Liszt</a> (arpèges de main gauche), dans le Con fuoco de l’op. 15, et plus tard dans l’Étude op. 10 n° 1.</p>')}
 `,
   },
 ];

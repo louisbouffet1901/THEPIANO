@@ -10,6 +10,12 @@ export default [
     title: 'Les degrés en mineur',
     summary: 'Ta pièce oppose fa majeur et fa mineur sur la même tonique. Trois degrés changent de couleur : 3, 6 et 7.',
     goals: ['Reconnaître les degrés 1 à 7 en mineur, après une cadence.', 'Chanter la gamme mineure en numéros.', 'Entendre la différence entre fa majeur et fa mineur dans ta pièce.'],
+    essentials: [
+      'En mineur, la tonique et les degrés 1, 2, 4, 5 ne changent pas ; <b>3 et 6</b> sont abaissés.',
+      'Le 7e degré est le plus souvent <b>haussé</b> : c’est la sensible, un demi-ton sous la tonique.',
+      'Ta pièce oppose fa majeur et fa mineur sur la même tonique : tu entends 3, 6 et 7 changer de couleur.',
+    ],
+    goal: '80 % à la série « Degrés 1 à 5 en mineur », puis 70 % à « Toute la gamme mineure ».',
     body: W => `
 <p>Au niveau 1, tu as appris à situer chaque note de la gamme majeure par rapport à la tonique. Le mode mineur garde la même tonique et les mêmes degrés 1, 2, 4 et 5 ; seuls <b>3 et 6</b> sont abaissés. Le 7e degré, lui, est le plus souvent haussé (mineur harmonique) pour garder une <b>sensible</b> : c’est ainsi qu’il sonne dans la cadence des exercices.</p>
 <table>
@@ -46,6 +52,12 @@ ${W.warn('Si 3 et 2 se confondent en mineur', '<p>En mineur, 2 et 3 ne sont sép
     title: 'Les intervalles (1) : de la seconde à la quinte',
     summary: 'Mesurer la distance entre deux notes, avec un début de chanson pour chaque intervalle. La levée de ta pièce est une quarte.',
     goals: ['Reconnaître secondes, tierces, quarte, quinte et octave, en montant.', 'Puis en descendant.', 'Chanter une tierce, une quarte, une quinte au-dessus d’une note donnée.'],
+    essentials: [
+      'Un intervalle se reconnaît à un <b>début de chanson</b> : l’oreille retrouve la chanson, la chanson donne l’intervalle.',
+      'D’abord en montant, puis en descendant, puis les deux notes ensemble.',
+      'La levée de ton op. 15 est une <b>quarte</b> (do → fa).',
+    ],
+    goal: '80 % aux séries d’intervalles de la seconde à la quinte, en montant puis en descendant.',
     body: W => `
 <p>Un <b>intervalle</b> est la distance entre deux notes. Tu en connais déjà beaucoup sans le savoir : de 1 à 3, c’est une tierce ; de 1 à 5, une quinte. Pour les reconnaître hors tonalité, on associe chacun au <b>début d’une chanson</b> connue : l’oreille retrouve la chanson, et la chanson donne l’intervalle.</p>
 <table>
@@ -76,6 +88,7 @@ ${W.quiz({ kind: 'sing', task: 'interval', set: ['2M', '3M', '4J', '5J', '8ve'],
 <h2>Dans ta pièce</h2>
 <p>La levée de l’op. 15 n° 1 fait <b>do → fa</b> : une <b>quarte juste</b>, comme « Allons en-fants » de la Marseillaise (en → fants), ou 5 → 8 dans la gamme de fa. Puis la mélodie descend par secondes (fa – mi – ré), remonte (mi), saute une <b>tierce</b> (mi → do), et monte pas à pas jusqu’au la de la mesure 4. Chante tout le début en nommant chaque intervalle.</p>
 ${W.score({ abc: OP15.e1, title: 'Mesures 1 à 8 : nomme les intervalles de la mélodie', bpm: 66, startBpm: 56, practice: false })}
+${W.quiz({ kind: 'echo', motifs: ['op15-a', 'op15-b', 'op70-a', 'op55-c'], title: 'Rejouer des motifs de Chopin (op. 15, op. 70, op. 55)', count: 6, stat: 'echo-chopin', goal: 0.7, intro: 'Le début de l’op. 15 : une quarte (do – fa), puis des secondes. Repère les intervalles avant de jouer.' })}
 
 ${W.warn('Quarte ou quinte ?', '<p>La quarte (« Allons en-fants ») monte vers une note d’arrivée ; la quinte (« do-do-sol ») sonne vide et ouverte. En cas de doute, chante 1 – 4 puis 1 – 5 : la quinte est un ton plus loin.</p>')}
 `,
@@ -86,6 +99,12 @@ ${W.warn('Quarte ou quinte ?', '<p>La quarte (« Allons en-fants ») monte vers 
     title: 'Les intervalles (2) : sixtes, septièmes, triton',
     summary: 'Les grands intervalles, les intervalles harmoniques, et le triton. Les doubles notes du Con fuoco sont des sixtes, des quintes et des quartes.',
     goals: ['Reconnaître sixtes, septièmes et triton.', 'Reconnaître un intervalle harmonique (notes ensemble).', 'Nommer les intervalles des doubles notes du Con fuoco.'],
+    essentials: [
+      'Les grands intervalles se comparent à l’<b>octave</b> : la 7e majeure est à un demi-ton de l’octave, la 7e mineure à un ton.',
+      'Une sixte est une tierce <b>renversée</b>.',
+      'Joués ensemble : vides (quarte, quinte, octave), doux (tierces, sixtes), frottants (secondes, septièmes, triton).',
+    ],
+    goal: '70 % ou plus à la série « Tous les intervalles », et tu nommes les intervalles des doubles notes du Con fuoco.',
     body: W => `
 <table>
 <thead><tr><th>Intervalle</th><th class="num">Demi-tons</th><th>Repère</th><th>Couleur harmonique</th></tr></thead>
@@ -123,6 +142,12 @@ ${W.warn('Sixte mineure ou majeure ?', '<p>Pense « tierce renversée » : chant
     title: 'Les accords : quatre couleurs, et la basse',
     summary: 'Majeur, mineur, diminué, augmenté à l’oreille ; chanter un arpège ; suivre la basse sous des accords qui changent.',
     goals: ['Reconnaître les quatre sortes d’accords de trois sons.', 'Chanter l’arpège d’un accord majeur et mineur.', 'Suivre une basse qui tient pendant que les accords changent.'],
+    essentials: [
+      'Majeur clair, mineur plus sombre, <b>diminué</b> serré, <b>augmenté</b> flottant.',
+      'La tierce décide majeur ou mineur ; la quinte, juste, diminuée ou augmentée.',
+      'Chante toujours la <b>basse</b> : elle porte l’harmonie.',
+    ],
+    goal: '80 % à la série « Quatre couleurs d’accords ».',
     body: W => `
 <table>
 <thead><tr><th>Accord</th><th>Tierces</th><th>Couleur</th></tr></thead>
@@ -159,6 +184,12 @@ ${W.warn('Si majeur et mineur se confondent encore', '<p>Joue l’accord, puis l
     title: 'Les fonctions : I, IV, V, vi, ii',
     summary: 'Reconnaître un accord par sa place dans la tonalité, en écoutant la basse. Clair de lune commence par une couleur empruntée.',
     goals: ['Reconnaître IV, V, vi et ii après l’accord de tonique.', 'Suivre et chanter une ligne de basse.', 'Entendre l’ombre de la mesure 2 de Clair de lune.'],
+    essentials: [
+      'Un accord s’entend <b>par rapport à la tonique</b>, et la basse le révèle : IV monte d’une quarte, V d’une quinte, vi descend d’une tierce, ii monte d’un ton.',
+      'Chante la basse des deux accords, puis juge.',
+      'Majeur ou mineur aide aussi : IV et V majeurs, ii et vi mineurs.',
+    ],
+    goal: '80 % à la série « ii, IV, V ou vi ? ».',
     body: W => `
 <p>Comme pour les degrés, on n’entend pas un accord « dans l’absolu » : on l’entend <b>par rapport à la tonique</b>. Et c’est la <b>basse</b> qui le révèle le plus vite :</p>
 <table>
@@ -193,6 +224,12 @@ ${W.warn('Si IV et V se confondent', '<p>IV donne envie de revenir doucement à 
     title: 'Les cadences et les changements de mode',
     summary: 'Les quatre ponctuations de la musique tonale, en majeur et en mineur, et le passage d’un mode à l’autre sur la même tonique.',
     goals: ['Reconnaître les cadences parfaite, demi, plagale et rompue.', 'Les reconnaître aussi en mineur.', 'Entendre un changement de mode dans tes pièces.'],
+    essentials: [
+      'Quatre ponctuations : <b>parfaite</b> (V → I, un point), <b>demi-cadence</b> (→ V, une virgule), <b>plagale</b> (IV → I, un « amen »), <b>rompue</b> (V → vi, une surprise).',
+      'Concentre-toi sur la fin : repos complet, suspension, repos adouci ou détour ?',
+      'Les mêmes existent en mineur.',
+    ],
+    goal: '70 % ou plus à la série « Les quatre cadences (majeur et mineur) ».',
     body: W => `
 <table>
 <thead><tr><th>Cadence</th><th>Enchaînement</th><th>Effet</th></tr></thead>
@@ -232,6 +269,12 @@ ${W.warn('Plagale ou parfaite ?', '<p>Les deux finissent sur I. La parfaite y ar
     title: 'Dictées : mélodies et rythmes',
     summary: 'Retrouver une mélodie entendue et la rejouer ; retaper des rythmes avec syncopes et triolets.',
     goals: ['Rejouer une mélodie de cinq ou six notes, en majeur et en mineur.', 'Retaper des rythmes pointés, syncopés, en triolets.', 'Entendre les duolets de Clair de lune et les triolets de l’op. 15.'],
+    essentials: [
+      'Méthode : écouter sans rien faire, <b>chanter</b>, repérer la structure (départ, sommet, fin), penser en degrés, puis jouer.',
+      'Pour le rythme : compter les temps pendant l’écoute ; battre la pulsation du pied pour sentir les syncopes.',
+      'Si une note t’échappe, garde les autres et cherche-la ensuite.',
+    ],
+    goal: '70 % ou plus aux séries « Rejouer 5 notes », en majeur et en mineur.',
     body: W => `
 <p>Une dictée rassemble tout ce que tu as travaillé : la tonique, les degrés, les intervalles, le rythme. La méthode compte plus que le talent :</p>
 <ol>
@@ -268,6 +311,12 @@ ${W.warn('Si les triolets se brouillent', '<p>Dis « tri-o-let » sur chaque tem
     title: 'Les accords de septième, et bilan',
     summary: 'Cinq couleurs de septième à l’oreille, du plus contrasté au plus fin. L’Andante de l’op. 15 en est rempli.',
     goals: ['Distinguer septième de dominante et septième majeure.', 'Ajouter la septième mineure, puis les accords diminués.', 'Faire le bilan de ton oreille sur les deux niveaux.'],
+    essentials: [
+      'Cinq septièmes : de <b>dominante</b> (tendue), <b>majeure</b> (rêveuse), <b>mineure</b> (souple), <b>demi-diminuée</b> (sombre), <b>diminuée</b> (dramatique).',
+      'D’abord la base de l’accord, puis la septième : à un demi-ton de l’octave (majeure) ou à un ton (mineure).',
+      'L’Andante de l’op. 15 en est rempli : presque chaque temps porte une septième.',
+    ],
+    goal: '70 % ou plus à la série « Les cinq septièmes ».',
     body: W => `
 <table>
 <thead><tr><th>Septième</th><th>Ce qu’on entend</th></tr></thead>

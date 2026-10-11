@@ -7,7 +7,7 @@ export const MODULES = [
   { id: 'theorie', label: 'Théorie', intro: 'Des cours complets, en partant des bases : notes, rythme, gammes, intervalles, accords, fonctions, cadences… Chaque chapitre s’appuie sur le passage de la pièce travaillé la même semaine.' },
   { id: 'oreille', label: 'Oreille', intro: 'Reprendre l’oreille à zéro : grave et aigu, chanter juste, sentir la tonique, reconnaître les degrés, puis les intervalles, les accords et les cadences. Dix minutes chaque jour, avec beaucoup de conseils.' },
   { id: 'lecture', label: 'Lecture à vue', intro: 'Une méthode et un entraînement quotidien court, sur de vrais extraits du répertoire classés en cinq niveaux, jamais deux fois les mêmes.' },
-  { id: 'impro', label: 'Improvisation', intro: 'Apprendre à improviser pas à pas : la pulsation et quelques notes sur un ostinato, puis l’harmonie (notes de l’accord, arpèges, gammes), les formules du nocturne, et enfin le langage classique (cadences, règle de l’octave, schémas) et les formes.' },
+  { id: 'impro', label: 'Improvisation', intro: 'Improviser pas à pas : un motif, la question et la réponse, les notes de l’accord et leurs ornements, puis des styles (romance de Liszt, nocturne, élégie russe, prélude de Chopin), le langage classique (cadences, règle de l’octave, schémas) et les formes. Chaque leçon redonne les accords, propose un modèle phrasé, un jeu guidé (notes en or) et un critère de réussite.' },
 ];
 
 const ALL = LESSONS;
@@ -84,7 +84,7 @@ export const LEVELS = [
         { mod: 'Lecture', lesson: 'n1-l1', text: '{l}' },
         { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t} « niveau 1 · main droite » : 10 minutes, 5 jours sur 7.' },
         { mod: 'Impro', lesson: 'n1-im-lancer', text: '{l}' },
-        { mod: 'Compléments', piece: 'valse-b150', text: '{p} (en cours) : stabiliser la partie A, caractère de valse.' },
+        { mod: 'Compléments', prio: 2, piece: 'valse-b150', text: '{p} (en cours) : stabiliser la partie A, caractère de valse.' },
       ] },
       { title: 'Le legato chanté', focus: 'La mélodie sans pédale, au doigt : le cœur du niveau.', tasks: [
         { mod: 'Pièce', piece: 'op55-1', text: '{p} : mesures 1 à 16 mains ensemble à ♩ = 40 ; mesures 17 à 24 mains séparées.' },
@@ -94,7 +94,7 @@ export const LEVELS = [
         { mod: 'Oreille', lesson: 'n1-or2', text: '{l}' },
         { mod: 'Lecture', lesson: 'n1-l2', text: '{l}' },
         { mod: 'Impro', lesson: 'n1-im-rythme', text: '{l}' },
-        { mod: 'Compléments', piece: 'prokofiev-75-6', text: '{p} (en cours) : rythme pointé et poids des accords.' },
+        { mod: 'Compléments', prio: 2, piece: 'prokofiev-75-6', text: '{p} (en cours) : rythme pointé et poids des accords.' },
       ] },
       { title: 'Les plans sonores', focus: 'Faire chanter le dessus ; les retours variés du thème.', tasks: [
         { mod: 'Pièce', piece: 'op55-1', text: '{p} : mesures 17 à 48 ; travaille à part les triolets (m. 27-28) et le septolet (m. 44).' },
@@ -125,7 +125,7 @@ export const LEVELS = [
         { mod: 'Oreille', lesson: 'n1-or5', text: '{l}' },
         { mod: 'Lecture', lesson: 'n1-l4', text: '{l}' },
         { mod: 'Impro', lesson: 'n1-im-gammes', text: '{l}' },
-        { mod: 'Compléments', piece: 'liszt-s169', text: '{p} : déchiffrage et mise en place de la première page.' },
+        { mod: 'Compléments', prio: 2, piece: 'liszt-s169', text: '{p} : déchiffrage et mise en place de la première page.' },
       ] },
       { title: 'La coda', focus: 'Triolets molto legato, passage en fa majeur, choral final.', tasks: [
         { mod: 'Pièce', piece: 'op55-1', text: '{p} : coda, mesures 77 à 101.' },
@@ -134,7 +134,7 @@ export const LEVELS = [
         { mod: 'Oreille', lesson: 'n1-or6', text: '{l}' },
         { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t} « niveau 3 · pièces faciles » : 5 extraits dans la semaine.' },
         { mod: 'Impro', lesson: 'n1-im2', text: '{l}' },
-        { mod: 'Compléments', piece: 'liszt-s169', text: '{p} : suite de la mise en place.' },
+        { mod: 'Compléments', prio: 2, piece: 'liszt-s169', text: '{p} : suite de la mise en place.' },
       ] },
       { title: 'Vue d’ensemble', focus: 'Toute la pièce, tempo progressif ; l’analyse éclaire l’interprétation.', tasks: [
         { mod: 'Pièce', piece: 'op55-1', text: '{p} : enchaîne toute la pièce ; tempo progressif de ♩ = 50 à ♩ = 60 (métronome, accélération progressive).' },
@@ -142,7 +142,7 @@ export const LEVELS = [
         { mod: 'Théorie', lesson: 'n1-th-etrangeres', text: '{l}' },
         { mod: 'Oreille', lesson: 'n1-or7', text: '{l}' },
         { mod: 'Impro', lesson: 'n1-im3', text: '{l}' },
-        { mod: 'Compléments', piece: 'valse-b150', text: '{p} et Montaigus et Capulets : jouer en entier.' },
+        { mod: 'Compléments', prio: 2, piece: 'valse-b150', text: '{p} et Montaigus et Capulets : jouer en entier.' },
       ] },
       { title: 'Interpréter et valider', focus: 'Écouter, s’enregistrer, juger avec la grille.', tasks: [
         { mod: 'Interprétation', lesson: 'n1-i5', text: '{l}' },
@@ -151,7 +151,7 @@ export const LEVELS = [
         { mod: 'Oreille', lesson: 'n1-or8', text: '{l}' },
         { mod: 'Impro', lesson: 'n1-im4', text: '{l}' },
         { mod: 'Validation', tool: ['#/validation/n1', 'la grille de validation'], text: 'Remplis {t} honnêtement ; reprends les points « en cours ».' },
-        { mod: 'Révisions', tool: ['#/outils/oreille', 'l’outil Oreille'], text: 'Dans {t} et dans l’outil Théorie, refais les séries où tu étais sous 80 %.' },
+        { mod: 'Révisions', prio: 2, tool: ['#/outils/oreille', 'l’outil Oreille'], text: 'Dans {t} et dans l’outil Théorie, refais les séries où tu étais sous 80 %.' },
       ] },
     ],
     validation: [
@@ -235,25 +235,28 @@ export const LEVELS = [
         { mod: 'Théorie', lesson: 'n2-th5', text: '{l}' },
         { mod: 'Oreille', lesson: 'n2-or5', text: '{l}' },
         { mod: 'Impro', lesson: 'n2-im1', text: '{l}' },
-        { mod: 'Compléments', piece: 'clair-de-lune', text: '{p} : mesures 1 à 26.' },
+        { mod: 'Compléments', prio: 2, piece: 'clair-de-lune', text: '{p} : mesures 1 à 26.' },
       ] },
       { title: 'L’harmonie', focus: 'Enchaîner ; l’harmonie guide le phrasé.', tasks: [
         { mod: 'Pièce', piece: 'op15-1', text: '{p} : enchaînement complet, transitions m. 24-25 et 48-49.' },
         { mod: 'Interprétation', lesson: 'n2-i2', text: '{l}' },
+        { mod: 'Technique', lesson: 'n2-t7', text: '{l}' },
+        { mod: 'Théorie', lesson: 'n2-th-chopin', text: '{l}' },
         { mod: 'Théorie', lesson: 'n2-th-debussy', text: '{l}' },
         { mod: 'Oreille', lesson: 'n2-or6', text: '{l}' },
         { mod: 'Lecture', lesson: 'n2-l4', text: '{l}' },
         { mod: 'Impro', lesson: 'n2-im2', text: '{l}' },
-        { mod: 'Compléments', piece: 'clair-de-lune', text: '{p} : mesures 27 à 50 (arpèges, pédale).' },
+        { mod: 'Compléments', prio: 2, piece: 'clair-de-lune', text: '{p} : mesures 27 à 50 (arpèges, pédale).' },
       ] },
       { title: 'Vue d’ensemble', focus: 'Tempo final ; analyse ; pianissimo.', tasks: [
         { mod: 'Pièce', piece: 'op15-1', text: '{p} : tempo final (Chopin indique ♩ = 69 pour l’Andante ; vise 60 à 69), toute la pièce.' },
         { mod: 'Interprétation', lesson: 'n2-i4', text: '{l}' },
         { mod: 'Technique', lesson: 'n2-t4', text: '{l}' },
         { mod: 'Théorie', lesson: 'n2-th6', text: '{l}' },
+        { mod: 'Théorie', lesson: 'n2-th-prelude4', text: '{l} — à faire avec la leçon d’improvisation « le prélude de Chopin ».' },
         { mod: 'Oreille', lesson: 'n2-or7', text: '{l}' },
         { mod: 'Impro', lesson: 'n2-im4', text: '{l}' },
-        { mod: 'Compléments', piece: 'clair-de-lune', text: '{p} : mesures 51 à la fin.' },
+        { mod: 'Compléments', prio: 2, piece: 'clair-de-lune', text: '{p} : mesures 51 à la fin.' },
       ] },
       { title: 'Interpréter et valider', focus: 'Debussy et Chopin, deux sons ; enregistrement ; grille.', tasks: [
         { mod: 'Interprétation', lesson: 'n2-i5', text: '{l}' },

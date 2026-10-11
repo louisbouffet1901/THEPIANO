@@ -40,6 +40,12 @@ export default [
     title: 'Le contraste : deux mondes dans une pièce',
     summary: 'Quand tout change d’une section à l’autre : construire deux caractères opposés, et les relier.',
     goals: ['Identifier les paramètres d’un contraste.', 'Construire les deux caractères de l’op. 15 n° 1.', 'Préparer les deux transitions.'],
+    essentials: [
+      'Un contraste réussi change <b>presque tout</b> à la fois : mode, tempo, nuances, registre, texture, toucher.',
+      'L’Andante et le Con fuoco de l’op. 15 sont deux personnages : un chant intime, un orage.',
+      'Les <b>transitions</b> se préparent : le silence de la mesure 24 fait partie de la musique.',
+    ],
+    goal: 'à l’enregistrement, on entend deux caractères opposés et deux transitions maîtrisées (mesures 24-25 et 48-49).',
     body: W => `
 <p>Le Nocturne op. 15 n° 1 met face à face deux mondes : un chant tranquille en fa majeur et un orage en fa mineur. Un contraste réussi ne se limite pas à « plus vite et plus fort » : presque tous les paramètres changent en même temps. Pour l’interprète, il s’agit de devenir deux personnages différents… et de passer de l’un à l’autre.</p>
 
@@ -80,6 +86,12 @@ ${W.checklist({ id: 'n2-i1-check', title: 'Je vérifie', items: ['Les deux secti
     title: 'L’harmonie guide l’expression',
     summary: 'Les bonnes nuances ne se décident pas au hasard : la plupart se lisent dans l’harmonie.',
     goals: ['Relier tension harmonique, nuance et tempo.', 'Repérer dissonances, résolutions et accords de couleur.', 'Construire le phrasé des mesures 1 à 8 de l’op. 15 n° 1 à partir de l’harmonie.'],
+    essentials: [
+      'La <b>dissonance appuie</b>, la résolution s’efface.',
+      'Plus l’harmonie s’éloigne de la tonique, plus la tension monte ; le retour à la tonique détend.',
+      'Un accord inattendu (emprunt, cadence rompue, modulation) se <b>colore</b> : plus doux, avec un léger temps de plus.',
+    ],
+    goal: 'tu as annoté tensions et détentes des mesures 1 à 8 de l’op. 15, et ton phrasé les suit à l’enregistrement.',
     body: W => `
 <p>Les grands interprètes semblent improviser leurs nuances ; en réalité, la plupart découlent de l’harmonie. Comprendre où la musique se tend et où elle se détend donne un phrasé naturel, que l’auditeur ressent sans pouvoir l’expliquer.</p>
 
@@ -117,6 +129,12 @@ ${W.links([W.informance('/content/pages/206-harmony-history-style', 'Harmony, Hi
     title: 'Les ornements chopiniens',
     summary: 'Des vocalises écrites : les jouer comme une voix qui chante, sur le temps et sans raideur.',
     goals: ['Comprendre l’origine vocale des ornements de Chopin.', 'Placer les petites notes sur le temps, avec la basse.', 'Jouer une fioriture souplement, la main gauche restant stable.'],
+    essentials: [
+      'Les ornements de Chopin sont des <b>vocalises</b> : souples, chantés, jamais mécaniques.',
+      'Les petites notes commencent <b>sur le temps</b>, avec la basse.',
+      'Une fioriture n’a que deux <b>points de rencontre</b> avec la main gauche, le départ et l’arrivée ; la main gauche ne ralentit pas.',
+    ],
+    goal: 'les fioritures des mesures 20 et 54 sont souples, et la main gauche reste régulière pendant qu’elles se déroulent.',
     body: W => `
 <p>Chopin adorait l’opéra italien de son temps, Bellini et les grands chanteurs qu’il entendait à Paris. Ses ornements sont des <b>vocalises écrites</b> : ils doivent sonner chantés, souples, presque improvisés — jamais comme des exercices de vélocité. On les entend, on ne les remarque pas.</p>
 
@@ -151,6 +169,12 @@ ${W.links([W.informance('/content/browse/technique/ornaments', 'Ornaments', 'Onl
     title: 'Analyse de l’op. 15 n° 1',
     summary: 'Le plan, l’harmonie des huit premières mesures, et ce qu’ils changent au jeu.',
     goals: ['Connaître le plan de la pièce, phrase par phrase.', 'Lire l’harmonie des mesures 1 à 8.', 'En tirer des décisions d’interprétation.'],
+    essentials: [
+      'Plan : <b>A</b> (m. 1-24, chant en fa majeur), <b>B</b> (m. 25-48, Con fuoco en fa mineur, deux vagues), <b>A′</b> (m. 49-74, reprise ornée).',
+      'Mesures 1 à 8 : une pédale de tonique, puis une basse qui descend pas à pas, colorée de dominantes secondaires.',
+      'L’analyse donne des décisions de jeu : où pousser, où retenir, où respirer.',
+    ],
+    goal: 'tu racontes de mémoire le plan de la pièce et l’harmonie des mesures 1 à 8, et tu en tires trois décisions de jeu.',
     body: W => `
 <h2>Le plan, phrase par phrase</h2>
 ${W.diagram('form', { total: 74, sections: [
@@ -203,10 +227,16 @@ ${W.exo('À faire', `<ol>
   },
 
   {
-    id: 'n2-i5', minutes: 20,
+    id: 'n2-i5', minutes: 20, prio: 2,
     title: 'Debussy : le son avant la note',
     summary: 'Après Chopin, une autre façon de faire sonner le piano : couleur, résonance, nuances extrêmes.',
     goals: ['Comprendre ce qui distingue l’écriture de Debussy de celle de Chopin.', 'Travailler un toucher de couleur.', 'Utiliser la pédale comme une résonance.'],
+    essentials: [
+      'Chez Debussy, le <b>son d’ensemble</b> compte plus que la note isolée : couleur et résonance.',
+      'Appuyer plutôt que frapper : le doigt part de la touche ; la pulpe du doigt pour les accords doux.',
+      'La pédale est une <b>résonance</b> : plus longue, changée partiellement ; le rubato fait respirer toute la texture.',
+    ],
+    goal: 'les accords parallèles de Clair de lune (mesures 15 à 18) sonnent fondus et égaux, la voix du haut légèrement en dehors.',
     body: W => `
 <p>« Il faut faire oublier que le piano a des marteaux » : la phrase est attribuée à Debussy par ses interprètes. Chez lui, la note isolée compte moins que le <b>son d’ensemble</b> — une couleur, une résonance qui se prolonge et se transforme. <i>Clair de lune</i> est une excellente porte d’entrée dans ce monde.</p>
 

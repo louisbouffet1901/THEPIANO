@@ -45,6 +45,12 @@ export default [
     title: 'Lire en motifs',
     summary: 'Les bons lecteurs ne lisent pas des notes, mais des formes : gammes, arpèges, marches, formules.',
     goals: ['Reconnaître d’un coup d’œil les motifs courants.', 'Repérer les répétitions et les marches avant de jouer.', 'Lire une formule de main gauche comme un tout.'],
+    essentials: [
+      'Lire des <b>formes</b>, pas des notes : gammes, arpèges, marches, répétitions, formules de main gauche.',
+      'Repérer répétitions et marches <b>avant</b> de jouer.',
+      'Moins de choses à décoder, plus de temps pour regarder devant.',
+    ],
+    goal: 'avant chaque extrait, tu nommes au moins deux motifs (marche, répétition, arpège…), puis tu le joues sans t’arrêter.',
     body: W => `
 <p>Un lecteur débutant déchiffre note après note ; un lecteur expérimenté reconnaît des <b>formes</b>, comme on lit des mots entiers plutôt que des lettres. C’est la clé de la vitesse en lecture à vue : moins de choses à décoder, donc plus de temps pour regarder devant.</p>
 ${W.score({ abc: PATTERNS, title: 'Les motifs les plus courants', bpm: 80, startBpm: 66, caption: 'Chaque motif a un aspect visuel immédiat : une gamme « marche » de ligne en interligne, un arpège saute de ligne en ligne (ou d’interligne en interligne), une marche reproduit le même dessin un cran plus haut.' })}
@@ -72,6 +78,12 @@ ${W.links([W.informance('/content/pages/136-advanced-sight-reading-curriculum', 
     title: 'Tonalités à trois et quatre altérations',
     summary: 'Penser dans la tonalité, plutôt que corriger chaque note de l’armure.',
     goals: ['Connaître la géographie des tonalités jusqu’à quatre altérations.', 'Se préparer en jouant gamme et cadence.', 'Repérer les altérations accidentelles qui comptent.'],
+    essentials: [
+      '<b>Penser dans la tonalité</b> : la main sait d’avance quelles touches noires font partie du paysage.',
+      'Se préparer en vingt secondes : armure, majeur ou mineur, gamme et cadence sur une octave.',
+      'Pièges : la sensible des tonalités mineures (mi♮ en fa mineur, si♮ en do mineur…) et les altérations qui ne valent que pour la mesure.',
+    ],
+    goal: '85 % de notes justes en rythme sur cinq extraits à trois ou quatre altérations.',
     body: W => `
 <p>Avec trois ou quatre altérations, lire chaque note puis « ajouter le dièse » devient trop lent et source d’erreurs. Il faut <b>penser dans la tonalité</b> : la main sait d’avance quelles touches noires appartiennent au paysage.</p>
 
@@ -107,6 +119,12 @@ ${W.sight({ level: '3', levels: ['1rh', '1lh', '2', '3', '4'], minFifths: 3, tit
     title: 'Rythmes : 6/8, polyrythmies, irrégularités',
     summary: 'Mesures composées, trois contre deux, quatre contre trois : les comprendre avant de les lire.',
     goals: ['Distinguer mesures simples et composées (3/4 et 6/8).', 'Jouer trois contre deux et quatre contre trois.', 'Lire les groupes irréguliers sans perdre la pulsation.'],
+    essentials: [
+      '3/4 : trois temps divisés en deux ; 6/8 : deux temps divisés en trois. La croche reste la même, la pulsation change.',
+      '<b>Trois contre deux</b> : on divise le temps en six ; ensemble, on entend long – bref – bref – long.',
+      'Les groupes irréguliers se lisent par leurs <b>points de rencontre</b> avec la pulsation.',
+    ],
+    goal: 'tu joues trois contre deux régulièrement au métronome, et tu lis un extrait en 6/8 en rythme.',
     body: W => `
 <h2>3/4 et 6/8 : même nombre de croches, autre pulsation</h2>
 <p>Les deux mesures contiennent six croches. Mais 3/4 compte <b>trois temps</b> divisés en deux, et 6/8 <b>deux temps</b> divisés en trois (une noire pointée par temps). L’op. 15 n° 1 passe deux fois de l’un à l’autre (mesures 36 et 48) : la pulsation change, la croche reste la même.</p>
@@ -136,6 +154,12 @@ ${W.sight({ level: '2', levels: ['1rh', '1lh', '2', '3', '4'], compound: true, t
     title: 'Lire en avance',
     summary: 'Les yeux devant les mains : entraîner l’empan de lecture.',
     goals: ['Comprendre l’écart entre les yeux et les mains.', 'Lire la mesure suivante pendant qu’on joue.', 'Garder les yeux sur la partition.'],
+    essentials: [
+      'Les yeux sont toujours <b>en avance</b> sur les mains : cet écart laisse le temps de préparer les gestes.',
+      'Exercices : « Regard en avant », photographier une mesure, profiter des notes longues.',
+      'Les yeux restent sur la partition ; les sauts se sentent sous la main.',
+    ],
+    goal: '80 % de notes justes sur cinq extraits de niveau 4, avec l’option « Regard en avant ».',
     body: W => `
 <p>Chez les bons lecteurs, les yeux sont toujours en avance sur les mains : d’un ou deux temps chez le débutant, d’une mesure ou plus chez l’expert. Cet écart, c’est ce qui laisse le temps de préparer les gestes. Il s’entraîne.</p>
 

@@ -4,6 +4,7 @@ import { midi } from './midi.js';
 import { store } from './store.js';
 import { h, clamp, mean, median } from './util.js';
 import { corrected } from './latency.js';
+import { scheduleCountIn, countInPosition } from './countin.js';
 
 /** Plage [q0, q1[ (en noires) ou null : filtre d'événements. */
 const inRange = (range, t) => !range || (t >= range[0] - 1e-6 && t < range[1] - 1e-6);
@@ -153,22 +154,81 @@ function rebuildOrnaments(track, ornEls) {
   return out;
 }
 
-/** Réalise un ornement (secondes) : trille vive, gruppetto, mordants, puis la note tenue. */
+/**
+ * Trille réalisée en valeurs mesurées, comme la joue un pianiste dans un nocturne :
+ * - les notes tombent sur une subdivision régulière du temps (4, 6, 8, 12 ou 16 par noire, ≈ 9 notes par seconde),
+ *   et non à une vitesse fixe qui ne correspond à aucun rythme ;
+ * - départ sur la note supérieure, sauf si la note précédente est déjà la note supérieure (on part alors de la note
+ *   principale, pour ne pas la répéter) ; avec des petites notes avant la trille (préfixe la♮ – si♭), elles prennent
+ *   les premières subdivisions et la trille continue sans répéter la note principale ;
+ * - la terminaison écrite (petites notes après la trille) est jouée à la même vitesse, juste avant la note suivante,
+ *   et la trille finit sur la note principale (au besoin la première note dure deux subdivisions) ;
+ * - sans terminaison : la trille va jusqu'au bout si la note suivante est voisine (elle sert de résolution) ou si une
+ *   fioriture enchaîne, sinon
+ *   la note principale est tenue sur la ou les dernières subdivisions.
+ * Renvoie { notes, used } (used : petites notes absorbées par la réalisation) ou null.
+ */
+export function realizeTrill(e, evs, toSec) {
+  const q0 = e.ag && e.g0 != null ? e.g0 : e.t;  // début écrit de la trille (avant son préfixe)
+  const qEnd = e.t + e.dur;                         // fin écrite (début de la note suivante)
+  const T0 = toSec(q0), T1 = toSec(qEnd);
+  const sec = T1 - T0, qLen = qEnd - q0;
+  if (!(sec > 0.05) || !(qLen > 0)) return null;
+  const near = (a, b) => a != null && Math.abs(a - b) < 1e-3;
+  const pre = evs.filter(x => x.grace && x.track === e.track && !x.gterm && near(x.g0, q0)).sort((a, b) => a.gk - b.gk);
+  const post = evs.filter(x => x.grace && x.track === e.track && x.gterm && near(x.g0, qEnd)).sort((a, b) => a.gk - b.gk);
+  // note précédente de la même voix (la plus proche en hauteur si c'est un accord)
+  let prevT = -Infinity, prevPitch = null;
+  for (const x of evs) {
+    if (x.grace || x.track !== e.track || x === e || x.t >= q0 - 1e-6) continue;
+    if (x.t > prevT + 1e-6) { prevT = x.t; prevPitch = x.pitch; }
+    else if (Math.abs(x.t - prevT) <= 1e-6 && Math.abs(x.pitch - e.pitch) < Math.abs(prevPitch - e.pitch)) prevPitch = x.pitch;
+  }
+  const spq = sec / qLen;
+  let k = [4, 6, 8, 12, 16].reduce((b, c) => (Math.abs(spq / c - 0.11) < Math.abs(spq / b - 0.11) ? c : b), 8);
+  let N = Math.max(4, Math.round(qLen * k));
+  while (N < pre.length + post.length + 4 && k < 32) { k *= 2; N = Math.round(qLen * k); }
+  const slot = sec / N;
+  const up = e.orn.upper, main = e.pitch;
+  const other = p => (p === up ? main : up);
+  const pairs = []; // [hauteur, nombre de subdivisions, rôle]
+  pre.forEach(g => pairs.push([g.pitch, 1, 'pre']));
+  // sans terminaison : la trille continue jusqu'au bout si la note suivante est voisine (elle sert de résolution),
+  // sinon la note principale est tenue sur la dernière subdivision
+  const nextEv = evs.find(x => !x.grace && x.track === e.track && x !== e && near(x.ag && x.g0 != null ? x.g0 : x.t, qEnd));
+  const flowsOn = nextEv && (Math.abs(nextEv.pitch - main) <= 2 || nextEv.dur <= 0.26); // note voisine, ou fioriture qui suit
+  const hold = post.length || flowsOn ? 0 : (N >= 8 ? 2 : 1);
+  let n = N - pre.length - post.length - hold;
+  let first = pre.length ? (pre[pre.length - 1].pitch === main ? up : main) : (prevPitch === up ? main : up);
+  if (n >= 2) {
+    const endsOnMain = n % 2 === 1 ? first === main : first === up;
+    if (!endsOnMain) { pairs.push([first, 2, 'alt']); n -= 2; first = other(first); }
+    for (let i = 0; i < n; i++) pairs.push([i % 2 === 0 ? first : other(first), 1, 'alt']);
+  } else {
+    pairs.push([main, Math.max(1, n), 'alt']);
+  }
+  if (hold) { const last = pairs[pairs.length - 1]; if (last[0] === main) last[1] += hold; else pairs.push([main, hold, 'alt']); }
+  post.forEach(g => pairs.push([g.pitch, 1, 'post']));
+  const notes = [];
+  let t = T0;
+  pairs.forEach(([pitch, slots, role], i) => {
+    const vel = i === 0 ? e.vel : role === 'post' ? e.vel * 0.88 : (pitch === main ? e.vel * 0.86 : e.vel * 0.8);
+    notes.push({ ...e, pitch, ts: t, te: t + slots * slot * 0.97, vel, orn: null, grace: false, trill: true, ag: 0 });
+    t += slots * slot;
+  });
+  return { notes, used: [...pre, ...post] };
+}
+
+/** Réalise un ornement (secondes) : gruppetto, mordants, puis la note tenue (les trilles : realizeTrill). */
 function expandOrnament(e) {
-  const { type, upper, lower, prefixed, prefixLast } = e.orn;
-  const end = e.te - (e.orn.termGap || 0); // place laissée aux notes de terminaison
-  const len = Math.max(0.05, end - e.ts);
+  const { type, upper, lower } = e.orn;
+  const len = Math.max(0.05, e.te - e.ts);
   const res = [];
   const add = (pitch, ts, te, k) => res.push({ ...e, pitch, ts, te, vel: k ? e.vel * 0.86 : e.vel, orn: null });
   if (type === 'trill' || type === 'trillh') {
-    const step = Math.max(0.055, Math.min(0.11, len / Math.max(2, Math.round(len / 0.085))));
-    const n = Math.max(3, Math.floor((len * 0.8) / step));
-    let t = e.ts, k = 0;
-    // Sans préfixe : départ sur la note supérieure. Petites notes qui finissent sur la note principale
-    // (la♮ – si♭ avant une trille sur si♭) : la trille continue sur la note supérieure, sans répéter si♭.
-    const first = prefixed ? (prefixLast === e.pitch ? 1 : 0) : 1;
-    for (; k < n - 1 && t + step < end - 0.05; k++, t += step) add((k + first) % 2 ? upper : e.pitch, t, t + step * 0.95, k);
-    add(e.pitch, t, end, k);
+    // trille isolée (sans contexte) : quatre subdivisions puis la note
+    const q = Math.min(0.1, len / 5);
+    add(upper, e.ts, e.ts + q, 0); add(e.pitch, e.ts + q, e.ts + 2 * q, 1); add(upper, e.ts + 2 * q, e.ts + 3 * q, 2); add(e.pitch, e.ts + 3 * q, e.te, 3);
   } else if (type === 'turn') {
     const q = Math.min(0.09, len / 5);
     add(upper, e.ts, e.ts + q, 0); add(e.pitch, e.ts + q, e.ts + 2 * q, 1); add(lower, e.ts + 2 * q, e.ts + 3 * q, 2); add(e.pitch, e.ts + 3 * q, e.te, 3);
@@ -421,6 +481,20 @@ export class Player {
       const tr = evs.find(e => e.orn && e.track === tg.track && Math.abs(e.te - tg.at) < 0.03);
       if (tr) tr.orn = { ...tr.orn, termGap: tg.gap };
     }
+    // Trilles : réalisées en valeurs mesurées sur la pulsation, préfixe et terminaison compris (voir realizeTrill)
+    const trills = evs.filter(e => e.orn && (e.orn.type === 'trill' || e.orn.type === 'trillh'));
+    if (trills.length) {
+      const drop = new Set();
+      const added = [];
+      for (const e of trills) {
+        const r = realizeTrill(e, evs, q => tmap(q) - shift);
+        if (!r) continue;
+        drop.add(e);
+        r.used.forEach(x => drop.add(x));
+        added.push(...r.notes);
+      }
+      evs = evs.filter(e => !drop.has(e)).concat(added);
+    }
     // Pédale simulée : chaque note sonne jusqu'au prochain changement de pédale (ou au relâchement écrit).
     if (o.pedal && o.pedal.length && !(this._useMidiOut())) {
       const changes = o.pedal.filter(b => !range || (b >= range[0] - 1e-6 && b <= range[1] + 1e-6)).map(b => tmap(b) - shift);
@@ -429,7 +503,7 @@ export class Player {
       if (!changes.length) changes.push(0);
       const lastBefore = (list, t) => { let v = -Infinity; for (const x of list) if (x <= t + 0.005 && x > v) v = x; return v; };
       for (const e of evs) {
-        if (e.orn) continue; // une trille s'arrête à sa valeur écrite (elle est réalisée plus bas)
+        if (e.orn || e.trill) continue; // une trille s'arrête à sa valeur écrite
         if (e.ts + 1e-6 < changes[0] || e.ts >= pedalEnd) continue;
         if (lastBefore(ups, e.ts) > lastBefore(changes, e.ts)) continue; // pédale relevée à ce moment
         const nextUp = ups.find(c => c > e.ts + 0.01) ?? Infinity;
@@ -474,17 +548,19 @@ export class Player {
     this.prepare();
     this.playing = true;
     const lead = 0.12;
-    let countIn = 0;
     const o = this.opts;
     const spq = 60 / this.qpm;
+    this.clickNodes = [];
+    this.countPlan = null;
     if (o.countIn) {
-      const beatsIn = Math.round(this.score.barQ / this.score.beatQ);
+      // décompte commun (countin.js) : au moins quatre temps, premier clic à l'heure
+      const beatSec = this.score.beatQ * spq;
       const pickupBeats = (o.range && o.range[0] > 1e-6) ? 0 : this.score.pickupQ / this.score.beatQ;
-      const t0 = audio.now() + lead;
-      for (let i = 0; i < beatsIn; i++) audio.click(t0 + i * this.score.beatQ * spq, i === 0 ? 'accent' : 'beat');
-      countIn = (beatsIn - pickupBeats) * this.score.beatQ * spq;
-    }
-    this.t0 = audio.now() + lead + countIn;
+      const plan = scheduleCountIn({ beatsPerBar: this.score.barQ / this.score.beatQ, beatSec, sub: o.countSub || 0 });
+      this.countPlan = plan;
+      this.clickNodes.push(...plan.nodes);
+      this.t0 = plan.end - pickupBeats * beatSec;
+    } else this.t0 = audio.now() + lead;
     const useMidi = this._useMidiOut();
     for (const e of this.prepared) {
       if (useMidi) {
@@ -505,7 +581,7 @@ export class Player {
       midi.outPedal(false, audio.ctxToPerf(this.t0 + this.endTime));
     }
     if (o.click) {
-      for (const g of beatGrid(this.score)) if (inRange(o.range, g.q)) audio.click(this.t0 + this.tmap(g.q), g.isBar ? 'accent' : 'beat');
+      for (const g of beatGrid(this.score)) if (inRange(o.range, g.q)) this.clickNodes.push(audio.click(this.t0 + this.tmap(g.q), g.isBar ? 'accent' : 'beat'));
     }
     this._emit('play');
     this._loop();
@@ -515,6 +591,11 @@ export class Player {
     const on = new Set();
     const frame = () => {
       if (!this.playing) return;
+      if (this.countPlan) {
+        const pos = countInPosition(this.countPlan);
+        this._emit('count', pos.done ? null : { ...pos, total: this.countPlan.beats, bars: this.countPlan.bars });
+        if (pos.done) this.countPlan = null;
+      }
       const now = audio.now() - this.t0;
       const cur = new Set();
       for (const e of this.prepared) {
@@ -541,6 +622,8 @@ export class Player {
     this.playing = false;
     cancelAnimationFrame(this.raf);
     audio.stopAll(this.id);
+    if (!natural) audio.cancelClicks(this.clickNodes);
+    this.clickNodes = [];
     if (this._useMidiOut() && was && !natural) midi.panic();
     this.score.clear('n-on');
     if (was) this._emit('stop');
@@ -676,12 +759,12 @@ export class TempoReader {
     this.played = [];
     this.active = true;
     sc.clear();
-    const beatsIn = Math.round(sc.barQ / sc.beatQ);
     const beatSec = sc.beatQ * spq;
-    const t0 = audio.now() + 0.15;
-    this.clickNodes = [];
-    for (let i = 0; i < beatsIn; i++) this.clickNodes.push(audio.click(t0 + i * beatSec, i === 0 ? 'accent' : 'beat'));
-    const startMusic = t0 + beatsIn * beatSec - (q0 > 1e-6 ? 0 : sc.pickupQ * spq);
+    // décompte commun (countin.js) : au moins quatre temps, premier clic à l'heure, affichage calé sur le son
+    const plan = scheduleCountIn({ beatsPerBar: sc.barQ / sc.beatQ, beatSec, sub: o.countSub || 0 });
+    this.countPlan = plan;
+    this.clickNodes = plan.nodes.slice();
+    const startMusic = plan.end - (q0 > 1e-6 ? 0 : sc.pickupQ * spq);
     // clics pendant le morceau
     if (o.click !== false) {
       for (const g of beatGrid(sc)) if (inRange(o.range, g.q)) this.clickNodes.push(audio.click(startMusic + (g.q - q0) * spq, g.isBar ? 'accent' : 'beat'));
@@ -694,8 +777,14 @@ export class TempoReader {
     window.__tempoReader = this; // accès de test (automatisation)
     // curseur
     const on = new Set();
+    let counting = true;
     const frame = () => {
       if (!this.active) return;
+      if (counting) {
+        const pos = countInPosition(plan);
+        o.onCount?.(pos.done || performance.now() >= this.zeroPerf ? null : { ...pos, total: plan.beats, bars: plan.bars });
+        if (pos.done || performance.now() >= this.zeroPerf) counting = false;
+      }
       const nowQ = (performance.now() - this.zeroPerf) / this.spqMs + this.q0;
       const cur = new Set();
       for (const s of this.steps) {

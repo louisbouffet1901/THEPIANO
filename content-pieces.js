@@ -157,8 +157,8 @@ ${W.listen([
 <li><b>La partie en triolets</b> et le <i>più agitato</i> : la main gauche passe aux triolets, le thème s’épaissit en accords et en octaves. Travaille les sauts de la main gauche lentement, en regardant le clavier.</li>
 <li><b>La fin</b> s’éteint <i>pp</i>, avec des <i>ritenuto</i> successifs : ralentis progressivement, sans arrêter le mouvement.</li>
 </ul>
-${W.tip('Lien avec le module d’improvisation', '<p>L’accompagnement en arpèges élargis est exactement celui de l’accompagnateur « arpèges élargis » : improviser dessus t’habituera à cette texture.</p>')}
-${W.improv({ preset: 'n1-arpege', presets: ['n1-arpege'], title: 'Arpèges élargis' })}
+${W.tip('Improviser dans ce style', '<p>La leçon <a href="#/lecon/n1-im2">« La romance en arpèges mineurs »</a> reprend cette écriture : main gauche déroulée jusqu’à la dixième, une pédale par accord, mélodie en valeurs longues qui soupire. Improviser dessus, dans la même tonalité de mi mineur, t’habituera à la texture avant de la lire chez Liszt.</p>')}
+${W.improv({ preset: 'romance-mi', presets: ['romance-mi', 'romance-la', 'n1-arpege'], title: 'Improviser une romance' })}
 <h2>Ta partition dans l’appli</h2>
 ${W.localScore({ piece: 'liszt-s169', intro: 'La partition de la romance n’est pas encore intégrée à l’appli. Si tu en as un fichier (par exemple exporté de MuseScore), importe-le : tu pourras travailler et faire analyser chaque passage.' })}
 ${W.listen([

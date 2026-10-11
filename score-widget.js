@@ -217,9 +217,11 @@ export function mountScore(el, cfg) {
       score.clear(); dimAll();
       results.innerHTML = '';
       tempoBtn.classList.add('on');
-      status.textContent = ladder && ladder.running ? `Montée de tempo · ${beatLabel} = ${bpm} · ${ladder.clean}/3 passages propres — décompte, puis joue.` : `${rangeLabel()} · décompte d’une mesure, puis joue en suivant le curseur.`;
+      const intro = ladder && ladder.running ? `Montée de tempo · ${beatLabel} = ${bpm} · ${ladder.clean}/3 passages propres — décompte, puis joue.` : `${rangeLabel()} · décompte, puis joue en suivant le curseur.`;
+      status.textContent = intro;
       reader = new TempoReader(score, {
         hands, qpm: bpm * score.beatQ, range: rangeQ(), click: clickOn || (ladder && ladder.running),
+        onCount: pos => { status.textContent = pos ? `Décompte : ${pos.waiting ? '…' : pos.inBar}${pos.bars > 1 ? ` (mesure ${pos.bar} sur ${pos.bars})` : ''} — puis joue.` : intro.replace(/décompte, puis /, ''); },
         onDone: res => {
           reader = null;
           results.innerHTML = `<span>Notes justes <b>${fmtPct(res.accuracy)}</b></span><span>Dans le temps <b>${fmtPct(res.precision)}</b></span><span>Écart moyen <b>${fmtNum(res.meanAbsMs)} ms</b></span><span>Notes en trop <b>${res.extra}</b></span>`;
@@ -328,7 +330,7 @@ export function mountScore(el, cfg) {
     const demoCurve = cfg.tempoMap ? demoTempoCurve(cfg.tempoMap, bars, measures) : null;
     takeHost.innerHTML = '';
     takeHost.append(renderAnalysis({
-      res, beatLabel, range: [m0, m1], hands, prev, ref, demoCurve,
+      res, beatLabel, range: [m0, m1], hands, prev, ref, demoCurve, focus: cfg.focus,
       onAction: (a) => {
         if (a.type === 'loop' && a.from != null) {
           setRange([a.from, a.to]);

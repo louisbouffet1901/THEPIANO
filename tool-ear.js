@@ -1,10 +1,12 @@
 // Exercices d'oreille et de théorie : écoute, chant au micro, jeu au piano, rythme, lecture.
+import { scheduleCountIn } from './countin.js';
 import { h, esc, pick, shuffle, randInt, fmtPct, noteNameFr, capitalize, median, isBlack, INTERVALS, CHORDS, SCALES, KEYS, midiToAbc, pc } from './util.js';
 import { audio } from './audio.js';
 import { midi } from './midi.js';
 import { store } from './store.js';
 import { keyboard } from './diagrams.js';
 import { pitch, octaveDiff, sungName } from './pitch.js';
+import { VoiceTrace, coachLine, adviceFor, seriesAdvice, voiceRange, voiceRangeLabel } from './voice.js';
 import { inputLatency } from './latency.js';
 
 const PLAY = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M7 4.5v15l12-7.5-12-7.5z" fill="currentColor"/></svg>';
@@ -175,7 +177,7 @@ function rhythmAbc(seq, meter, bars) {
 const TIPS = {
   highlow: ['Chante (ou fredonne) les deux notes : ta voix sent très bien si elle monte ou si elle descend.', 'Imagine un ascenseur : la deuxième note est-elle un étage au-dessus ou en dessous ?', 'Les petits écarts sont difficiles pour tout le monde au début. Réécoute autant que tu veux : c’est en comparant qu’on progresse.'],
   contour: ['Dessine le chemin avec la main pendant l’écoute : elle monte, elle descend.', 'Fredonne la mélodie à mi-voix : ta voix retrouve le dessin plus vite que ta tête.', 'Concentre-toi d’abord sur la note la plus haute (ou la plus basse) : où se trouve-t-elle ?'],
-  sing: ['Avant de chanter, entends la note dans ta tête pendant une seconde de silence.', 'Commence bouche fermée (« mmm ») : c’est plus facile de trouver la hauteur, puis ouvre sur « la ».', 'Trop bas ou trop haut ? Ne force pas : glisse doucement, comme une sirène, jusqu’à ce que l’aiguille se centre.', 'Chante dans ton octave confortable : peu importe que tu sois une octave en dessous du piano.', 'Respire avant de chanter, puis tiens le son calmement, sans pousser : un son tenu et détendu est plus juste.', 'Fais d’abord la note au piano, puis chante-la en même temps, puis seul : c’est l’ordre naturel.'],
+  sing: ['Regarde la ligne pendant que tu chantes : si elle est sous la bande verte, monte doucement ; au-dessus, descends. Tes yeux guident ta voix.', 'Pas de note dans la voix ? Chante d’abord n’importe quelle note, puis glisse lentement jusqu’à la bande verte : c’est plus facile que de viser du premier coup.', 'Avant de chanter, entends la note dans ta tête pendant une seconde de silence.', 'Commence bouche fermée (« mmm ») : c’est plus facile de trouver la hauteur, puis ouvre sur « la ».', 'Trop bas ou trop haut ? Ne force pas : glisse doucement, comme une sirène, jusqu’à ce que la ligne entre dans la bande verte.', 'Chante dans ton octave confortable : peu importe que tu sois une octave en dessous du piano.', 'Respire avant de chanter, puis tiens le son calmement, sans pousser : un son tenu et détendu est plus juste.', 'Fais d’abord la note au piano, puis chante-la en même temps, puis seul : c’est l’ordre naturel.'],
   degree: ['Juste après la cadence, chante intérieurement la tonique (1) et garde-la en tête.', 'Après ta réponse, écoute la résolution : la note glisse vers 1 (ou vers 8). C’est ce chemin que ton oreille apprend.', 'N’essaie pas de calculer l’intervalle : écoute l’effet. 1 repos, 3 lumineux, 5 ouvert, 7 tendu vers le haut.', 'Si tu hésites, chante depuis 1 en montant (1, 2, 3…) jusqu’à retrouver la note.', 'Le sens de la résolution est un indice : une note qui veut descendre vers 1 est 2, 3 ou 4 ; une note qui veut monter vers 8 est 7 (ou 6).'],
   echo: ['Chante la mélodie avant de la jouer : si tu peux la chanter, tu peux la retrouver.', 'Repère d’abord la direction (monte, descend), puis la taille des pas : notes voisines ou saut.', 'Écoute la dernière note : très souvent, elle revient sur la tonique.', 'Ne cherche pas au hasard sur le clavier : pense en degrés (1, 2, 3…), puis joue.'],
   rhythm: ['Compte les temps à voix basse (« 1, 2, 3, 4 ») pendant l’écoute.', 'Chante le rythme sur « ta » avant de le taper.', 'Les croches se comptent « 1 et 2 et » : la deuxième croche tombe sur le « et ».', 'Bouge un peu avec la pulsation (le pied, la tête) : le rythme se place tout seul par rapport à elle.', 'Une note longue continue de compter : ne la raccourcis pas, attends le temps suivant.'],
@@ -198,6 +200,29 @@ const tipFor = (kind, q) => q.tip || pick(TIPS[q.tipKind || kind] || TIPS.degree
 /* ================================================================== */
 /* Générateurs de questions                                            */
 /* ================================================================== */
+/* Motifs de tes pièces (V4) : vraies notes (MIDI) et durées (en noires), relevées sur les partitions vérifiées. */
+const PIECE_MOTIFS = {
+  'op55-a': { src: 'Nocturne op. 55 n° 1, le thème (mesures 0 à 1)', notes: [72, 77, 75, 73, 72], durs: [2, 1, 1, 1, 2], tonic: 5, mode: 'min', names: 'do – fa – mi♭ – ré♭ – do' },
+  'op55-b': { src: 'Nocturne op. 55 n° 1, la broderie (mesure 2)', notes: [72, 71, 72, 73, 72], durs: [0.75, 0.25, 0.75, 0.25, 2], tonic: 5, mode: 'min', names: 'do – si♮ – do – ré♭ – do' },
+  'op55-c': { src: 'Nocturne op. 55 n° 1, le thème entier (mesures 0 à 2)', notes: [72, 77, 75, 73, 72, 71, 72, 73, 72], durs: [2, 1, 1, 1, 0.75, 0.25, 0.75, 0.25, 2], tonic: 5, mode: 'min', names: 'do – fa – mi♭ – ré♭ – do – si♮ – do – ré♭ – do' },
+  'op15-a': { src: 'Nocturne op. 15 n° 1, le début (mesures 0 à 2)', notes: [72, 77, 76, 74, 76, 72], durs: [1, 2, 1, 1, 1, 1], tonic: 5, mode: 'maj', names: 'do – fa – mi – ré – mi – do' },
+  'op15-b': { src: 'Nocturne op. 15 n° 1, la montée (mesures 3 à 4)', notes: [74, 76, 77, 79, 81], durs: [0.75, 0.25, 1, 1, 3], tonic: 5, mode: 'maj', names: 'ré – mi – fa – sol – la' },
+  'op70-a': { src: 'Valse op. 70 n° 2, le début (mesures 0 à 2)', notes: [72, 73, 72, 70, 68, 67, 65, 65], durs: [2, 0.5, 0.5, 0.5, 0.5, 1.5, 0.5, 1], tonic: 5, mode: 'min', names: 'do – ré♭ – do – si♭ – la♭ – sol – fa – fa' },
+};
+/** Un motif de pièce, sans répéter le précédent ; cadence dans la tonalité de la pièce. */
+function pieceMotif(cfg, st) {
+  const keys = cfg.motifs.filter(k => PIECE_MOTIFS[k]);
+  let k = pick(keys);
+  if (keys.length > 1) { let g = 0; while (k === st?.lastMotif && g++ < 20) k = pick(keys); }
+  if (st) st.lastMotif = k;
+  const M = PIECE_MOTIFS[k];
+  const tr = ((M.tonic - (M.mode === 'maj' ? 0 : 9) + 18) % 12) - 6; // transposition de la cadence (do majeur / la mineur → tonalité de la pièce)
+  const cad = cadenceNotes(tr, M.mode);
+  const beat = cfg.beat || 0.5;
+  const timed = (ms, t0, slow = 1) => { let t = t0; return ms.map((m, i) => { const n = { m, t, d: M.durs[i] * beat * slow * 0.95, v: 80 }; t += M.durs[i] * beat * slow; return n; }); };
+  return { M, k, cad, timed, beat, key: keyFr(M.tonic, M.mode) };
+}
+
 const GEN = {
   /** Plus grave ou plus aigu ? (difficulté adaptée : l'écart se resserre quand on réussit) */
   highlow(cfg, st) {
@@ -252,22 +277,27 @@ const GEN = {
   /** Chanter : une note entendue, un degré après une cadence, une suite de degrés, une mélodie. Réponse au micro. */
   sing(cfg, st) {
     const task = cfg.task || 'match';
-    const voice = store.get('settings.voice') || 'grave';
-    const [vlo, vhi] = voice === 'aigue' ? [57, 74] : [45, 62];
+    const [vlo, vhi] = voiceRange();                     // tessiture mesurée, sinon voix grave / aiguë
     const mode = cfg.mode || 'maj';
     if (task === 'match') {
-      const span = cfg.span || 7; // ambitus resserré autour du centre de la voix au début
+      // ambitus adapté : il se resserre au milieu de ta voix après un échec, s'élargit après une réussite
+      const base = cfg.span || 7;
+      if (st.span == null) st.span = base;
+      const span = st.span;
       const mid = Math.round((vlo + vhi) / 2);
-      let m;
-      do { m = randInt(mid - span, mid + span); } while ((cfg.white !== false && isBlack(m)) || m === st.lastSing);
+      let m, guard = 0;
+      do { m = randInt(mid - span, mid + span); guard++; } while (guard < 50 && ((cfg.white !== false && isBlack(m)) || m === st.lastSing));
       st.lastSing = m;
+      const len = span < base ? 2.3 : 1.7; // note de référence plus longue quand c'est difficile
       return {
         type: 'sing', tipKind: 'sing',
         prompt: 'Écoute la note, puis chante-la (bouche fermée « mmm », ou sur « la »).',
-        play: () => playNotes([{ m, t: 0, d: 1.6, v: 80 }]),
+        play: () => playNotes([{ m, t: 0, d: len, v: 80 }]),
         targets: [m], labels: [noteNameFr(m, { octave: false })],
         explain: `La note était un <b>${noteNameFr(m, { octave: false })}</b> (${noteNameFr(m)}).`,
         reveal: () => playNotes([{ m, t: 0, d: 1.3, v: 80 }]),
+        onAnswer: ok => { st.span = ok ? Math.min(base, st.span + 1) : Math.max(3, st.span - 2); },
+        status: span < base ? 'Notes resserrées au milieu de ta voix, et plus longues, le temps de trouver tes repères.' : '',
       };
     }
     // tonalité : do majeur (ou la mineur) par défaut, ou au hasard
@@ -287,6 +317,7 @@ const GEN = {
         play: () => playNotes(cad.notes), targets: [target], labels: [String(deg)],
         explain: `Le degré ${deg} de ${keyFr(tonicPc, mode)} est <b>${nm(deg)}</b> : ${DEG_FEEL[mode][deg]}`,
         reveal: () => playNotes(resolution(target, deg, mode, 0)),
+        hint: { label: 'Indice : la tonique', play: () => playNotes([{ m: T, t: 0, d: 1.4, v: 80 }]), note: deg === 1 ? 'Chante exactement cette note.' : `Chante la tonique (1), puis monte la gamme en comptant (1, 2, 3…) jusqu’à ${deg}.` },
       };
     }
     if (task === 'seq') {
@@ -299,6 +330,22 @@ const GEN = {
         play: () => playNotes([...cad.notes, ...pre]), targets, labels: seq.map(String),
         explain: `En ${keyFr(tonicPc, mode)} : ${seq.map(d => `${d} = ${nm(d)}`).join(', ')}.`,
         reveal: () => playNotes(targets.map((m, i) => ({ m, t: i * 0.55, d: 0.55, v: 78 }))),
+        hint: { label: 'Indice : la première note', play: () => playNotes([{ m: targets[0], t: 0, d: 1.4, v: 80 }]), note: 'Pars de cette note, puis avance degré par degré, lentement : chaque note doit entrer dans la bande verte.' },
+      };
+    }
+    if (task === 'echo' && cfg.motifs) {
+      const { M, cad, timed, key } = pieceMotif(cfg, st);
+      const mean = M.notes.reduce((a, b) => a + b, 0) / M.notes.length;
+      const shift = 12 * Math.round(((vlo + vhi) / 2 - mean) / 12); // à l'octave de ta voix
+      const targets = M.notes.map(m => m + shift);
+      return {
+        type: 'sing', tipKind: 'echo',
+        prompt: `Écoute la cadence et le motif, puis rechante-le (sur « la », ou avec les noms des notes).`,
+        play: () => playNotes([...cad.notes, ...timed(M.notes, cad.end + 0.4)]),
+        targets, labels: M.names.split(' – '),
+        explain: `${M.src}, en ${key} : <b>${M.names}</b>.`,
+        reveal: () => playNotes(timed(M.notes, 0)),
+        hint: { label: 'Indice : le motif, lentement', play: () => playNotes(timed(M.notes, 0, 1.8)), note: 'Chante-le d’abord dans ta tête en suivant les notes, puis à voix haute, une note à la fois : chaque note doit entrer dans la bande verte.' },
       };
     }
     if (task === 'echo') {
@@ -312,6 +359,7 @@ const GEN = {
         targets, labels: mel.map(() => '•'),
         explain: `La mélodie : <b>${mel.join(' – ')}</b> (${mel.map(nm).join(' – ')}).`,
         reveal: () => playNotes(playMs.map((m, i) => ({ m, t: i * 0.6, d: 0.58, v: 80 }))),
+        hint: { label: 'Indice : la mélodie, lentement', play: () => playNotes(playMs.map((m, i) => ({ m, t: i * 1.0, d: 0.95, v: 80 }))), note: 'Chante-la en même temps dans ta tête, puis à voix haute, note par note.' },
       };
     }
     if (task === 'interval') {
@@ -324,6 +372,7 @@ const GEN = {
         play: () => playNotes([{ m: a, t: 0, d: 1.4, v: 80 }]), targets: [a + stp], labels: [IV_LABEL[stp]],
         explain: `${noteNameFr(a, { octave: false })} → <b>${noteNameFr(a + stp, { octave: false })}</b>. Repère : ${IV_REF[stp]}.`,
         reveal: () => playNotes([{ m: a, t: 0, d: 0.8 }, { m: a + stp, t: 0.85, d: 1.2 }]),
+        hint: { label: 'Indice : les marches', play: () => { const steps = [0, 2, 4, 5, 7, 9, 11, 12].filter(x => x <= stp); if (steps[steps.length - 1] !== stp) steps.push(stp); return playNotes(steps.map((x, i) => ({ m: a + x, t: i * 0.45, d: i === steps.length - 1 ? 1.2 : 0.42, v: 78 }))); }, note: `Chante la note de départ, puis monte la gamme jusqu’à l’arrivée (${IV_REF[stp]}).` },
       };
     }
   },
@@ -363,7 +412,24 @@ const GEN = {
   },
 
   /** Dictée jouée : écouter une courte mélodie et la rejouer au piano. */
-  echo(cfg) {
+  echo(cfg, st) {
+    if (cfg.motifs) {
+      const { M, cad, timed, key } = pieceMotif(cfg, st);
+      const ms = M.notes;
+      const lo = Math.min(...ms) - 7, hi = Math.max(...ms) + 7;
+      return {
+        type: 'play', tipKind: 'echo',
+        playTask: `Écoute (la cadence, puis le motif), puis rejoue-le (${ms.length} notes). Il commence sur <b>${M.names.split(' – ')[0]}</b> (${key}).`,
+        play: () => playNotes([...cad.notes, ...timed(ms, cad.end + 0.4)]),
+        extra: { label: 'Le motif, lentement', fn: () => playNotes(timed(ms, 0, 1.8)) },
+        expect: ms.length,
+        check: played => played.length === ms.length && played.every((m, i) => pc(m) === pc(ms[i])),
+        diff: played => played.map((m, i) => (pc(m) === pc(ms[i]) ? '✓' : '✗')).join(' '),
+        explain: `${M.src} : <b>${M.names}</b>. Retrouve-le dans ta partition, et joue-le en chantant.`,
+        kbRange: [lo, hi],
+        status: `Tonalité : ${key}`,
+      };
+    }
     const mode = cfg.mode || 'maj';
     const tr = cfg.key === 'random' ? randInt(-5, 6) : 0;
     const tonicPc = ((mode === 'maj' ? 0 : 9) + tr + 12) % 12;
@@ -777,6 +843,7 @@ export function mountQuiz(el, cfg) {
 
   const start = () => {
     state = { i: 0, ok: 0, solved: 0, startAt: Date.now(), singMode };
+    persist.singStats = null;
     next();
   };
 
@@ -936,33 +1003,39 @@ export function mountQuiz(el, cfg) {
   };
 
   /* ---------- chant (micro, ou repli piano / auto-évaluation) ---------- */
+  // Au micro : la ligne de ta voix en direct (bande verte = la note visée), un conseil qui change selon ce que tu
+  // chantes (rien entendu, loin, note voisine, voix instable, tout près), un indice si besoin, et un diagnostic
+  // précis après un essai manqué.
   const renderSing = (ctx) => {
     const { q, fb, nextBtn, row, tipBox } = ctx;
     const singMode = state.singMode;
     body.append(h('div', { class: 'quiz-q', html: q.prompt }));
+    if (singMode === 'mic' && state.i < 2) body.append(h('p', { class: 'small sing-how', html: '<b>1.</b> Écoute. <b>2.</b> Entends la note dans ta tête, une seconde. <b>3.</b> Chante doucement sur « mmm » ou « la » et regarde la ligne : amène-la dans la <b>bande verte</b>, puis tiens-la.' }));
     const chips = h('div', { class: 'sing-chips' });
     const chipEls = q.targets.map((_, i) => h('span', { class: 'chip' }, q.labels?.[i] ?? '•'));
     chips.append(...chipEls);
     if (q.targets.length > 1) body.append(chips);
     const again = h('button', { class: 'btn', type: 'button', html: PLAY + ' Réécouter' });
+    const hintBtn = q.hint ? h('button', { class: 'btn ghost', type: 'button', html: PLAY + ' ' + esc(q.hint.label) }) : null;
     const skip = h('button', { class: 'btn ghost', type: 'button' }, 'Je passe');
-    row.append(again, skip);
+    row.append(again, ...(hintBtn ? [hintBtn] : []), skip);
     body.append(row);
-    let idx = 0, tries = 0, finished = false;
+    let idx = 0, tries = 0, finished = false, hinted = false;
+    const st = persist.singStats || (persist.singStats = { n: 0, flat: 0, sharp: 0, silence: 0, far: 0, unstable: 0 });
     const succeed = () => {
       if (finished) return;
       finished = true; stopListening();
       fb.className = 'quiz-feedback ok';
-      fb.innerHTML = (tries === 0 ? 'Juste ! ' : 'Juste. ') + q.explain;
-      ctx.done(true, tries === 0);
+      fb.innerHTML = (tries === 0 && !hinted ? 'Juste ! ' : 'Juste. ') + q.explain;
+      ctx.done(true, tries === 0 && !hinted);
       if (q.type === 'sing' && cfg.task !== 'match') setTimeout(() => q.reveal?.(), 300);
     };
-    const fail = (msg) => {
+    const fail = (msg, kind) => {
       if (finished) return;
       finished = true; stopListening();
       fb.className = 'quiz-feedback bad';
       fb.innerHTML = `${msg || 'Pas encore.'} ${q.explain}`;
-      ctx.showTip();
+      if (kind) { tipBox.hidden = false; tipBox.innerHTML = `<b>Conseil.</b> ${adviceFor(kind)}`; } else ctx.showTip();
       retry.hidden = false;
       setTimeout(() => q.reveal?.(), 400);
       ctx.done(false, false);
@@ -970,62 +1043,82 @@ export function mountQuiz(el, cfg) {
     const retry = h('button', { class: 'btn', type: 'button', hidden: true }, 'Réessayer');
     retry.addEventListener('click', () => {
       tries++; finished = false; idx = 0; chipEls.forEach(c => c.classList.remove('ok'));
-      retry.hidden = true; fb.className = 'quiz-feedback'; fb.textContent = '';
+      retry.hidden = true; fb.className = 'quiz-feedback'; fb.textContent = ''; tipBox.hidden = true;
       playThenListen();
     });
     skip.addEventListener('click', () => { if (!finished) fail('Passée.'); });
 
     /* --- mode micro --- */
-    let listening = false, offPitch = null, timer = null, hist = [], holdStart = null, recent = [], lastVoiced = 0;
+    let listening = false, offPitch = null, timer = null, hist = [], holdStart = null, recent = [], lastVoiced = 0, listenStart = 0, lastCoach = 0;
+    const all = []; // écarts de tout l'essai (diagnostic)
     const tol = (cfg.tol ?? 45) / 100;
-    const meter = h('div', { class: 'pm' });
-    const needle = h('i', { class: 'pm-needle' });
-    const zone = h('i', { class: 'pm-zone', style: { left: `${50 - tol * 25}%`, width: `${tol * 50}%` } });
-    const bar = h('div', { class: 'pm-bar' }, zone, needle, h('span', { class: 'pm-lo' }, 'trop bas'), h('span', { class: 'pm-hi' }, 'trop haut'));
+    const trace = new VoiceTrace({ height: 150, tol });
     const read = h('div', { class: 'pm-read' }, 'Écoute…');
-    const level = h('div', { class: 'pm-level' }, h('i'));
-    meter.append(bar, read, level);
-    const stopListening = () => { listening = false; clearTimeout(timer); offPitch?.(); offPitch = null; };
+    const coach = h('div', { class: 'sing-coach small' });
+    const level = h('div', { class: 'pm-level', title: 'Niveau du micro' }, h('i'));
+    const meter = h('div', { class: 'pm' }, trace.el, read, coach, level);
+    const stopListening = () => { listening = false; clearTimeout(timer); offPitch?.(); offPitch = null; trace.stop(); };
+    const diagnose = () => {
+      const voiced = all.length;
+      if (!voiced) return { kind: 'silence', msg: 'Je ne t’ai pas entendu.' };
+      const tail = all.slice(-25).map(r => r.d);
+      const mean = tail.reduce((a, b) => a + b, 0) / tail.length;
+      const sd = Math.sqrt(tail.reduce((a, b) => a + (b - mean) ** 2, 0) / tail.length);
+      const n = Math.abs(mean);
+      const where = mean < 0 ? 'trop bas' : 'trop haut';
+      if (sd > 0.6 && n < 2) return { kind: 'unstable', msg: 'Pas encore : ta voix bougeait autour de la note.' };
+      if (n <= tol) return { kind: 'ok', msg: 'Presque : c’était juste, mais pas assez longtemps.' };
+      if (n <= 1) return { kind: 'close', msg: `Tout près : un peu ${where} (environ ${Math.round(n * 100)} cents).`, dir: Math.sign(mean) };
+      if (n <= 2.5) return { kind: 'neighbour', msg: `Pas encore : tu chantais une note voisine, ${Math.round(n) === 1 ? 'un demi-ton' : 'un ton'} ${where}.`, dir: Math.sign(mean) };
+      return { kind: 'far', msg: `Pas encore : tu étais environ ${Math.round(n)} demi-tons ${where}.`, dir: Math.sign(mean) };
+    };
     const startListening = () => {
-      listening = true; hist = []; holdStart = null; recent = [];
+      listening = true; hist = []; holdStart = null; recent = []; listenStart = performance.now(); lastVoiced = 0; lastCoach = 0;
+      trace.setTarget(q.targets[idx]); trace.start();
       read.innerHTML = q.targets.length > 1 ? `À toi : chante la note ${idx + 1}.` : 'À toi : chante.';
+      coach.innerHTML = '';
       offPitch = pitch.on(ev => {
         level.firstChild.style.width = `${Math.min(100, ev.rms * 900)}%`;
+        trace.push(ev);
         if (!listening) return;
+        const now = ev.t;
         if (!ev.voiced) {
           // une courte coupure (respiration, consonne, mesure ratée) n'annule pas la tenue
-          if (ev.t - lastVoiced > 220) { holdStart = null; hist = []; needle.style.opacity = 0.25; }
-          return;
+          if (now - lastVoiced > 220) { holdStart = null; hist = []; }
+        } else {
+          lastVoiced = now;
+          hist.push(ev.midi); if (hist.length > 3) hist.shift();
+          const mm = median(hist);
+          const target = q.targets[idx];
+          const d = octaveDiff(mm, target);
+          recent.push({ t: now, d }); while (recent.length && now - recent[0].t > 1500) recent.shift();
+          all.push({ t: now, d });
+          const cents = Math.round(d * 100);
+          read.innerHTML = `Tu chantes : <b>${sungName(mm)}</b> · ${cents > 0 ? '+' : ''}${cents} cents${Math.abs(d) <= tol ? ' · <span class="ok">juste</span>' : d < 0 ? ' · monte ↑' : ' · descends ↓'}`;
+          if (Math.abs(d) <= tol) {
+            if (holdStart == null) holdStart = now;
+            if (now - holdStart >= (q.targets.length > 1 ? 260 : 380)) {
+              chipEls[idx]?.classList.add('ok');
+              idx++; holdStart = null; hist = []; recent = []; all.length = 0;
+              if (idx >= q.targets.length) { succeed(); return; }
+              trace.setTarget(q.targets[idx]);
+              read.innerHTML = `Bien. Note ${idx + 1} maintenant.`;
+            }
+          } else holdStart = null;
         }
-        lastVoiced = ev.t;
-        hist.push(ev.midi); if (hist.length > 3) hist.shift();
-        const mm = median(hist);
-        const target = q.targets[idx];
-        const d = octaveDiff(mm, target);
-        recent.push({ t: ev.t, d }); while (recent.length && ev.t - recent[0].t > 1500) recent.shift();
-        needle.style.opacity = 1;
-        needle.style.left = `${50 + Math.max(-2, Math.min(2, d)) * 25}%`;
-        needle.classList.toggle('in', Math.abs(d) <= tol);
-        const cents = Math.round(d * 100);
-        read.innerHTML = `Tu chantes : <b>${sungName(mm)}</b> · ${cents > 0 ? '+' : ''}${cents} cents${Math.abs(d) <= tol ? ' · <span class="ok">juste</span>' : d < 0 ? ' · monte un peu ↑' : ' · descends un peu ↓'}`;
-        if (Math.abs(d) <= tol) {
-          if (holdStart == null) holdStart = ev.t;
-          if (ev.t - holdStart >= (q.targets.length > 1 ? 260 : 380)) {
-            chipEls[idx]?.classList.add('ok');
-            idx++; holdStart = null; hist = [];
-            if (idx >= q.targets.length) succeed();
-            else read.innerHTML = `Bien. Note ${idx + 1} maintenant.`;
-          }
-        } else holdStart = null;
+        // un conseil qui suit ce que tu chantes (au plus toutes les 0,7 s)
+        if (now - lastCoach > 700) {
+          lastCoach = now;
+          const c = coachLine(recent, tol, now - listenStart, lastVoiced ? now - lastVoiced : now - listenStart);
+          coach.innerHTML = c ? c.html : '';
+        }
       });
-      const limit = 9000 + 2500 * (q.targets.length - 1);
+      const limit = 15000 + 4000 * (q.targets.length - 1);
       timer = setTimeout(() => {
-        const avg = recent.length ? recent.reduce((s, r) => s + r.d, 0) / recent.length : null;
-        let msg = 'Pas encore.';
-        if (avg == null) msg = 'Je ne t’ai pas entendu (micro trop loin ? chante un peu plus fort).';
-        else if (Math.abs(avg) <= tol) msg = 'Presque : c’était juste, mais pas assez longtemps. Tiens le son calmement.';
-        else msg = `Pas encore : tu étais environ ${Math.abs(avg) < 0.75 ? 'un quart de ton' : Math.round(Math.abs(avg)) === 1 ? 'un demi-ton' : Math.round(Math.abs(avg)) + ' demi-tons'} trop ${avg < 0 ? 'bas' : 'haut'}.`;
-        fail(msg);
+        const dg = diagnose();
+        st.n++; if (dg.kind in st) st[dg.kind]++;
+        if (dg.dir < 0) st.flat++; else if (dg.dir > 0) st.sharp++;
+        fail(dg.msg, dg.kind);
       }, limit);
     };
 
@@ -1050,18 +1143,24 @@ export function mountQuiz(el, cfg) {
     yes.disabled = true; no.disabled = true;
     selfRow.append(showAns, yes, no);
 
-    const playThenListen = async () => {
+    // joue (la question, ou l'indice), sans écouter pendant le son, puis écoute
+    const playThenListen = async (player = q.play) => {
       stopListening(); stopAudio();
-      read.innerHTML = 'Écoute…';
+      read.innerHTML = 'Écoute…'; coach.innerHTML = '';
       let ms = 0;
-      try { ms = await q.play(); } catch (e) { fb.textContent = 'Audio indisponible : ' + e.message; }
-      if (singMode === 'mic') { const t = setTimeout(startListening, ms + 300); addCleanup(() => clearTimeout(t)); }
+      try { ms = await player(); } catch (e) { fb.textContent = 'Audio indisponible : ' + e.message; }
+      if (singMode === 'mic') { const t = setTimeout(() => { if (!finished) startListening(); }, ms + 300); addCleanup(() => clearTimeout(t)); }
       else if (singMode === 'piano') { const t = setTimeout(pianoListen, Math.max(0, ms - 200)); addCleanup(() => clearTimeout(t)); }
       else { selfRow.hidden = false; }
     };
     again.addEventListener('click', () => { if (!finished) playThenListen(); else { stopAudio(); q.play(); } });
+    hintBtn?.addEventListener('click', () => {
+      hinted = true;
+      if (!finished) playThenListen(q.hint.play); else { stopAudio(); q.hint.play(); }
+      if (q.hint.note) { tipBox.hidden = false; tipBox.innerHTML = `<b>Indice.</b> ${q.hint.note}`; }
+    });
 
-    if (singMode === 'mic') body.append(meter);
+    if (singMode === 'mic') { body.append(meter); trace.setTarget(q.targets[0]); requestAnimationFrame(() => trace.draw()); }
     if (singMode === 'piano') {
       const kbEl = midi.status !== 'ready' ? screenKeyboard([Math.min(...q.targets.map(m => 48 + pc(m))), Math.max(...q.targets.map(m => 60 + pc(m)))]) : null;
       body.append(h('p', { class: 'small' }, 'Chante intérieurement, puis joue au piano la ou les notes que tu chanterais.'));
@@ -1070,7 +1169,7 @@ export function mountQuiz(el, cfg) {
     if (singMode === 'self') body.append(h('p', { class: 'small' }, 'Chante à voix haute, puis écoute la réponse et juge honnêtement.'), selfRow);
     body.append(fb, tipBox, h('div', { class: 'btn-row' }, retry, nextBtn));
     addCleanup(stopListening);
-    const t = setTimeout(playThenListen, 250);
+    const t = setTimeout(() => playThenListen(), 250);
     addCleanup(() => clearTimeout(t));
   };
 
@@ -1078,7 +1177,7 @@ export function mountQuiz(el, cfg) {
   const renderRhythm = (ctx) => {
     const { q, fb, nextBtn, row, tipBox } = ctx;
     const echo = q.task === 'echo';
-    body.append(h('div', { class: 'quiz-q', html: echo ? 'Écoute le rythme (après une mesure de décompte), puis tape-le à ton tour dès la fin du second décompte.' : 'Lis ce rythme. Après une mesure de décompte, tape-le en suivant les clics.' }));
+    body.append(h('div', { class: 'quiz-q', html: echo ? 'Écoute le rythme (après le décompte), puis tape-le à ton tour dès la fin du second décompte.' : 'Lis ce rythme. Après le décompte, tape-le en suivant les clics.' }));
     const staff = h('div', { class: 'quiz-staff' });
     const showStaff = () => { staff.innerHTML = ''; window.ABCJS.renderAbc(staff, q.abc, { responsive: 'resize', staffwidth: 300, scale: 1.3, paddingtop: 0, paddingbottom: 0 }); };
     if (!echo) showStaff();
@@ -1102,12 +1201,13 @@ export function mountQuiz(el, cfg) {
     addCleanup(() => { offMidi(); window.removeEventListener('keydown', key); });
     const spb = 60 / q.bpm;
 
+    // délais calés sur la sortie du son (latence comprise), comme le décompte commun (countin.js)
+    const delayTo = tctx => Math.max(0, audio.ctxToPerf(tctx) - performance.now());
     const flashBeats = (t0ctx, nBeats) => {
       for (let k = 0; k < nBeats; k++) {
-        const delay = (t0ctx + k * spb - audio.now()) * 1000;
         const tm = setTimeout(() => {
           [...beatsBox.children].forEach((d, j) => d.classList.toggle('on', j === k % q.meter));
-        }, Math.max(0, delay));
+        }, delayTo(t0ctx + k * spb));
         addCleanup(() => clearTimeout(tm));
       }
     };
@@ -1118,10 +1218,10 @@ export function mountQuiz(el, cfg) {
       if (running) return;
       audio.claim('quiz', () => audio.stopAll('quiz'));
       await audio.ensure();
-      const t0 = audio.now() + 0.1;
-      for (let k = 0; k < q.meter * (q.bars + 1); k++) audio.click(t0 + k * spb, k % q.meter === 0 ? 'accent' : 'beat');
-      playPattern(t0 + q.meter * spb);
-      flashBeats(t0, q.meter * (q.bars + 1));
+      const cin = scheduleCountIn({ beatsPerBar: q.meter, beatSec: spb });
+      for (let k = 0; k < q.meter * q.bars; k++) audio.click(cin.end + k * spb, k % q.meter === 0 ? 'accent' : 'beat');
+      playPattern(cin.end);
+      flashBeats(cin.t0, cin.beats + q.meter * q.bars);
     });
 
     goBtn.addEventListener('click', async () => {
@@ -1130,32 +1230,28 @@ export function mountQuiz(el, cfg) {
       fb.className = 'quiz-feedback'; fb.textContent = '';
       audio.claim('quiz', () => audio.stopAll('quiz'));
       await audio.ensure();
-      const t0 = audio.now() + 0.15;
       const barDur = q.meter * spb;
+      // décompte (au moins quatre temps) ; en écho : le rythme entendu avec ses clics, puis un second décompte
+      const first = scheduleCountIn({ beatsPerBar: q.meter, beatSec: spb });
+      const t0 = first.t0;
       let answerStart;
-      let nClicks;
       if (echo) {
-        // décompte, rythme (avec clics), second décompte, réponse
-        playPattern(t0 + barDur);
-        answerStart = t0 + barDur * (q.bars + 2);
-        nClicks = q.meter * (q.bars * 2 + 2);
+        const listenStart = first.end;
+        playPattern(listenStart);
+        for (let k = 0; k < q.meter * q.bars; k++) audio.click(listenStart + k * spb, k % q.meter === 0 ? 'accent' : 'beat');
+        const second = scheduleCountIn({ beatsPerBar: q.meter, beatSec: spb, start: listenStart + q.bars * barDur });
+        answerStart = second.end;
+        msg('Écoute…', listenStart - 0.05);
+        msg('Prépare-toi…', second.t0);
       } else {
-        answerStart = t0 + barDur;
-        nClicks = q.meter * (q.bars + 1);
+        answerStart = first.end;
+        msg('Prépare-toi…', t0);
       }
-      for (let k = 0; k < nClicks; k++) {
-        const tt = t0 + k * spb;
-        const inAnswer = tt >= answerStart - 1e-6;
-        const countIn = echo ? (tt >= t0 + barDur * (q.bars + 1) - 1e-6 && !inAnswer) || tt < t0 + barDur : tt < answerStart - 1e-6;
-        audio.click(tt, k % q.meter === 0 ? 'accent' : countIn ? 'beat' : 'sub');
-      }
-      flashBeats(t0, nClicks);
-      const msg = (txt, at) => { const tm = setTimeout(() => { fb.className = 'quiz-feedback'; fb.innerHTML = txt; }, Math.max(0, (at - audio.now()) * 1000)); addCleanup(() => clearTimeout(tm)); };
-      if (echo) { msg('Écoute…', t0 + barDur * 0.9); msg('Prépare-toi…', t0 + barDur * (q.bars + 1)); }
-      else msg('Prépare-toi…', t0);
+      for (let k = 0; k < q.meter * q.bars; k++) audio.click(answerStart + k * spb, k % q.meter === 0 ? 'accent' : 'sub');
+      flashBeats(t0, Math.round((answerStart - t0) / spb) + q.meter * q.bars);
       msg('<b>À toi !</b>', answerStart - 0.05);
       const startPerf = audio.ctxToPerf(answerStart);
-      const tapOpen = setTimeout(() => { taps = []; }, Math.max(0, (answerStart - audio.now()) * 1000 - spb * 400));
+      const tapOpen = setTimeout(() => { taps = []; }, Math.max(0, delayTo(answerStart) - spb * 400));
       addCleanup(() => clearTimeout(tapOpen));
       const endAt = answerStart + q.bars * barDur + spb * 0.5;
       const tm = setTimeout(() => {
@@ -1163,9 +1259,10 @@ export function mountQuiz(el, cfg) {
         taps = null; running = false; goBtn.disabled = false;
         [...beatsBox.children].forEach(d => d.classList.remove('on'));
         evaluate(got, startPerf);
-      }, Math.max(0, (endAt - audio.now()) * 1000) + 150);
+      }, delayTo(endAt) + 150);
       addCleanup(() => clearTimeout(tm));
     });
+    function msg(txt, at) { const tm = setTimeout(() => { fb.className = 'quiz-feedback'; fb.innerHTML = txt; }, delayTo(at)); addCleanup(() => clearTimeout(tm)); }
 
     const evaluate = (got, startPerf) => {
       const spbMs = spb * 1000;
@@ -1218,7 +1315,9 @@ export function mountQuiz(el, cfg) {
       h('div', {}, h('div', { class: 'v' }, `${Math.round((Date.now() - state.startAt) / 1000)} s`), h('div', { class: 'l' }, 'durée'))));
     const goal = cfg.goal ?? 0.8;
     body.append(h('p', { class: 'small', html: pct >= goal ? `Objectif atteint (${fmtPct(goal)}). Refais une série demain pour confirmer, puis passe à l’étape suivante.` : `Objectif : ${fmtPct(goal)}. Refais une série demain : dix minutes chaque jour valent mieux qu’une heure le dimanche.` }));
-    body.append(h('div', { class: 'quiz-tip', html: `<b>Conseil.</b> ${pick(TIPS[cfg.tipKind || cfg.kind] || TIPS.degree)}` }));
+    const sa = isSing ? seriesAdvice(persist.singStats) : null;
+    if (sa) body.append(h('div', { class: 'quiz-tip', html: `<b>Ce que montre cette série.</b><ul>${sa.map(x => `<li>${x}</li>`).join('')}</ul>` }));
+    else body.append(h('div', { class: 'quiz-tip', html: `<b>Conseil.</b> ${pick(TIPS[cfg.tipKind || cfg.kind] || TIPS.degree)}` }));
     const again = h('button', { class: 'btn primary', type: 'button' }, 'Recommencer');
     again.addEventListener('click', start);
     body.append(again);
@@ -1234,11 +1333,19 @@ export function mountQuiz(el, cfg) {
   if (cfg.tipKind || TIPS[cfg.kind]) intro.append(h('div', { class: 'quiz-tip', html: `<b>Conseil.</b> ${pick(TIPS[cfg.tipKind || cfg.kind] || TIPS.degree)}` }));
   let singMode = 'mic';
   if (isSing) {
-    const voice = store.get('settings.voice') || 'grave';
+    const measured = voiceRangeLabel();
+    const useMeasured = measured && store.get('settings.voiceMode') !== 'preset';
+    const voice = useMeasured ? 'mesure' : (store.get('settings.voice') || 'grave');
     const vseg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Ta voix' });
-    [['grave', 'Voix grave'], ['aigue', 'Voix aiguë']].forEach(([v, l]) => {
+    const vopts = [['grave', 'Voix grave'], ['aigue', 'Voix aiguë']];
+    if (measured) vopts.unshift(['mesure', `Ma tessiture (${measured})`]);
+    vopts.forEach(([v, l]) => {
       const b = h('button', { type: 'button', class: v === voice ? 'on' : '' }, l);
-      b.addEventListener('click', () => { store.set('settings.voice', v); vseg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); });
+      b.addEventListener('click', () => {
+        if (v === 'mesure') store.set('settings.voiceMode', 'measured');
+        else { store.set('settings.voiceMode', 'preset'); store.set('settings.voice', v); }
+        vseg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+      });
       vseg.append(b);
     });
     const mseg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Mode de réponse' });
@@ -1252,7 +1359,7 @@ export function mountQuiz(el, cfg) {
     });
     intro.append(h('div', { class: 'row mb-0', style: { marginBottom: '10px' } }, h('span', { class: 'small' }, 'Ta voix :'), vseg));
     intro.append(h('div', { class: 'row mb-0', style: { marginBottom: '10px' } }, h('span', { class: 'small' }, 'Réponse :'), mseg));
-    intro.append(h('p', { class: 'small' }, 'Au micro, place la tablette à 30–50 cm, dans une pièce calme. Sans micro : chante, puis rejoue la note au piano, ou écoute la réponse et juge toi-même.'));
+    intro.append(h('p', { class: 'small', html: `Au micro, place la tablette à 30–50 cm, dans une pièce calme. Une <b>ligne</b> montre ta voix en direct ; la <b>bande verte</b> est la note à chanter.${measured ? '' : ' Pour des notes à ta mesure, mesure d’abord ta tessiture avec « Trouver ma voix » (outil Oreille).'} Sans micro : chante, puis rejoue la note au piano, ou écoute la réponse et juge toi-même.` }));
   }
   const msg = h('p', { class: 'small', style: { color: 'var(--err)' } });
   const go = h('button', { class: 'btn primary', type: 'button' }, 'Commencer');
@@ -1284,6 +1391,8 @@ export const EAR_PRESETS = [
   { group: '1 · Hauteur et voix', id: 'hl', title: 'Plus grave ou plus aigu ?', kind: 'highlow', minSt: 1, maxSt: 12 },
   { group: '1 · Hauteur et voix', id: 'contour', title: 'Le dessin d’une mélodie', kind: 'contour', notes: 3 },
   { group: '1 · Hauteur et voix', id: 'contour4', title: 'Le dessin d’une mélodie (4 notes)', kind: 'contour', notes: 4 },
+  { group: '1 · Hauteur et voix', id: 'voice-finder', title: 'Trouver ma voix (sirène et tessiture)', kind: 'voicefinder' },
+  { group: '1 · Hauteur et voix', id: 'sing-match-a', title: 'Chanter une note, au milieu de ta voix', kind: 'sing', task: 'match', span: 4, count: 8 },
   { group: '1 · Hauteur et voix', id: 'sing-match', title: 'Chanter une note entendue', kind: 'sing', task: 'match', count: 8 },
   { group: '2 · Degrés', id: 'deg-1', title: 'La tonique ou pas ?', kind: 'degree', binary: true, degrees: [1, 2, 3, 4, 5, 6, 7] },
   { group: '2 · Degrés', id: 'deg-123', title: 'Degrés 1, 2, 3 (do majeur)', kind: 'degree', degrees: [1, 2, 3], names: true },
@@ -1302,6 +1411,9 @@ export const EAR_PRESETS = [
   { group: '3 · Mélodies', id: 'echo-bass', title: 'Rejouer une basse (degrés 1, 4, 5, 6)', kind: 'echo', degrees: [1, 4, 5, 6, 8], length: 4, maxStep: 3, count: 8 },
   { group: '3 · Mélodies', id: 'echo-min', title: 'Rejouer 5 notes en mineur', kind: 'echo', mode: 'min', degrees: [1, 2, 3, 4, 5, 6, 7, 8], length: 5, maxStep: 2, count: 8, key: 'random' },
   { group: '3 · Mélodies', id: 'sing-echo', title: 'Rechanter une mélodie', kind: 'sing', task: 'echo', degrees: [1, 2, 3, 4, 5], length: 3, count: 8 },
+  { group: '3 · Mélodies', id: 'echo-op55', title: 'Les motifs de ta pièce (op. 55 n° 1)', kind: 'echo', motifs: ['op55-a', 'op55-b', 'op55-c'], count: 6 },
+  { group: '3 · Mélodies', id: 'sing-op55', title: 'Chanter les motifs de ta pièce (op. 55 n° 1)', kind: 'sing', task: 'echo', motifs: ['op55-a', 'op55-b'], count: 6 },
+  { group: '3 · Mélodies', id: 'echo-chopin', title: 'Motifs de Chopin (op. 15 n° 1, valse op. 70 n° 2)', kind: 'echo', motifs: ['op15-a', 'op15-b', 'op70-a', 'op55-c'], count: 6 },
   { group: '4 · Intervalles', id: 'iv-a', title: 'Tierce majeure, quarte, quinte, octave', kind: 'intervals', set: ['3M', '4J', '5J', '8ve'] },
   { group: '4 · Intervalles', id: 'iv-b', title: 'Secondes et tierces', kind: 'intervals', set: ['2m', '2M', '3m', '3M'] },
   { group: '4 · Intervalles', id: 'iv-n1', title: 'De la seconde à la quinte, et l’octave', kind: 'intervals', set: ['2m', '2M', '3m', '3M', '4J', '5J', '8ve'] },

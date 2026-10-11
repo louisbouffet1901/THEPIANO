@@ -463,6 +463,38 @@ export function analyzeTake(input) {
   const asyncMean = asyncs.length ? mean(asyncs.map(a => a.ms)) : 0;
   const asyncBad = asyncs.filter(a => Math.abs(a.ms) > 60);
 
+  /* --- rubato : la main gauche garde le temps, la main droite respire --- */
+  // Régularité locale de la main gauche (chaque intervalle entre deux temps comparé à ses voisins : un ralenti
+  // d'ensemble est toléré, un temps qui flotte ne l'est pas) ; liberté de la main droite (décalage avec la gauche) ;
+  // retrouvailles sur les premiers temps.
+  let rubato = null;
+  {
+    const lhBeats = [];
+    for (const x of perGroup) {
+      if (x.g.grace || x.g.orn || x.g.afterGrace || !onBeat(x.g.t)) continue;
+      const lh = x.matched.filter(m => m.e.hand === 'lh').map(m => m.p.on);
+      if (lh.length) lhBeats.push({ q: x.g.t, ms: median(lh), m: x.g.m });
+    }
+    const lhIbis = [];
+    for (let k = 1; k < lhBeats.length; k++) {
+      const dq = (lhBeats[k].q - lhBeats[k - 1].q) / beatQ;
+      if (dq >= 0.99 && dq <= 2.01) lhIbis.push({ ms: (lhBeats[k].ms - lhBeats[k - 1].ms) / dq, m: lhBeats[k].m });
+    }
+    if (lhIbis.length >= 4) {
+      const loc = lhIbis.map((v, k) => {
+        const nb = lhIbis.slice(Math.max(0, k - 3), k + 4).map(x => x.ms);
+        const ref = median(nb);
+        return { m: v.m, d: Math.abs(v.ms - ref) / (ref || 1) };
+      });
+      const lhVar = mean(loc.map(x => x.d));
+      const unsteady = [...new Set(loc.filter(x => x.d > 0.12).map(x => x.m))];
+      const rhAbs = asyncs.length ? mean(asyncs.map(a => Math.abs(a.ms))) : null;
+      const down = asyncs.filter(a => Math.abs(a.beat - 1) < 0.01);
+      const together = down.length ? down.filter(a => Math.abs(a.ms) <= 70).length / down.length : null;
+      rubato = { lhVar, unsteady, rhAbs, together, nDown: down.length, n: lhIbis.length };
+    }
+  }
+
   /* --- équilibre : mélodie (note supérieure de la main droite) / accompagnement --- */
   const melody = [], acc = [], voicing = [];
   for (const x of perGroup) {
@@ -560,7 +592,7 @@ export function analyzeTake(input) {
   };
   const res = {
     ok: true, summary, notes: noteRes, extras, measures: measureList, tempoCurve, hesitations, rhythm, rhythmPts,
-    asyncs, pedal, runsEven, dyn: { scoreRange, playRange, corr: dynCorr, melodyTexture, balance, voicing: voicingMean },
+    asyncs, pedal, runsEven, rubato, dyn: { scoreRange, playRange, corr: dynCorr, melodyTexture, balance, voicing: voicingMean },
     meta: { beatQ, firstBar: meta.firstBar, lastBar: groups[groups.length - 1].m, barQ: meta.barQ },
   };
   res.issues = diagnose(res, meta);

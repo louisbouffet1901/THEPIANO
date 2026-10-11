@@ -276,3 +276,131 @@ V:LH2 clef=bass
 [V:LH1] !pp!(2z [FGB]- [FGB] [EGB] [EGB] [EGB] [DGB] [DGB] | [DGB] [CGB] [CGB] (2[CGB] [DGB] [B,DG]3 | (2z [FGB]- [FGB] [GBe] [FGB] [EGB] [FGB] [EGB] | [DGB] [EGB] [DGB] (2[CGB] [DGB] [B,EG]3 |]
 [V:LH2] [E,,,E,,]6 x3 | x9 | [E,,,E,,B,,]6 x3 | x9 |]`,
 };
+
+// V4 — Préludes op. 28 et Valse op. 70 n° 2 : d'après les éditions LilyPond de K. Snortum (CC BY-SA 4.0),
+// extraits vérifiés note à note contre la partition complète (tools/make_excerpts.py).
+export const OP28 = {
+  n4a: `X:1
+M:2/2
+L:1/16
+K:Em
+%%score {RH | LH}
+%%barnumbers 1
+%%setbarnb 0
+V:RH clef=treble
+V:LH clef=bass
+[V:RH] "^Largo"!p!B,3 "^espressivo"B | B12 c4 | B12 c4 | B12 c4 |
+[V:LH] z4 | [G,B,E]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 | [F,A,E]2 [F,A,E]2 [F,A,E]2 [F,A,E]2 [F,A,_E]2 [F,A,E]2 [F,A,E]2 [F,A,E]2 | [=F,A,_E]2 [F,A,E]2 [F,A,E]2 [F,A,E]2 [F,A,D]2 [F,A,D]2 [F,^G,D]2 [F,G,D]2 |
+[V:RH] B12 _B4 | A12 B4 | A12 B4 |
+[V:LH] [E,^G,D]2 [E,G,D]2 [E,G,D]2 [E,G,D]2 [E,=G,D]2 [E,G,D]2 [E,G,^C]2 [E,G,C]2 | [E,G,C]2 [E,G,C]2 [E,G,C]2 [E,G,C]2 [E,F,C]2 [E,F,C]2 [E,F,C]2 [E,F,C]2 | [E,F,C]2 [E,F,C]2 [E,F,C]2 [E,F,C]2 [^D,F,C]2 [D,F,C]2 [D,F,C]2 [D,F,C]2 |
+[V:RH] A12 B3 A | A12 !>!^G4- | G4 A2 B2 d2 c2 E2 A2 |
+[V:LH] [D,F,C]2 [D,F,C]2 [D,F,C]2 [D,F,C]2 [D,F,C]2 [D,F,C]2 [D,F,C]2 [D,F,C]2 | [D,=F,C]2 [D,F,C]2 [D,F,C]2 [D,F,C]2 [D,F,B,]2 [D,F,B,]2 [D,F,B,]2 [D,F,B,]2 | [C,E,B,]2 [C,E,B,]2 [C,E,A,]2 [C,E,A,]2 [C,E,A,]2 [C,E,A,]2 [C,E,A,]2 [C,E,A,]2 |
+[V:RH] F12 A4 | F12 {/B}A4 | G2 F2 !>!C2 B,2 ^D2 F2 (3:2:3d2 c2 B2 |]
+[V:LH] [B,,E,A,]2 [B,,E,A,]2 [B,,^D,A,]2 [B,,D,A,]2 [C,E,A,]2 [C,E,A,]2 [C,E,A,]2 [C,E,A,]2 | [B,,^D,A,]2 [B,,D,A,]2 [B,,D,A,]2 [B,,D,A,]2 [C,E,A,]2 [C,E,A,]2 [C,E,A,]2 [C,E,A,]2 | [B,,^D,A,]4 z4 z8 |]`,
+  n4b: `X:1
+M:2/2
+L:1/16
+K:Em
+%%score {RH1 | (LH1 LH2 LH3)}
+%%barnumbers 1
+%%setbarnb 13
+V:RH1 clef=treble
+V:LH1 clef=bass stem=up
+V:LH2 clef=bass stem=down
+V:LH3 clef=bass
+[V:RH1] B12 c4 | B12 c4 | B12 c4 |
+[V:LH1] [G,B,E]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 | [F,A,E]2 [F,A,E]2 [F,A,E]2 [F,A,E]2 [=F,A,_E]2 [F,A,E]2 [F,A,E]2 [F,A,E]2 | [=F,_A,_E]2 [F,A,E]2 [F,A,D]2 [F,A,D]2 [E,^G,D]2 [E,G,D]2 [E,G,D]2 [E,G,D]2 |
+[V:LH2] x16 | x16 | x16 |
+[V:LH3] x16 | x16 | x16 |
+[V:RH1] B3 ^A A4 g4 f3 e | !f!e2 ^d2 c'2 d2 d2 e2 g2 B2 | d2 c2 (3:2:3e2 E2 A2 "^dim."F6 A2 |
+[V:LH1] [E,G,D]2 [E,G,D]2 [E,G,^C]2 [E,G,C]2 [^C,E,^A,]2 [C,E,A,]2 [=C,E,=A,]2 [C,E,A,]2 | [B,,,B,,]2 [A,CFA]2 [A,CFA]2 [A,CFA]2 [G,B,^DF]2 [G,B,E]2 [G,B,E]2 [G,B,E]2 | [A,CE]2 [A,CE]2 A,,2 [E,F,C]2 [B,,E,B,]2 [B,,E,B,]2 [C,E,A,]2 [C,E,A,]2 |
+[V:LH2] x16 | x16 | x16 |
+[V:LH3] x16 | x16 | x16 |
+[V:RH1] !p!F12 {/B}A4 | F12- F3 E | "^smorz."E12 F4 |
+[V:LH1] [B,,E,B,]2 [B,,E,B,]2 [B,,E,B,]2 [B,,E,B,]2 [C,E,A,]2 [C,E,A,]2 [C,E,A,]2 [C,E,A,]2 | [B,,E,B,]2 [B,,E,B,]2 [B,,E,B,]2 [B,,E,B,]2 [B,,^D,B,]2 [B,,D,B,]2 [B,,D,A,]2 [B,,D,A,]2 | [C,G,]2 [C,G,]2 [C,G,]2 [C,G,]2 [C,_B,]2 [C,B,]2 [C,E,A,]2 [C,E,A,]2 |
+[V:LH2] x16 | x16 | x16 |
+[V:LH3] x16 | x16 | x16 |
+[V:RH1] E12 F4 | E8 z8 | !pp!E8 ^D8 |
+[V:LH1] [B,,E,A,]2 [B,,E,A,]2 [B,,E,^G,]2 [B,,E,G,]2 [B,,E,=G,]2 [B,,E,G,]2 [B,,E,G,]2 [B,,E,G,]2 | [_B,,C,G,]8 z8 | x16 |
+[V:LH2] x16 | x16 | [E,F,B,]8 [^D,F,B,]8 |
+[V:LH3] x16 | x16 | [B,,,B,,]8 [B,,,F,,B,,]8 |
+[V:RH1] !fermata!E16 |]
+[V:LH1] x16 |]
+[V:LH2] [E,G,B,]16 |]
+[V:LH3] !fermata![E,,,E,,]16 |]`,
+  n6: `X:1
+M:3/4
+L:1/16
+K:Bm
+%%score {(RH1 RH2) | LH1}
+%%barnumbers 1
+%%setbarnb 1
+V:RH1 clef=treble stem=up
+V:RH2 clef=treble stem=down
+V:LH1 clef=bass
+[V:RH1] "^Assai lento""^sotto voce"!>!B2 .B2 !>!B2 .B2 !>!B2 .B2 | B2 B2 B2 B2 B2 B2 | B2 B2 d2 d2 d2 d2 | d2 d2 d2 d2 d2 d2 |
+[V:RH2] [DF]4 F4 F4 | [DF]4 [DF]4 [DF]4 | [DF]4 B4 B4 | [FB]4 [FB]4 [FB]4 |
+[V:LH1] B,, D, F, B, D4 C3 D | B,6 F,2 D,2 C,2 | B,, F, B, D F4 E3 F | D6 B,2 F,2 D,2 |
+[V:RH1] d2 d2 d2 d2 d2 d2 | d2 d2 c2 c2 [^Ac]2 [Bd]2 | e6 f2 e d {/d}c B | [C^^F^A]2 [D^GB]2 [DBd]2 [CAc]2 z4 |]
+[V:RH2] [GB]4 B4 B4 | [^GB]4 [GB]4 =G4 | [G^A]2 [GB]2 [GA]2 [Fc]2 [FB]2 F2 | x8 x4 |]
+[V:LH1] G,, D, B, D G4 F4 | F4 ^E4 =E2 D2 | C2 {/E}D2 C2 ^A,2 B,2 D,2 | E,2 ^E,2 F,4 D,2 C,2 |]`,
+  n20: `X:1
+M:4/4
+L:1/16
+K:Cm
+%%score {(RH1 RH2 RH3 RH4 RH5 RH6 RH7 RH8 RH9) | LH1}
+%%barnumbers 1
+%%setbarnb 1
+V:RH1 clef=bass stem=up
+V:RH2 clef=bass stem=down
+V:RH3 clef=bass
+V:RH4 clef=bass
+V:RH5 clef=bass
+V:RH6 clef=bass
+V:RH7 clef=bass
+V:RH8 clef=bass
+V:RH9 clef=bass
+V:LH1 clef=bass
+[V:RH1] !ff![G,CEG]4 [A,CEA]4 x4 [E,G,CE]4 | [E,A,CE]4 [F,A,_DF]4 x4 [C,E,A,C]4 |
+[V:RH2] x8 [EG]3 [DF] x4 | x16 |
+[V:RH3] x8 [G,=B,]4 x4 | x16 |
+[V:RH4] x16 | x8 [CE]3 [B,_D] x4 |
+[V:RH5] x16 | x8 [_D,E,G,]4 x4 |
+[V:RH6] x16 | x16 |
+[V:RH7] x16 | x16 |
+[V:RH8] x16 | x16 |
+[V:RH9] x16 | x16 |
+[V:LH1] [C,,C,]4 [F,,,F,,]4 [G,,,G,,]4 [C,,G,,C,]4 | [A,,,A,,]4 [_D,,,_D,,]4 [E,,,E,,]4 [A,,,A,,]4 |
+[V:RH1] [D,F,=B,D]4 [=E,G,_B,C=E]4 x4 [G,CE]4 | [^F,CD]4 [G,=B,DG]4 x4 [K:clef=treble] [B,DG]4 |]
+[V:RH2] x16 | x16 |]
+[V:RH3] x16 | x16 |]
+[V:RH4] x16 | x16 |]
+[V:RH5] x16 | x16 |]
+[V:RH6] x8 G3 F x4 | x16 |]
+[V:RH7] x8 [A,C]4 x4 | x16 |]
+[V:RH8] x16 | x8 =B3 =A x4 |]
+[V:RH9] x16 | x8 [CD^F]4 x4 |]
+[V:LH1] [G,,,G,,]4 [C,,,C,,]4 [F,,,F,,]4 [C,,C,]4 | [D,,=A,,D,]4 [G,,,G,,]4 [D,,,D,,]4 [G,,,G,,]4 |]`,
+};
+
+export const OP70 = {
+  n2: `X:1
+M:3/4
+L:1/16
+K:Fm
+%%score {RH1 | (LH1 LH2)}
+%%barnumbers 1
+%%setbarnb 0
+V:RH1 clef=treble stem=up
+V:LH1 clef=bass stem=up
+V:LH2 clef=bass stem=down
+[V:RH1] !mf!!>!c4- | c4 d2 c2 B2 A2 | G6 F2 !>!F4 | f4 B2 c2 e2 d2 |
+[V:LH1] x4 | z4 [A,C]4 [A,C]4 | z4 [F,A,C]4 [F,A,C]4 | z4 [F,B,]8 |
+[V:LH2] z4 | F,12 | E,12 | D,8 B,,4 |
+[V:RH1] {cde}!>!d6 c2 !>!c4 | =B2 c2 {/e}d2 c2 f2 g2 | a2 A2 =e2 g2 f2 F2 | c2 e2 d2 D2 c2 B2 |
+[V:LH1] x8 x4 | z4 [B,CG]4 [B,CG]4 | z4 [A,CF]4 x4 | z4 [F,G,D]4 x4 |
+[V:LH2] .F,,4 [CA]4 [CA]4 | =E,12 | F,8 A,,4 | B,,4 D4 .B,,,4 |
+[V:RH1] G2 c2 =B2 c2 d2 =d2 |]
+[V:LH1] x8 x4 |]
+[V:LH2] .C,,4 !arpeggio![C,G,=E]4 z4 |]`,
+};

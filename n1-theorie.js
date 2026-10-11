@@ -158,6 +158,7 @@ export default [
     title: 'Les notes et le clavier',
     summary: 'Les sept noms de notes, le clavier, les octaves, les demi-tons et les altérations : le vocabulaire de base.',
     goals: ['Nommer n’importe quelle touche du clavier.', 'Connaître le système des octaves (do3 = do central).', 'Comprendre demi-ton, ton, dièse, bémol et bécarre.'],
+    goal: 'tu nommes au moins 9 touches sur 10 (blanches et noires) et tu trouves une note au piano sans hésiter.',
     body: W => `
 <p>Avant de parler d’harmonie, il faut un vocabulaire sûr. Ce premier chapitre reprend tout depuis le début : le nom des notes, leur place sur le clavier, la manière de les modifier. Tu le connais sans doute en partie ; prends quand même le temps de faire les exercices, ils fixent des automatismes utiles toute ta vie de pianiste.</p>
 
@@ -218,6 +219,7 @@ ${W.quiz({ kind: 'findnote', title: 'Au piano : trouver une note', count: 10, st
     title: 'Lire les notes : la portée, les clés de sol et de fa',
     summary: 'La portée, les deux clés du piano, les lignes supplémentaires, et une méthode de lecture par repères.',
     goals: ['Lire les notes en clé de sol et en clé de fa.', 'Utiliser des notes-repères pour lire vite.', 'Situer chaque note de ta partition sur le clavier.'],
+    goal: '90 % ou plus aux séries « Notes en clé de sol » et « Notes en clé de fa ».',
     body: W => `
 <h2>La portée</h2>
 <p>Les notes s’écrivent sur une <b>portée</b> de cinq lignes et quatre interlignes, numérotés de bas en haut. Plus une note est haute sur la portée, plus elle est aiguë. Au-delà de la portée, on ajoute de petites <b>lignes supplémentaires</b>.</p>
@@ -271,6 +273,7 @@ ${W.quiz({ kind: 'notes', mode: 'play', title: 'Au piano : joue la note écrite,
     title: 'Le rythme : durées, silences, points et liaisons',
     summary: 'Les figures de notes et de silences, le point, la liaison, les groupes irréguliers — et comment les compter.',
     goals: ['Connaître la durée de chaque figure et de chaque silence.', 'Lire le point et la liaison.', 'Compter un rythme à voix haute, croches et triolets compris.'],
+    goal: 'tu complètes 8 mesures sur 10 et tu comptes à voix haute le rythme des mesures 1 à 4 de ton nocturne.',
     body: W => `
 <p>La hauteur dit <i>quelle</i> note jouer ; le rythme dit <i>quand</i>, et <i>combien de temps</i>. Les durées se mesurent en <b>temps</b> : la pulsation régulière que l’on bat du pied.</p>
 
@@ -345,6 +348,7 @@ ${W.rhythm({ level: 2, title: 'Lire et taper un rythme', stat: 'rread-1' })}
     title: 'La mesure : temps forts, levée, mesures simples et composées',
     summary: 'Comment les temps se regroupent, où sont les appuis, et ce que signifient 4/4, 3/4 ou 6/8.',
     goals: ['Lire un chiffre de mesure.', 'Situer les temps forts et les temps faibles.', 'Reconnaître une levée et une syncope.'],
+    goal: 'tu complètes 8 mesures sur 10 (2/4, 3/4, 4/4) et tu dis où tombent les temps forts de ton nocturne.',
     body: W => `
 <h2>Pulsation, temps et mesure</h2>
 <p>La <b>pulsation</b> est le battement régulier de la musique. Les temps se regroupent par deux, trois ou quatre : chaque groupe est une <b>mesure</b>, délimitée par des <b>barres de mesure</b>. Le premier temps de chaque mesure est un appui naturel : le <b>temps fort</b>.</p>
@@ -397,6 +401,7 @@ ${W.rhythm({ level: 2, meter: '3/4', title: 'Lire et taper un rythme à 3/4', st
     title: 'La gamme majeure et ses degrés',
     summary: 'Le modèle « ton – ton – demi-ton… », la construction de n’importe quelle gamme majeure, et le nom des degrés.',
     goals: ['Construire une gamme majeure sur n’importe quelle note.', 'Nommer les sept degrés.', 'Reconnaître une gamme majeure dans ta pièce.'],
+    goal: 'tu construis une gamme majeure sur n’importe quelle note et tu réussis 8 questions sur 10 sur les degrés.',
     body: W => `
 <h2>Le modèle</h2>
 <p>Une gamme majeure, ce sont sept notes de noms différents, de la tonique à la tonique suivante, avec toujours les mêmes écarts : <b>ton – ton – demi-ton – ton – ton – ton – demi-ton</b>.</p>
@@ -424,6 +429,10 @@ ${W.kbd({ from: 56, to: 68, title: 'La♭ majeur (quatre bémols)', marks: [56, 
 <tr><td class="num">7</td><td>sensible</td><td>si</td><td>à un demi-ton de la tonique : elle « tire » vers elle</td></tr>
 </tbody></table>
 <p>Ces numéros sont exactement ceux que tu entraînes dans le module d’oreille (« entendre le degré 3… ») : la théorie et l’oreille parlent de la même chose.</p>
+${W.ecoute({ title: 'La sensible : écoute ce qu’elle fait', bpm: 84, items: [
+  { label: 'Avec la sensible (si → do)', seq: 'sol3 | la3 | si3 | do4:3', note: 'Le si, à un demi-ton du do, « tire » vers lui : l’arrivée est inévitable.' },
+  { label: 'Sans sensible (si♭ → do)', seq: 'sol3 | la3 | sib3 | do4:3', note: 'Un ton entier : l’arrivée sur do perd sa force. C’est ce demi-ton que la gamme majeure place exprès entre 7 et 8.' },
+] })}
 
 ${W.key('À retenir', '<ul><li>Gamme majeure : T – T – ½ – T – T – T – ½.</li><li>Sept noms de notes, chacun une fois ; les altérations viennent du modèle.</li><li>Degrés : tonique, sus-tonique, médiante, sous-dominante, dominante, sus-dominante, sensible.</li></ul>')}
 ${W.warn('Erreurs fréquentes', '<ul><li>Sauter ou répéter un nom de note : une gamme n’a jamais à la fois sol♭ et sol.</li><li>Mettre les demi-tons au mauvais endroit : ils sont entre 3–4 et 7–8.</li><li>Appeler « sensible » un 7e degré à un ton de la tonique : ce n’est plus une sensible (on la retrouvera en mineur).</li></ul>')}
@@ -442,29 +451,51 @@ ${W.quiz({ kind: 'playscale', keys: ['C', 'G', 'F', 'D', 'Ab'], title: 'Au piano
   },
 
   {
-    id: 'n1-th-armures', minutes: 20,
+    id: 'n1-th-armures', minutes: 25,
     title: 'Tonalités, armures et cycle des quintes',
-    summary: 'Pourquoi une armure, comment la lire en une seconde, et comment les tonalités s’organisent entre elles.',
-    goals: ['Reconnaître une tonalité majeure ou mineure à son armure.', 'Connaître l’ordre des dièses et des bémols.', 'Situer les tonalités voisines sur le cycle des quintes.'],
+    summary: 'Pourquoi chaque tonalité a son armure, comment le cycle des quintes les range, et à quoi il sert au piano : lire vite, prévoir les modulations, enchaîner les accords.',
+    goals: ['Trouver la tonalité d’une armure, et l’armure d’une tonalité.', 'Comprendre pourquoi un pas sur le cycle ne change qu’une note.', 'Situer les tons voisins de ta pièce, et les entendre.'],
+    goal: 'tu donnes l’armure d’une tonalité jusqu’à quatre altérations en moins de cinq secondes, et tu nommes ses tons voisins (série « Armures » : 80 %).',
     body: W => `
 <h2>L’armure</h2>
-<p>Construire une gamme majeure sur une autre note que do demande des altérations, toujours les mêmes : plutôt que de les écrire devant chaque note, on les place une fois pour toutes en début de ligne. C’est l’<b>armure</b>. Elle indique la <b>tonalité</b> : la gamme, et donc la tonique, autour de laquelle la pièce est construite.</p>
+<p>Construire une gamme majeure sur une autre note que do demande des altérations, toujours les mêmes : plutôt que de les écrire devant chaque note, on les place une fois pour toutes en début de ligne. C’est l’<b>armure</b>. Elle désigne la <b>tonalité</b> : la gamme, et donc la note de repos, autour de laquelle la pièce est construite.</p>
 <ul>
-<li><b>Ordre des dièses</b> : fa – do – sol – ré – la – mi – si. <b>Ordre des bémols</b> : l’inverse, si – mi – la – ré – sol – do – fa.</li>
+<li><b>Ordre des dièses</b> : fa – do – sol – ré – la – mi – si. <b>Ordre des bémols</b> : le même, à l’envers : si – mi – la – ré – sol – do – fa.</li>
 <li><b>Avec des dièses</b> : la tonique majeure est un demi-ton au-dessus du dernier dièse (dernier dièse do♯ → ré majeur).</li>
 <li><b>Avec des bémols</b> : la tonique majeure est l’avant-dernier bémol (si♭ mi♭ la♭ ré♭ → la♭ majeur). Un seul bémol : fa majeur.</li>
 </ul>
 
-<h2>Relatif et homonyme</h2>
-<p>Chaque armure correspond à <b>deux</b> tonalités : une majeure et sa <b>relative mineure</b>, une tierce mineure (trois demi-tons) plus bas. Quatre bémols : la♭ majeur, ou <b>fa mineur</b>, la tonalité de l’op. 55 n° 1. On distingue les deux à l’oreille (la note de repos) et à la partition : la première et la dernière basse, et les altérations accidentelles (en mineur, le 7e degré est souvent haussé : mi♮ en fa mineur).</p>
-<p>L’<b>homonyme</b>, lui, a la même tonique et l’autre mode : fa mineur et fa majeur. La coda de l’op. 55 passe justement de fa mineur à fa majeur.</p>
+<h2>Le cycle, pas à pas : une seule note change</h2>
+<p>Pars de do majeur, sans altération. Construis la gamme sur sa <b>quinte</b>, sol : toutes les notes sont les mêmes, sauf une. Le modèle de la gamme majeure (ton – ton – demi-ton – ton – ton – ton – demi-ton) exige un demi-ton entre le 7e degré et la tonique : <b>fa devient fa♯</b>, la nouvelle sensible. Recommence sur la quinte de sol, ré : seul do devient do♯. Chaque pas d’une quinte vers le haut ajoute <b>un dièse</b>, toujours la nouvelle sensible. Dans l’autre sens, une quinte plus bas (fa), seul si devient si♭ : chaque pas ajoute <b>un bémol</b>.</p>
+<p>En reliant toutes les tonalités de quinte en quinte, on fait le tour des douze et on revient au départ : c’est le <b>cycle des quintes</b>. Essaie : touche une tonalité, écoute sa gamme, puis fais un pas avec « une quinte plus haut » : la seule note qui change s’allume en or.</p>
+${W.cof({ start: 0, minor: false })}
 
-<h2>Le cycle des quintes</h2>
-${W.cof({ start: 8, minor: true })}
-<p>En tournant dans le sens des aiguilles d’une montre, on monte d’une quinte et on ajoute un dièse (ou on retire un bémol). Les tonalités côte à côte sont les <b>tons voisins</b> : elles ne diffèrent que d’une altération, et c’est vers elles qu’une pièce module le plus naturellement.</p>
+<h2>Pourquoi c’est utile : les voisines se ressemblent</h2>
+<p>Deux tonalités côte à côte sur le cycle partagent six notes sur sept. C’est pour cela que la musique passe <b>naturellement</b> de l’une à l’autre (on dit qu’elle <b>module</b>), alors qu’un saut à l’autre bout du cycle change presque toutes les notes et surprend l’oreille. Écoute la différence :</p>
+${W.ecoute({ title: 'Une cadence en do, puis…', bpm: 92, items: [
+  { label: '… en sol majeur (voisine)', seq: 'do2 mi3 sol3 do4 | fa2 fa3 la3 do4 | sol2 fa3 si3 ré4 | do2 mi3 sol3 do4:2 | z | sol1 si2 ré3 sol3 | do2 do3 mi3 sol3 | ré2 do3 fa#3 la3 | sol1 si2 ré3 sol3:2', note: 'Un pas sur le cycle : une seule note nouvelle (fa♯). Le changement est doux, presque une suite logique.' },
+  { label: '… en la mineur (relative)', seq: 'do2 mi3 sol3 do4 | fa2 fa3 la3 do4 | sol2 fa3 si3 ré4 | do2 mi3 sol3 do4:2 | z | la1 do3 mi3 la3 | ré2 ré3 fa3 la3 | mi2 ré3 sol#3 si3 | la1 do3 mi3 la3:2', note: 'La même armure, une autre note de repos : la couleur s’assombrit sans quitter le paysage (seul le sol♯ de la cadence est nouveau).' },
+  { label: '… en fa♯ majeur (à l’opposé)', seq: 'do2 mi3 sol3 do4 | fa2 fa3 la3 do4 | sol2 fa3 si3 ré4 | do2 mi3 sol3 do4:2 | z | fa#2 la#3 do#4 fa#4 | si2 si3 ré#4 fa#4 | do#2 si3 mi#4 sol#4 | fa#2 la#3 do#4 fa#4:2', note: 'Six pas plus loin : presque toutes les notes changent. L’oreille est projetée ailleurs, sans transition.' },
+] })}
 
-${W.key('À retenir', '<ul><li>Dièses : fa do sol ré la mi si ; bémols : si mi la ré sol do fa.</li><li>Dièses : tonique = dernier dièse + un demi-ton. Bémols : tonique = avant-dernier bémol.</li><li>Relative mineure : une tierce mineure sous la tonique majeure.</li><li>Tons voisins : une altération d’écart, côte à côte sur le cycle.</li></ul>')}
-${W.warn('Erreurs fréquentes', '<ul><li>Déduire la tonalité de l’armure seule : quatre bémols, c’est la♭ majeur <i>ou</i> fa mineur. Regarde la basse finale et les altérations.</li><li>Oublier une altération de l’armure au milieu d’un passage difficile : relis l’armure avant de déchiffrer.</li></ul>')}
+<h2>À quoi sert le cycle au piano</h2>
+<ul>
+<li><b>Lire une armure en un clin d’œil</b> : le nombre de dièses ou de bémols dit où l’on est sur le cycle.</li>
+<li><b>Prévoir les modulations</b> : une pièce va d’abord vers ses <b>tons voisins</b>, une altération plus loin (la dominante, la sous-dominante, et leurs relatives). Dans l’op. 55, la phrase b passe en la♭ majeur (le relatif) puis en do mineur (la dominante) : deux voisins de fa mineur.</li>
+<li><b>Comprendre les enchaînements d’accords</b> : V → I, c’est un pas sur le cycle, d’une quinte vers le bas. Les suites qui tournent sur le cycle (vi – ii – V – I) sonnent « inévitables » : chaque accord appelle le suivant.</li>
+</ul>
+${W.ecoute({ title: 'Les accords tournent sur le cycle', bpm: 76, items: [
+  { label: 'la m – ré m – sol 7 – do', seq: 'la1 mi3 la3 do4 | ré2 fa3 la3 ré4 | sol1 fa3 si3 ré4 | do2 mi3 sol3 do4:2', note: 'Chaque basse descend d’une quinte (ou monte d’une quarte) : la, ré, sol, do. On sent l’arrivée dès le début.' },
+  { label: 'la m – sol – ré m – do', seq: 'la1 mi3 la3 do4 | sol1 ré3 sol3 si3 | ré2 fa3 la3 ré4 | do2 mi3 sol3 do4:2', note: 'Les mêmes accords (ou presque), dans le désordre : la fin arrive moins naturellement.' },
+] })}
+
+<h2>Chopin et le cycle : les 24 Préludes</h2>
+<p>Chopin a rangé ses <b>24 Préludes op. 28</b> en suivant le cycle des quintes, chaque majeur suivi de sa relative mineure : do majeur, la mineur, sol majeur, <b>mi mineur (le n° 4, celui que tu étudies en improvisation)</b>, ré majeur, si mineur… jusqu’à fa majeur et ré mineur. Écouter le recueil dans l’ordre, c’est faire le tour du cycle.</p>
+${W.listen([W.yt('Chopin 24 Preludes op 28 complete', 'Les 24 Préludes op. 28, dans l’ordre', 'Suis le cycle : do, la m, sol, mi m, ré, si m…')], 'Écouter')}
+
+${W.key('À retenir', '<ul><li>Dièses : fa do sol ré la mi si ; bémols : si mi la ré sol do fa.</li><li>Dièses : tonique = dernier dièse + un demi-ton. Bémols : tonique = avant-dernier bémol.</li><li>Un pas sur le cycle (une quinte) ne change qu’une note : vers les dièses, la nouvelle sensible ; vers les bémols, le nouveau 4e degré.</li><li>Relative mineure : une tierce mineure sous la tonique majeure, même armure.</li></ul>')}
+${W.warn('Erreurs fréquentes', '<ul><li>Déduire la tonalité de l’armure seule : quatre bémols, c’est la♭ majeur <i>ou</i> fa mineur. Regarde la basse finale et les altérations (le mi♮ sensible de fa mineur).</li><li>Oublier une altération de l’armure au milieu d’un passage difficile : relis l’armure avant de déchiffrer.</li></ul>')}
+${W.more('Relatif et homonyme', '<p>Chaque armure correspond à <b>deux</b> tonalités : une majeure et sa <b>relative mineure</b>, une tierce mineure (trois demi-tons) plus bas : quatre bémols, la♭ majeur ou fa mineur. L’<b>homonyme</b>, lui, a la même tonique et l’autre mode : fa mineur et fa majeur. La coda de l’op. 55 passe de fa mineur à fa majeur ; l’op. 15 n° 1 (niveau 2) oppose fa majeur et fa mineur.</p>')}
 
 <h2>Dans ta pièce cette semaine : mesures 17 à 24</h2>
 <p>La phrase b voyage dans les <b>tons voisins</b> de fa mineur, et les altérations accidentelles servent de panneaux indicateurs :</p>
@@ -486,7 +517,8 @@ ${W.score({ abc: OP55.e4, title: 'Mesures 17 à 20', bpm: 56, startBpm: 46 })}
 
 <h2>Exercices</h2>
 ${W.exo('Exercice 1 — Lire une armure', '<p>Quelles tonalités (majeure et relative mineure) pour : 2 dièses ? 3 bémols ? 1 dièse ? 5 bémols ?</p><details><summary>Corrigé</summary><div><p>2 dièses : ré majeur / si mineur. 3 bémols : mi♭ majeur / do mineur. 1 dièse : sol majeur / mi mineur. 5 bémols : ré♭ majeur / si♭ mineur.</p></div></details>')}
-${W.exo('Exercice 2 — Les indices', '<p>Une pièce a quatre bémols à l’armure ; on y voit souvent des mi♮ et elle finit sur un accord fa – la♭ – do. Quelle est sa tonalité ?</p><details><summary>Corrigé</summary><div><p>Fa mineur : le mi♮ est la sensible de fa (forme harmonique), et la pièce se termine sur la tonique fa.</p></div></details>')}
+${W.exo('Exercice 2 — Un pas sur le cycle', '<p>Quelle note change entre : ré majeur et la majeur ? fa majeur et si♭ majeur ? Vérifie avec le cycle ci-dessus (« une quinte plus haut / plus bas »).</p><details><summary>Corrigé</summary><div><p>Ré → la majeur : sol devient sol♯ (la sensible de la). Fa → si♭ majeur : mi devient mi♭ (le 4e degré de si♭).</p></div></details>')}
+${W.exo('Exercice 3 — Les indices', '<p>Une pièce a quatre bémols à l’armure ; on y voit souvent des mi♮ et elle finit sur un accord fa – la♭ – do. Quelle est sa tonalité ? Quels sont ses tons voisins ?</p><details><summary>Corrigé</summary><div><p>Fa mineur : le mi♮ est la sensible de fa (forme harmonique), et la pièce se termine sur la tonique fa. Tons voisins : la♭ majeur (relatif), do mineur (dominante), si♭ mineur (sous-dominante), mi♭ majeur et ré♭ majeur (leurs relatifs).</p></div></details>')}
 ${W.quiz({ kind: 'keysig', keys: ['C', 'G', 'D', 'A', 'E', 'F', 'Bb', 'Eb', 'Ab', 'Db'], title: 'Armures : tonalités majeures', count: 10, stat: 'ks-maj' })}
 ${W.quiz({ kind: 'keysig', minor: true, keys: ['C', 'G', 'D', 'A', 'E', 'F', 'Bb', 'Eb', 'Ab'], title: 'Armures : tonalités mineures', count: 10, stat: 'ks-min' })}
 ${W.links([W.informance('/content/pages/20-a-crash-course-in-music-theory', 'A Crash Course in Music Theory')], 'Pour aller plus loin')}
@@ -498,6 +530,7 @@ ${W.links([W.informance('/content/pages/20-a-crash-course-in-music-theory', 'A C
     title: 'Les trois gammes mineures',
     summary: 'Naturelle, harmonique, mélodique : trois versions d’une même tonalité, et le rôle décisif de la sensible.',
     goals: ['Construire les trois gammes mineures.', 'Comprendre le rôle de la sensible.', 'Repérer les sensibles dans le Più mosso.'],
+    goal: 'tu joues la mineur harmonique de fa, la et mi, et tu reconnais à l’oreille la seconde augmentée.',
     body: W => `
 <p>Le mode mineur n’a pas une, mais trois formes de gamme. Toutes partagent le début : une <b>tierce mineure</b> au-dessus de la tonique (la – do en la mineur), qui donne au mineur sa couleur. Elles diffèrent par les degrés 6 et 7.</p>
 <ul>
@@ -506,6 +539,12 @@ ${W.links([W.informance('/content/pages/20-a-crash-course-in-music-theory', 'A C
 <li><b>Mineure mélodique</b> : en montant, on hausse le 6e et le 7e degré (la seconde augmentée disparaît) ; en descendant, on revient à la forme naturelle.</li>
 </ul>
 ${W.score({ abc: MINOR_SCALES, title: 'La mineur : les trois formes', bpm: 96, hands: false, practice: false })}
+${W.ecoute({ title: 'Pourquoi hausser le 7e degré ?', bpm: 72, items: [
+  { label: 'Cadence avec sol (mineur naturel)', seq: 'mi2 si2 mi3 sol3:2 | la1 do3 mi3 la3:3', note: 'Mi mineur → la mineur : pas de sensible, la fin est molle, presque une suspension.' },
+  { label: 'Cadence avec sol♯ (mineur harmonique)', seq: 'mi2 si2 mi3 sol#3:2 | la1 do3 mi3 la3:3', note: 'Mi majeur → la mineur : le sol♯ monte vers la, la fin est nette. C’est la raison d’être de la gamme harmonique.' },
+  { label: 'Harmonique : la seconde augmentée', seq: 'mi3 | fa3 | sol#3 | la3:2', note: 'Entre fa et sol♯, un ton et demi : la couleur très reconnaissable de la mineure harmonique.' },
+  { label: 'Mélodique : en montant, sans la seconde augmentée', seq: 'mi3 | fa#3 | sol#3 | la3:2', note: 'Fa♯ et sol♯ : la mélodie monte en douceur vers la tonique.' },
+] })}
 
 <h2>Pourquoi la sensible ?</h2>
 <p>Sans elle, l’accord bâti sur le 5e degré serait mineur et perdrait sa force d’attraction vers la tonique. C’est pourquoi, dans une pièce en mineur, le 7e degré est presque toujours haussé dans les accords de dominante : en fa mineur, c’est le <b>mi♮</b> qu’on voit si souvent dans l’op. 55.</p>
@@ -537,6 +576,7 @@ ${W.quiz({ kind: 'playscale', keys: ['Am', 'Dm', 'Cm', 'Fm', 'Gm'], title: 'Au p
     title: 'Les intervalles',
     summary: 'Nommer, lire et entendre la distance entre deux notes : la base de la lecture rapide, de l’harmonie et de l’oreille.',
     goals: ['Nommer un intervalle (quantité et qualité).', 'Le reconnaître sur la portée.', 'Le retrouver dans ta pièce, à deux voix.'],
+    goal: '80 % ou plus à la série « Sur la portée : quantité et qualité ».',
     body: W => `
 <h2>Le nom d’un intervalle</h2>
 <p>Un intervalle a deux composantes. La <b>quantité</b> se compte en noms de notes, les deux extrémités comprises : do – mi = do, ré, mi = <b>tierce</b>. La <b>qualité</b> dépend du nombre exact de demi-tons : do – mi (4 demi-tons) est une tierce <b>majeure</b> ; do – mi♭ (3) une tierce <b>mineure</b>.</p>
@@ -567,8 +607,17 @@ ${W.score({ abc: INTERVALS_ABC, title: 'Les intervalles depuis do3', bpm: 60, ha
 <h2>Le renversement</h2>
 <p>Renverser un intervalle, c’est passer la note grave à l’octave supérieure : do – mi (tierce) devient mi – do (sixte). La quantité devient « 9 moins l’ancienne », et la qualité s’inverse : majeur ↔ mineur, juste ↔ juste, augmenté ↔ diminué. Une tierce majeure renversée donne une sixte mineure.</p>
 
+
+
 <h2>Consonances et dissonances</h2>
 <p>Les intervalles « reposants » (octave, quinte, tierces et sixtes) sont des <b>consonances</b> ; les intervalles tendus (secondes, septièmes, triton) sont des <b>dissonances</b>, qui demandent en général à se résoudre. La quarte est un cas particulier : consonante entre deux voix supérieures, elle est traitée comme une dissonance au-dessus de la basse.</p>
+${W.ecoute({ title: 'Consonance ou dissonance ?', bpm: 60, items: [
+  { label: 'Tierce majeure (do – mi)', seq: 'do3 mi3:2', note: 'Douce et stable : une consonance.' },
+  { label: 'Seconde majeure (do – ré)', seq: 'do3 ré3:2', note: 'Les deux notes frottent : une dissonance.' },
+  { label: 'Quinte juste (do – sol)', seq: 'do3 sol3:2', note: 'Vide et stable.' },
+  { label: 'Triton (do – fa♯)', seq: 'do3 fa#3:2', note: 'Instable : il veut bouger.' },
+  { label: 'Le triton se résout (fa – si → mi – do)', seq: 'fa3 si3:2 | mi3 do4:3', note: 'Les deux notes s’écartent d’un demi-ton chacune : la tension se dénoue. C’est le cœur de la cadence V7 → I.' },
+] })}
 
 ${W.key('À retenir', '<ul><li>Quantité : on compte les noms de notes, extrémités comprises. Qualité : on compte les demi-tons.</li><li>Justes : quarte (5), quinte (7), octave (12). Majeures / mineures : secondes, tierces, sixtes, septièmes.</li><li>Renversement : 9 moins la quantité ; majeur ↔ mineur.</li></ul>')}
 ${W.warn('Erreurs fréquentes', '<ul><li>Compter les écarts au lieu des noms : do – mi, c’est 3 noms (tierce), pas 2.</li><li>Oublier l’armure : en fa mineur, la – do est la♭ – do, une tierce majeure.</li><li>Confondre sixte majeure et septième mineure : 9 et 10 demi-tons.</li></ul>')}
@@ -597,6 +646,7 @@ ${W.quiz({ kind: 'intervals', set: ['2m', '2M', '3m', '3M', '4J', '5J', '8ve'], 
     title: 'Les accords de trois sons',
     summary: 'Superposer deux tierces : quatre sortes d’accords, et les accords bâtis sur chaque degré d’une tonalité.',
     goals: ['Construire les accords majeur, mineur, diminué et augmenté.', 'Connaître les accords d’une tonalité majeure et mineure.', 'Nommer les accords de ta pièce.'],
+    goal: '80 % ou plus à « À l’oreille : nature de l’accord » et tu joues les quatre accords sur n’importe quelle note.',
     body: W => `
 <h2>Superposer des tierces</h2>
 <p>Un accord de trois sons (ou <b>triade</b>) superpose deux tierces au-dessus d’une <b>fondamentale</b> : fondamentale, <b>tierce</b>, <b>quinte</b>. Selon les tierces employées, on obtient quatre sortes d’accords :</p>
@@ -609,6 +659,12 @@ ${W.quiz({ kind: 'intervals', set: ['2m', '2M', '3m', '3M', '4J', '5J', '8ve'], 
 <tr><td>augmenté</td><td>majeure + majeure</td><td>augmentée</td><td>do – mi – sol♯</td><td>flottant, instable</td></tr>
 </tbody></table>
 ${W.score({ abc: TRIADS, title: 'Les quatre accords sur do', bpm: 50, hands: false, practice: false })}
+${W.ecoute({ title: 'Une seule note change la couleur', bpm: 66, items: [
+  { label: 'Do majeur', seq: 'do3 mi3 sol3 ~:1 | do3 mi3 sol3:2', note: 'Clair, stable.' },
+  { label: 'Do mineur (mi → mi♭)', seq: 'do3 mib3 sol3 ~:1 | do3 mib3 sol3:2', note: 'Seule la tierce baisse d’un demi-ton : tout s’assombrit.' },
+  { label: 'Do diminué (sol → sol♭)', seq: 'do3 mib3 solb3 ~:1 | do3 mib3 solb3:2', note: 'La quinte se resserre : inquiet, instable.' },
+  { label: 'Do augmenté (sol → sol♯)', seq: 'do3 mi3 sol#3 ~:1 | do3 mi3 sol#3:2', note: 'La quinte s’élargit : flottant, sans repos.' },
+] })}
 <p>Pour nommer un accord, on dit sa fondamentale et sa nature : « fa mineur », « mi♭ majeur ». En notation anglo-saxonne : Fm, E♭.</p>
 
 <h2>Les accords d’une tonalité</h2>
@@ -648,6 +704,7 @@ ${W.quiz({ kind: 'chords', set: ['M', 'm', 'dim'], mode: 'play', title: 'Au pian
     title: 'Renversements et chiffrage',
     summary: 'Quand la fondamentale n’est pas à la basse : les trois positions d’un accord, leur chiffrage, et la septième de dominante.',
     goals: ['Reconnaître un accord renversé et trouver sa fondamentale.', 'Lire les chiffrages 5, 6, 6/4, et 7, 6/5, 4/3, 4/2.', 'Analyser les accords renversés du thème.'],
+    goal: 'tu trouves la fondamentale et la position de 8 accords sur 10 sur la portée.',
     body: W => `
 <h2>Trois positions</h2>
 <p>Quand la fondamentale n’est pas la note la plus grave, l’accord est <b>renversé</b>. On le désigne d’après la note de basse :</p>
@@ -657,6 +714,12 @@ ${W.quiz({ kind: 'chords', set: ['M', 'm', 'dim'], mode: 'play', title: 'Au pian
 <li><b>2e renversement</b> : quinte à la basse (chiffré <b>6/4</b>). Il est instable ; on le trouve surtout juste avant une cadence (le « 6/4 de cadence »).</li>
 </ul>
 ${W.score({ abc: INVERSIONS, title: 'Do majeur dans ses trois positions', bpm: 50, hands: false, practice: false, caption: 'En notation anglo-saxonne, on écrit la basse après une barre : do/mi, do/sol.' })}
+${W.ecoute({ title: 'Le même accord, trois basses', bpm: 60, items: [
+  { label: 'Do / do (état fondamental)', seq: 'do2 sol3 do4 mi4:3', note: 'Stable, assis.' },
+  { label: 'Do / mi (1er renversement)', seq: 'mi2 sol3 do4 mi4:3', note: 'Plus léger : il avance, idéal au milieu d’une phrase.' },
+  { label: 'Do / sol (2e renversement)', seq: 'sol1 sol3 do4 mi4:3', note: 'Suspendu : il attend la dominante.' },
+  { label: 'Le 6/4 de cadence : do/sol → sol 7 → do', seq: 'sol1 sol3 do4 mi4:2 | sol1 fa3 si3 ré4:2 | do2 mi3 sol3 do4:3', note: 'La basse sol ne bouge pas : l’accord de do « posé sur sol » glisse vers sol 7, puis tout se résout.' },
+] })}
 <p>Le chiffrage indique les intervalles au-dessus de la basse : au 1er renversement, la fondamentale est une <b>sixte</b> au-dessus de la basse ; au 2e, une <b>quarte</b>, et la tierce une <b>sixte</b>.</p>
 
 <h2>Trouver la fondamentale</h2>
@@ -700,6 +763,7 @@ ${W.quiz({ kind: 'chordsight', set: ['M', 'm'], inversions: [0, 1, 2], title: 'S
     title: 'Degrés et fonctions : tonique, sous-dominante, dominante',
     summary: 'Chaque accord joue un rôle : repos, éloignement ou tension. Comprendre ces rôles, c’est comprendre le mouvement de la musique.',
     goals: ['Classer les accords par fonction.', 'Comprendre la résolution de la septième de dominante.', 'Analyser la coda de l’op. 55 en fonctions.'],
+    goal: 'tu classes en T, SD ou D les accords de la coda (mesures 77 à 84) et tu réussis 70 % à « après le I, IV, V ou vi ».',
     body: W => `
 <h2>Trois fonctions</h2>
 ${W.diagram('functions', { key: 'fa mineur' })}
@@ -710,6 +774,11 @@ ${W.diagram('functions', { key: 'fa mineur' })}
 </ul>
 <p>Le schéma le plus courant de la musique tonale est <b>T – SD – D – T</b>. Quand tu reconnais ces trois fonctions, tu sais où va la musique, donc où elle se tend et où elle se détend : c’est la base d’un phrasé convaincant.</p>
 ${W.score({ abc: FUNCTIONS, title: 'T – SD – D – T en fa mineur', bpm: 60, caption: 'Écoute la tension du V7 et le soulagement de l’accord final.' })}
+${W.ecoute({ title: 'Tension et détente', bpm: 72, items: [
+  { label: 'I – IV – V7 – I', seq: 'do2 mi3 sol3 do4 | fa2 fa3 la3 do4 | sol2 fa3 si3 ré4 | do2 mi3 sol3 do4:3', note: 'Repos, éloignement, tension, retour.' },
+  { label: 'I – IV – V7… et rien', seq: 'do2 mi3 sol3 do4 | fa2 fa3 la3 do4 | sol2 fa3 si3 ré4:3', note: 'Arrêté sur la dominante : l’oreille attend la suite. Chante la note qui manque.' },
+  { label: 'V → I, puis V7 → I', seq: 'sol2 ré3 sol3 si3:2 | do2 mi3 sol3 do4:2 | z | sol2 fa3 si3 ré4:2 | do2 mi3 sol3 do4:3', note: 'Avec la septième (fa), la tension est plus forte et la détente plus nette : fa descend sur mi, si monte sur do.' },
+] })}
 
 <h2>La septième de dominante</h2>
 <p>L’accord V7 (en fa mineur : do – mi♮ – sol – si♭) contient un <b>triton</b> entre mi♮ et si♭. Ce triton se résout : la sensible <b>mi♮ monte</b> vers fa ; la septième <b>si♭ descend</b> vers la♭. Cette double attraction rend la cadence si forte.</p>
@@ -741,6 +810,7 @@ ${W.quiz({ kind: 'chordfunc', set: ['IV', 'V', 'vi'], title: 'À l’oreille : a
     title: 'Les cadences',
     summary: 'La ponctuation de la musique : point final, virgule, « amen » et surprise.',
     goals: ['Reconnaître les quatre cadences.', 'Comprendre le 6/4 de cadence.', 'Repérer toutes les cadences de l’op. 55.'],
+    goal: '80 % ou plus à « fin ou suspension ? », et tu nommes les cadences de ton nocturne listées dans la leçon.',
     body: W => `
 <ul>
 <li><b>Cadence parfaite</b> (V – I), les deux accords à l’état fondamental, la tonique au soprano : le point final. Si l’un des accords est renversé, ou si la tonique n’est pas à la voix supérieure, on parle de <b>cadence imparfaite</b>.</li>
@@ -749,6 +819,12 @@ ${W.quiz({ kind: 'chordfunc', set: ['IV', 'V', 'vi'], title: 'À l’oreille : a
 <li><b>Cadence rompue</b> (V – vi) : on attend I, on entend vi. Une surprise qui relance la musique.</li>
 </ul>
 ${W.score({ abc: CADENCES, title: 'Les quatre cadences en do majeur', bpm: 72, caption: 'Une cadence par mesure.' })}
+${W.ecoute({ title: 'Une phrase, quatre fins', bpm: 76, items: [
+  { label: 'Parfaite (V7 → I)', seq: 'do2 mi3 sol3 do4 | fa2 fa3 la3 do4 | sol2 fa3 si3 ré4 | do2 mi3 sol3 do4:3', note: 'Un point final.' },
+  { label: 'Demi-cadence (arrêt sur V)', seq: 'do2 mi3 sol3 do4 | fa2 fa3 la3 do4 | ré2 fa#3 la3 do4 | sol2 ré3 sol3 si3:3', note: 'Une virgule : la question reste ouverte.' },
+  { label: 'Plagale (IV → I)', seq: 'do2 mi3 sol3 do4 | sol2 ré3 sol3 si3 | fa2 fa3 la3 do4 | do2 mi3 sol3 do4:3', note: 'Un « amen », plus doux que la parfaite.' },
+  { label: 'Rompue (V7 → vi)', seq: 'do2 mi3 sol3 do4 | fa2 fa3 la3 do4 | sol2 fa3 si3 ré4 | la1 mi3 la3 do4:3', note: 'On attendait do, on entend la mineur : la phrase doit repartir.' },
+] })}
 
 <h2>Le 6/4 de cadence</h2>
 <p>Juste avant V, on trouve souvent l’accord de tonique au 2e renversement (I6/4 ou i6/4) : la basse est déjà la dominante, et les voix du haut « retardent » l’accord de V avant de s’y résoudre. On l’analyse comme un ornement de la dominante.</p>
@@ -782,6 +858,12 @@ ${W.quiz({ kind: 'cadences', title: 'À l’oreille : les quatre cadences', coun
     title: 'Les notes étrangères',
     summary: 'Les notes qui n’appartiennent pas à l’accord : ce sont elles qui font chanter une mélodie.',
     goals: ['Reconnaître notes de passage, broderies, appoggiatures, retards et pédales.', 'Les repérer dans toute la pièce.', 'En tirer des conséquences pour le phrasé.'],
+    essentials: [
+      '<b>Note de passage</b> et <b>broderie</b> : entre les temps, par degrés ; elles s’allègent.',
+      '<b>Appoggiature</b> : sur le temps, résolue d’un degré ; elle s’appuie, sa résolution se pose.',
+      '<b>Retard</b> : une note tenue de l’accord précédent, qui devient dissonante puis se résout ; <b>pédale</b> : une basse tenue sous les accords.',
+    ],
+    goal: 'tu as entouré et nommé les notes étrangères des mesures 1 à 24 de ta pièce, et ton jeu allège les broderies, appuie les appoggiatures.',
     body: W => `
 <p>Une mélodie faite uniquement de notes de l’accord serait un arpège. Ce qui la rend expressive, ce sont les <b>notes étrangères</b> à l’harmonie.</p>
 <ul>
@@ -792,6 +874,12 @@ ${W.quiz({ kind: 'cadences', title: 'À l’oreille : les quatre cadences', coun
 <li><b>Pédale</b> : une note tenue à la basse, sous des accords qui changent.</li>
 </ul>
 ${W.score({ abc: NONCHORD, title: 'Les notes étrangères (do majeur)', bpm: 66, caption: 'Le retard a besoin d’une préparation : do appartient à l’accord de I (mesure 4), il est tenu sur V (mesure 5), puis se résout sur si.' })}
+${W.ecoute({ title: 'Avec ou sans : la note étrangère fait chanter', bpm: 60, items: [
+  { label: 'Sans note étrangère', seq: ['do2 sol2 mi3:2 | sol1 sol2 fa3:2 | do2 sol2 mi3:3', 'mi4:2 | si3:2 | do4:3'], note: 'Juste, mais neutre : chaque note appartient à l’accord.' },
+  { label: 'Avec une appoggiature (do → si)', seq: ['do2 sol2 mi3:2 | sol1 sol2 fa3:2 | do2 sol2 mi3:3', 'mi4:2 | do4:1 | si3:1 | do4:3'], note: 'Le do frotte sur l’accord de sol 7, puis glisse sur si : un soupir. On appuie le do, on allège le si.' },
+  { label: 'Avec un retard (do tenu)', seq: ['do2 sol2 mi3:2 | sol1 sol2 fa3:2 | do2 sol2 mi3:3', 'mi4:1 | do4:2 | si3:1 | do4:3'], note: 'Le do vient de l’accord précédent, reste quand l’harmonie change, puis se résout : la dissonance est préparée.' },
+  { label: 'Avec broderie et passage', seq: ['do2 sol2 mi3:2 | sol1 sol2 fa3:2 | do2 sol2 mi3:3', 'mi4:0.5 | fa4:0.5 | mi4:0.5 | ré4:0.5 | si3:0.5 | do4:0.5 | ré4:1 | do4:3'], note: 'Mi – fa – mi : une broderie ; si – do – ré : un passage. Les notes d’appui restent sur les temps.' },
+] })}
 
 ${W.key('Conséquences pour le jeu', '<ul><li>Appoggiature : plus d’appui, puis une résolution plus douce.</li><li>Notes de passage et broderies : plus légères que les notes de l’accord qu’elles ornent.</li><li>Retard : laisse entendre la dissonance tenue, résous en douceur.</li><li>Pédale : la basse tenue porte tout ; ne la laisse pas s’éteindre trop tôt.</li></ul>')}
 ${W.warn('Erreurs fréquentes', '<ul><li>Accentuer toutes les notes d’une broderie : seule la note principale compte.</li><li>Prendre une appoggiature pour une note de passage : l’appoggiature est sur le temps.</li></ul>')}
@@ -817,6 +905,12 @@ ${W.exo('Exercice', '<p>Sur ta partition des mesures 1 à 24, entoure au crayon 
     title: 'Synthèse : le plan de l’op. 55 n° 1',
     summary: 'Toutes les notions du niveau au service d’une seule chose : comprendre la pièce entière, pour mieux la jouer et la mémoriser.',
     goals: ['Connaître le plan de la pièce : sections, tonalités, cadences.', 'Relier chaque section à son caractère.', 'Utiliser l’analyse pour mémoriser.'],
+    essentials: [
+      'Le plan de l’op. 55 n° 1 : <b>A</b> (thème a et ses retours, phrase b), <b>Più mosso</b>, retour bref, <b>coda</b> en fa majeur.',
+      'Chaque section a ses tonalités et ses cadences : elles disent où la musique se tend et se repose.',
+      'L’analyse sert au piano : doser l’énergie, varier les retours, <b>mémoriser</b> et savoir repartir.',
+    ],
+    goal: 'tu racontes de mémoire le plan de la pièce (sections, tonalités, cadences) et tu repars sans hésiter du début de n’importe quelle section.',
     body: W => `
 <h2>Le plan</h2>
 ${W.diagram('form', { total: 101, sections: [

@@ -24,6 +24,8 @@ const DEFAULTS = () => ({
     labels: 'fr',        // noms des touches sur le clavier : 'fr' | 'none'
     echoVirtual: true,   // son pour le clavier à l'écran
     voice: 'grave',      // tessiture pour les exercices de chant : 'grave' | 'aigue'
+    voiceRange: null,    // tessiture mesurée [grave, aigu] en MIDI (outil « Trouver ma voix »)
+    voiceMode: 'measured', // 'measured' : tessiture mesurée si elle existe ; 'preset' : voix grave / aiguë
   },
   pieces: {},          // options par pièce (ex. { byHeart: true })
   sight: {},           // lecture à vue : niveau choisi, progression par niveau (cible, extraits lus, essais), tempo

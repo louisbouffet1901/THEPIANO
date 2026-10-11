@@ -1,5 +1,16 @@
 // Niveau 1 — Interprétation
 import { OP55 } from './content-excerpts.js';
+
+// Mélodie en valeurs longues au-dessus d'une main gauche en arpèges (le modèle de la romance, n1-impro.js)
+const ROMANCE_BC = `X:1
+M:3/4
+L:1/8
+K:Em
+%%score {RH | LH}
+V:RH clef=treble
+V:LH clef=bass
+[V:RH] B4 G2 | c3 B A2 | G2 B2 e2 | f4 ^d2 | g3 f e2 | d2 c2 A2 | B3 A F2 | E6 |]
+[V:LH] "_i"E,, B,, E, G, B, G, | "_iv"A,, E, A, C E C | "_i"E,, B,, E, G, B, G, | "_V"B,,, F,, B,, ^D, F, D, | "_VI"C,, G,, C, E, G, E, | "_iv"A,,, E,, A,, C, E, C, | "_V7"B,,, F,, A,, ^D, F, D, | "_i"E,, B,, E, G, B, G, |]`;
 import { AN } from './content-analyses.js';
 
 // Mesures 1 à 8 avec analyse harmonique sous la basse
@@ -23,6 +34,12 @@ export default [
     title: 'La phrase : départ, sommet, arrivée',
     summary: 'Une phrase musicale se construit comme une phrase parlée : elle part, va quelque part, et conclut.',
     goals: ['Repérer le sommet d’une phrase et ce qui le désigne.', 'Donner une direction à chaque note au lieu de les juxtaposer.', 'Respirer entre les phrases.'],
+    essentials: [
+      'Une phrase a un <b>départ</b>, une <b>direction</b>, un <b>sommet</b> et une <b>arrivée</b>, suivie d’une respiration.',
+      'Le sommet se repère : note la plus aiguë ou la plus longue, dissonance la plus forte, moment juste avant la cadence.',
+      'Une dissonance s’appuie et sa résolution se pose ; la note d’arrivée est plus douce que celle qui la précède.',
+    ],
+    goal: 'tu as marqué le sommet de chaque phrase des mesures 1 à 24, et à l’enregistrement on entend où va chaque phrase.',
     body: W => `
 <p>Une suite de notes justes, de même force et de même durée, ne fait pas encore une phrase. Comme une phrase parlée, une phrase musicale a un <b>départ</b>, une <b>direction</b>, un <b>sommet</b> (le mot important) et une <b>arrivée</b>, suivie d’une respiration.</p>
 ${W.diagram('phrase', { labels: ['do (levée)', 'fa', 'mi♭', 'ré♭', 'do', 'si♮ – do – ré♭', 'do'], peak: 1, title: 'La première phrase du nocturne (mesures 1-2) : intensité de chaque note' })}
@@ -67,7 +84,13 @@ ${W.checklist({ id: 'n1-i1-check', title: 'Je vérifie', items: ['Chaque phrase 
     id: 'n1-i2', minutes: 20,
     title: 'Chanter au piano : le bel canto chopinien',
     summary: 'Le piano ne tient pas les notes : il faut écouter chaque son jusqu’au bout et en tenir compte.',
-    goals: ['Comprendre ce que Chopin cherchait chez les chanteurs.', 'Enchaîner une note longue et la suivante sans casser la ligne.', 'Placer les respirations.'],
+    goals: ['Comprendre ce que Chopin cherchait chez les chanteurs.', 'Enchaîner une note longue et la suivante sans casser la ligne.', 'Faire chanter une mélodie au-dessus d’un accompagnement en arpèges.'],
+    essentials: [
+      'Le piano ne tient pas le son : on <b>écoute chaque note jusqu’au bout</b> et on attaque la suivante au niveau où la précédente est arrivée.',
+      'Au-dessus (ou au milieu) d’un <b>accompagnement arpégé</b>, la mélodie domine : arpèges légers et égaux, mélodie portée par le poids du bras.',
+      'Les ornements sont des <b>vocalises</b>, et l’on <b>respire</b> entre les phrases, comme une chanteuse.',
+    ],
+    goal: 'à l’analyseur « Équilibre », la mélodie de la romance dépasse l’arpège d’au moins 12 de vélocité, et à l’écoute aucune note longue ne « casse » la ligne.',
     body: W => `
 <p>Chopin admirait l’opéra italien, en particulier Bellini, et les grands chanteurs de son temps. Ses élèves rapportent qu’il leur conseillait d’aller les écouter, et qu’il voulait entendre chanter sa mélodie au piano. La difficulté est évidente : une chanteuse soutient sa note et peut même l’enfler ; au piano, chaque note <b>décroît</b> dès qu’elle est jouée.</p>
 
@@ -88,6 +111,17 @@ ${W.exo('Exercice 1 — La note tenue', `<p>Joue une blanche pointée <i>mf</i> 
 <li><b>La respiration</b> : une chanteuse respire entre les phrases. Dans l’op. 55 n° 1, les respirations naturelles se trouvent après le do de la mesure 4 et après la cadence de la mesure 8.</li>
 </ul>
 ${W.exo('Exercice 2 — Penser comme une chanteuse', `<p>Main droite seule, mesures 1 à 8 : chante-la d’abord (même faux, peu importe), en marquant tes respirations. Puis joue-la en imaginant ta voix. Enregistre-toi et vérifie qu’aucune note ne « sort » de la ligne.</p>`)}
+<h2>Chanter au-dessus des arpèges</h2>
+<p>Dans la <a href="#/piece/liszt-s169">Romance de Liszt</a>, et dans les nocturnes à grands arpèges (op. 27 n° 2, op. 72 n° 1), la main gauche déroule l’accord sur une ou deux octaves et vient frôler la mélodie. Le risque : que les arpèges couvrent le chant. Trois réglages :</p>
+<ul>
+<li><b>Arpèges légers et égaux</b> : les doigts près des touches, le poignet qui accompagne la vague ; seule la basse (la première note) a un peu de poids.</li>
+<li><b>Mélodie portée</b> : chaque note longue reçoit le poids du bras, puis on écoute sa décroissance au-dessus des arpèges.</li>
+<li><b>Une pédale par harmonie</b>, changée juste après la basse (<a href="#/lecon/n1-t5">pédale syncopée</a>) : les arpèges se fondent en un halo, la mélodie reste nette.</li>
+</ul>
+${W.score({ abc: ROMANCE_BC, title: 'La mélodie au-dessus d’une main gauche en arpèges', bpm: 63, startBpm: 52, pedal: [0, 3, 6, 9, 12, 15, 18, 21], pedalEnd: 24, variants: [{ label: 'Tout au même niveau', balance: { rh: 1, lh: 1.05 } }, { label: 'Mélodie en avant', balance: { rh: 1.18, lh: 0.62 } }], caption: 'Même texte, deux équilibres. Joue-le, puis mesure l’écart avec l’analyseur « Équilibre » ci-dessous (vise + 12 de vélocité ou plus pour la mélodie).' })}
+<h3>Quand la mélodie est au milieu</h3>
+<p>Parfois la mélodie se cache à l’intérieur : un pouce qui chante sous des arpèges de la main droite, ou une voix de ténor dans la main gauche. Le principe est le même, mais dans une seule main : le doigt de la mélodie est un peu plus ferme et plus lent, les autres effleurent. Travaille-le en jouant d’abord la mélodie seule (en la chantant), puis les arpèges seuls (très légers), puis ensemble.</p>
+${W.analyzer({ mode: 'balance', title: 'Analyseur — mélodie et arpèges', target: 12, help: 'Joue la romance ci-dessus mains ensemble (ou un passage de ta pièce à grands arpèges). Objectif : la mélodie au moins 12 de vélocité au-dessus de l’accompagnement.' })}
 ${W.listen([
   W.yt('Bellini Casta diva', 'Bellini, « Casta diva » (Norma)', 'Le modèle du chant que Chopin aimait — plusieurs cantatrices à comparer'),
   W.yt('Bellini Norma Casta diva Callas', 'Maria Callas'),
@@ -101,6 +135,12 @@ ${W.links([W.informance('/content/pages/34-nocturne-in-c-sharp-minor', 'Nocturne
     title: 'Le rubato : la main gauche garde le temps',
     summary: 'Le rubato « vole » du temps pour le rendre : une main droite libre sur une main gauche qui ne bronche pas.',
     goals: ['Distinguer le rubato de la mélodie et celui de la phrase.', 'Laisser la main droite libre sans déstabiliser la main gauche.', 'Éviter les maniérismes.'],
+    essentials: [
+      'Chez Chopin, <b>la main gauche garde le temps</b>, comme un chef d’orchestre ; la <b>main droite respire</b> : elle s’attarde, puis rattrape.',
+      'Le temps « volé » est <b>rendu</b> : les deux mains se retrouvent aux temps forts.',
+      'On le <b>mesure</b> : main gauche stable (± 6 % ou moins), main droite décalée par moments, retrouvailles aux premiers temps.',
+    ],
+    goal: 'l’analyse « Rubato » de tes mesures 1 à 4 affiche une main gauche à ± 6 % ou moins, un décalage de la main droite d’au moins 20 ms, et des retrouvailles sur la plupart des premiers temps.',
     body: W => `
 <p><i>Tempo rubato</i> signifie « temps volé » : une note prend un peu plus de temps, et ce temps est rendu ailleurs. Les témoignages des élèves de Chopin s’accordent sur un point : chez lui, <b>la main gauche reste régulière, comme un chef d’orchestre</b>, pendant que la main droite chante librement.</p>
 
@@ -123,6 +163,10 @@ ${W.exo('Exercice — Le chef d’orchestre', `<ol>
 <li>Coupe le métronome et garde la même sensation. Enregistre-toi : la main gauche doit rester stable.</li>
 </ol>`)}
 ${W.metronome({ bpm: 56, beats: 4 })}
+
+<h2>Mesure ton rubato</h2>
+<p>Joue les mesures 1 à 4 sur le piano connecté, puis touche « Analyser » : la partie <b>Rubato</b> de l’analyse mesure trois choses. <b>Main gauche</b> : sa régularité, temps par temps (un ralenti d’ensemble est toléré, un temps qui flotte ne l’est pas) : vise ± 6 % ou moins. <b>Main droite</b> : son décalage moyen avec la gauche quand elles jouent ensemble : à 0, tout est collé (propre mais droit) ; 20 à 80 ms, la main droite respire. <b>Retrouvailles</b> : la part des premiers temps où les mains sont ensemble.</p>
+${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4 : mesure ton rubato', bpm: 56, startBpm: 50, focus: 'rubato', pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17, caption: 'Trois prises : (1) main gauche seule, avec le clic ; (2) mains ensemble, strict ; (3) mains ensemble, la main droite s’attarde sur le fa (mesure 1) et sur le si♮ (mesure 2), et rattrape avant le temps fort suivant.' })}
 ${W.warn('Ce que le rubato n’est pas', '<ul><li>Ce n’est pas jouer plus lentement : le temps volé est rendu.</li><li>Ce n’est pas ralentir à chaque fin de mesure : un tic qui devient vite pénible.</li><li>Ce n’est pas une liberté de la main gauche : si la basse flotte, tout flotte.</li></ul>')}
 `,
   },
@@ -132,6 +176,7 @@ ${W.warn('Ce que le rubato n’est pas', '<ul><li>Ce n’est pas jouer plus lent
     title: 'Analyse du Nocturne op. 55 n° 1',
     summary: 'Forme, harmonie, nuances : ce que la partition dit, et ce que l’interprète en fait.',
     goals: ['Connaître la forme et les tonalités de la pièce.', 'Suivre l’harmonie des mesures 1 à 8.', 'En tirer des décisions d’interprétation.'],
+    goal: 'tu racontes le plan de la pièce (A – B – A′, coda) et l’harmonie des mesures 1 à 8, et tu en tires trois décisions de jeu.',
     body: W => `
 <h2>La forme</h2>
 ${W.diagram('form', { total: 101, sections: [
@@ -177,10 +222,16 @@ ${W.key('À retenir', `<ul>
   },
 
   {
-    id: 'n1-i5', minutes: 20,
+    id: 'n1-i5', minutes: 20, prio: 2,
     title: 'Écouter les grands interprètes',
     summary: 'L’écoute comparée, un outil de travail : mesurer, comparer, choisir.',
     goals: ['Écouter activement, partition en main.', 'Comparer plusieurs versions sur des critères précis.', 'Construire ta propre interprétation.'],
+    essentials: [
+      'Écouter <b>plusieurs versions</b>, partition en main, avec des questions précises : tempo, équilibre, pédale, rubato, caractère.',
+      '<b>Mesurer</b> plutôt que s’en remettre à l’impression : « Taper le tempo » donne le tempo de chaque version.',
+      'Le but n’est pas de copier mais de <b>choisir</b> : essayer au piano ce qui t’a convaincu.',
+    ],
+    goal: 'tu as noté trois différences concrètes entre deux versions du thème et de la coda, et situé ton propre enregistrement.',
     body: W => `
 <p>Écouter un enregistrement pour le copier n’a pas beaucoup d’intérêt. Écouter <b>plusieurs</b> versions, partition en main, avec des questions précises, apprend énormément : on découvre ce qui est possible, et on choisit.</p>
 

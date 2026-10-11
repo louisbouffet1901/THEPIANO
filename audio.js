@@ -160,6 +160,15 @@ export const audio = {
     osc.stop(t + 0.07);
     return osc;
   },
+  /** Réveille la sortie son (un échantillon silencieux) : le premier vrai son part ensuite à l'heure. */
+  prime() {
+    if (!ctx) return;
+    try {
+      const b = ctx.createBuffer(1, 1, ctx.sampleRate);
+      const s = ctx.createBufferSource();
+      s.buffer = b; s.connect(ctx.destination); s.start(0);
+    } catch (e) { /* */ }
+  },
   /** Annule des clics planifiés (arrêt d'un exercice avant la fin). */
   cancelClicks(list) { for (const o of list || []) { try { o.stop(); } catch (e) { /* déjà joué */ } } },
 

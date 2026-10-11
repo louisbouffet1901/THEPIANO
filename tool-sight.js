@@ -207,7 +207,7 @@ export function mountSight(el, cfg = {}) {
 
   const btn = (label, cls = '', title) => h('button', { class: 'btn ' + cls, type: 'button', title }, label);
   const prepBtn = btn('Préparer 30 s puis jouer', 'primary', 'Analyse guidée de l’extrait, puis départ en rythme');
-  const playBtn = btn('Jouer en rythme', '', 'Une mesure de décompte, puis on ne s’arrête plus');
+  const playBtn = btn('Jouer en rythme', '', 'Un décompte, puis on ne s’arrête plus');
   const waitBtn = btn('Mode attente', '', 'Le curseur attend la bonne note : pour une nouvelle clé ou tonalité, ce n’est pas encore de la lecture à vue');
   const nextBtn = btn('Extrait suivant', '');
   const listenBtn = btn('Écouter', 'ghost', 'Écoute après avoir joué : compare avec ce que tu as lu');
@@ -386,10 +386,12 @@ export function mountSight(el, cfg = {}) {
     if (!needInput()) return;
     stopAll(); score.clear(); results.replaceChildren(); advice.replaceChildren();
     playBtn.classList.add('on');
-    status.textContent = 'Une mesure de décompte, puis joue sans t’arrêter, même si tu te trompes.';
+    const intro = 'Décompte, puis joue sans t’arrêter, même si tu te trompes.';
+    status.textContent = intro;
     let curBar = -1;
     reader = new TempoReader(score, {
       qpm: bpm * score.beatQ,
+      onCount: pos => { status.textContent = pos ? `Décompte : ${pos.waiting ? '…' : pos.inBar}${pos.bars > 1 ? ` (mesure ${pos.bar} sur ${pos.bars})` : ''}` : 'Joue sans t’arrêter, même si tu te trompes.'; },
       onTime: q => {
         if (!mask) return;
         const bar = Math.floor((q + 0.25 * score.beatQ) / score.barQ);

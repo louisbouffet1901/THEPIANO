@@ -23,6 +23,12 @@ export default [
     title: 'Méthode : avant, pendant, après',
     summary: 'La lecture à vue est une compétence à part : elle se travaille un peu chaque jour, avec des textes nouveaux.',
     goals: ['Préparer une lecture en trente secondes.', 'Jouer sans s’arrêter, en gardant la pulsation.', 'Tirer parti de chaque essai.'],
+    essentials: [
+      'On progresse en lisant <b>du neuf</b>, un peu plus facile que son répertoire, <b>dix minutes par jour</b>.',
+      'Avant de jouer (30 s) : armure, mesure, structure, difficultés, position des mains.',
+      'Pendant : <b>ne jamais s’arrêter</b>, garder la pulsation, regarder devant.',
+    ],
+    goal: 'cinq jours sur sept, dix minutes de lecture à vue, avec les 30 secondes de préparation avant chaque extrait.',
     body: W => `
 <p>On ne progresse pas en lecture à vue en rejouant des pièces connues : il faut lire du <b>neuf</b>, un peu plus facile que ton répertoire, <b>chaque jour</b>, dix minutes. C’est ce que propose l’outil de lecture : de vrais extraits de pièces (Bach, Diabelli, Burgmüller, Schumann…), classés en cinq niveaux, jamais deux fois le même tant que le niveau n’est pas épuisé. La difficulté suit tes résultats.</p>
 
@@ -59,6 +65,12 @@ ${W.links([W.informance('/content/pages/198-music-at-sight', 'Music at Sight'), 
     title: 'Repères et lecture par intervalles',
     summary: 'Quelques notes repères, puis lire la distance plutôt que le nom de chaque note.',
     goals: ['Connaître les notes repères des deux clés.', 'Lire par intervalles à partir d’un repère.', 'Trouver une note au clavier sans hésiter.'],
+    essentials: [
+      'Quelques <b>notes repères</b> : do central, sol3 (clé de sol), fa2 (clé de fa), puis do4, do2, do5, do1.',
+      'À partir d’un repère, on lit la <b>distance</b> (seconde, tierce…), pas le nom de chaque note.',
+      'La clé de fa est souvent la plus faible : travaille-la exprès.',
+    ],
+    goal: '90 % ou plus aux séries « Notes en clé de sol » et « Notes en clé de fa ».',
     body: W => `
 <p>Lire note après note (« si… do… ré… ») est trop lent. Les bons lecteurs s’appuient sur quelques <b>repères</b> fixes, puis lisent la <b>distance</b> d’une note à l’autre.</p>
 ${W.score({ abc: LANDMARKS, title: 'Les notes repères', bpm: 50, practice: false, caption: 'Notation française : le do central est do3. Clé de sol : le sol3 est sur la 2e ligne. Clé de fa : le fa2 est sur la 4e ligne.' })}
@@ -85,6 +97,12 @@ ${W.sight({ level: '1lh', levels: ['1lh', '1rh'] })}
     title: 'Lire le rythme en pulsation',
     summary: 'Le rythme se lit par cellules, comme des mots, sur une pulsation qui ne s’arrête pas.',
     goals: ['Reconnaître les cellules rythmiques courantes.', 'Compter et subdiviser.', 'Garder la pulsation en lisant.'],
+    essentials: [
+      'Le rythme d’abord : une note juste au mauvais moment s’entend plus qu’une fausse note en rythme.',
+      'Compter et <b>subdiviser</b> à voix haute (« 1 et 2 et »).',
+      'Reconnaître les <b>cellules</b> d’un coup d’œil, comme des mots : pointé, triolet, syncope.',
+    ],
+    goal: 'tu tapes, puis joues en rythme, cinq extraits de lecture sans t’arrêter.',
     body: W => `
 <p>En lecture à vue, une note fausse dans le bon rythme passe presque inaperçue ; une note juste au mauvais moment s’entend tout de suite. Le rythme d’abord.</p>
 <h2>Compter et subdiviser</h2>
@@ -107,6 +125,12 @@ ${W.sight({ level: '1rh', levels: ['1rh', '1lh', '2'] })}
     title: 'Lire à deux mains',
     summary: 'Lire en accords et en formules, et savoir quoi sacrifier quand c’est trop dense.',
     goals: ['Lire verticalement ce qui sonne ensemble.', 'Reconnaître les formules de main gauche.', 'Garder la continuité à deux mains.'],
+    essentials: [
+      'Lire <b>verticalement</b> ce qui sonne ensemble, de colonne en colonne.',
+      'Reconnaître la <b>formule</b> de main gauche (basse et accord, Alberti) : elle suit presque seule.',
+      'Priorités : la pulsation, puis la basse et la mélodie, puis le reste.',
+    ],
+    goal: '85 % de notes justes en rythme sur cinq extraits de suite, niveau 2 (deux mains) de l’outil de lecture.',
     body: W => `
 <h2>Lire verticalement</h2>
 <p>À deux mains, on lit d’abord <b>ce qui sonne ensemble</b> (une colonne), puis on avance de colonne en colonne. Les accords se lisent par leur forme : trois notes sur trois lignes (ou trois interlignes) consécutives forment un accord à l’état fondamental ; une forme « une ligne, un interligne, une ligne » signale un renversement.</p>

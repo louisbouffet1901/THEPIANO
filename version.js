@@ -1,4 +1,4 @@
-// Généré par tools/build-sw.mjs — ne pas modifier à la main.
-export const APP_VERSION = '3.1';
-export const BUILD = 'piano-61c14b6401f1';
-export const BUILT = '2026-10-07';
+// Généré par tools/build.py — ne pas modifier à la main.
+export const APP_VERSION = '4.0';
+export const BUILD = 'piano-b3c4c6381e6f';
+export const BUILT = '2026-10-11';

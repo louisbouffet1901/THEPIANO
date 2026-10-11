@@ -1,5 +1,5 @@
 // Niveau 1 — Technique
-import { OP55 } from './content-excerpts.js';
+import { OP55, OP70 } from './content-excerpts.js';
 
 const EX_FIVE = `X:1
 M:4/4
@@ -53,6 +53,12 @@ export default [
     title: 'Méthode de travail : la boucle et les trois S',
     summary: 'Ce qui compte, ce n’est pas le temps passé, c’est ce qui change pendant la séance.',
     goals: ['Travailler par boucles courtes : imaginer, jouer, écouter, ajuster.', 'Appliquer les trois S : lentement, séparément, par sections.', 'Corriger une erreur pour de bon, au lieu de la répéter.'],
+    essentials: [
+      'Une séance se juge à une seule question : <b>qu’est-ce qui joue mieux à la fin qu’au début ?</b>',
+      'La boucle : <b>imaginer</b> ce qu’on veut entendre, jouer, <b>écouter</b>, puis ajuster <b>une seule chose</b> à la fois.',
+      'Les trois S : <b>lentement</b> (sans faute), <b>séparément</b> (mains et couches), par <b>sections</b> d’une ou deux mesures, avec un pont vers la suivante.',
+    ],
+    goal: 'tu corriges une erreur de ta pièce avec la méthode (localiser, réparer lentement trois fois juste, replacer), et elle n’est pas revenue le lendemain.',
     body: W => `
 <p>Une séance utile se mesure à une seule question : <b>qu’est-ce qui joue mieux à la fin qu’au début ?</b> Répéter une pièce du début à la fin en espérant qu’elle s’améliore, c’est surtout répéter ses fautes. Les pianistes qui progressent vite travaillent autrement : par petites unités, avec un objectif précis à chaque essai.</p>
 
@@ -112,6 +118,12 @@ ${W.links([
     title: 'Posture et poids du bras',
     summary: 'Un réglage du banc, une main naturelle, et un son qui vient du poids plutôt que de la force.',
     goals: ['Régler la hauteur et la distance du banc.', 'Jouer avec le poids du bras puis relâcher.', 'Repérer les tensions inutiles (épaules, poignet, mâchoire).'],
+    essentials: [
+      'Banc : <b>coude au niveau des touches</b>, assez loin pour que les coudes bougent librement.',
+      'Le son dépend de la <b>vitesse de la touche</b> : on transmet le poids du bras à l’attaque, puis on <b>relâche</b> en gardant juste la pression de maintien.',
+      'Épaules basses, <b>poignet mobile</b> à tout moment : une tension se repère et se relâche pendant qu’on joue.',
+    ],
+    goal: 'tu peux bouger le poignet pendant une note tenue sans que le son change, et la chute sur un doigt sonne rond, jamais cogné.',
     body: W => `
 <h2>Le réglage du banc</h2>
 ${W.diagram('posture', {}, 'Repères de posture. Le plus important : un avant-bras à peu près horizontal et des bras libres de bouger.')}
@@ -154,6 +166,12 @@ ${W.links([
     title: 'Le legato chanté',
     summary: 'Lier les notes avec les doigts, sans compter sur la pédale : la condition d’une mélodie qui chante.',
     goals: ['Comprendre le legato comme un transfert de poids.', 'Mesurer et régler le chevauchement entre deux notes.', 'Jouer la mélodie du nocturne liée, sans pédale.'],
+    essentials: [
+      'Le legato est un <b>transfert de poids</b> : le doigt qui a joué se relève quand le suivant prend le relais, ni avant (trou), ni bien après (bavure).',
+      'La mélodie se lie <b>avec les doigts</b>, sans pédale ; la pédale enrichit le son, elle ne cache pas un legato imparfait.',
+      'La <b>substitution de doigts</b> (changer de doigt sur une touche enfoncée) lie ce que le doigté seul ne lie pas.',
+    ],
+    goal: 'l’analyseur de legato compte au moins 80 % de transitions liées sur la mélodie des mesures 1 à 4, sans pédale.',
     body: W => `
 <p>Chopin demandait à ses élèves de lier une mélodie <b>avec les doigts seuls</b>. La pédale enrichit le son, elle ne doit pas cacher un legato imparfait. C’est d’autant plus vrai dans l’op. 55 n° 1, dont la mélodie se déroule en notes longues au-dessus d’une main gauche détachée.</p>
 
@@ -182,6 +200,12 @@ ${W.links([W.informance('/content/pages/6-the-art-of-piano-fingering', 'The Art 
     title: 'Faire chanter la mélodie : les plans sonores',
     summary: 'Le piano comme un petit orchestre : un soliste, une basse et un accompagnement discret.',
     goals: ['Jouer les deux mains à des nuances différentes.', 'Faire ressortir la note supérieure d’un accord dans une même main.', 'Mesurer l’équilibre entre mélodie et accompagnement.'],
+    essentials: [
+      'Trois plans dans l’op. 55 : la <b>mélodie</b> domine, la <b>basse</b> soutient, les <b>accords</b> se fondent.',
+      'Pour faire ressortir le chant, <b>alléger l’accompagnement</b> marche mieux que forcer la mélodie.',
+      'Dans une même main, la note du haut chante : le poids s’incline vers le 5e doigt, les autres doigts enfoncent leur touche plus lentement.',
+    ],
+    goal: 'l’analyseur « Équilibre » mesure au moins +12 de vélocité entre la mélodie et la main gauche, mesures 1 à 4.',
     body: W => `
 <p>Dans l’op. 55 n° 1, trois plans se superposent : la <b>mélodie</b> (main droite), la <b>basse</b> (main gauche, 1er et 3e temps) et les <b>accords</b> (main gauche, 2e et 4e temps). Le soliste doit dominer, la basse soutenir, les accords se fondre. Jouer tout au même niveau, c’est perdre la mélodie.</p>
 ${W.diagram('voicing', {}, 'Ce qu’on vise : la mélodie nettement au-dessus, la basse présente, les accords les plus doux.')}
@@ -210,6 +234,12 @@ ${W.tip('Alléger plutôt que forcer', '<p>Pour que la mélodie ressorte, il est
     title: 'La pédale syncopée',
     summary: 'Changer la pédale juste après l’accord : des harmonies liées, jamais mélangées.',
     goals: ['Comprendre pourquoi la pédale se change après l’attaque.', 'Réaliser une pédale syncopée propre sur i – iv – V7 – i.', 'Appliquer une pédale par demi-mesure dans l’op. 55 n° 1.'],
+    essentials: [
+      'Changer la pédale <b>juste après</b> l’accord (pédale syncopée) : les harmonies se lient sans se mélanger.',
+      'Chez Chopin, <b>une pédale par harmonie</b> (dans le nocturne : une par basse) ; dans une valse, la pédale prend la basse et se lève avant le troisième temps.',
+      'C’est <b>l’oreille</b> qui décide : si la basse précédente traîne dans l’harmonie suivante, change plus tôt ou plus vite.',
+    ],
+    goal: 'l’analyseur « Pédale » compte au moins 80 % de changements syncopés et aucun brouillé sur i – iv – V7 – i.',
     body: W => `
 <p>La pédale de droite soulève tous les étouffoirs : les cordes continuent de vibrer, et les autres cordes entrent en résonance. Le son s’enrichit, mais deux harmonies successives se mélangent si on garde la pédale. La solution est la <b>pédale syncopée</b> (ou pédale de legato) : on la relève au moment où l’on joue le nouvel accord, et on la reprend juste après.</p>
 ${W.diagram('pedal', { mode: 'sync' }, 'Pédale syncopée : les doigts jouent, puis le pied relève et rabaisse aussitôt. Les doigts tiennent l’accord pendant le changement : aucun trou, aucun mélange.')}
@@ -229,6 +259,13 @@ ${W.analyzer({ mode: 'pedal', title: 'Analyseur — pédale', help: 'Joue la sui
 <h2>Dans le nocturne : une pédale par basse</h2>
 <p>La main gauche de l’op. 55 n° 1 alterne basse et accord, notés <i>staccato</i>. C’est la pédale qui relie la basse à son accord : on la change sur chaque basse (1er et 3e temps), après l’attaque. Les points de staccato indiquent une attaque légère et une main qui quitte vite le clavier, pas un son sec.</p>
 ${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4 : avec et sans pédale', bpm: 56, variants: [{ label: 'Sans pédale' }, { label: 'Une pédale par demi-mesure', pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17 }], caption: 'La pédale est reprise sur chaque basse. Remarque comme la main gauche cesse de sonner « piquée ».' })}
+<h2>La pédale chez Chopin : nocturne et valse</h2>
+<p>Chopin note la pédale avec précision (« Ped. » pour l’enfoncer, une étoile pour la lever). Ses pédales suivent l’harmonie : une par accord, parfois longue sur une basse tenue. Sur un piano moderne, plus résonant que le sien, on les raccourcit souvent un peu. Dans une <b>valse</b>, la pédale prend la basse du premier temps (que la main quitte aussitôt pour l’accord) et se lève avant le troisième temps, pour que les accords restent légers. Compare :</p>
+${W.score({ abc: OP70.n2, title: 'Valse op. 70 n° 2, mesures 1 à 8 : trois pédales', bpm: 52, practice: false, variants: [
+  { label: 'Sans pédale' },
+  { label: 'Pédale de valse', pedal: [1, 4, 7, 10, 13, 16, 19, 22], pedalUp: [2.9, 5.9, 8.9, 11.9, 14.9, 17.9, 20.9, 23.9], pedalEnd: 25 },
+  { label: 'Pédale trop longue', pedal: [1, 7, 13, 19], pedalEnd: 25 },
+], caption: 'Sans pédale, la basse s’arrête net. Pédale de valse : la basse résonne sous les accords, puis tout s’allège avant le troisième temps. Pédale trop longue (une pour deux mesures) : les harmonies se mélangent.' })}
 ${W.tip('L’oreille décide', '<p>Les indications de pédale des éditions sont des suggestions. Le piano, la salle, le tempo changent tout : écoute toujours si la basse précédente traîne dans l’harmonie suivante.</p>')}
 ${W.links([W.informance('/content/pages/8-the-art-of-pedalling', 'The Art of Pedalling', 'Graham Fitch — traité complet de la pédale (en anglais)')], 'Pour aller plus loin')}
 `,
@@ -239,6 +276,12 @@ ${W.links([W.informance('/content/pages/8-the-art-of-pedalling', 'The Art of Ped
     title: 'Gammes et arpèges du niveau 1',
     summary: 'Dix gammes, leurs arpèges, des doigtés sûrs et une régularité mesurée.',
     goals: ['Connaître les doigtés du programme.', 'Préparer le passage du pouce.', 'Monter en tempo avec une régularité mesurée.'],
+    essentials: [
+      'Dix minutes par jour suffisent, à condition d’<b>écouter chaque note</b> : régularité, passage du pouce, géographie du clavier.',
+      'Le pouce se prépare <b>tôt</b> : dès qu’il a joué, il glisse sous la main vers sa note suivante.',
+      'On monte en tempo par paliers (rythmes, accents, métronome progressif), jusqu’à ♩ = 80 en doubles croches.',
+    ],
+    goal: 'l’analyseur « Régularité » mesure moins de 8 % d’irrégularité sur deux octaves à ♩ = 80 en doubles croches.',
     body: W => `
 <p>Les gammes ne sont pas une fin en soi : elles entraînent la régularité, le passage du pouce et la géographie du clavier, utiles dans chaque trait de Chopin. Dix minutes par jour suffisent, à condition d’écouter chaque note.</p>
 

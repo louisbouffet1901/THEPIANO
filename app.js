@@ -32,6 +32,7 @@ const NI = {
   theorie: '<path d="M4 6h16M4 10h16M4 14h16M4 18h16"/><circle cx="10" cy="14" r="2"/>',
   lecture: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   impro: '<path d="M12 3v12"/><path d="M12 15a3 3 0 1 1-3-3"/><path d="M15 6c2 1 3 3 3 5"/>',
+  compose: '<path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"/><path d="M14 7l3 3"/>',
   metro: '<path d="M9 3h6l4 18H5L9 3z"/><path d="M12 15l5-8"/>',
   ear: '<path d="M8 10a4 4 0 1 1 8 0c0 3-3 4-3 7a3 3 0 0 1-5 2"/>',
   oreille: '<path d="M8 10a4 4 0 1 1 8 0c0 3-3 4-3 7a3 3 0 0 1-5 2"/><path d="M11 10a1 1 0 1 1 2 0"/>',
@@ -64,6 +65,7 @@ const routes = [
   [/^#\/outils\/theorie$/, () => pagePresets('theorie')],
   [/^#\/outils\/analyseur$/, () => toolPage('Analyse technique', 'Pour les gammes, arpèges et exercices joués sans partition : régularité, legato, pédale, équilibre des mains. Pour un passage de tes pièces, utilise plutôt « Analyser » sous l’extrait : l’analyse compare alors ton jeu à la partition.', () => import('./tool-analyzer.js').then(m => el => m.mountAnalyzer(el, { modes: ['evenness', 'legato', 'pedal', 'balance', 'voicing', 'dynamics'] })))],
   [/^#\/outils\/impro$/, pageImproTool],
+  [/^#\/outils\/composition$/, pageCompose],
   [/^#\/outils\/clavier$/, pageKeyboardTest],
   [/^#\/reglages$/, pageSettings],
 ];
@@ -141,6 +143,7 @@ function renderNav(hash) {
   html += link('#/outils/oreille', 'Oreille', 'ear');
   html += link('#/outils/theorie', 'Théorie', 'theorie');
   html += link('#/outils/impro', 'Improvisation', 'impro');
+  html += link('#/outils/composition', 'Composition', 'compose');
   html += link('#/outils/analyseur', 'Analyse technique', 'chart');
   html += link('#/outils/metronome', 'Métronome', 'metro');
   html += `</div><div class="nav-section">${link('#/reglages', 'Réglages', 'gear')}</div>`;
@@ -245,9 +248,20 @@ function crumbs(items) {
 function renderRich(container, bodyFn) {
   const { W, cfgs } = makeW();
   container.innerHTML = bodyFn(W);
+  container._core = W._core.slice(); // encadrés « À retenir » : affichés en tête (L'essentiel)
   const unmount = mountWidgets(container, cfgs);
   frenchSpacing(container);
   return unmount;
+}
+/** Encadré de tête d'une leçon : l'essentiel (à retenir), l'objectif mesurable et les objectifs. */
+function essentialsCard(l, core) {
+  const ess = l.essentials && l.essentials.length ? `<ul>${l.essentials.map(x => `<li>${x}</li>`).join('')}</ul>` : core.join('');
+  const goals = l.goals && l.goals.length ? `<ul class="goals">${l.goals.map(g => `<li>${g}</li>`).join('')}</ul>` : '';
+  if (!ess && !goals && !l.goal) return null;
+  const card = h('div', { class: 'card essentials' + (ess && goals ? ' two' : '') });
+  card.innerHTML = (ess ? `<div class="ess-col"><div class="ess-title">${ICONS.star}L’essentiel</div>${ess}</div>` : '') +
+    (goals || l.goal ? `<div class="ess-col"><div class="ess-title muted-title">À la fin de cette leçon</div>${goals}${l.goal ? `<p class="ess-goal"><b>Réussi quand :</b> ${l.goal}</p>` : ''}</div>` : '');
+  return card;
 }
 /** Typographie française : espace fine insécable avant ? ! ; : et à l'intérieur des guillemets. */
 export function frenchSpacing(root) {
@@ -263,7 +277,13 @@ export function frenchSpacing(root) {
   }
 }
 function lessonListHTML(lessons) {
-  return `<ul class="lesson-list">${lessons.map((l, i) => `<li class="${store.isDone(l.id) ? 'done' : ''}"><a href="#/lecon/${l.id}"><span class="num">${store.isDone(l.id) ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b><span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a></li>`).join('')}</ul>`;
+  return `<ul class="lesson-list">${lessons.map((l, i) => `<li class="${store.isDone(l.id) ? 'done' : ''}${l.prio === 2 ? ' opt' : ''}"><a href="#/lecon/${l.id}"><span class="num">${store.isDone(l.id) ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b>${l.prio === 2 ? '<em class="tag opt-tag">complément</em>' : ''}<span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a></li>`).join('')}</ul>`;
+}
+/** Priorité d'une tâche du plan : 2 = « si tu as le temps » (indiquée dans le plan, ou leçon de complément). */
+function taskPrio(t) {
+  if (t.prio) return t.prio;
+  const l = t.lesson ? lessonById(t.lesson) : null;
+  return l && l.prio === 2 ? 2 : 1;
 }
 function nextUndone(L) {
   // ordre du plan hebdomadaire
@@ -313,6 +333,7 @@ function pageHome() {
       ${toolCard('#/outils/lecture', 'Lecture à vue', '10 minutes par jour, de vrais extraits à ton niveau, jamais deux fois le même.')}
       ${toolCard('#/outils/oreille', 'Oreille', '10 minutes chaque jour : chanter, reconnaître les degrés, rejouer des mélodies.')}
       ${toolCard('#/outils/theorie', 'Théorie', 'Tous les cours, et des exercices : notes, gammes, intervalles, accords.')}
+      ${toolCard('#/outils/composition', 'Composition', 'Écrire ta pièce de 8 mesures : élégie, romance ou nocturne, notée et vérifiée.')}
       <a class="card" href="#/maitrise" id="masteryCard"><h3>En cours de maîtrise</h3><p>5 minutes par jour : la théorie des leçons terminées et l’analyse de tes pièces, revues au bon moment.</p></a>
     </div>
     <div id="midiHelp"></div>`;
@@ -350,11 +371,11 @@ function weekCard(L, wk, week, compact) {
   const head = h('div', { class: 'week-head' }, h('h3', {}, `Semaine ${week} — ${wk.title}`), h('span', { class: 'small' }, `${done}/${wk.tasks.length}`));
   const body = h('div', { class: 'week-body' });
   if (wk.focus && !compact) body.append(h('p', { class: 'small mt-0' }, wk.focus));
-  wk.tasks.forEach((t, i) => {
+  const mkRow = (t, i) => {
     const key = `${L.id}:s${week}:${i}`;
     const cb = h('input', { type: 'checkbox', 'aria-label': 'Fait' });
     cb.checked = !!store.get('plan')?.[key];
-    const row = h('div', { class: 'task' + (cb.checked ? ' done' : '') }, cb, h('span', { class: 'mod' }, t.mod), h('span', { class: 'txt', html: taskHTML(t) }));
+    const row = h('div', { class: 'task' + (cb.checked ? ' done' : '') + (taskPrio(t) === 2 ? ' opt' : '') }, cb, h('span', { class: 'mod' }, t.mod), h('span', { class: 'txt', html: taskHTML(t) }));
     cb.addEventListener('change', () => {
       const pl = { ...(store.get('plan') || {}) };
       pl[key] = cb.checked; store.set('plan', pl);
@@ -363,8 +384,20 @@ function weekCard(L, wk, week, compact) {
       const d = wk.tasks.filter((_, j) => store.get('plan')?.[`${L.id}:s${week}:${j}`]).length;
       head.lastChild.textContent = `${d}/${wk.tasks.length}`;
     });
-    body.append(row);
-  });
+    return row;
+  };
+  // d'abord l'incontournable, puis ce qui se fait « si tu as le temps »
+  const main1 = wk.tasks.map((t, i) => [t, i]).filter(([t]) => taskPrio(t) === 1);
+  const opt = wk.tasks.map((t, i) => [t, i]).filter(([t]) => taskPrio(t) === 2);
+  body.append(h('div', { class: 'task-group-title' }, 'Incontournable'));
+  main1.forEach(([t, i]) => body.append(mkRow(t, i)));
+  if (opt.length) {
+    if (compact) body.append(h('p', { class: 'small task-more' }, h('a', { href: `#/plan/${L.id}` }, `+ ${opt.length} tâche${opt.length > 1 ? 's' : ''} si tu as le temps`)));
+    else {
+      body.append(h('div', { class: 'task-group-title opt' }, 'Si tu as le temps'));
+      opt.forEach(([t, i]) => body.append(mkRow(t, i)));
+    }
+  }
   card.append(head, body);
   return card;
 }
@@ -441,17 +474,18 @@ async function pageLesson(id) {
   const L = levelById(l.level);
   const M = MODULES.find(m => m.id === l.module);
   const siblings = lessonsOf(l.level, l.module);
-  const idx = siblings.indexOf(l);
+  const idx = siblings.findIndex(x => x.id === l.id);
   const prev = siblings[idx - 1], next = siblings[idx + 1];
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: `Niveau ${L.num}`, href: `#/niveau/${L.id}` }, { label: M.label, href: `#/niveau/${L.id}/${M.id}` }, { label: `Leçon ${idx + 1}` }]) +
     `<div class="page-head"><h1>${esc(l.title)}</h1>${l.summary ? `<p class="lead">${esc(l.summary)}</p>` : ''}
      <div class="lesson-meta"><span>${esc(M.label)} · niveau ${L.num}</span>${l.minutes ? `<span>≈ ${l.minutes} min</span>` : ''}${store.isDone(l.id) ? '<span class="tag ok">terminée</span>' : ''}</div></div>`;
-  if (l.goals && l.goals.length) page.insertAdjacentHTML('beforeend', `<div class="card" style="max-width:var(--prose-w)"><div class="eyebrow" style="font-size:12px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px">À la fin de cette leçon</div><ul class="goals">${l.goals.map(g => `<li>${g}</li>`).join('')}</ul></div>`);
   const body = h('div', { class: 'prose mt-2' });
   page.append(body);
   main.append(page);
   const unmount = renderRich(body, l.body);
+  const top = essentialsCard(l, body._core || []);
+  if (top) { body.before(top); frenchSpacing(top); }
   const foot = h('div', { class: 'lesson-foot' });
   const doneBtn = h('button', { class: 'btn ' + (store.isDone(l.id) ? 'ok' : 'primary'), type: 'button' }, store.isDone(l.id) ? '✓ Leçon terminée' : 'Marquer comme terminée');
   doneBtn.addEventListener('click', () => {
@@ -494,7 +528,13 @@ async function pagePiece(id) {
   const body = h('div', { class: 'prose' });
   page.append(body);
   main.append(page);
-  return renderRich(body, P.body);
+  const unmount = renderRich(body, P.body);
+  const top = essentialsCard({ essentials: P.essentials }, body._core || []);
+  if (top) { body.before(top); frenchSpacing(top); }
+  if (['op55-1', 'op15-1', 'clair-de-lune'].includes(id)) {
+    import('./analysis-panel.js').then(m => m.weekTakesSection(id)).then(sec => { if (stillHere(tok)) { page.append(sec); frenchSpacing(sec); } }).catch(e => console.warn(e));
+  }
+  return unmount;
 }
 
 function pagePlan(id) {
@@ -612,11 +652,14 @@ async function pagePresets(kind) {
     const grid = h('div', { class: 'grid cols-3' });
     for (const q of presets.filter(x => x.group === g)) {
       const hist = (store.get('stats.ear') || []).filter(st => st.id === q.id).slice(-1)[0];
-      const c = h('button', { class: 'card', type: 'button', style: { textAlign: 'left', cursor: 'pointer', font: 'inherit' } }, h('h3', {}, q.title), h('p', {}, hist ? `Dernier score : ${fmtPct(hist.pct)}` : 'Pas encore fait'));
-      c.addEventListener('click', () => {
+      const vr = store.get('settings.voiceRange');
+      const sub = q.kind === 'voicefinder' ? (Array.isArray(vr) ? 'Tessiture mesurée' : 'À faire en premier : tes notes de chant seront à ta mesure') : hist ? `Dernier score : ${fmtPct(hist.pct)}` : 'Pas encore fait';
+      const c = h('button', { class: 'card', type: 'button', style: { textAlign: 'left', cursor: 'pointer', font: 'inherit' } }, h('h3', {}, q.title), h('p', {}, sub));
+      c.addEventListener('click', async () => {
         cleanupQuiz?.();
         host.innerHTML = '';
-        cleanupQuiz = mountQuiz(host, { ...q, stat: q.id });
+        if (q.kind === 'voicefinder') { const vm = await import('./voice.js'); cleanupQuiz = vm.mountVoiceFinder(host, {}); }
+        else cleanupQuiz = mountQuiz(host, { ...q, stat: q.id });
         host.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
       grid.append(c);
@@ -638,6 +681,17 @@ function pageImproTool() {
   page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3"><h2>La méthode, leçon par leçon</h2></div>` + moduleIndexHTML('impro'));
   main.append(page);
   return mountLazy(host, () => import('./tool-improv.js').then(m => el => m.mountImprov(el, {})));
+}
+
+function pageCompose() {
+  const page = h('div', { class: 'page' });
+  page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Composition' }]) +
+    `<div class="page-head"><h1>Composition</h1><p class="lead">Écris ta propre pièce de 8 mesures (élégie, romance ou nocturne) : l’accompagnement est fourni, tu inventes la mélodie mesure par mesure, l’application la note en partition et vérifie la construction. Tes projets sont gardés sur cet appareil.</p></div>`;
+  const host = h('div', { class: 'w' });
+  page.append(host);
+  page.insertAdjacentHTML('beforeend', `<div class="callout tip mt-3"><div class="c-title">${ICONS.bulb}Avant de commencer</div><p>Fais d’abord les leçons <a href="#/lecon/n1-im2">Romance : la phrase qui respire</a> et <a href="#/lecon/n2-im2">Élégie</a> : ce sont les mêmes grilles. Ici, on fixe ce que l’improvisation laisse filer.</p></div>`);
+  main.append(page);
+  return mountLazy(host, () => Promise.all([import('./tool-compose.js'), ensureAbcjs()]).then(([m]) => el => m.mountCompose(el)));
 }
 
 function pageKeyboardTest() {

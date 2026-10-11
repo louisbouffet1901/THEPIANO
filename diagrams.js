@@ -169,7 +169,8 @@ export function circleOfFifths(container, opts = {}) {
   const info = h('div', { class: 'cof-info' });
   wrap.append(left, info);
   container.append(wrap);
-  const show = (i, minor) => {
+  const show = (i, minor, notify = true) => {
+    if (notify) opts.onSelect?.(i, minor);
     left.querySelectorAll('.sel').forEach(e => e.classList.remove('sel'));
     left.querySelector(`.${minor ? 'seg-min' : 'seg-maj'}[data-i="${i}"]`)?.classList.add('sel');
     const sig = COF_SIG[i];
@@ -192,7 +193,9 @@ export function circleOfFifths(container, opts = {}) {
     if (!p) return;
     show(+p.dataset.i, p.classList.contains('seg-min'));
   });
-  show(opts.start ?? 8, opts.minor ?? true);
+  show(opts.start ?? 8, opts.minor ?? true, false);
+  /** Sélection depuis l'extérieur (sans rappeler onSelect). */
+  wrap.select = (i, minor) => show(i, minor, false);
   return wrap;
 }
 

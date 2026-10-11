@@ -162,6 +162,22 @@ export function renderAnalysis(ctx) {
   box.append(grid);
   if (s.before || s.after) box.append(h('p', { class: 'small mt-1 mb-0' }, `${s.before ? s.before + ' note(s) jouée(s) avant le passage' : ''}${s.before && s.after ? ' et ' : ''}${s.after ? s.after + ' après' : ''} : ignorées.`));
 
+  // Rubato (leçons de rubato, ou dès que les deux mains jouent) : la main gauche tient-elle le temps ?
+  const rb = res.rubato;
+  if (rb && ctx.hands !== 'rh' && (ctx.focus === 'rubato' || (res.asyncs.length >= 4 && rb.n >= 6))) {
+    const lhPct = Math.round(rb.lhVar * 100);
+    const rg = h('div', { class: 'an-grid' });
+    rg.append(tile('Main gauche', `± ${lhPct}`, '%', lhPct <= 6 ? 'stable : elle garde le temps' : 'elle flotte : c’est elle qui doit tenir le temps'));
+    if (rb.rhAbs != null) rg.append(tile('Main droite', `${Math.round(rb.rhAbs)}`, 'ms', 'décalage moyen avec la gauche, quand elles jouent ensemble'));
+    if (rb.together != null && rb.nDown >= 2) rg.append(tile('Retrouvailles', pct(rb.together), '', 'premiers temps où les mains sont ensemble'));
+    let verdict;
+    if (lhPct > 6) verdict = `La main gauche varie de ± ${lhPct} %${rb.unsteady.length ? ` (surtout m. ${rb.unsteady.slice(0, 3).join(', ')})` : ''} : c’est elle qui doit tenir le temps. Joue-la seule avec le clic, puis ajoute la main droite sans la laisser ralentir.`;
+    else if (rb.rhAbs != null && rb.rhAbs < 18) verdict = 'Main gauche stable, et les mains toujours ensemble : c’est propre, mais un peu droit. Laisse la main droite s’attarder sur une note longue ou un sommet, et rattrape avant le temps fort suivant.';
+    else if (rb.together != null && rb.nDown >= 2 && rb.together < 0.6) verdict = 'La main droite est libre, mais elle retrouve rarement la gauche au premier temps : après chaque liberté, rejoins-la sur le temps fort.';
+    else verdict = 'Bon rubato : la main gauche garde le temps, la main droite respire et retrouve la gauche aux temps forts.';
+    box.append(h('h4', { class: 'an-sub' }, 'Rubato'), rg, h('p', { class: 'verdict small' }, verdict));
+  }
+
   // Priorités
   const issues = res.issues.slice(0, 3);
   box.append(h('h4', { class: 'an-sub' }, issues.length ? 'À travailler en priorité' : 'Verdict'));
@@ -246,5 +262,48 @@ export function renderAnalysis(ctx) {
   if (ctx.isWeek) week.disabled = true;
   row.append(replay, week);
   box.append(row);
+  return box;
+}
+
+/* ------------------------------------------------------------------ */
+/* Les prises « de la semaine » d'une pièce                            */
+/* ------------------------------------------------------------------ */
+/** Une prise de référence par semaine (bouton « Garder comme prise de la semaine ») : la liste, comparée à la précédente du même passage. */
+export async function weekTakesSection(piece) {
+  const box = h('div', { class: 'week-takes' });
+  box.append(h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Mes prises de la semaine')));
+  let all = [];
+  try { all = (await db.all('takes')).filter(t => t.piece === piece && t.week).sort((a, b) => a.at - b.at); } catch (e) { /* base indisponible */ }
+  if (!all.length) {
+    box.append(h('p', { class: 'small' }, 'Une fois par semaine, après « Analyser » sous un extrait, touche « Garder comme prise de la semaine ». Tes prises s’alignent ici : tu entends et tu mesures le chemin parcouru (justesse, tempo), passage par passage.'));
+    return box;
+  }
+  const HANDS = { both: '2 mains', right: 'main droite', left: 'main gauche', rh: 'main droite', lh: 'main gauche' };
+  const last = new Map();
+  const rows = all.map(t => {
+    const key = `${t.passage}|${t.hands}|${(t.range || []).join('-')}`;
+    const prev = last.get(key);
+    last.set(key, t);
+    const acc = t.summary?.accuracy != null ? Math.round(t.summary.accuracy * 100) : null;
+    const pAcc = prev?.summary?.accuracy != null ? Math.round(prev.summary.accuracy * 100) : null;
+    const d = (a, b, unit) => (a != null && b != null && a !== b ? ` (${a > b ? '+' : ''}${a - b}${unit})` : '');
+    return { t, text: `${t.range ? `m. ${t.range[0]}${t.range[1] !== t.range[0] ? '–' + t.range[1] : ''}` : ''} · ${HANDS[t.hands] || t.hands || ''}`,
+      stats: `${t.bpm ? `tempo ${Math.round(t.bpm)}${t.target ? ' / ' + Math.round(t.target) : ''}${d(Math.round(t.bpm), prev?.bpm != null ? Math.round(prev.bpm) : null, '')}` : ''}${acc != null ? ` · ${acc} % de notes justes${d(acc, pAcc, ' %')}` : ''}${t.summary?.hesitations ? ` · ${t.summary.hesitations} hésitation${t.summary.hesitations > 1 ? 's' : ''}` : ''}` };
+  }).reverse();
+  const list = h('div', { class: 'wt-list' });
+  for (const r of rows) {
+    const btn = h('button', { class: 'btn sm ghost', type: 'button' }, 'Réécouter');
+    btn.addEventListener('click', async () => {
+      if (btn.dataset.playing) { audio.stopAll('weektake'); delete btn.dataset.playing; btn.textContent = 'Réécouter'; return; }
+      btn.dataset.playing = '1'; btn.textContent = 'Arrêter';
+      const take = { notes: (r.t.notes || []).map(([pitch, on, off, vel]) => ({ pitch, on, off, vel })), pedal: (r.t.pedal || []).map(([t, down]) => ({ t, down: !!down })) };
+      const dur = await replayTake(take, 'weektake');
+      setTimeout(() => { delete btn.dataset.playing; btn.textContent = 'Réécouter'; }, dur * 1000);
+    });
+    list.append(h('div', { class: 'wt-row' },
+      h('div', { class: 'wt-date' }, new Date(r.t.at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })),
+      h('div', { class: 'wt-main' }, h('b', {}, r.text), h('div', { class: 'small' }, r.stats)), btn));
+  }
+  box.append(list, h('p', { class: 'small muted mt-1' }, 'Entre parenthèses : l’écart avec la prise précédente du même passage.'));
   return box;
 }
