@@ -754,7 +754,7 @@ export class TempoReader {
     const q0 = o.range ? o.range[0] : 0, q1 = o.range ? o.range[1] : sc.totalQ;
     this.q0 = q0;
     const expected = [];
-    for (const s of this.steps) for (const n of s.notes) expected.push({ pitch: n.pitch, t: s.t, char: n.char });
+    for (const s of this.steps) for (const n of s.notes) expected.push({ pitch: n.pitch, t: s.t, char: n.char, hand: n.hand, dur: n.dur });
     this.expected = expected;
     this.played = [];
     this.active = true;
@@ -773,7 +773,12 @@ export class TempoReader {
     this.spqMs = spq * 1000;
     this.endPerf = this.zeroPerf + (q1 - q0 + sc.beatQ) * this.spqMs;
     // instants de jeu corrigés de la latence de l'entrée (piano, écran…)
-    this.offOn = midi.on('noteon', ev => { if (this.active) this.played.push({ pitch: ev.note, time: corrected(ev) }); });
+    this.offOn = midi.on('noteon', ev => { if (this.active) this.played.push({ pitch: ev.note, time: corrected(ev), vel: ev.velocity, off: null }); });
+    // relâchements : durée tenue de chaque note (articulation, notes tenues)
+    this.offOff = midi.on('noteoff', ev => {
+      if (!this.active) return;
+      for (let i = this.played.length - 1; i >= 0; i--) { const p = this.played[i]; if (p.pitch === ev.note && p.off == null) { p.off = corrected(ev); break; } }
+    });
     window.__tempoReader = this; // accès de test (automatisation)
     // curseur
     const on = new Set();
@@ -812,7 +817,11 @@ export class TempoReader {
         const dt = p.time - target;
         if (Math.abs(dt) < Math.abs(bestDt) && Math.abs(dt) <= winMs) { best = i; bestDt = dt; }
       });
-      if (best >= 0) { used.add(best); results.push({ ...ex, dt: bestDt, status: Math.abs(bestDt) <= okMs ? 'ok' : 'late' }); }
+      if (best >= 0) {
+        used.add(best);
+        const pl = this.played[best];
+        results.push({ ...ex, dt: bestDt, status: Math.abs(bestDt) <= okMs ? 'ok' : 'late', vel: pl.vel ?? null, durMs: pl.off != null ? pl.off - pl.time : null });
+      }
       else results.push({ ...ex, dt: null, status: 'miss' });
     }
     // marquage par élément (une note fausse dans l'accord colore l'accord)
@@ -836,7 +845,8 @@ export class TempoReader {
     };
     res.accuracy = res.total ? (res.ok + res.late) / res.total : 0;
     res.precision = res.total ? res.ok / res.total : 0;
-    res.items = results.map(r => ({ t: r.t, status: r.status }));
+    res.items = results.map(r => ({ t: r.t, status: r.status, hand: r.hand, pitch: r.pitch, dt: r.dt, dur: r.dur, vel: r.vel ?? null, durMs: r.durMs ?? null }));
+    res.spqMs = this.spqMs;
     this.stop(false);
     this.opts.onDone?.(res);
   }
@@ -847,6 +857,8 @@ export class TempoReader {
     cancelAnimationFrame(this.raf);
     this.offOn?.();
     this.offOn = null;
+    this.offOff?.();
+    this.offOff = null;
     if (clear) this.score.clear('n-on');
   }
 }

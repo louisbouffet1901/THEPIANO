@@ -33,6 +33,7 @@ const NI = {
   lecture: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
   impro: '<path d="M12 3v12"/><path d="M12 15a3 3 0 1 1-3-3"/><path d="M15 6c2 1 3 3 3 5"/>',
   compose: '<path d="M4 20l4-1 11-11-3-3L5 16l-1 4z"/><path d="M14 7l3 3"/>',
+  hands: '<path d="M7 11V5a1.5 1.5 0 0 1 3 0v6M10 10V4a1.5 1.5 0 0 1 3 0v6M13 10V5a1.5 1.5 0 0 1 3 0v8c0 4-2.5 7-6 7s-5-2-6.5-5L3 12a1.5 1.5 0 0 1 2.5-1.5L7 13"/>',
   metro: '<path d="M9 3h6l4 18H5L9 3z"/><path d="M12 15l5-8"/>',
   ear: '<path d="M8 10a4 4 0 1 1 8 0c0 3-3 4-3 7a3 3 0 0 1-5 2"/>',
   oreille: '<path d="M8 10a4 4 0 1 1 8 0c0 3-3 4-3 7a3 3 0 0 1-5 2"/><path d="M11 10a1 1 0 1 1 2 0"/>',
@@ -58,7 +59,13 @@ const routes = [
   [/^#\/validation\/(n\d)$/, pageValidation],
   [/^#\/outils$/, pageTools],
   [/^#\/outils\/metronome$/, () => toolPage('Métronome', 'Mesures muettes, accélération progressive, tempo tapé.', () => import('./tool-metronome-ui.js').then(m => el => m.mountMetronome(el, { title: false })))],
-  [/^#\/outils\/lecture$/, () => toolPage('Lecture à vue', 'De vrais extraits du répertoire (Bach, Diabelli, Burgmüller, Schumann…), du plus simple au plus avancé. Prépare-toi 30 secondes, puis joue sans t’arrêter : la difficulté s’ajuste à tes résultats.', () => Promise.all([import('./tool-sight.js'), ensureAbcjs()]).then(([m]) => el => m.mountSight(el, { level: store.get('sight.level') || (currentLevel().id === 'n2' ? '2' : '1rh') })))],
+  [/^#\/outils\/lecture$/, () => toolPage('Lecture à vue', 'De vrais extraits du répertoire (Bach, Diabelli, Burgmüller, Schumann…), du plus simple au plus avancé. Prépare-toi 30 secondes, puis joue sans t’arrêter : la difficulté s’ajuste à tes résultats.', () => Promise.all([import('./tool-sight.js'), import('./tool-notespeed.js'), ensureAbcjs()]).then(([m, ns]) => el => {
+    const a = m.mountSight(el, { level: store.get('sight.level') || (currentLevel().id === 'n2' ? '2' : '1rh') });
+    const box = h('div', { class: 'mt-3' });
+    el.append(h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Échauffement : lecture de notes chronométrée')), box);
+    const b = ns.mountNoteSpeed(box);
+    return () => { try { a?.(); } catch (e) { /* */ } try { b?.(); } catch (e) { /* */ } };
+  }))],
   [/^#\/maitrise$/, () => toolPage('En cours de maîtrise', 'Cinq minutes par jour : les notions des leçons de théorie terminées et l’analyse de tes pièces, revues juste avant de les oublier.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)))],
   [/^#\/outils\/rythme$/, () => toolPage('Rythme', 'Lire le rythme : compter, subdiviser, placer chaque attaque. Dix niveaux, des noires aux polyrythmies, et les rythmes de tes pièces.', () => Promise.all([import('./tool-rhythm.js'), ensureAbcjs()]).then(([m]) => el => m.mountRhythmPage(el)))],
   [/^#\/outils\/oreille$/, () => pagePresets('oreille')],
@@ -66,6 +73,7 @@ const routes = [
   [/^#\/outils\/analyseur$/, () => toolPage('Analyse technique', 'Pour les gammes, arpèges et exercices joués sans partition : régularité, legato, pédale, équilibre des mains. Pour un passage de tes pièces, utilise plutôt « Analyser » sous l’extrait : l’analyse compare alors ton jeu à la partition.', () => import('./tool-analyzer.js').then(m => el => m.mountAnalyzer(el, { modes: ['evenness', 'legato', 'pedal', 'balance', 'voicing', 'dynamics'] })))],
   [/^#\/outils\/impro$/, pageImproTool],
   [/^#\/outils\/composition$/, pageCompose],
+  [/^#\/outils\/exercices$/, pageExercises],
   [/^#\/outils\/clavier$/, pageKeyboardTest],
   [/^#\/reglages$/, pageSettings],
 ];
@@ -136,6 +144,7 @@ function renderNav(hash) {
   html += `</div><div class="nav-section"><div class="nav-title">Outils</div>`;
   html += link('#/outils/rythme', 'Rythme', 'rythme');
   html += link('#/outils/lecture', 'Lecture à vue', 'lecture');
+  html += link('#/outils/exercices', 'Exercices', 'hands');
   html += link('#/outils/oreille', 'Oreille', 'ear');
   html += link('#/outils/theorie', 'Théorie', 'theorie');
   html += link('#/outils/impro', 'Improvisation', 'impro');
@@ -384,6 +393,7 @@ function pageHome() {
       ${toolCard('#/outils/lecture', 'Lecture à vue', '10 minutes par jour, de vrais extraits à ton niveau, jamais deux fois le même.')}
       ${toolCard('#/outils/oreille', 'Oreille', '10 minutes chaque jour : chanter, reconnaître les degrés, rejouer des mélodies.')}
       ${toolCard('#/outils/theorie', 'Théorie', 'Tous les cours, et des exercices : notes, gammes, intervalles, accords.')}
+      ${toolCard('#/outils/exercices', 'Exercices', 'Indépendance des mains, polyrythmes, lié contre détaché ; lecture de notes chronométrée.')}
       ${toolCard('#/outils/composition', 'Composition', 'Écrire ta pièce de 8 mesures : élégie, romance ou nocturne, notée et vérifiée.')}
       <a class="card" href="#/maitrise" id="masteryCard"><h3>En cours de maîtrise</h3><p>5 minutes par jour : la théorie des leçons terminées et l’analyse de tes pièces, revues au bon moment.</p></a>
     </div>
@@ -407,6 +417,7 @@ function pageHome() {
   if (sc) $('#sessionBox', page).append(sc);
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '4.2': '<ul><li><b>Exercices</b> (menu Outils) : indépendance des mains en 17 exercices (deux rythmes à la fois, polyrythmes, lié contre détaché, une main qui chante, notes tenues). Après « En rythme », un retour main par main, et le tempo monte à chaque réussite.</li><li><b>Lecture de notes chronométrée</b> : une minute, au piano ou par le nom ; notes par minute, notes lentes, record et courbe sur 30 jours. Dans Exercices et sous la Lecture à vue.</li></ul>',
     '4.1': '<ul><li><b>Ta séance d’aujourd’hui</b> : environ 1 h 15 tirée de la semaine, étape par étape. Sur chaque page, la barre du bas mène à l’étape suivante.</li><li><b>Pièce</b> : un passage ouvert à la fois ; l’analyse harmonique sous les extraits s’ouvre d’un toucher.</li><li><b>Partitions</b> : Boucle, Montée de tempo et Clavier sont rangés dans « Options ».</li><li><b>Oreille et Théorie</b> : la prochaine série est proposée en haut ; les séries sont rangées par groupe.</li><li><b>Plan</b> : seule la semaine en cours est dépliée. <b>Niveau</b> : les six modules en cartes.</li></ul>',
   };
   if (NEWS[version.app] && store.get('seenVersion') !== version.app) {
@@ -506,7 +517,7 @@ function todaySession(L, create = true) {
   const piece = tasks.find(x => x.t.mod === 'Pièce');
   if (piece) add({ mod: 'Pièce', min: 30, html: taskHTML(piece.t), href: `#/piece/${piece.t.piece}` });
   const sight = tasks.find(x => x.t.mod === 'Lecture' && x.t.tool);
-  add({ mod: 'Lecture', min: 10, html: sight ? taskHTML(sight.t) : '<a href="#/outils/lecture">Lecture à vue</a> : un ou deux extraits nouveaux, sans t’arrêter.', href: sight ? sight.t.tool[0] : '#/outils/lecture' });
+  add({ mod: 'Lecture', min: 10, html: (sight ? taskHTML(sight.t) : '<a href="#/outils/lecture">Lecture à vue</a> : un ou deux extraits nouveaux, sans t’arrêter.') + ' Commence par une minute de lecture de notes chronométrée (sous l’outil).', href: sight ? sight.t.tool[0] : '#/outils/lecture' });
   let budget = 35;
   const used = new Set();
   const cand = tasks.filter(x => x.t.lesson && !x.done && lessonById(x.t.lesson)).sort((a, b) => taskPrio(a.t) - taskPrio(b.t) || a.i - b.i);
@@ -518,6 +529,7 @@ function todaySession(L, create = true) {
     used.add(x.t.mod); budget -= min;
     if (budget <= 5) break;
   }
+  if (!used.has('Technique')) add({ mod: 'Technique', min: 10, html: '<a href="#/outils/exercices">Exercices</a> : l’exercice du jour (indépendance des mains), en rythme avec le clic.', href: '#/outils/exercices' });
   if (!used.size) { // semaine bouclée : entraînement libre
     add({ mod: 'Oreille', min: 10, html: '<a href="#/outils/oreille">Oreille</a> : ta prochaine série, proposée en haut de la page.', href: '#/outils/oreille' });
     add({ mod: 'Impro', min: 15, html: '<a href="#/outils/impro">Improvisation</a> : une grille de la semaine, sans t’arrêter.', href: '#/outils/impro' });
@@ -912,6 +924,16 @@ function pageImproTool() {
   page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3"><h2>La méthode, leçon par leçon</h2></div>` + moduleIndexHTML('impro'));
   main.append(page);
   return mountLazy(host, () => import('./tool-improv.js').then(m => el => m.mountImprov(el, {})));
+}
+
+function pageExercises() {
+  const page = h('div', { class: 'page' });
+  page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Exercices' }]) +
+    `<div class="page-head"><h1>Exercices</h1><p class="lead">Une minute de lecture de notes chronométrée, puis l’indépendance des mains : deux rythmes à la fois, polyrythmes, lié contre détaché, une main qui chante, notes tenues. Joue « En rythme » : l’appli mesure chaque main et monte le tempo à chaque réussite.</p></div>`;
+  const host = h('div');
+  page.append(host);
+  main.append(page);
+  return mountLazy(host, () => Promise.all([import('./tool-exercises.js'), ensureAbcjs()]).then(([m]) => el => m.mountExercisesPage(el)));
 }
 
 function pageCompose() {

@@ -191,7 +191,7 @@ export function mountScore(el, cfg) {
   let anaBtn = null;
   if (cfg.practice !== false) {
     const waitBtn = h('button', { class: 'btn sm', type: 'button', title: 'Le curseur attend que tu joues la bonne note' }, 'Mode attente');
-    const tempoBtn = h('button', { class: 'btn sm', type: 'button', title: 'Décompte, puis joue en rythme : évaluation à la fin' }, 'En rythme');
+    const tempoBtn = h('button', { class: 'btn sm' + (cfg.drill ? ' primary' : ''), type: 'button', title: 'Décompte, puis joue en rythme : évaluation à la fin' }, 'En rythme');
     anaBtn = h('button', { class: 'btn sm', type: 'button', title: 'Joue le passage à ton tempo : analyse détaillée et exercices' }, 'Analyser');
     const ladderBtn = h('button', { class: 'btn sm ghost', type: 'button', title: 'En rythme : après 3 passages propres, le tempo monte de 5 % ; après un passage raté, il baisse' }, 'Montée de tempo');
     const kbBtn = h('button', { class: 'btn sm ghost', type: 'button', title: 'Afficher un clavier à l’écran' }, h('span', { html: ICONS.keys }), 'Clavier');
@@ -245,6 +245,12 @@ export function mountScore(el, cfg) {
           reader = null;
           results.innerHTML = `<span>Notes justes <b>${fmtPct(res.accuracy)}</b></span><span>Dans le temps <b>${fmtPct(res.precision)}</b></span><span>Écart moyen <b>${fmtNum(res.meanAbsMs)} ms</b></span><span>Notes en trop <b>${res.extra}</b></span>`;
           if (cfg.stat) store.push('stats.sight', { id: cfg.stat, mode: 'tempo', bpm, at: Date.now(), ...res });
+          // retour propre à l'exercice (onglet Exercices : main par main, articulation, nuances…)
+          if (cfg.onTempo) {
+            const extra = cfg.onTempo(res, { bpm, baseBpm, hands, setBpm, range: range ? range.slice() : null });
+            takeHost.innerHTML = '';
+            if (extra) takeHost.append(extra);
+          }
           // carte des erreurs : notes manquées ou fausses par mesure
           const perBar = new Map();
           for (const r of res.items || []) { const m = bars.barOf(r.t); const o = perBar.get(m) || { m, errors: 0, total: 0 }; o.total++; if (r.status === 'miss') o.errors++; perBar.set(m, o); }
