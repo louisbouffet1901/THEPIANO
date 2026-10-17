@@ -940,3 +940,58 @@ details.cp-tips ul { margin: 2px 0 8px; padding-left: 18px; }
 .ex-table tbody th { font-weight: 500; color: var(--text-2); }
 .ex-tips { margin: 6px 0 0; padding-left: 18px; font-size: 14.5px; }
 .ex-tips li { margin: 3px 0; }
+
+/* ================================================================== */
+/* V4.3 : chant juste (aiguille, tenue) et parcours d'oreille           */
+/* ================================================================== */
+.tuner { position: relative; height: 44px; margin: 8px 0 2px; border-radius: 8px; background: var(--surface-2); overflow: hidden; }
+.tn-zone { position: absolute; top: 0; bottom: 16px; background: var(--ok-tint); border-left: 1px solid var(--ok); border-right: 1px solid var(--ok); }
+.tn-mid { position: absolute; left: 50%; top: 0; bottom: 16px; width: 2px; margin-left: -1px; background: var(--ok); opacity: .7; }
+.tn-needle { position: absolute; left: 50%; top: 3px; width: 6px; height: 22px; margin-left: -3px; border-radius: 3px; background: var(--line-strong); opacity: 0; transition: left .08s linear, background .15s; }
+.tn-needle.on { opacity: 1; background: var(--warn); }
+.tn-needle.ok { background: var(--ok); }
+.tn-lbl { position: absolute; left: 6px; right: 6px; bottom: 1px; display: flex; justify-content: space-between; font-size: 11px; color: var(--text-3); }
+.hold-bar { margin: 6px 0 2px; height: 8px; }
+.hold-bar > i { background: var(--ok); transition: width .1s linear; }
+/* Parcours d'oreille */
+.ear-tabs { margin: 0 0 14px; }
+.ear-tabs button { min-height: 40px; font-size: 15px; padding: 0 16px; }
+.ear-head { margin-bottom: 14px; }
+.ear-head .progress { margin: 8px 0 10px; }
+.ear-method { margin-top: 10px; font-size: 14.5px; }
+.ear-method > summary { cursor: pointer; font-weight: 600; color: var(--accent-strong); padding: 4px 0; }
+.ear-method ol { margin: 4px 0 4px; padding-left: 20px; }
+.ear-method li { margin: 3px 0; }
+.ear-tend { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--gold-tint); }
+.ear-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ear-step { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.ear-step.current { border-color: var(--accent); }
+.ear-step.done { background: #fbfdfb; }
+.es-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px; background: none; border: 0; font: inherit; text-align: left; cursor: pointer; color: var(--text); border-radius: var(--radius); }
+.es-head:hover { background: var(--surface-2); }
+.es-num { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-3); color: var(--text-2); font-size: 13.5px; font-weight: 700; }
+.ear-step.current .es-num { background: var(--accent); color: #fff; }
+.ear-step.done .es-num { background: var(--ok); color: #fff; }
+.es-title { flex: 1; font-weight: 600; font-size: 16px; }
+.es-stat { color: var(--text-3); white-space: nowrap; }
+.ear-step.current .es-stat { color: var(--accent); font-weight: 600; }
+.ear-step.done .es-stat { color: var(--ok); }
+.es-body { padding: 0 14px 12px 54px; }
+.es-why { margin: 0 0 10px; color: var(--text-2); }
+.es-series { display: flex; flex-direction: column; gap: 8px; }
+.es-row { display: flex; align-items: center; gap: 12px; }
+.es-row .btn { flex: none; min-width: 108px; justify-content: center; }
+.es-row.ok .btn { border-color: var(--ok); color: var(--ok); }
+.es-st { display: flex; flex-direction: column; line-height: 1.3; }
+.es-st b { font-weight: 600; font-size: 15px; }
+.es-lesson { margin: 10px 0 0; }
+.es-next { margin: 10px 0 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ok-txt { color: var(--ok); font-weight: 600; }
+.es-quiz:empty { display: none; }
+.es-quiz { margin-top: 12px; scroll-margin-top: 70px; }
+@media (max-width: 600px) { .es-body { padding-left: 14px; } .es-row { align-items: flex-start; } }
+.ear-free { margin-top: 22px; }
+.ear-free .free-group { padding: 4px 14px 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ear-free .free-title { width: 100%; font-weight: 650; color: var(--text-2); margin: 6px 0 2px; }
+.ear-free .btn.ok { border-color: var(--ok); }
+.ear-free .es-quiz { padding: 0 14px 14px; }

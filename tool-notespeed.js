@@ -11,14 +11,15 @@ import { lineChart } from './charts.js';
 const DURATION = 60; // secondes
 const dur = () => (typeof window !== 'undefined' && window.__nsDuration) || DURATION; // durée réduite pour les tests automatiques
 const CLEFS = { treble: 'clé de sol', bass: 'clé de fa', both: 'les deux clés' };
-const RANGES = { staff: 'dans la portée', ledger: 'avec lignes supplémentaires', acc: 'avec altérations' };
+const RANGES = { staff: 'dans la portée', ledger: 'jusqu’à 2 lignes supplémentaires', far: 'jusqu’à 4 lignes supplémentaires' };
 // notes naturelles (MIDI) par clé : dans la portée (et juste autour), puis jusqu'à deux lignes supplémentaires
 const POOLS = {
-  treble: { staff: [62, 79], ledger: [57, 84] },
-  bass: { staff: [41, 59], ledger: [36, 64] },
+  treble: { staff: [62, 79], ledger: [57, 84], far: [50, 91] }, // ± 4 lignes : ré2 (sous la 4e ligne) à sol5
+  bass: { staff: [41, 59], ledger: [36, 64], far: [29, 71] },   // fa0 à si3
 };
 // repères (notes justes par minute) : une lecture déjà fluide
-const TARGET = { staff: 40, ledger: 30, acc: 25 };
+const TARGET = { staff: 40, ledger: 30, far: 24 }; // 5 de moins avec les altérations
+const targetOf = c => TARGET[c.range] - (c.acc ? 5 : 0);
 const NAMES7 = [['do', 0], ['ré', 2], ['mi', 4], ['fa', 5], ['sol', 7], ['la', 9], ['si', 11]];
 const NAMES12 = [['do', 0], ['do♯ ré♭', 1], ['ré', 2], ['ré♯ mi♭', 3], ['mi', 4], ['fa', 5], ['fa♯ sol♭', 6], ['sol', 7], ['sol♯ la♭', 8], ['la', 9], ['la♯ si♭', 10], ['si', 11]];
 const isNatural = m => [0, 2, 4, 5, 7, 9, 11].includes(pc(m));
@@ -28,23 +29,24 @@ function poolOf(conf) {
   const clefs = conf.clef === 'both' ? ['treble', 'bass'] : [conf.clef];
   const out = [];
   for (const clef of clefs) {
-    const [lo, hi] = POOLS[clef][conf.range === 'staff' ? 'staff' : 'ledger'];
+    const [lo, hi] = POOLS[clef][conf.range] || POOLS[clef].ledger;
     for (let m = lo; m <= hi; m++) {
       if (isNatural(m)) out.push({ m, clef, flat: false, w0: 1 });
       // touches noires : mi♭, la♭, si♭ en bémols ; do♯, fa♯ en dièses (les orthographes les plus courantes)
-      else if (conf.range === 'acc') out.push({ m, clef, flat: [3, 8, 10].includes(pc(m)), w0: 0.7 });
+      else if (conf.acc) out.push({ m, clef, flat: [3, 8, 10].includes(pc(m)), w0: 0.7 });
     }
   }
   return out;
 }
-const confKey = c => `${c.clef}:${c.range}:${c.input}${c.input === 'piano' && !c.exact ? ':oct' : ''}`;
+const confKey = c => `${c.clef}:${c.range}${c.acc ? '+acc' : ''}:${c.input}${c.input === 'piano' && !c.exact ? ':oct' : ''}`;
 const noteKey = n => `${n.clef}:${n.m}${n.flat ? 'b' : ''}`;
 const nameOf = n => noteNameFr(n.m, { octave: true, flats: n.flat });
 const dayOf = t => new Date(t).toDateString();
 
 export function mountNoteSpeed(el, opts = {}) {
   const saved = store.get('notespeed') || {};
-  const conf = { clef: 'treble', range: 'staff', input: midi.status === 'ready' ? 'piano' : 'names', exact: true, ...(saved.conf || {}) };
+  const conf = { clef: 'treble', range: 'staff', acc: false, input: midi.status === 'ready' ? 'piano' : 'names', exact: true, ...(saved.conf || {}) };
+  if (conf.range === 'acc') { conf.range = 'ledger'; conf.acc = true; } // réglage de la V4.2
   const frame = h('div', { class: 'w-frame notespeed' });
   const head = h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, 'Lecture de notes chronométrée'), h('span', { class: 'w-sub' }, 'une minute, le plus de notes justes possible'));
   const body = h('div', { class: 'w-body' });
@@ -64,9 +66,13 @@ export function mountNoteSpeed(el, opts = {}) {
   const exactCb = h('input', { type: 'checkbox', checked: conf.exact });
   exactCb.addEventListener('change', () => { conf.exact = exactCb.checked; saveConf(); renderIdle(); });
   const exactLbl = h('label', { class: 'check small' }, exactCb, 'À la bonne octave');
+  const accCb = h('input', { type: 'checkbox', checked: conf.acc });
+  accCb.addEventListener('change', () => { if (running) { accCb.checked = conf.acc; return; } conf.acc = accCb.checked; saveConf(); renderIdle(); });
+  const accLbl = h('label', { class: 'check small' }, accCb, 'Altérations');
   const settings = h('div', { class: 'score-ctrl ns-settings' },
     seg('Clé', 'clef', [['treble', 'Sol'], ['bass', 'Fa'], ['both', 'Les deux']]),
-    seg('Notes', 'range', [['staff', 'Portée'], ['ledger', '+ lignes'], ['acc', '+ altérations']]),
+    seg('Notes', 'range', [['staff', 'Portée'], ['ledger', '± 2 lignes'], ['far', '± 4 lignes']]),
+    accLbl,
     seg('Réponse', 'input', [['piano', 'Au piano'], ['names', 'Par le nom']]),
     exactLbl);
   const info = h('p', { class: 'small ns-info' });
@@ -92,8 +98,8 @@ export function mountNoteSpeed(el, opts = {}) {
   const renderIdle = () => {
     exactLbl.hidden = conf.input !== 'piano';
     const b = best();
-    const target = TARGET[conf.range];
-    info.innerHTML = `${esc(CLEFS[conf.clef])}, ${esc(RANGES[conf.range])}, ${conf.input === 'piano' ? (conf.exact ? 'au piano, à la bonne octave' : 'au piano, n’importe quelle octave') : 'par le nom'}. `
+    const target = targetOf(conf);
+    info.innerHTML = `${esc(CLEFS[conf.clef])}, ${esc(RANGES[conf.range])}${conf.acc ? ', avec altérations' : ''}, ${conf.input === 'piano' ? (conf.exact ? 'au piano, à la bonne octave' : 'au piano, n’importe quelle octave') : 'par le nom'}. `
       + (b ? `Ton record : <b>${b} notes justes par minute</b> · repère : ${target}.` : `Repère d’une lecture déjà fluide : ${target} notes justes par minute.`)
       + (conf.input === 'piano' && midi.status !== 'ready' ? ' Piano non connecté : un clavier s’affiche à l’écran.' : '');
   };
@@ -160,8 +166,8 @@ export function mountNoteSpeed(el, opts = {}) {
   const buildInput = () => {
     inputHost.innerHTML = '';
     if (conf.input === 'names') {
-      const grid = h('div', { class: 'ns-names' + (conf.range === 'acc' ? ' twelve' : '') });
-      for (const [label, p] of (conf.range === 'acc' ? NAMES12 : NAMES7)) {
+      const grid = h('div', { class: 'ns-names' + (conf.acc ? ' twelve' : '') });
+      for (const [label, p] of (conf.acc ? NAMES12 : NAMES7)) {
         const b = h('button', { class: 'btn', type: 'button' }, label);
         b.addEventListener('pointerdown', e => { e.preventDefault(); if (!cur) return; answer(pc(cur.m) === p, label.split(' ')[0]); });
         grid.append(b);
@@ -236,7 +242,7 @@ export function mountNoteSpeed(el, opts = {}) {
     const slow = [...by.values()].filter(o => o.ok).sort((a, b) => b.rt / b.ok - a.rt / a.ok).slice(0, 3);
     const missed = [...by.values()].filter(o => o.err).sort((a, b) => b.err - a.err).slice(0, 4);
     const acc = session.ok + session.err ? session.ok / (session.ok + session.err) : 0;
-    const target = TARGET[conf.range];
+    const target = targetOf(conf);
     results.innerHTML = '';
     const tiles = h('div', { class: 'an-grid' },
       h('div', { class: 'stat' }, h('div', { class: 'l' }, 'Notes justes par minute'), h('div', { class: 'v' }, String(npm))),
@@ -244,7 +250,7 @@ export function mountNoteSpeed(el, opts = {}) {
       h('div', { class: 'stat' }, h('div', { class: 'l' }, 'Temps moyen par note'), h('div', { class: 'v' }, avgMs ? `${(avgMs / 1000).toFixed(1).replace('.', ',')} s` : '—')));
     const verdict = npm > prevBest && prevBest > 0 ? `Nouveau record (ancien : ${prevBest}).` : !prevBest ? 'Premier score enregistré pour ce réglage.' : `Record : ${prevBest}.`;
     const advice = acc < 0.85 ? 'Trop d’erreurs : ralentis un peu, la justesse d’abord (vise 90 %), la vitesse vient ensuite.'
-      : npm >= target ? `Au-dessus du repère (${target}) : passe au réglage suivant (${conf.range === 'staff' ? '« + lignes »' : conf.range === 'ledger' ? '« + altérations »' : 'l’autre clé, ou les deux clés'}).`
+      : npm >= target ? `Au-dessus du repère (${target}) : passe au réglage suivant (${conf.range === 'staff' ? '« ± 2 lignes »' : conf.range === 'ledger' ? '« ± 4 lignes »' : !conf.acc ? 'les altérations' : 'l’autre clé, ou les deux clés'}).`
       : `Repère : ${target} notes justes par minute. Une minute par jour suffit : la vitesse monte en quelques semaines.`;
     results.append(h('h4', { class: 'an-sub' }, 'Résultat'), tiles,
       h('p', { class: 'small' }, `${verdict} ${advice}`));

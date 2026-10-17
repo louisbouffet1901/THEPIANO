@@ -68,7 +68,7 @@ const routes = [
   }))],
   [/^#\/maitrise$/, () => toolPage('En cours de maîtrise', 'Cinq minutes par jour : les notions des leçons de théorie terminées et l’analyse de tes pièces, revues juste avant de les oublier.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)))],
   [/^#\/outils\/rythme$/, () => toolPage('Rythme', 'Lire le rythme : compter, subdiviser, placer chaque attaque. Dix niveaux, des noires aux polyrythmies, et les rythmes de tes pièces.', () => Promise.all([import('./tool-rhythm.js'), ensureAbcjs()]).then(([m]) => el => m.mountRhythmPage(el)))],
-  [/^#\/outils\/oreille$/, () => pagePresets('oreille')],
+  [/^#\/outils\/oreille$/, pageEar],
   [/^#\/outils\/theorie$/, () => pagePresets('theorie')],
   [/^#\/outils\/analyseur$/, () => toolPage('Analyse technique', 'Pour les gammes, arpèges et exercices joués sans partition : régularité, legato, pédale, équilibre des mains. Pour un passage de tes pièces, utilise plutôt « Analyser » sous l’extrait : l’analyse compare alors ton jeu à la partition.', () => import('./tool-analyzer.js').then(m => el => m.mountAnalyzer(el, { modes: ['evenness', 'legato', 'pedal', 'balance', 'voicing', 'dynamics'] })))],
   [/^#\/outils\/impro$/, pageImproTool],
@@ -391,7 +391,7 @@ function pageHome() {
     <div class="grid cols-2">
       ${toolCard('#/outils/rythme', 'Rythme', 'Lire et taper des rythmes, dix niveaux, et ceux de tes pièces.')}
       ${toolCard('#/outils/lecture', 'Lecture à vue', '10 minutes par jour, de vrais extraits à ton niveau, jamais deux fois le même.')}
-      ${toolCard('#/outils/oreille', 'Oreille', '10 minutes chaque jour : chanter, reconnaître les degrés, rejouer des mélodies.')}
+      ${toolCard('#/outils/oreille', 'Oreille', 'Deux parcours pas à pas : chanter juste, et reconnaître à l’oreille. 10 minutes par jour.')}
       ${toolCard('#/outils/theorie', 'Théorie', 'Tous les cours, et des exercices : notes, gammes, intervalles, accords.')}
       ${toolCard('#/outils/exercices', 'Exercices', 'Indépendance des mains, polyrythmes, lié contre détaché ; lecture de notes chronométrée.')}
       ${toolCard('#/outils/composition', 'Composition', 'Écrire ta pièce de 8 mesures : élégie, romance ou nocturne, notée et vérifiée.')}
@@ -417,6 +417,7 @@ function pageHome() {
   if (sc) $('#sessionBox', page).append(sc);
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '4.3': '<ul><li><b>Oreille</b> refaite en deux parcours, une étape après l’autre : <b>Chanter juste</b> (13 étapes, de la voix stable aux intervalles et aux motifs de ta pièce) et <b>Reconnaître à l’oreille</b> (16 étapes). L’étape en cours est ouverte ; toutes les séries restent dans « Entraînement libre ».</li><li><b>Chanter juste</b> : nouveaux exercices « Tenir une note » et « Glisser jusqu’à la note », une aiguille qui montre l’écart à la note, ta tendance (trop bas, trop haut…) et la méthode en cinq points.</li><li><b>Lecture de notes chronométrée</b> : jusqu’à 4 lignes supplémentaires ; les altérations se cochent à part.</li></ul>',
     '4.2': '<ul><li><b>Exercices</b> (menu Outils) : indépendance des mains en 17 exercices (deux rythmes à la fois, polyrythmes, lié contre détaché, une main qui chante, notes tenues). Après « En rythme », un retour main par main, et le tempo monte à chaque réussite.</li><li><b>Lecture de notes chronométrée</b> : une minute, au piano ou par le nom ; notes par minute, notes lentes, record et courbe sur 30 jours. Dans Exercices et sous la Lecture à vue.</li></ul>',
     '4.1': '<ul><li><b>Ta séance d’aujourd’hui</b> : environ 1 h 15 tirée de la semaine, étape par étape. Sur chaque page, la barre du bas mène à l’étape suivante.</li><li><b>Pièce</b> : un passage ouvert à la fois ; l’analyse harmonique sous les extraits s’ouvre d’un toucher.</li><li><b>Partitions</b> : Boucle, Montée de tempo et Clavier sont rangés dans « Options ».</li><li><b>Oreille et Théorie</b> : la prochaine série est proposée en haut ; les séries sont rangées par groupe.</li><li><b>Plan</b> : seule la semaine en cours est dépliée. <b>Niveau</b> : les six modules en cartes.</li></ul>',
   };
@@ -531,7 +532,7 @@ function todaySession(L, create = true) {
   }
   if (!used.has('Technique')) add({ mod: 'Technique', min: 10, html: '<a href="#/outils/exercices">Exercices</a> : l’exercice du jour (indépendance des mains), en rythme avec le clic.', href: '#/outils/exercices' });
   if (!used.size) { // semaine bouclée : entraînement libre
-    add({ mod: 'Oreille', min: 10, html: '<a href="#/outils/oreille">Oreille</a> : ta prochaine série, proposée en haut de la page.', href: '#/outils/oreille' });
+    add({ mod: 'Oreille', min: 10, html: '<a href="#/outils/oreille">Oreille</a> : l’étape en cours de tes deux parcours (chanter juste, reconnaître).', href: '#/outils/oreille' });
     add({ mod: 'Impro', min: 15, html: '<a href="#/outils/impro">Improvisation</a> : une grille de la semaine, sans t’arrêter.', href: '#/outils/impro' });
   }
   steps.sort((a, b) => MOD_ORDER.indexOf(a.mod) - MOD_ORDER.indexOf(b.mod));
@@ -913,6 +914,17 @@ async function pagePresets(kind) {
   page.append(host, list, index);
   main.append(page);
   return () => cleanupQuiz?.();
+}
+
+function pageEar() {
+  const page = h('div', { class: 'page' });
+  page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Oreille' }]) +
+    `<div class="page-head"><h1>Oreille</h1><p class="lead">Deux parcours, une étape après l’autre : <b>chanter juste</b>, et <b>reconnaître à l’oreille</b>. Dix minutes par jour : l’étape en cours de l’un, puis de l’autre.</p></div>`;
+  const host = h('div');
+  page.append(host);
+  page.insertAdjacentHTML('beforeend', `<p class="small muted mt-3">Les leçons d’oreille, dans l’ordre du parcours : <a href="#/niveau/n1/oreille">niveau 1</a> · <a href="#/niveau/n2/oreille">niveau 2</a>.</p>`);
+  main.append(page);
+  return mountLazy(host, () => Promise.all([import('./tool-earpath.js'), ensureAbcjs()]).then(([m]) => el => m.mountEarPath(el)));
 }
 
 function pageImproTool() {

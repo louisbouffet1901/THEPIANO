@@ -320,6 +320,44 @@ const GEN = {
         hint: { label: 'Indice : la tonique', play: () => playNotes([{ m: T, t: 0, d: 1.4, v: 80 }]), note: deg === 1 ? 'Chante exactement cette note.' : `Chante la tonique (1), puis monte la gamme en comptant (1, 2, 3…) jusqu’à ${deg}.` },
       };
     }
+    if (task === 'hold') {
+      // tenir une note, droite, plusieurs secondes : la stabilité avant la justesse des intervalles
+      const span = cfg.span || 3;
+      const mid = Math.round((vlo + vhi) / 2);
+      let m, guard = 0;
+      do { m = randInt(mid - span, mid + span); guard++; } while (guard < 50 && (isBlack(m) || m === st.lastSing));
+      st.lastSing = m;
+      const holdMs = cfg.holdMs || 3000;
+      return {
+        type: 'sing', tipKind: 'sing', holdMs,
+        prompt: `Écoute la note, puis chante-la et <b>tiens-la ${holdMs / 1000} secondes</b>, bien droite : la ligne reste dans la bande verte, l’aiguille au milieu.`,
+        play: () => playNotes([{ m, t: 0, d: 2.2, v: 80 }]),
+        targets: [m], labels: [noteNameFr(m, { octave: false })],
+        explain: `La note : <b>${noteNameFr(m, { octave: false })}</b> (${noteNameFr(m)}).`,
+        reveal: () => playNotes([{ m, t: 0, d: 2, v: 80 }]),
+        hint: { label: 'Indice : la note, longue', play: () => playNotes([{ m, t: 0, d: 4, v: 78 }]), note: 'Fredonne avec le piano pendant qu’il joue, puis continue seul, sur la même note, sans pousser : le souffle régulier tient la note.' },
+      };
+    }
+    if (task === 'glide') {
+      // deux notes : chanter la première, puis glisser jusqu'à la seconde en regardant la ligne
+      const mid = Math.round((vlo + vhi) / 2);
+      const dist = pick(cfg.dists || [2, 3, 4, 5, -2, -3, -4]);
+      let a = randInt(mid - 2, mid + 1);
+      if (isBlack(a)) a++;
+      const b = a + dist;
+      const nm = m => noteNameFr(m, { octave: false });
+      const steps = [];
+      for (let k = 0, x = a; k <= Math.abs(dist); k++, x += Math.sign(dist)) steps.push(x);
+      return {
+        type: 'sing', tipKind: 'sing', holdMs: 400,
+        prompt: `Deux notes. Chante la première, puis <b>glisse lentement</b> jusqu’à la seconde, comme une sirène : la ligne ${dist > 0 ? 'monte' : 'descend'} vers la nouvelle bande verte, et tu t’y arrêtes.`,
+        play: () => playNotes([{ m: a, t: 0, d: 1.2, v: 80 }, { m: b, t: 1.35, d: 1.4, v: 80 }]),
+        targets: [a, b], labels: ['départ', 'arrivée'],
+        explain: `De <b>${nm(a)}</b> à <b>${nm(b)}</b> : ${Math.abs(dist)} demi-tons ${dist > 0 ? 'plus haut' : 'plus bas'}.`,
+        reveal: () => playNotes([{ m: a, t: 0, d: 0.9, v: 80 }, { m: b, t: 1.0, d: 1.2, v: 80 }]),
+        hint: { label: 'Indice : le chemin', play: () => playNotes(steps.map((x, i) => ({ m: x, t: i * 0.3, d: i === steps.length - 1 ? 1.2 : 0.28, v: 76 }))), note: 'Le piano joue toutes les notes entre les deux : ta voix passe par le même chemin, mais sans s’arrêter.' },
+      };
+    }
     if (task === 'seq') {
       const seq = pick(cfg.seqs || [[1, 2, 3]]);
       const targets = seq.map(d => T + degOffset(d, mode));
@@ -1056,7 +1094,13 @@ export function mountQuiz(el, cfg) {
     const read = h('div', { class: 'pm-read' }, 'Écoute…');
     const coach = h('div', { class: 'sing-coach small' });
     const level = h('div', { class: 'pm-level', title: 'Niveau du micro' }, h('i'));
-    const meter = h('div', { class: 'pm' }, trace.el, read, coach, level);
+    // aiguille : l'écart à la note, de -100 à +100 cents ; la zone verte = la tolérance
+    const needle = h('div', { class: 'tn-needle' });
+    const tuner = h('div', { class: 'tuner', 'aria-hidden': 'true' },
+      h('div', { class: 'tn-zone', style: { left: `${50 - tol * 50}%`, width: `${tol * 100}%` } }), h('div', { class: 'tn-mid' }), needle,
+      h('div', { class: 'tn-lbl' }, h('span', {}, '← trop bas'), h('span', {}, 'juste'), h('span', {}, 'trop haut →')));
+    const holdBar = h('div', { class: 'progress hold-bar', hidden: !(q.holdMs > 1000), title: 'Tenue' }, h('i'));
+    const meter = h('div', { class: 'pm' }, trace.el, tuner, read, holdBar, coach, level);
     const stopListening = () => { listening = false; clearTimeout(timer); offPitch?.(); offPitch = null; trace.stop(); };
     const diagnose = () => {
       const voiced = all.length;
@@ -1072,8 +1116,11 @@ export function mountQuiz(el, cfg) {
       if (n <= 2.5) return { kind: 'neighbour', msg: `Pas encore : tu chantais une note voisine, ${Math.round(n) === 1 ? 'un demi-ton' : 'un ton'} ${where}.`, dir: Math.sign(mean) };
       return { kind: 'far', msg: `Pas encore : tu étais environ ${Math.round(n)} demi-tons ${where}.`, dir: Math.sign(mean) };
     };
+    let lastIn = 0, holdD = [];
+    const need = q.holdMs || (q.targets.length > 1 ? 260 : 380);
     const startListening = () => {
-      listening = true; hist = []; holdStart = null; recent = []; listenStart = performance.now(); lastVoiced = 0; lastCoach = 0;
+      listening = true; hist = []; holdStart = null; recent = []; listenStart = performance.now(); lastVoiced = 0; lastCoach = 0; lastIn = 0; holdD = [];
+      holdBar.firstChild.style.width = '0%';
       trace.setTarget(q.targets[idx]); trace.start();
       read.innerHTML = q.targets.length > 1 ? `À toi : chante la note ${idx + 1}.` : 'À toi : chante.';
       coach.innerHTML = '';
@@ -1084,7 +1131,7 @@ export function mountQuiz(el, cfg) {
         const now = ev.t;
         if (!ev.voiced) {
           // une courte coupure (respiration, consonne, mesure ratée) n'annule pas la tenue
-          if (now - lastVoiced > 220) { holdStart = null; hist = []; }
+          if (now - lastVoiced > 220) { holdStart = null; hist = []; holdD = []; holdBar.firstChild.style.width = '0%'; needle.classList.remove('on', 'ok'); }
         } else {
           lastVoiced = now;
           hist.push(ev.midi); if (hist.length > 3) hist.shift();
@@ -1095,16 +1142,25 @@ export function mountQuiz(el, cfg) {
           all.push({ t: now, d });
           const cents = Math.round(d * 100);
           read.innerHTML = `Tu chantes : <b>${sungName(mm)}</b> · ${cents > 0 ? '+' : ''}${cents} cents${Math.abs(d) <= tol ? ' · <span class="ok">juste</span>' : d < 0 ? ' · monte ↑' : ' · descends ↓'}`;
+          needle.style.left = `${50 + Math.max(-1, Math.min(1, d)) * 50}%`;
+          needle.classList.add('on'); needle.classList.toggle('ok', Math.abs(d) <= tol);
           if (Math.abs(d) <= tol) {
+            lastIn = now;
             if (holdStart == null) holdStart = now;
-            if (now - holdStart >= (q.targets.length > 1 ? 260 : 380)) {
+            holdD.push(d);
+            if (q.holdMs > 1000) holdBar.firstChild.style.width = `${Math.min(100, (now - holdStart) / need * 100)}%`;
+            if (now - holdStart >= need) {
               chipEls[idx]?.classList.add('ok');
-              idx++; holdStart = null; hist = []; recent = []; all.length = 0;
+              if (q.holdMs > 1000 && holdD.length) {
+                const avg = holdD.reduce((a, b) => a + Math.abs(b), 0) / holdD.length;
+                q.explain += ` Tenue de ${need / 1000} s, à ${Math.round(avg * 100)} cents en moyenne de la note${avg <= 0.15 ? ' : très stable' : ''}.`;
+              }
+              idx++; holdStart = null; hist = []; recent = []; all.length = 0; holdD = [];
               if (idx >= q.targets.length) { succeed(); return; }
               trace.setTarget(q.targets[idx]);
               read.innerHTML = `Bien. Note ${idx + 1} maintenant.`;
             }
-          } else holdStart = null;
+          } else if (now - lastIn > 150) { holdStart = null; holdD = []; holdBar.firstChild.style.width = '0%'; } // un écart très bref (vibrato) ne compte pas
         }
         // un conseil qui suit ce que tu chantes (au plus toutes les 0,7 s)
         if (now - lastCoach > 700) {
@@ -1113,11 +1169,12 @@ export function mountQuiz(el, cfg) {
           coach.innerHTML = c ? c.html : '';
         }
       });
-      const limit = 15000 + 4000 * (q.targets.length - 1);
+      const limit = 15000 + 4000 * (q.targets.length - 1) + (q.holdMs > 1000 ? q.holdMs : 0);
       timer = setTimeout(() => {
         const dg = diagnose();
         st.n++; if (dg.kind in st) st[dg.kind]++;
         if (dg.dir < 0) st.flat++; else if (dg.dir > 0) st.sharp++;
+        store.push('stats.sing', { at: Date.now(), kind: dg.kind, dir: dg.dir || 0 }, 120); // tendance personnelle (parcours « Chanter juste »)
         fail(dg.msg, dg.kind);
       }, limit);
     };
