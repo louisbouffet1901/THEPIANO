@@ -160,14 +160,14 @@ a:hover { color: var(--accent-strong); }
 }
 
 /* ---------- Navigation ---------- */
-.nav-section { margin-bottom: 18px; }
+.nav-section { margin-bottom: 12px; }
 .nav-title {
   font-size: 11.5px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase;
   color: var(--text-3); padding: 0 10px 6px;
 }
 .nav-link {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px; border-radius: 8px;
+  padding: 6px 10px; border-radius: 8px;
   color: var(--text); text-decoration: none; font-size: 15px;
 }
 .nav-link:hover { background: var(--surface-2); color: var(--text); }
@@ -177,7 +177,7 @@ a:hover { color: var(--accent-strong); }
 .nav-level { margin: 4px 0 8px; }
 .nav-level > .nav-link { font-weight: 600; }
 .nav-sub { margin: 2px 0 6px 18px; border-left: 1px solid var(--line); padding-left: 6px; }
-.nav-sub .nav-link { font-size: 14px; padding: 6px 10px; }
+.nav-sub .nav-link { font-size: 14px; padding: 4px 10px; }
 .nav-link.locked { color: var(--text-3); }
 .nav-progress { height: 3px; border-radius: 3px; background: var(--surface-3); margin: 2px 10px 0; overflow: hidden; }
 .nav-progress > i { display: block; height: 100%; background: var(--accent); }
@@ -821,3 +821,80 @@ details.more[open] > summary::before { transform: rotate(90deg); }
 .wt-row { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: var(--surface); }
 .wt-date { min-width: 64px; font-weight: 650; color: var(--accent); font-variant-numeric: tabular-nums; }
 .wt-main { flex: 1 1 auto; min-width: 0; }
+
+
+/* ================================================================== */
+/* V4.1 : interfaces simplifiées                                        */
+/* ================================================================== */
+.linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
+/* Partition : options repliées */
+.score-ctrl-opt { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.more-btn::after { content: ' ▾'; font-size: 11px; }
+.more-btn.on::after { content: ' ▴'; }
+/* Analyse harmonique repliable */
+.w-analysis { padding-top: 6px; padding-bottom: 6px; }
+.w-analysis.open { padding-bottom: 12px; }
+.wa-head { margin-bottom: 0; min-height: 36px; }
+.w-analysis.open .wa-head { margin-bottom: 8px; }
+.wa-toggle { display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; padding: 6px 4px; margin-left: -4px; font: inherit; cursor: pointer; color: var(--text); border-radius: 6px; }
+.wa-toggle:hover { background: var(--surface-2); }
+.wa-chev::before { content: '▸'; display: inline-block; color: var(--text-3); transition: transform .15s; }
+.w-analysis.open .wa-chev::before { transform: rotate(90deg); }
+/* Pièce : passages repliables */
+.ps-hint { margin: -4px 0 10px; color: var(--text-3); }
+.prose details.passage { margin: 0 0 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.prose details.passage > summary { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 12px 16px; font-family: var(--font-read); font-size: 18px; font-weight: 650; color: var(--text); list-style: none; cursor: pointer; }
+.prose details.passage > summary::before { content: '▸'; display: inline-block; width: 1em; color: var(--accent); transition: transform .15s; }
+.prose details.passage[open] > summary::before { content: '▸'; transform: rotate(90deg); }
+.prose details.passage[open] > summary { border-bottom: 1px solid var(--line); }
+.ps-bars { font-family: var(--font-ui); font-size: 13.5px; font-weight: 600; color: var(--gold); background: var(--gold-tint); border-radius: 6px; padding: 1px 8px; }
+.passage-body { padding: 4px 16px 6px; }
+/* Plan : semaines repliables */
+.week.foldable .week-head h3::before { content: '▸'; display: inline-block; width: 1.1em; color: var(--accent); transition: transform .15s; }
+.week.foldable.open .week-head h3::before { transform: rotate(90deg); }
+.week.foldable:not(.open) .week-head { padding-bottom: 12px; }
+details.routine > summary { cursor: pointer; list-style: none; margin-bottom: 0; }
+details.routine > summary::-webkit-details-marker { display: none; }
+details.routine[open] > summary { margin-bottom: 6px; }
+/* Oreille, Théorie : la prochaine série, des groupes repliables */
+.card.reco { border-color: var(--accent); background: var(--accent-tint); margin-bottom: 18px; }
+.card.reco h3 { margin: 4px 0 4px; font-size: 19px; }
+.card.reco p { margin: 0 0 10px; }
+details.preset-group { border-top: 1px solid var(--line); padding: 4px 0; }
+details.preset-group > summary { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 2px; font-weight: 650; font-size: 16px; cursor: pointer; list-style: none; }
+details.preset-group > summary::-webkit-details-marker { display: none; }
+details.preset-group > summary > span:first-child::before { content: '▸'; display: inline-block; width: 1.1em; color: var(--accent); transition: transform .15s; }
+details.preset-group[open] > summary > span:first-child::before { transform: rotate(90deg); }
+details.preset-group > .grid { margin: 2px 0 12px; }
+.card.preset { text-align: left; cursor: pointer; font: inherit; }
+.card.preset.ok { border-color: var(--ok); }
+.card.preset.ok h3::after { content: ' ✓'; color: var(--ok); }
+/* Composition : quatre étapes */
+.cp-step { display: flex; align-items: center; gap: 8px; margin-top: 20px; }
+.cp-n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; flex: none; }
+.cp-fix { margin-top: 8px; }
+details.cp-tips { margin-top: 10px; border-radius: 8px; background: var(--accent-tint); padding: 4px 12px; font-size: 14px; color: var(--text-2); }
+details.cp-tips > summary { cursor: pointer; padding: 6px 0; font-weight: 600; color: var(--accent-strong); }
+details.cp-tips ul { margin: 2px 0 8px; padding-left: 18px; }
+/* Séance du jour */
+.card.session { padding: 14px 16px 16px; }
+.session-steps { list-style: none; margin: 8px 0 0; padding: 0; }
+.session-steps .task .dur { flex: none; font-size: 13px; color: var(--text-3); padding-top: 3px; font-variant-numeric: tabular-nums; }
+.session-fin { margin: 8px 0 0; color: var(--ok); font-weight: 600; }
+.session-bar { position: fixed; left: 0; right: 0; margin: 0 auto; width: fit-content; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 30;
+  display: flex; align-items: center; gap: 12px; max-width: min(640px, calc(100vw - 24px)); padding: 8px 8px 8px 16px;
+  background: var(--surface); border: 1px solid var(--accent); border-radius: 999px; box-shadow: 0 6px 24px rgba(20, 30, 50, .16); }
+.session-bar[hidden] { display: none; }
+.session-bar .sb-txt { font-size: 14px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.session-bar .sb-txt b { color: var(--accent-strong); }
+.session-bar .btn { flex: none; border-radius: 999px; }
+.sb-close { flex: none; width: 30px; height: 30px; border: 0; border-radius: 50%; background: transparent; color: var(--text-3); font-size: 20px; line-height: 1; cursor: pointer; }
+.sb-close:hover { background: var(--surface-2); }
+@media print { .session-bar { display: none !important; } }
+.compose .cp-plan { margin-top: 14px; }
+.cp-score[hidden] { display: none; }
+/* Niveau : les six modules en cartes */
+.module-card .card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.module-card h3 { margin: 0; font-size: 17px; }
+.module-card .progress { margin: 8px 0 10px; }
+.module-card p b { font-weight: 600; color: var(--text); }

@@ -127,14 +127,14 @@ export function mountCompose(el) {
   const planBox = h('div', { class: 'improv-grid cp-plan' });
   const status = h('div', { class: 'score-status' });
   const checks = h('ul', { class: 'cp-checks' });
-  const tipsBox = h('div', { class: 'quiz-tip' });
+  const tipsBox = h('details', { class: 'cp-tips' });
   const rng = h('input', { type: 'range', min: 36, max: 90, 'aria-label': 'Tempo' });
   const out = h('output');
   const playGrid = h('button', { class: 'btn', type: 'button' }, 'Écouter la grille');
-  const recAll = h('button', { class: 'btn primary', type: 'button' }, 'Enregistrer la mélodie (8 mesures)');
-  const barSel = h('select', { 'aria-label': 'Mesure' }, ...Array.from({ length: 8 }, (_, i) => h('option', { value: i }, `Mesure ${i + 1}`)));
-  const recBar = h('button', { class: 'btn', type: 'button' }, 'Réenregistrer cette mesure');
-  const clearBar = h('button', { class: 'btn ghost', type: 'button' }, 'Effacer cette mesure');
+  const recAll = h('button', { class: 'btn primary', type: 'button' }, 'Enregistrer les 8 mesures');
+  const barSel = h('select', { 'aria-label': 'Mesure' }, ...Array.from({ length: 8 }, (_, i) => h('option', { value: i }, `mesure ${i + 1}`)));
+  const recBar = h('button', { class: 'btn sm', type: 'button' }, 'Réenregistrer');
+  const clearBar = h('button', { class: 'btn sm ghost', type: 'button' }, 'Effacer');
   const scoreHost = h('div', { class: 'cp-score' });
   const kbHost = h('div');
   const title = h('input', { type: 'text', class: 'cp-title', placeholder: 'Titre de ta pièce', maxlength: 60 });
@@ -145,17 +145,20 @@ export function mountCompose(el) {
   const abcBtn = h('button', { class: 'btn ghost', type: 'button' }, 'Copier la partition (ABC)');
   const midiBtn = h('button', { class: 'btn ghost', type: 'button' }, 'Télécharger le MIDI');
   const msg = h('p', { class: 'small' });
+  const fixRow = h('div', { class: 'score-ctrl cp-fix' }, h('span', { class: 'small' }, 'Reprendre la'), barSel, recBar, clearBar);
+  const mineRow = h('div', { class: 'score-ctrl' }, h('span', { class: 'small' }, 'Mes compositions'), listSel, openBtn, delBtn);
+  const exportRow = h('div', { class: 'score-ctrl' }, abcBtn, midiBtn);
+  const step = (n, t) => h('h4', { class: 'an-sub cp-step' }, h('span', { class: 'cp-n' }, String(n)), t);
   body.append(
     lead,
-    h('h4', { class: 'an-sub' }, 'Le plan'), planBox,
+    step(1, 'Écoute la grille'), planBox,
     h('div', { class: 'score-ctrl' }, playGrid, h('label', { class: 'range' }, 'Tempo', rng, out)),
-    h('h4', { class: 'an-sub' }, 'Ta mélodie'),
-    h('p', { class: 'small mt-0' }, 'Joue la main droite sur le piano connecté (ou le clavier à l’écran) pendant que l’appli joue la main gauche, après le décompte. Les notes sont rangées en croches. Tu peux ensuite reprendre une seule mesure.'),
-    h('div', { class: 'score-ctrl' }, recAll, barSel, recBar, clearBar), kbHost, status, tipsBox,
-    h('h4', { class: 'an-sub' }, 'Ce que l’appli remarque'), checks,
-    h('h4', { class: 'an-sub' }, 'La partition'), scoreHost,
-    h('h4', { class: 'an-sub' }, 'Garder et partager'),
-    h('div', { class: 'score-ctrl' }, title, saveBtn), h('div', { class: 'score-ctrl' }, listSel, openBtn, delBtn, abcBtn, midiBtn), msg);
+    step(2, 'Joue ta mélodie'),
+    h('p', { class: 'small mt-0' }, 'Après le décompte, l’appli joue la main gauche : joue la main droite sur le piano (ou le clavier à l’écran). Les notes sont rangées en croches.'),
+    h('div', { class: 'score-ctrl' }, recAll), fixRow, kbHost, status, tipsBox,
+    step(3, 'Lis et vérifie'), checks, scoreHost,
+    step(4, 'Garde ta pièce'),
+    h('div', { class: 'score-ctrl' }, title, saveBtn), mineRow, exportRow, msg);
 
   let S, P, timeline, meter, per, bars, bpm, melody = [], playing = null, scoreCleanup = null;
   const projects = () => store.get('compose.projects') || [];
@@ -179,7 +182,7 @@ export function mountCompose(el) {
         h('span', { class: 'ig-name' }, chs.map(c => c.name).join(', ')),
         h('span', { class: 'ig-notes' }, ROLE[b] || '')));
     }
-    tipsBox.innerHTML = `<b>Pour commencer.</b> ${TIPS.join(' ')}`;
+    tipsBox.innerHTML = `<summary>Conseils pour inventer la mélodie</summary><ul>${TIPS.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`;
     render();
   };
 
@@ -220,11 +223,13 @@ export function mountCompose(el) {
     // garder la hauteur pendant le nouveau rendu : sans cela la page saute (et un toucher en cours tombe à côté)
     if (scoreHost.offsetHeight) { scoreHost.style.minHeight = scoreHost.offsetHeight + 'px'; requestAnimationFrame(() => requestAnimationFrame(() => { scoreHost.style.minHeight = ''; })); }
     scoreHost.innerHTML = '';
+    fixRow.hidden = exportRow.hidden = scoreHost.hidden = !melody.length;
+    renderChecks();
+    if (!melody.length) return; // la partition apparaît avec la première mélodie (la grille s'écoute au-dessus)
     const abc = buildAbc();
     const pedal = timeline.filter(c => !c.silent).map(c => c.at);
     try { scoreCleanup = mountScore(scoreHost, { abc, bpm, title: title.value || 'Ma composition', pedal, pedalEnd: timeline.totalBeats, practice: true, variants: [{ label: 'Écouter' }] }); }
     catch (e) { scoreHost.textContent = 'Partition indisponible : ' + e.message; }
-    renderChecks();
   };
 
   /* --- vérifications --- */
@@ -258,7 +263,7 @@ export function mountCompose(el) {
     if (playing) { playing.offs?.forEach(f => f()); playing.timers?.forEach(clearTimeout); playing.clicks && audio.cancelClicks(playing.clicks); }
     playing = null;
     audio.stopAll('compose');
-    recAll.textContent = 'Enregistrer la mélodie (8 mesures)'; recBar.textContent = 'Réenregistrer cette mesure';
+    recAll.textContent = 'Enregistrer les 8 mesures'; recBar.textContent = 'Réenregistrer';
     playGrid.textContent = 'Écouter la grille';
   };
   const scheduleLH = (t0, fromBeat, toBeat, spb) => {
@@ -375,6 +380,7 @@ export function mountCompose(el) {
   const refreshList = () => {
     listSel.innerHTML = '';
     const ps = projects();
+    mineRow.hidden = !ps.length;
     if (!ps.length) listSel.append(h('option', { value: '' }, 'Aucune composition gardée'));
     ps.forEach(p => listSel.append(h('option', { value: p.id }, `${p.title} · ${STYLES.find(s => s.id === p.style)?.label.split(' (')[0] || ''} · ${new Date(p.at).toLocaleDateString('fr-FR')}`)));
   };

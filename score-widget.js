@@ -125,7 +125,20 @@ export function mountScore(el, cfg) {
   loopBtn.addEventListener('click', () => { loopOn = !loopOn; loopBtn.classList.toggle('on', loopOn); player.set({ loop: loopOn }); });
   const clickBtn = h('button', { class: 'btn sm' + (clickOn ? ' on' : ''), type: 'button', title: 'Métronome pendant la lecture et en rythme' }, 'Clic');
   clickBtn.addEventListener('click', () => { clickOn = !clickOn; clickBtn.classList.toggle('on', clickOn); });
-  ctrl.append(loopBtn, clickBtn);
+  ctrl.append(clickBtn);
+  // Options rarement utiles (boucle, montée de tempo, clavier à l'écran) : une seule touche « Options » les montre,
+  // et ce choix vaut pour toutes les partitions. Partition d'illustration (sans entraînement) : la boucle reste visible.
+  const ctrlOpt = h('div', { class: 'score-ctrl score-ctrl-opt' });
+  if (cfg.practice === false) ctrl.append(loopBtn); else ctrlOpt.append(loopBtn);
+  const optOpen = () => store.get('ui.scoreOpts') === true || loopOn;
+  ctrlOpt.hidden = !optOpen();
+  const moreBtn = h('button', { class: 'btn sm ghost more-btn' + (ctrlOpt.hidden ? '' : ' on'), type: 'button', 'aria-expanded': String(!ctrlOpt.hidden), title: 'Boucle, montée de tempo, clavier à l’écran' }, 'Options');
+  moreBtn.addEventListener('click', () => {
+    ctrlOpt.hidden = !ctrlOpt.hidden;
+    moreBtn.classList.toggle('on', !ctrlOpt.hidden);
+    moreBtn.setAttribute('aria-expanded', String(!ctrlOpt.hidden));
+    store.set('ui.scoreOpts', !ctrlOpt.hidden);
+  });
 
   /* ---------------- Plage de mesures ---------------- */
   const dimAll = () => {
@@ -133,23 +146,25 @@ export function mountScore(el, cfg) {
     if (!range) return;
     for (const e of score.events) { const m = bars.barOf(e.t); if ((m < range[0] || m > range[1]) && e.char != null) score.mark(e.char, 'n-dim'); }
   };
-  let selFrom = null, selTo = null;
+  let selFrom = null, selTo = null, allBtn = null;
   const setRange = (r, quiet) => {
     range = r && !(r[0] === measures[0] && r[1] === measures[measures.length - 1]) ? [Math.min(r[0], r[1]), Math.max(r[0], r[1])] : null;
     if (selFrom) { selFrom.value = String(range ? range[0] : measures[0]); selTo.value = String(range ? range[1] : measures[measures.length - 1]); }
+    if (allBtn) allBtn.hidden = !range;
     dimAll();
     if (player.playing) { player.set(playOpts(variants[activeVariant] || {})); player.play(); }
     if (!quiet) refreshMap();
   };
   if (measures.length > 1 && cfg.practice !== false) {
-    selFrom = h('select', { 'aria-label': 'Première mesure' }, ...measures.map(m => h('option', { value: m }, String(m))));
-    selTo = h('select', { 'aria-label': 'Dernière mesure' }, ...measures.map(m => h('option', { value: m }, String(m))));
+    const mLabel = m => (m === 0 ? 'levée' : String(m));
+    selFrom = h('select', { 'aria-label': 'Première mesure' }, ...measures.map(m => h('option', { value: m }, mLabel(m))));
+    selTo = h('select', { 'aria-label': 'Dernière mesure' }, ...measures.map(m => h('option', { value: m }, mLabel(m))));
     selTo.value = String(measures[measures.length - 1]);
     const onSel = () => setRange([+selFrom.value, +selTo.value]);
     selFrom.addEventListener('change', onSel); selTo.addEventListener('change', onSel);
-    const all = h('button', { class: 'btn sm ghost', type: 'button', title: 'Toutes les mesures' }, 'Tout');
-    all.addEventListener('click', () => setRange(null));
-    ctrl2.append(h('label', { class: 'field range-m' }, 'Mesures', selFrom, h('span', { class: 'small' }, 'à'), selTo), all);
+    allBtn = h('button', { class: 'btn sm ghost', type: 'button', title: 'Revenir à toutes les mesures', hidden: true }, 'Tout');
+    allBtn.addEventListener('click', () => setRange(null));
+    ctrl2.append(h('label', { class: 'field range-m' }, 'Mesures', selFrom, h('span', { class: 'small' }, 'à'), selTo), allBtn);
   }
 
   /* ---------------- Carte des erreurs ---------------- */
@@ -183,11 +198,15 @@ export function mountScore(el, cfg) {
     modeBtns.push(waitBtn, tempoBtn, anaBtn);
     let ladderOn = false;
     ladderBtn.addEventListener('click', () => { ladderOn = !ladderOn; ladderBtn.classList.toggle('on', ladderOn); });
-    ctrl2.append(waitBtn, tempoBtn, ladderBtn, anaBtn, kbBtn);
+    ctrl2.append(waitBtn, tempoBtn, anaBtn);
+    ctrlOpt.append(ladderBtn, kbBtn);
     foot.append(ctrl2);
     const needInput = () => {
       if (midi.status !== 'ready' && !vk) {
-        status.innerHTML = 'Branche le piano (pastille « Connecter le piano » en haut) ou affiche le clavier à l’écran.';
+        const show = h('button', { class: 'linklike', type: 'button' }, 'affiche le clavier à l’écran');
+        show.addEventListener('click', () => { if (!vk) kbBtn.click(); status.textContent = 'Clavier à l’écran affiché : relance le mode choisi.'; });
+        status.innerHTML = '';
+        status.append('Branche le piano (pastille « Connecter le piano » en haut) ou ', show, '.');
         return false;
       }
       return true;
@@ -292,6 +311,7 @@ export function mountScore(el, cfg) {
       kbBtn.classList.add('on');
     });
   }
+  if (cfg.practice !== false) { ctrl2.append(moreBtn); foot.append(ctrlOpt); }
   foot.append(statusRow);
   frame.append(takeHost);
 
@@ -436,8 +456,12 @@ function analysisPanel(score, an, abc, getBpm, stopOthers) {
     });
     timers.push(setTimeout(() => stop(), at * 1000 + 300));
   };
-  const head = h('div', { class: 'wa-head' }, h('span', { class: 'wa-title' }, 'Analyse'), h('span', { class: 'wa-key' }, an.key));
-  const playAll = h('button', { class: 'btn sm', type: 'button', html: ICONS.play + 'Accords en blocs' });
+  // repliée par défaut : un toucher l'ouvre (et ce choix vaut pour les analyses suivantes)
+  const open0 = store.get('ui.harmonyOpen') === true;
+  const toggle = h('button', { class: 'wa-toggle', type: 'button', 'aria-expanded': String(open0) },
+    h('span', { class: 'wa-chev', 'aria-hidden': 'true' }), h('span', { class: 'wa-title' }, 'Analyse harmonique'), h('span', { class: 'wa-key' }, an.key));
+  const head = h('div', { class: 'wa-head' }, toggle);
+  const playAll = h('button', { class: 'btn sm', type: 'button', html: ICONS.play + 'Accords en blocs', hidden: !open0 });
   head.append(playAll);
   const strip = h('div', { class: 'wa-strip' });
   const chips = [];
@@ -458,7 +482,17 @@ function analysisPanel(score, an, abc, getBpm, stopOthers) {
     playAll.classList.add('on'); playAll.innerHTML = ICONS.stop + 'Arrêter';
   });
   const legend = h('div', { class: 'wa-legend' }, h('span', { class: 'f-T' }, 'T tonique'), h('span', { class: 'f-SD' }, 'SD sous-dominante'), h('span', { class: 'f-D' }, 'D dominante'), h('span', { class: 'f-x' }, 'passage, couleur'));
-  box.append(head, strip, legend);
-  if (an.notes && an.notes.length) box.append(h('ul', { class: 'wa-notes' }, ...an.notes.map(n => h('li', { html: n }))));
+  const inner = h('div', { class: 'wa-body', hidden: !open0 }, strip, legend);
+  if (an.notes && an.notes.length) inner.append(h('ul', { class: 'wa-notes' }, ...an.notes.map(n => h('li', { html: n }))));
+  box.classList.toggle('open', open0);
+  toggle.addEventListener('click', () => {
+    const o = inner.hidden;
+    inner.hidden = !o; playAll.hidden = !o;
+    box.classList.toggle('open', o);
+    toggle.setAttribute('aria-expanded', String(o));
+    store.set('ui.harmonyOpen', o);
+    if (!o) stop();
+  });
+  box.append(head, inner);
   return { el: box, stop };
 }

@@ -1,12 +1,12 @@
 # Parcours piano
 
-Application web installable (PWA) pour apprendre le piano classique sur tablette, avec un piano numérique branché en MIDI (Yamaha P-145, câble USB-C ↔ USB-B).
+Application web installable (PWA) pour apprendre le piano classique sur tablette, avec un piano numérique relié en MIDI (Kawai ES110 en Bluetooth MIDI ; un piano avec prise USB TO HOST se branche aussi par câble USB-C ↔ USB-B).
 
 - **Fil rouge** : six niveaux, une pièce phare par niveau. Niveaux 1 et 2 rédigés : Nocturne op. 55 n° 1, puis Nocturne op. 15 n° 1 et Clair de lune.
 - **Six modules** : technique, interprétation, théorie (cours complets, chaque chapitre ancré sur le passage travaillé la même semaine, avec des écoutes comparées), oreille (de zéro, avec chant au micro, tracé de la voix et conseils), lecture à vue, improvisation (méthode guidée : motif, question et réponse, notes de l’accord ; styles romance, nocturne, élégie, prélude ; cadences, règle de l’octave, schémas, formes).
 - **Panneau d’analyse** sous chaque extrait de pièce : accords, chiffrages, fonctions, remarques ; les accords se jouent en blocs.
 - **Outils** : partitions jouables (mode attente, mode en rythme), analyse d’une prise contre la partition (justesse, rythme, rubato, équilibre, pédale), analyseurs de jeu MIDI, lecture à vue, rythme, exercices d’oreille (dont chant avec détection de hauteur au micro) et de théorie, accompagnateur d’improvisation, atelier de composition (huit mesures notées et vérifiées, export MIDI), métronome.
-- **Plan hebdomadaire** (environ 1 h 15 par jour) et **grille de validation** pour chaque niveau.
+- **Séance du jour** (environ 1 h 15, tirée de la semaine en cours), **plan hebdomadaire** et **grille de validation** pour chaque niveau.
 
 La progression est enregistrée localement dans le navigateur (Réglages → Exporter pour la sauvegarder).
 
@@ -14,7 +14,7 @@ La progression est enregistrée localement dans le navigateur (Réglages → Exp
 
 1. Ouvrir l’adresse du site dans Chrome.
 2. Menu ⋮ → « Ajouter à l’écran d’accueil » (ou « Installer l’application »).
-3. Brancher le piano, puis toucher « Connecter le piano » et autoriser l’accès MIDI.
+3. Relier le piano (Kawai ES110 : appairer d’abord le piano en Bluetooth MIDI, par exemple avec l’appli « MIDI BLE Connect »), puis toucher « Connecter le piano » et autoriser l’accès MIDI.
 
 Une fois installée, l’application fonctionne hors connexion.
 

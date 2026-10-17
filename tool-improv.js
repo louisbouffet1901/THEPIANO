@@ -426,11 +426,17 @@ export function mountImprov(el, cfg = {}) {
   const modeSeg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Mode' });
   const lhSeg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Main gauche jouée par' });
   const clickBtn = h('button', { class: 'btn sm', type: 'button', title: 'Clic sur chaque temps' }, 'Clic');
-  const replayBtn = h('button', { class: 'btn sm ghost', type: 'button', disabled: true, title: 'Réécouter ta dernière improvisation avec l’accompagnement' }, 'Réécouter');
+  const replayBtn = h('button', { class: 'btn sm', type: 'button', hidden: true, title: 'Réécouter ta dernière improvisation avec l’accompagnement' }, 'Réécouter');
   const modelBtn = h('button', { class: 'btn sm ghost', type: 'button', hidden: true }, 'Écouter une réponse possible');
+  // l'essentiel d'abord ; le motif de main gauche, la répétition et le clic dans « Options »
+  const optRow = h('div', { class: 'score-ctrl score-ctrl-opt' }, h('label', { class: 'field inline' }, 'Main gauche', patSel), h('label', { class: 'field inline' }, 'Répétition', loops), clickBtn);
+  optRow.hidden = store.get('ui.improvOpts') !== true;
+  const optBtn = h('button', { class: 'btn sm ghost more-btn' + (optRow.hidden ? '' : ' on'), type: 'button', 'aria-expanded': String(!optRow.hidden), title: 'Motif de main gauche, répétition, clic' }, 'Options');
+  optBtn.addEventListener('click', () => { optRow.hidden = !optRow.hidden; optBtn.classList.toggle('on', !optRow.hidden); optBtn.setAttribute('aria-expanded', String(!optRow.hidden)); store.set('ui.improvOpts', !optRow.hidden); });
   foot.append(
-    h('div', { class: 'score-ctrl' }, playBtn, h('label', { class: 'range' }, 'Tempo', rng, out), h('label', { class: 'field inline' }, 'Main gauche', patSel), h('label', { class: 'field inline' }, 'Répétition', loops)),
-    h('div', { class: 'score-ctrl score-ctrl-2' }, h('span', { class: 'small' }, 'Mode'), modeSeg, h('span', { class: 'small' }, 'Main gauche jouée par'), lhSeg, clickBtn, replayBtn, modelBtn),
+    h('div', { class: 'score-ctrl' }, playBtn, h('label', { class: 'range' }, 'Tempo', rng, out), replayBtn),
+    h('div', { class: 'score-ctrl score-ctrl-2' }, h('span', { class: 'small' }, 'Mode'), modeSeg, h('span', { class: 'small' }, 'Main gauche jouée par'), lhSeg, modelBtn, optBtn),
+    optRow,
     h('div', { style: { width: '100%' } }, status));
   rng.addEventListener('input', () => { bpm = +rng.value; out.textContent = `♩ = ${bpm}`; });
   clickBtn.addEventListener('click', () => { clickOn = !clickOn; clickBtn.classList.toggle('on', clickOn); });
@@ -706,7 +712,7 @@ export function mountImprov(el, cfg = {}) {
     gridBox.querySelectorAll('.ig-cell.on').forEach(c => c.classList.remove('on'));
     clearTimeout(replayTimer); replayTimer = null;
     if (replaying) { replaying = false; status.textContent = statusIdle(); return; }
-    if (rec.length >= 3) { lastRec = { notes: rec.slice(), presetId, bpm, pattern: patSel.value }; replayBtn.disabled = false; }
+    if (rec.length >= 3) { lastRec = { notes: rec.slice(), presetId, bpm, pattern: patSel.value }; replayBtn.disabled = false; replayBtn.hidden = false; }
     if (wasPlaying && qr) {
       const rs = qr.results;
       if (rs.length) {

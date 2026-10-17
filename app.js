@@ -95,6 +95,7 @@ function router() {
         } else cleanup = res || null;
       } catch (e) { showError(e); }
       renderNav(hash);
+      updateSessionBar(hash);
       frenchSpacing(main);
       closeNav();
       window.scrollTo(0, 0);
@@ -121,17 +122,12 @@ function renderNav(hash) {
     const ls = allLessons().filter(x => x.level === L.id);
     const done = ls.filter(x => store.isDone(x.id)).length;
     const open = hash.includes(`/${L.id}`) || (hash.startsWith('#/lecon/') && hash.includes(L.id + '-')) || (hash.startsWith('#/piece/') && L.pieceIds.some(p => hash.endsWith(p)));
-    html += `<div class="nav-level">${link(`#/niveau/${L.id}`, `Niveau ${L.num} — ${L.short}`, 'level', { meta: `${done}/${ls.length}` })}`;
+    html += `<div class="nav-level">${link(`#/niveau/${L.id}`, `Niveau ${L.num} — ${L.short}`, 'level', { meta: `${done}/${ls.length}`, prefix: `#/niveau/${L.id}/` })}`;
     html += `<div class="nav-progress"><i style="width:${ls.length ? done / ls.length * 100 : 0}%"></i></div>`;
     if (open) {
       html += `<div class="nav-sub">`;
       html += link(`#/piece/${L.piece}`, 'Pièce phare', 'piece');
       html += link(`#/plan/${L.id}`, 'Plan hebdomadaire', 'plan');
-      for (const M of MODULES) {
-        const lm = lessonsOf(L.id, M.id);
-        const d = lm.filter(x => store.isDone(x.id)).length;
-        html += link(`#/niveau/${L.id}/${M.id}`, M.label, M.id, { meta: `${d}/${lm.length}`, prefix: `#/niveau/${L.id}/${M.id}` });
-      }
       html += link(`#/validation/${L.id}`, 'Valider le niveau', 'check');
       html += `</div>`;
     }
@@ -145,7 +141,6 @@ function renderNav(hash) {
   html += link('#/outils/impro', 'Improvisation', 'impro');
   html += link('#/outils/composition', 'Composition', 'compose');
   html += link('#/outils/analyseur', 'Analyse technique', 'chart');
-  html += link('#/outils/metronome', 'Métronome', 'metro');
   html += `</div><div class="nav-section">${link('#/reglages', 'Réglages', 'gear')}</div>`;
   sidebar.innerHTML = html;
 }
@@ -253,6 +248,61 @@ function renderRich(container, bodyFn) {
   frenchSpacing(container);
   return unmount;
 }
+/**
+ * Page de pièce : comme renderRich, mais les passages (les h3 qui suivent « Les passages, un par un ») deviennent des
+ * sections repliables. Une seule ouverte d'emblée (la dernière consultée, sinon la première) ; les partitions d'un
+ * passage fermé ne sont dessinées qu'à son ouverture.
+ */
+function renderPieceBody(container, bodyFn, pieceId) {
+  const { W, cfgs } = makeW();
+  container.innerHTML = bodyFn(W);
+  container._core = W._core.slice();
+  const h2 = [...container.querySelectorAll('h2')].find(x => /^Les passages/.test(x.textContent.trim()));
+  const groups = [];
+  if (h2) {
+    let n = h2.nextElementSibling;
+    while (n && n.tagName !== 'H2') {
+      const next = n.nextElementSibling;
+      if (n.tagName === 'H3') groups.push({ h: n, nodes: [] });
+      else if (groups.length) groups[groups.length - 1].nodes.push(n);
+      n = next;
+    }
+  }
+  const key = `pieces.${pieceId}.openPassage`;
+  const want = store.get(key);
+  const openIdx = Number.isInteger(want) && want < groups.length ? want : 0;
+  const cleanups = [];
+  const lazy = new Map(); // details → monté ?
+  groups.forEach((g, i) => {
+    const det = h('details', { class: 'passage' });
+    const m = g.h.textContent.match(/\(([^)]*)\)\s*$/);
+    const sum = h('summary', {}, h('span', { class: 'ps-title' }, m ? g.h.textContent.slice(0, m.index).trim() : g.h.textContent.trim()), m ? h('span', { class: 'ps-bars' }, m[1]) : null);
+    const bodyEl = h('div', { class: 'passage-body' });
+    g.h.replaceWith(det);
+    det.append(sum, bodyEl);
+    g.nodes.forEach(x => bodyEl.append(x));
+    // partitions différées : on masque leurs marqueurs jusqu'à l'ouverture
+    bodyEl.querySelectorAll('[data-wid]').forEach(x => { x.dataset.widLazy = x.dataset.wid; delete x.dataset.wid; });
+    lazy.set(det, false);
+    det.addEventListener('toggle', () => {
+      if (!det.open) return;
+      store.set(key, i);
+      if (lazy.get(det)) return;
+      lazy.set(det, true);
+      bodyEl.querySelectorAll('[data-wid-lazy]').forEach(x => { x.dataset.wid = x.dataset.widLazy; delete x.dataset.widLazy; });
+      cleanups.push(mountWidgets(bodyEl, cfgs));
+      frenchSpacing(bodyEl);
+    });
+    if (i === openIdx) det.open = true;
+  });
+  if (groups.length > 1) {
+    const nav = h('p', { class: 'small ps-hint' }, `${groups.length} passages : touche un titre pour l’ouvrir ou le fermer.`);
+    h2.after(nav);
+  }
+  cleanups.push(mountWidgets(container, cfgs));
+  frenchSpacing(container);
+  return () => cleanups.forEach(fn => { try { fn(); } catch (e) { /* */ } });
+}
 /** Encadré de tête d'une leçon : l'essentiel (à retenir), l'objectif mesurable et les objectifs. */
 function essentialsCard(l, core) {
   const ess = l.essentials && l.essentials.length ? `<ul>${l.essentials.map(x => `<li>${x}</li>`).join('')}</ul>` : core.join('');
@@ -312,9 +362,9 @@ function pageHome() {
         <h2>${esc(L.title)}</h2>
         <p class="small">${esc(L.subtitle)}</p>
         <div class="progress mt-1"><i style="width:${p.total ? p.done / p.total * 100 : 0}%"></i></div>
-        ${next ? `<p class="small mt-2 mb-0">Prochaine leçon : <b>${esc(next.title)}</b></p>` : ''}
+        ${next ? `<p class="small mt-2 mb-0">Prochaine leçon du plan : <a href="#/lecon/${next.id}">${esc(next.title)}</a></p>` : ''}
         <div class="btn-row mt-2">
-          ${next ? `<a class="btn primary" href="#/lecon/${next.id}">Continuer</a>` : `<a class="btn primary" href="#/validation/${L.id}">Valider le niveau</a>`}
+          ${next ? '' : `<a class="btn primary" href="#/validation/${L.id}">Valider le niveau</a>`}
           <a class="btn" href="#/niveau/${L.id}">Voir le niveau</a>
         </div>
       </div>
@@ -325,8 +375,9 @@ function pageHome() {
         <p class="small mt-1">Plan de travail, extraits jouables, analyse et écoutes.</p>
       </a>
     </div>
-    <div class="section-title"><h2>Cette semaine</h2><span class="small"><a href="#/plan/${L.id}">Semaine ${week} sur ${L.plan.length} — tout le plan</a></span></div>
-    <div id="weekBox"></div>
+    <div class="section-title"><h2>Ta séance d’aujourd’hui</h2><span class="small"><a href="#/plan/${L.id}">Semaine ${week} sur ${L.plan.length} — tout le plan</a></span></div>
+    <div id="sessionBox"></div>
+    <div id="weekBox" class="mt-2"></div>
     <div class="section-title"><h2>Outils du quotidien</h2></div>
     <div class="grid cols-2">
       ${toolCard('#/outils/rythme', 'Rythme', 'Lire et taper des rythmes, dix niveaux, et ceux de tes pièces.')}
@@ -352,8 +403,20 @@ function pageHome() {
     const c = $('#masteryCard', page);
     if (c && r && r.total) c.querySelector('p').textContent = r.n ? `${r.n} carte${r.n > 1 ? 's' : ''} à revoir aujourd’hui (≈ ${r.minutes} min).` : 'C’est fait pour aujourd’hui. Prochaines cartes demain.';
   }).catch(() => {});
+  const sc = sessionCard(L);
+  if (sc) $('#sessionBox', page).append(sc);
+  // nouveautés de la version, montrées une fois
+  const NEWS = {
+    '4.1': '<ul><li><b>Ta séance d’aujourd’hui</b> : environ 1 h 15 tirée de la semaine, étape par étape. Sur chaque page, la barre du bas mène à l’étape suivante.</li><li><b>Pièce</b> : un passage ouvert à la fois ; l’analyse harmonique sous les extraits s’ouvre d’un toucher.</li><li><b>Partitions</b> : Boucle, Montée de tempo et Clavier sont rangés dans « Options ».</li><li><b>Oreille et Théorie</b> : la prochaine série est proposée en haut ; les séries sont rangées par groupe.</li><li><b>Plan</b> : seule la semaine en cours est dépliée. <b>Niveau</b> : les six modules en cartes.</li></ul>',
+  };
+  if (NEWS[version.app] && store.get('seenVersion') !== version.app) {
+    const ok = h('button', { class: 'btn sm', type: 'button' }, 'Compris');
+    const box = h('div', { class: 'callout tip mt-2 news' }, h('div', { class: 'c-title', html: `${ICONS.bulb}Nouveau dans la version ${version.app}` }), h('div', { html: NEWS[version.app] }), ok);
+    ok.addEventListener('click', () => { store.set('seenVersion', version.app); box.remove(); });
+    $('.page-head', page).after(box);
+  }
   const weekBox = $('#weekBox', page);
-  if (wk) weekBox.append(weekCard(L, wk, week, true));
+  if (wk) weekBox.append(weekCard(L, wk, week, true, { open: false }));
   if (midi.status !== 'ready') {
     $('#midiHelp', page).innerHTML = `<div class="callout tip mt-3"><div class="c-title">${ICONS.bulb}Brancher le piano</div>
       <ol><li>Relie le piano à la tablette. <b>Kawai ES110</b> : en Bluetooth MIDI (connecte d’abord le piano avec l’appli gratuite « MIDI BLE Connect »), ou avec une interface USB-MIDI branchée sur la prise ronde <b>MIDI OUT</b>. Piano avec prise <b>USB TO HOST</b> : câble USB-C ↔ USB-B.</li>
@@ -365,11 +428,21 @@ function toolCard(href, title, txt) {
   return `<a class="card" href="${href}"><h3>${esc(title)}</h3><p>${esc(txt)}</p></a>`;
 }
 
-function weekCard(L, wk, week, compact) {
+function weekCard(L, wk, week, compact, fold = null) {
   const card = h('div', { class: 'card week', style: { padding: 0 } });
   const done = wk.tasks.filter((t, i) => store.get('plan')?.[`${L.id}:s${week}:${i}`]).length;
   const head = h('div', { class: 'week-head' }, h('h3', {}, `Semaine ${week} — ${wk.title}`), h('span', { class: 'small' }, `${done}/${wk.tasks.length}`));
   const body = h('div', { class: 'week-body' });
+  if (fold) {
+    // semaine repliable : seule la semaine en cours est ouverte d'emblée
+    card.classList.add('foldable');
+    head.setAttribute('role', 'button'); head.tabIndex = 0;
+    const set = o => { body.hidden = !o; card.classList.toggle('open', o); head.setAttribute('aria-expanded', String(o)); };
+    set(!!fold.open);
+    const flip = () => set(body.hidden);
+    head.addEventListener('click', flip);
+    head.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+  }
   if (wk.focus && !compact) body.append(h('p', { class: 'small mt-0' }, wk.focus));
   const mkRow = (t, i) => {
     const key = `${L.id}:s${week}:${i}`;
@@ -409,6 +482,113 @@ function taskHTML(t) {
   return s;
 }
 
+/* ================================================================== */
+/* Séance du jour : ≈ 1 h 15 tirée de la semaine en cours               */
+/* ================================================================== */
+const MOD_ORDER = ['Technique', 'Lecture', 'Pièce', 'Interprétation', 'Oreille', 'Théorie', 'Impro', 'Compléments', 'Révisions', 'Validation'];
+const dayKey = () => new Date().toDateString();
+const fmtMin = m => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ' ' + String(m % 60).padStart(2, '0') : ''}` : `${m} min`);
+/**
+ * Chaque jour : la pièce phare (30 min) et la lecture à vue (10 min), puis les leçons de la semaine pas encore faites
+ * (une par module, ≈ 35 min, l'incontournable d'abord), dans l'ordre de la séance type. Figée pour la journée.
+ */
+function todaySession(L, create = true) {
+  const week = store.get(`plan.week_${L.id}`) || 1;
+  const wk = L.plan[week - 1];
+  if (!wk) return null;
+  const saved = store.get('session');
+  if (saved && saved.day === dayKey() && saved.level === L.id && saved.week === week) return saved;
+  if (!create) return null;
+  const plan = store.get('plan') || {};
+  const tasks = wk.tasks.map((t, i) => ({ t, i, done: !!plan[`${L.id}:s${week}:${i}`] || !!(t.lesson && store.isDone(t.lesson)) }));
+  const steps = [];
+  const add = st => steps.push({ id: 's' + steps.length, ...st });
+  const piece = tasks.find(x => x.t.mod === 'Pièce');
+  if (piece) add({ mod: 'Pièce', min: 30, html: taskHTML(piece.t), href: `#/piece/${piece.t.piece}` });
+  const sight = tasks.find(x => x.t.mod === 'Lecture' && x.t.tool);
+  add({ mod: 'Lecture', min: 10, html: sight ? taskHTML(sight.t) : '<a href="#/outils/lecture">Lecture à vue</a> : un ou deux extraits nouveaux, sans t’arrêter.', href: sight ? sight.t.tool[0] : '#/outils/lecture' });
+  let budget = 35;
+  const used = new Set();
+  const cand = tasks.filter(x => x.t.lesson && !x.done && lessonById(x.t.lesson)).sort((a, b) => taskPrio(a.t) - taskPrio(b.t) || a.i - b.i);
+  for (const x of cand) {
+    const l = lessonById(x.t.lesson);
+    const min = l.minutes || 15;
+    if (used.has(x.t.mod) || (used.size && min > budget)) continue;
+    add({ mod: x.t.mod, min, html: taskHTML(x.t), href: `#/lecon/${l.id}`, lesson: l.id, task: x.i });
+    used.add(x.t.mod); budget -= min;
+    if (budget <= 5) break;
+  }
+  if (!used.size) { // semaine bouclée : entraînement libre
+    add({ mod: 'Oreille', min: 10, html: '<a href="#/outils/oreille">Oreille</a> : ta prochaine série, proposée en haut de la page.', href: '#/outils/oreille' });
+    add({ mod: 'Impro', min: 15, html: '<a href="#/outils/impro">Improvisation</a> : une grille de la semaine, sans t’arrêter.', href: '#/outils/impro' });
+  }
+  steps.sort((a, b) => MOD_ORDER.indexOf(a.mod) - MOD_ORDER.indexOf(b.mod));
+  const sess = { day: dayKey(), level: L.id, week, steps, done: {} };
+  store.set('session', sess);
+  return sess;
+}
+const stepDone = (sess, st) => (st.lesson ? store.isDone(st.lesson) : !!sess.done[st.id]);
+function setStepDone(sess, st, v) {
+  if (st.lesson) {
+    store.setDone(st.lesson, v);
+    if (st.task != null) { const pl = { ...(store.get('plan') || {}) }; pl[`${sess.level}:s${sess.week}:${st.task}`] = v; store.set('plan', pl); }
+  } else { sess.done[st.id] = v; store.set('session', sess); }
+}
+const stepText = st => { const d = document.createElement('div'); d.innerHTML = st.html; return d.textContent.trim(); };
+
+function sessionCard(L) {
+  const sess = todaySession(L);
+  if (!sess) return null;
+  const total = sess.steps.reduce((a, st) => a + st.min, 0);
+  const prog = h('span', { class: 'tag accent' });
+  const go = h('a', { class: 'btn primary' });
+  const fin = h('p', { class: 'small session-fin', hidden: true }, 'Séance terminée. S’il te reste du temps : une pièce complémentaire, pour le plaisir, ou la suite du plan de la semaine.');
+  const list = h('ol', { class: 'session-steps' });
+  const refresh = () => {
+    const d = sess.steps.filter(st => stepDone(sess, st)).length;
+    prog.textContent = `${d}/${sess.steps.length}`;
+    const nxt = sess.steps.find(st => !stepDone(sess, st));
+    go.hidden = !nxt; fin.hidden = !!nxt;
+    if (nxt) { go.href = nxt.href; go.textContent = d ? 'Continuer la séance' : 'Commencer la séance'; }
+  };
+  sess.steps.forEach(st => {
+    const cb = h('input', { type: 'checkbox', 'aria-label': 'Fait' });
+    cb.checked = stepDone(sess, st);
+    const li = h('li', { class: 'task' + (cb.checked ? ' done' : '') }, cb, h('span', { class: 'mod' }, st.mod), h('span', { class: 'txt', html: st.html }), h('span', { class: 'dur' }, `${st.min} min`));
+    cb.addEventListener('change', () => { setStepDone(sess, st, cb.checked); li.classList.toggle('done', cb.checked); refresh(); renderNav(location.hash); });
+    list.append(li);
+  });
+  refresh();
+  return h('div', { class: 'card session' },
+    h('div', { class: 'card-top' }, h('span', {}, h('span', { class: 'eyebrow' }, `Semaine ${sess.week}`), h('span', { class: 'small muted' }, ` · environ ${fmtMin(total)}`)), prog),
+    list, h('div', { class: 'btn-row mt-1' }, go), fin);
+}
+
+/** Barre « séance du jour » sur la page d'une étape : la marquer faite et passer à la suivante. */
+const sessionBar = h('div', { class: 'session-bar', hidden: true, role: 'region', 'aria-label': 'Séance du jour' });
+document.body.append(sessionBar);
+function updateSessionBar(hash) {
+  sessionBar.hidden = true;
+  sessionBar.innerHTML = '';
+  const sess = todaySession(currentLevel(), false);
+  if (!sess) return;
+  const i = sess.steps.findIndex(st => st.href === hash);
+  if (i < 0) return;
+  const st = sess.steps[i];
+  const nxt = sess.steps.slice(i + 1).find(x => !stepDone(sess, x)) || sess.steps.find(x => x !== st && !stepDone(sess, x));
+  const label = h('div', { class: 'sb-txt' }, h('b', {}, `Séance du jour · ${i + 1}/${sess.steps.length}`), h('span', {}, ` ${st.mod} · ${st.min} min`));
+  const btn = h('button', { class: 'btn primary sm', type: 'button' }, nxt ? 'Fait, étape suivante' : 'Fait, fin de la séance');
+  if (stepDone(sess, st)) btn.textContent = nxt ? 'Étape suivante' : 'Retour à l’accueil';
+  btn.addEventListener('click', () => {
+    if (!stepDone(sess, st)) setStepDone(sess, st, true);
+    location.hash = nxt ? nxt.href : '#/';
+  });
+  const close = h('button', { class: 'sb-close', type: 'button', 'aria-label': 'Masquer' }, '×');
+  close.addEventListener('click', () => { sessionBar.hidden = true; });
+  sessionBar.append(label, btn, close);
+  sessionBar.hidden = false;
+}
+
 function pageParcours() {
   const page = h('div', { class: 'page' });
   let html = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Le parcours' }]);
@@ -443,10 +623,17 @@ function pageLevel(id) {
   </div>`;
   html += `<div class="section-title"><h2>Objectifs du niveau</h2></div><div class="card"><ul class="goals">${L.goals.map(g => `<li>${g}</li>`).join('')}</ul></div>`;
   html += `<div class="btn-row mt-2"><a class="btn primary" href="#/plan/${L.id}">Plan hebdomadaire</a><a class="btn" href="#/validation/${L.id}">Grille de validation</a></div>`;
+  // les six modules en un coup d'œil : avancement et prochaine leçon ; la liste complète est sur la page du module
+  html += `<div class="section-title"><h2>Les six modules</h2></div><div class="grid cols-3 module-grid">`;
   for (const M of MODULES) {
     const lm = lessonsOf(L.id, M.id);
-    html += `<div class="section-title"><h2>${esc(M.label)}</h2><span class="small">${lm.filter(x => store.isDone(x.id)).length}/${lm.length}</span></div>${lessonListHTML(lm)}`;
+    const d = lm.filter(x => store.isDone(x.id)).length;
+    const nx = lm.find(x => !store.isDone(x.id) && x.prio !== 2) || lm.find(x => !store.isDone(x.id));
+    html += `<a class="card module-card" href="#/niveau/${L.id}/${M.id}"><div class="card-top"><h3>${esc(M.label)}</h3><span class="small">${d}/${lm.length}</span></div>
+      <div class="progress"><i style="width:${lm.length ? d / lm.length * 100 : 0}%"></i></div>
+      <p class="small mb-0">${nx ? `Prochaine : <b>${esc(nx.title)}</b>` : 'Module terminé.'}</p></a>`;
   }
+  html += `</div>`;
   page.innerHTML = html;
   main.append(page);
 }
@@ -494,6 +681,7 @@ async function pageLesson(id) {
     doneBtn.className = 'btn ' + (v ? 'ok' : 'primary');
     doneBtn.textContent = v ? '✓ Leçon terminée' : 'Marquer comme terminée';
     renderNav(location.hash);
+    updateSessionBar(location.hash);
     if (v) toast('Leçon terminée', 'ok');
   });
   foot.append(doneBtn, h('a', { class: 'small', href: `#/plan/${L.id}` }, 'Retour au plan de la semaine'));
@@ -528,7 +716,7 @@ async function pagePiece(id) {
   const body = h('div', { class: 'prose' });
   page.append(body);
   main.append(page);
-  const unmount = renderRich(body, P.body);
+  const unmount = renderPieceBody(body, P.body, id);
   const top = essentialsCard({ essentials: P.essentials }, body._core || []);
   if (top) { body.before(top); frenchSpacing(top); }
   if (['op55-1', 'op15-1', 'clair-de-lune'].includes(id)) {
@@ -553,9 +741,9 @@ function pagePlan(id) {
   });
   sel.append(seg);
   page.append(sel);
-  if (L.weekRoutine) page.append(h('div', { class: 'callout tip', html: `<div class="c-title">${ICONS.bulb}Une séance type (≈ 1 h 15)</div>${L.weekRoutine}` }));
+  if (L.weekRoutine) page.append(h('details', { class: 'callout tip routine', html: `<summary class="c-title">${ICONS.bulb}Une séance type (≈ 1 h 15)</summary>${L.weekRoutine}<p class="small">L’accueil propose chaque jour une séance toute prête, tirée de la semaine en cours.</p>` }));
   L.plan.forEach((wk, i) => {
-    const c = weekCard(L, wk, i + 1, false);
+    const c = weekCard(L, wk, i + 1, false, { open: i + 1 === cur });
     if (i + 1 === cur) c.style.borderColor = 'var(--accent)';
     page.append(c);
   });
@@ -621,6 +809,39 @@ function moduleIndexHTML(mod) {
   return html;
 }
 
+/**
+ * État des séries d'exercices (statistiques « stats.ear », communes aux leçons et aux onglets Oreille et Théorie).
+ * Réussie : 80 % ou plus deux jours différents, et la dernière fois aussi (l'objectif annoncé aux élèves).
+ */
+function presetStatus(presets) {
+  const all = store.get('stats.ear') || [];
+  const vr = store.get('settings.voiceRange');
+  const day = t => new Date(t).toDateString();
+  const out = new Map();
+  for (const q of presets) {
+    if (q.kind === 'voicefinder') { const done = Array.isArray(vr); out.set(q.id, { done, mastered: done, last: null, label: done ? 'Tessiture mesurée' : 'À faire en premier : tes notes de chant seront à ta mesure' }); continue; }
+    const hist = all.filter(x => x.id === q.id);
+    const last = hist[hist.length - 1] || null;
+    const goodDays = new Set(hist.filter(x => x.pct >= 0.8).map(x => day(x.at))).size;
+    const mastered = !!last && last.pct >= 0.8 && goodDays >= 2;
+    const label = !last ? 'Pas encore fait' : mastered ? `Réussie · dernier score ${fmtPct(last.pct)}` : `Dernier score : ${fmtPct(last.pct)}${last.pct >= 0.8 ? ' · encore un jour à 80 %' : ' · objectif 80 %'}`;
+    out.set(q.id, { done: !!last, mastered, last, label });
+  }
+  return out;
+}
+/** La série à faire maintenant : celle en cours, sinon la première jamais faite, sinon la révision la plus ancienne. */
+function recommendPreset(presets, st) {
+  const doing = presets.filter(q => st.get(q.id).done && !st.get(q.id).mastered && st.get(q.id).last);
+  if (doing.length) {
+    const q = doing.sort((a, b) => st.get(b.id).last.at - st.get(a.id).last.at)[0];
+    return { q, why: `En cours : ${st.get(q.id).label.toLowerCase()}. Refais-la jusqu’à 80 %, deux jours différents.` };
+  }
+  const fresh = presets.find(q => !st.get(q.id).done);
+  if (fresh) return { q: fresh, why: fresh.kind === 'voicefinder' ? 'À faire une fois : les exercices de chant se règlent ensuite sur ta voix.' : 'Nouvelle série, dans l’ordre du cours.' };
+  const old = presets.filter(q => st.get(q.id).last).sort((a, b) => st.get(a.id).last.at - st.get(b.id).last.at)[0];
+  return old ? { q: old, why: `Révision : la série que tu n’as pas faite depuis le plus longtemps (${new Date(st.get(old.id).last.at).toLocaleDateString('fr-FR')}).` } : null;
+}
+
 const PRESET_PAGES = {
   oreille: {
     title: 'Oreille', presets: m => m.EAR_PRESETS, lessonsTitle: 'Le cours d’oreille, leçon par leçon',
@@ -646,25 +867,35 @@ async function pagePresets(kind) {
   const host = h('div', { class: 'w' });
   const list = h('div');
   let cleanupQuiz = null;
-  list.append(h('div', { class: 'section-title' }, h('h2', {}, 'Exercices')));
+  const open = async q => {
+    cleanupQuiz?.();
+    host.innerHTML = '';
+    if (q.kind === 'voicefinder') { const vm = await import('./voice.js'); cleanupQuiz = vm.mountVoiceFinder(host, {}); }
+    else cleanupQuiz = mountQuiz(host, { ...q, stat: q.id });
+    host.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  const st = presetStatus(presets);
+  const reco = recommendPreset(presets, st);
+  if (reco) {
+    const go = h('button', { class: 'btn primary', type: 'button' }, 'Commencer');
+    go.addEventListener('click', () => open(reco.q));
+    list.append(h('div', { class: 'card reco' }, h('div', { class: 'eyebrow' }, 'Ta prochaine série'), h('h3', {}, reco.q.title), h('p', { class: 'small' }, reco.why), go));
+  }
+  list.append(h('div', { class: 'section-title' }, h('h2', {}, 'Toutes les séries')));
   for (const g of groups) {
-    list.append(h('h3', { style: { margin: '18px 0 8px', fontSize: '16px' } }, g));
+    const qs = presets.filter(x => x.group === g);
+    const ok = qs.filter(q => st.get(q.id).mastered).length;
+    const det = h('details', { class: 'preset-group' }, h('summary', {}, h('span', {}, g), h('span', { class: 'small' }, `réussies : ${ok}/${qs.length}`)));
+    if (groups.length === 1 || (reco && reco.q.group === g)) det.open = true;
     const grid = h('div', { class: 'grid cols-3' });
-    for (const q of presets.filter(x => x.group === g)) {
-      const hist = (store.get('stats.ear') || []).filter(st => st.id === q.id).slice(-1)[0];
-      const vr = store.get('settings.voiceRange');
-      const sub = q.kind === 'voicefinder' ? (Array.isArray(vr) ? 'Tessiture mesurée' : 'À faire en premier : tes notes de chant seront à ta mesure') : hist ? `Dernier score : ${fmtPct(hist.pct)}` : 'Pas encore fait';
-      const c = h('button', { class: 'card', type: 'button', style: { textAlign: 'left', cursor: 'pointer', font: 'inherit' } }, h('h3', {}, q.title), h('p', {}, sub));
-      c.addEventListener('click', async () => {
-        cleanupQuiz?.();
-        host.innerHTML = '';
-        if (q.kind === 'voicefinder') { const vm = await import('./voice.js'); cleanupQuiz = vm.mountVoiceFinder(host, {}); }
-        else cleanupQuiz = mountQuiz(host, { ...q, stat: q.id });
-        host.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+    for (const q of qs) {
+      const s0 = st.get(q.id);
+      const c = h('button', { class: 'card preset' + (s0.mastered ? ' ok' : ''), type: 'button' }, h('h3', {}, q.title), h('p', {}, s0.label));
+      c.addEventListener('click', () => open(q));
       grid.append(c);
     }
-    list.append(grid);
+    det.append(grid);
+    list.append(det);
   }
   const index = h('div', { html: `<div class="section-title mt-3"><h2>${esc(cfg.lessonsTitle)}</h2></div>` + moduleIndexHTML(kind) });
   page.append(host, list, index);
@@ -686,10 +917,9 @@ function pageImproTool() {
 function pageCompose() {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Composition' }]) +
-    `<div class="page-head"><h1>Composition</h1><p class="lead">Écris ta propre pièce de 8 mesures (élégie, romance ou nocturne) : l’accompagnement est fourni, tu inventes la mélodie mesure par mesure, l’application la note en partition et vérifie la construction. Tes projets sont gardés sur cet appareil.</p></div>`;
+    `<div class="page-head"><h1>Composition</h1><p class="lead">Écris ta propre pièce de 8 mesures (élégie, romance ou nocturne) : l’accompagnement est fourni, tu inventes la mélodie, l’application la note en partition et vérifie la construction. Mêmes grilles que les leçons <a href="#/lecon/n1-im2">${esc(lessonById('n1-im2')?.title || 'Romance')}</a> et <a href="#/lecon/n2-im2">${esc(lessonById('n2-im2')?.title || 'Élégie')}</a>.</p></div>`;
   const host = h('div', { class: 'w' });
   page.append(host);
-  page.insertAdjacentHTML('beforeend', `<div class="callout tip mt-3"><div class="c-title">${ICONS.bulb}Avant de commencer</div><p>Fais d’abord les leçons <a href="#/lecon/n1-im2">Romance : la phrase qui respire</a> et <a href="#/lecon/n2-im2">Élégie</a> : ce sont les mêmes grilles. Ici, on fixe ce que l’improvisation laisse filer.</p></div>`);
   main.append(page);
   return mountLazy(host, () => Promise.all([import('./tool-compose.js'), ensureAbcjs()]).then(([m]) => el => m.mountCompose(el)));
 }
