@@ -790,7 +790,7 @@ export function mountImprov(el, cfg = {}) {
     });
   };
 
-  /** Fin d'une prise de palier : vérifications, résultat affiché, rappel de la leçon. */
+  /** Fin d'une prise d'exercice (palier) : vérifications, résultat affiché, rappel de la leçon. */
   const finishStep = elapsed => {
     const take = { meter: P.meter, timeline, scale: P.scale, split, notes: takeNotes.map(({ m, b, d, v }) => ({ m, b, d, v })), end: elapsed };
     const A = analyzeTake(take);
@@ -804,9 +804,9 @@ export function mountImprov(el, cfg = {}) {
     resBox.hidden = false;
     resBox.innerHTML = '';
     resBox.append(
-      h('div', { class: 'ir-head ' + (res.ok ? 'ok' : 'todo') }, res.ok ? '✓ Palier réussi pour aujourd’hui' : 'Pas encore : voici ce qui manque'),
+      h('div', { class: 'ir-head ' + (res.ok ? 'ok' : 'todo') }, res.ok ? '✓ Réussi pour aujourd’hui' : 'Pas encore : voici ce qui manque'),
       h('ul', { class: 'cp-checks' }, ...res.lines.map(l => h('li', { class: l.ok ? 'ok' : 'todo' }, (l.ok ? '✓ ' : '→ ') + l.text))));
-    status.textContent = res.ok ? 'Réussi. Réécoute-toi, ou passe au palier suivant.' : 'Relance quand tu veux : un essai de plus, un peu plus lentement si besoin (curseur du tempo).';
+    status.textContent = res.ok ? 'Réussi. Réécoute-toi, ou passe à l’exercice suivant.' : 'Relance quand tu veux : un essai de plus, un peu plus lentement si besoin (curseur du tempo).';
     cfg.onResult?.(res);
   };
 

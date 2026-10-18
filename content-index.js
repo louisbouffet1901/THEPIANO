@@ -7,7 +7,7 @@ export const MODULES = [
   { id: 'theorie', label: 'Théorie', intro: 'Des cours complets, en partant des bases : notes, rythme, gammes, intervalles, accords, fonctions, cadences… Chaque chapitre s’appuie sur le passage de la pièce travaillé la même semaine.' },
   { id: 'oreille', label: 'Oreille', intro: 'Reprendre l’oreille à zéro : grave et aigu, chanter juste, sentir la tonique, reconnaître les degrés, puis les intervalles, les accords et les cadences. Dix minutes chaque jour, avec beaucoup de conseils.' },
   { id: 'lecture', label: 'Lecture à vue', intro: 'Une méthode et un entraînement quotidien court, sur de vrais extraits du répertoire classés en cinq niveaux, jamais deux fois les mêmes.' },
-  { id: 'impro', label: 'Improvisation', intro: 'Improviser pas à pas : un motif, la question et la réponse, les notes de l’accord et leurs ornements, puis des styles (romance de Liszt, nocturne, élégie russe, prélude de Chopin), le langage classique (cadences, règle de l’octave, schémas) et les formes. Chaque leçon explique pourquoi ça marche, puis se travaille en paliers : une seule nouveauté à chacun (imiter, squelette, rythme, ornement, question – réponse, silences, transposition), vérifiée au piano. Dix minutes par jour, au palier en cours.' },
+  { id: 'impro', label: 'Improvisation', intro: 'Improviser pas à pas : un motif, la question et la réponse, les notes de l’accord et leurs ornements, puis des styles (romance de Liszt, nocturne, élégie russe, prélude de Chopin), le langage classique (cadences, règle de l’octave, schémas) et les formes. Chaque leçon explique pourquoi ça marche, puis se travaille en 4 à 7 exercices progressifs : une seule nouveauté à chacun (imiter, squelette, rythme, ornement, question – réponse, silences, transposition), vérifiée au piano. Dix minutes par jour, à l’exercice en cours.' },
 ];
 
 const ALL = LESSONS;
@@ -54,7 +54,7 @@ const ROUTINE = `<p>Pour une séance d’environ 1 h 15 :</p>
 <li><b>10 min de lecture à vue</b> : un ou deux extraits nouveaux, sans s’arrêter.</li>
 <li><b>30 min de pièce phare</b>, quand l’attention est encore fraîche : sections courtes, lentement, une intention à la fois.</li>
 <li><b>10 min d’oreille</b> : la routine de la leçon d’oreille de la semaine (chant, degrés, intervalles…).</li>
-<li><b>10 min d’improvisation</b>, chaque jour : le palier en cours de la leçon de la semaine, puis une minute de jeu libre sur la même grille.</li>
+<li><b>10 min d’improvisation</b>, chaque jour : l’exercice en cours de la leçon de la semaine, puis une minute de jeu libre sur la même grille.</li>
 <li><b>15 min de théorie</b>, deux ou trois jours par semaine : le chapitre de la semaine, qui s’appuie sur le passage que tu travailles.</li>
 </ul>
 <p>S’il te reste du temps, finis par une pièce complémentaire, pour le plaisir. Un jour par semaine, enregistre la pièce phare en entier et réécoute-la le lendemain.</p>`;

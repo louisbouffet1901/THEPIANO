@@ -225,7 +225,7 @@ export const CHECKS = {
     }
     if (v === 'noires') {
       if (per < 0.6 * m) return { ok: false, line: `Une note par temps : il en manque (${per.toFixed(1)} par mesure de ${m} temps).` };
-      if (per > 1.35 * m) return { ok: false, line: `Une note par temps, pas plus (${per.toFixed(1)} par mesure) : les croches viendront au palier suivant.` };
+      if (per > 1.35 * m) return { ok: false, line: `Une note par temps, pas plus (${per.toFixed(1)} par mesure) : les croches viendront dans un exercice suivant.` };
       if (onBeat < 0.8) return { ok: false, line: `Joue sur les temps : ${pct(onBeat)} de tes notes y sont.` };
       return { ok: true, line: `Une note par temps, bien en place (${pct(onBeat)} sur les temps).` };
     }

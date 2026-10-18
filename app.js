@@ -418,6 +418,7 @@ function pageHome() {
   // nouveautés de la version, montrées une fois
   const NEWS = {
     '4.3': '<ul><li><b>Oreille</b> refaite en deux parcours, une étape après l’autre : <b>Chanter juste</b> (13 étapes, de la voix stable aux intervalles et aux motifs de ta pièce) et <b>Reconnaître à l’oreille</b> (16 étapes). L’étape en cours est ouverte ; toutes les séries restent dans « Entraînement libre ».</li><li><b>Chanter juste</b> : nouveaux exercices « Tenir une note » et « Glisser jusqu’à la note », une aiguille qui montre l’écart à la note, ta tendance (trop bas, trop haut…) et la méthode en cinq points.</li><li><b>Lecture de notes chronométrée</b> : jusqu’à 4 lignes supplémentaires ; les altérations se cochent à part.</li></ul>',
+    '5.1': '<ul><li><b>Improvisation, plus simple</b> : chaque leçon se travaille en <b>exercices</b> (« Exercice 2 sur 5 »), du plus simple au plus difficile. Un exercice est <b>validé</b> quand tu le réussis deux jours différents. L’« échelle d’ornementation », qui recomptait les mêmes exercices, est retirée.</li></ul>',
     '5.0': '<ul><li><b>Improvisation en paliers</b> : chaque leçon se travaille en 4 à 7 paliers, une seule nouveauté à chacun (imiter, squelette, rythme, ornement, question – réponse, silences, transposition). L’appli vérifie ta prise au piano à l’arrêt ; un palier est réussi deux jours différents.</li><li><b>Nouveaux exercices</b> : l’imitation (écouter, chanter, rejouer), la question – réponse qui suit le dessin ou le registre, les phrases et silences, le rythme pointé, la marche, le contraste ABA. Un décompte avant chaque départ.</li><li><b>Explications</b> : « pourquoi ça marche », avec des écoutes comparées, et les erreurs fréquentes de chaque leçon. Nouveaux schémas : Do-Ré-Mi et Quiescenza ; la leçon Monte et Fonte réécrite.</li><li><b>Séance du jour</b> : 10 min d’improvisation chaque jour, au palier en cours. L’<b>échelle d’ornementation</b> est dans l’outil Improvisation.</li></ul>',
     '4.2': '<ul><li><b>Exercices</b> (menu Outils) : indépendance des mains en 17 exercices (deux rythmes à la fois, polyrythmes, lié contre détaché, une main qui chante, notes tenues). Après « En rythme », un retour main par main, et le tempo monte à chaque réussite.</li><li><b>Lecture de notes chronométrée</b> : une minute, au piano ou par le nom ; notes par minute, notes lentes, record et courbe sur 30 jours. Dans Exercices et sous la Lecture à vue.</li></ul>',
     '4.1': '<ul><li><b>Ta séance d’aujourd’hui</b> : environ 1 h 15 tirée de la semaine, étape par étape. Sur chaque page, la barre du bas mène à l’étape suivante.</li><li><b>Pièce</b> : un passage ouvert à la fois ; l’analyse harmonique sous les extraits s’ouvre d’un toucher.</li><li><b>Partitions</b> : Boucle, Montée de tempo et Clavier sont rangés dans « Options ».</li><li><b>Oreille et Théorie</b> : la prochaine série est proposée en haut ; les séries sont rangées par groupe.</li><li><b>Plan</b> : seule la semaine en cours est dépliée. <b>Niveau</b> : les six modules en cartes.</li></ul>',
@@ -506,8 +507,8 @@ const fmtMin = m => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ' ' + String(m
  * (une par module, ≈ 35 min, l'incontournable d'abord), dans l'ordre de la séance type. Figée pour la journée.
  */
 /**
- * Improvisation (V5) : la leçon dont un palier reste à réussir — celle de la semaine d'abord, puis les précédentes
- * du niveau (révision). Le résumé de chaque leçon (paliers réussis, palier en cours) est tenu par tool-paliers.js.
+ * Improvisation (V5.1) : la leçon dont un exercice reste à valider — celle de la semaine d'abord, puis les précédentes
+ * du niveau (révision). Le résumé de chaque leçon (exercices validés, exercice en cours) est tenu par tool-paliers.js.
  */
 function improStep(L, week) {
   const ids = [];
@@ -517,7 +518,7 @@ function improStep(L, week) {
   const id = order.find(x => !sums[x] || sums[x].mastered < sums[x].total);
   if (!id) return { mod: 'Impro', min: 10, html: '<a href="#/outils/impro">Improvisation</a> : jeu libre sur une grille de ton choix, sans t’arrêter.', href: '#/outils/impro' };
   const l = lessonById(id), s = sums[id];
-  const where = s && s.cur != null ? `palier ${s.cur + 1} sur ${s.total} (${esc(s.curTitle)})` : 'le premier palier';
+  const where = s && s.cur != null ? `exercice ${s.cur + 1} sur ${s.total} (${esc(s.curTitle)})` : 'le premier exercice';
   return { mod: 'Impro', min: 10, html: `<a href="#/lecon/${l.id}">${esc(l.title)}</a> : ${where}, puis une minute de jeu libre.`, href: `#/lecon/${l.id}` };
 }
 function todaySession(L, create = true) {
@@ -535,7 +536,7 @@ function todaySession(L, create = true) {
   if (piece) add({ mod: 'Pièce', min: 30, html: taskHTML(piece.t), href: `#/piece/${piece.t.piece}` });
   const sight = tasks.find(x => x.t.mod === 'Lecture' && x.t.tool);
   add({ mod: 'Lecture', min: 10, html: (sight ? taskHTML(sight.t) : '<a href="#/outils/lecture">Lecture à vue</a> : un ou deux extraits nouveaux, sans t’arrêter.') + ' Commence par une minute de lecture de notes chronométrée (sous l’outil).', href: sight ? sight.t.tool[0] : '#/outils/lecture' });
-  // improvisation : 10 min chaque jour, au palier en cours (V5) ; les autres leçons se partagent ≈ 25 min
+  // improvisation : 10 min chaque jour, à l'exercice en cours (V5) ; les autres leçons se partagent ≈ 25 min
   add(improStep(L, week));
   let budget = 25;
   const used = new Set();
@@ -947,43 +948,24 @@ function pageEar() {
 function pageImproTool() {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Improvisation' }]) +
-    `<div class="page-head"><h1>Improvisation</h1><p class="lead">Les leçons se travaillent en paliers, une seule nouveauté à chacun, vérifiée au piano. Ici : ton palier en cours, l’échelle d’ornementation, et l’accompagnateur pour jouer librement.</p></div>`;
-  const top = h('div', { class: 'grid cols-2 impro-top' });
+    `<div class="page-head"><h1>Improvisation</h1><p class="lead">Chaque leçon d’improvisation se travaille en exercices progressifs, vérifiés au piano. Ici : l’exercice où tu en es, et l’accompagnateur pour jouer librement.</p></div>`;
+  // l'exercice en cours : celui de la leçon d'improvisation de la semaine (niveau en cours)
+  const L = currentLevel();
+  const week = store.get(`plan.week_${L.id}`) || 1;
+  const tl = L.plan[week - 1]?.tasks.find(t => t.mod === 'Impro' && t.lesson);
+  const l = tl ? lessonById(tl.lesson) : null;
+  const sm = l ? (store.get('improv.lessons') || {})[l.id] : null;
+  const cur = h('div', { class: 'card impro-top' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Où tu en es'), h('span', { class: 'small' }, `Niveau ${L.num} · semaine ${week}`)));
+  if (l) {
+    cur.append(h('h3', {}, l.title),
+      h('p', { class: 'small' }, sm ? (sm.cur != null ? `Exercice ${sm.cur + 1} sur ${sm.total} : ${sm.curTitle}. ${sm.mastered} validé${sm.mastered > 1 ? 's' : ''} sur ${sm.total}.` : `Les ${sm.total} exercices sont validés.`) : 'Pas encore commencée : le premier exercice t’attend.'),
+      h('a', { class: 'btn primary sm', href: `#/lecon/${l.id}` }, !sm ? 'Commencer' : sm.cur == null ? 'Revoir la leçon' : 'Continuer'));
+  } else cur.append(h('p', { class: 'small' }, 'Pas de leçon d’improvisation cette semaine : joue librement ci-dessous.'));
   const host = h('div', { class: 'w' });
-  page.append(top, h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Jouer librement')), h('p', { class: 'small' }, 'L’accompagnateur joue la main gauche (ou la basse seule) ; improvise à la main droite. Les notes jouées s’allument selon leur rôle dans l’harmonie. Modes : libre, question – réponse, imitation, squelette.'), host);
+  page.append(cur, h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Jouer librement')), h('p', { class: 'small' }, 'L’accompagnateur joue la main gauche (ou la basse seule) ; improvise à la main droite. Les notes jouées s’allument selon leur rôle dans l’harmonie. Modes : libre, question – réponse, imitation, squelette.'), host);
   page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3"><h2>La méthode, leçon par leçon</h2></div>` + moduleIndexHTML('impro'));
   main.append(page);
-  const renderTop = P => {
-    top.innerHTML = '';
-    // le palier en cours : la leçon de la semaine du niveau en cours (sinon la première leçon commencée et pas finie)
-    const L = currentLevel();
-    const week = store.get(`plan.week_${L.id}`) || 1;
-    const wk = L.plan[week - 1];
-    const tl = wk?.tasks.find(t => t.mod === 'Impro' && t.lesson);
-    const sums = store.get('improv.lessons') || {};
-    const lid = tl?.lesson;
-    const l = lid ? lessonById(lid) : null;
-    const cur = h('div', { class: 'card' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Ton palier en cours'), h('span', { class: 'small' }, `Niveau ${L.num} · semaine ${week}`)));
-    if (l) {
-      const sm = sums[l.id];
-      cur.append(h('h3', {}, l.title),
-        h('p', { class: 'small' }, sm ? (sm.cur != null ? `Palier ${sm.cur + 1} sur ${sm.total} : ${sm.curTitle}. ${sm.mastered} réussi${sm.mastered > 1 ? 's' : ''}.` : `Les ${sm.total} paliers sont réussis.`) : 'Pas encore commencée : le premier palier t’attend.'),
-        h('a', { class: 'btn primary sm', href: `#/lecon/${l.id}` }, !sm ? 'Commencer' : sm.cur == null ? 'Revoir la leçon' : 'Continuer'));
-    } else cur.append(h('p', { class: 'small' }, 'Pas de leçon d’improvisation cette semaine : joue librement ci-dessous.'));
-    // l'échelle d'ornementation
-    const ech = P.echelleStatus();
-    const ol = h('ol', { class: 'echelle' });
-    for (const r of ech) {
-      const where = r.where.map(([lid2]) => lessonById(lid2)).filter(Boolean).filter((x, i, a) => a.indexOf(x) === i);
-      ol.append(h('li', { class: r.reached ? 'reached' : r.started ? 'started' : '' },
-        h('span', { class: 'ech-n' }, r.reached ? '✓' : String(r.n)),
-        h('span', { class: 'ech-t' }, h('b', {}, r.title), h('span', { class: 'small' }, r.what), h('span', { class: 'small' }, 'Dans : ', ...where.flatMap((x, i) => [i ? ', ' : '', h('a', { href: `#/lecon/${x.id}` }, x.title)])))));
-    }
-    const echCard = h('div', { class: 'card' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'L’échelle d’ornementation'), h('span', { class: 'small' }, `${ech.filter(r => r.reached).length}/8 atteints`)),
-      h('p', { class: 'small' }, 'Du squelette aux fioritures de Chopin : huit niveaux, chacun travaillé dans un palier. Un niveau est atteint quand l’un de ses paliers est réussi.'), ol);
-    top.append(cur, echCard);
-  };
-  return mountLazy(host, () => Promise.all([import('./tool-improv.js'), import('./tool-paliers.js')]).then(([m, P]) => el => { renderTop(P); return m.mountImprov(el, {}); }));
+  return mountLazy(host, () => import('./tool-improv.js').then(m => el => m.mountImprov(el, {})));
 }
 
 function pageExercises() {

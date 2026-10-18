@@ -1,8 +1,8 @@
-// Niveau 1 — Improvisation (V5) : une idée nouvelle par leçon, travaillée en paliers.
+// Niveau 1 — Improvisation (V5.1) : une idée nouvelle par leçon, travaillée en exercices progressifs (W.paliers).
 // 1. le motif  2. question et réponse  3. les notes de l'accord  4. passages et broderies  5. l'appoggiature (le soupir)
 // 6. style : la romance en arpèges mineurs (Liszt)  7. style : le nocturne, sur les harmonies de l'op. 55  8. la période.
 // Chaque leçon : l'essentiel en tête, la boîte à outils, « pourquoi ça marche » (avec une écoute comparée), un modèle
-// phrasé, puis les paliers (W.paliers : une seule nouveauté par palier, vérifiée au piano), les erreurs fréquentes.
+// phrasé, puis les exercices (W.paliers : une seule nouveauté par exercice, vérifiée au piano), les erreurs fréquentes.
 // Les exemples sont écrits par tools/impro_examples.py : chaque note des temps forts y est vérifiée contre l'accord.
 import { OP55 } from './content-excerpts.js';
 
@@ -142,7 +142,7 @@ export default [
       'Les <b>silences</b> font partie de la phrase : ils la rendent lisible.',
     ],
     goals: ['Tenir deux minutes sans t’arrêter.', 'Construire huit mesures avec un seul motif, et faire respirer tes phrases.'],
-    goal: 'le dernier palier (deux minutes sans t’arrêter, ton motif reconnaissable) est réussi deux jours différents.',
+    goal: 'le dernier exercice (deux minutes sans t’arrêter, ton motif reconnaissable) est validé.',
     body: W => `
 <p>Pour commencer, on supprime le risque : la main gauche (l’appli) joue un ${W.term('ostinato', 'un court motif d’accompagnement répété en boucle, ici la quinte fa♯ – do♯ bercée')}, et ta main droite n’utilise que les <b>cinq touches noires</b> (fa♯, sol♯, la♯, do♯, ré♯). Elles forment une gamme ${W.term('pentatonique', 'gamme de cinq notes sans demi-ton : aucune note ne « frotte » avec une autre')}. Aucune note n’est fausse : toute ton attention va au rythme.</p>
 
@@ -157,8 +157,8 @@ ${W.ecoute({ title: 'La même idée, avec ou sans silence', bpm: 76, items: [
   { label: 'Avec des silences', seq: ['do♯4 | do♯4 | ré♯4:2 | z:4 | fa♯4 | fa♯4 | sol♯4:2 | z:4', OST_FA], note: 'Le motif, un silence, le motif déplacé : chaque phrase se détache, et l’oreille attend la suivante.' },
 ] })}
 
-<h2>Les paliers</h2>
-<p>Une seule nouveauté à chaque palier : d’abord imiter, puis tenir un motif, le varier, faire respirer les phrases, et enfin jouer longtemps sans t’arrêter.</p>
+<h2>Les exercices</h2>
+<p>Une seule nouveauté à chaque exercice : d’abord imiter, puis tenir un motif, le varier, faire respirer les phrases, et enfin jouer longtemps sans t’arrêter.</p>
 ${W.paliers({ lesson: 'n1-im-lancer', steps: [
   { id: 'imiter', title: 'Écouter, chanter, rejouer', preset: 'n1-noires', mode: 'echo', echo: { rhythms: [[1, 1, 2], [2, 1, 1]], end: 'close', count: 4 },
     what: 'L’appli joue une phrase de deux mesures sur les touches noires. Pendant les deux mesures suivantes, <b>chante-la</b> (à voix haute ou dans ta tête) ; puis <b>rejoue-la</b> au piano. Quatre phrases.',
@@ -172,7 +172,7 @@ ${W.paliers({ lesson: 'n1-im-lancer', steps: [
     what: 'Ton motif, mais plus libre : répète-le, déplace-le plus haut, change une note ou un rythme, comme dans le modèle. Il doit revenir au moins trois fois en huit mesures.',
     why: 'Varier sans perdre le fil : l’auditeur reconnaît l’idée, et elle avance.',
     checks: [{ k: 'scale', min: 0.9 }, { k: 'motif', min: 3 }, { k: 'nonstop', bars: 8 }] },
-  { id: 'silences', title: 'Respirer : deux mesures jouées, deux de silence', preset: 'n1-noires', mode: 'libre', loops: 4, dim: 7,
+  { id: 'silences', title: 'Respirer : deux mesures jouées, deux de silence', preset: 'n1-noires', mode: 'libre', loops: 4,
     what: 'Joue deux mesures, puis laisse deux mesures de silence, et ainsi de suite : le bandeau au-dessus de la grille indique « Joue » ou « Écoute ». Finis chaque phrase sur <b>fa♯</b>.',
     why: 'Savoir <i>quand</i> jouer est une compétence à part entière (Hal Crook) : le silence rend la phrase lisible, et il te laisse le temps de préparer la suivante.',
     checks: [{ k: 'rests', play: 2, rest: 2 }, { k: 'phraseEnd', on: 'tonic', min: 0.6 }] },
@@ -202,7 +202,7 @@ ${W.links([W.informance('/content/pages/5-anyone-can-improvise', 'Anyone Can Imp
       'La <b>tonique</b> est la note « maison » de la tonalité : ici <b>la</b>.',
     ],
     goals: ['Entendre la différence entre une fin ouverte et une fin fermée.', 'Répondre à une question en reprenant son rythme, puis son dessin.'],
-    goal: 'le palier « changement imprévu » est réussi deux jours différents : tu réponds à l’appli, quel que soit le registre de sa question.',
+    goal: 'l’exercice « changement imprévu » est validé : tu réponds à l’appli, quel que soit le registre de sa question.',
     body: W => `
 <p>Tu sais tenir un motif. On lui donne maintenant une direction. Deux phrases de deux mesures se répondent, comme une question et sa réponse. La ${W.term('tonique', 'la note de repos de la tonalité, celle où la musique se sent « à la maison » : la en la mineur')} décide de tout : finir ailleurs, c’est interroger ; finir dessus, c’est conclure.</p>
 <p>On passe à la pentatonique de <b>la mineur</b> (la, do, ré, mi, sol), plus mélancolique, sur un ostinato la – mi.</p>
@@ -216,7 +216,7 @@ ${W.ecoute({ title: 'Fin ouverte, fin fermée', bpm: 72, items: [
   { label: 'La réponse : fin sur la', seq: ['la3 | do4 | ré4:2 | ré4 | do4 | la3:2', OST_LA], note: 'Même début, même rythme ; la longue note finale est la tonique : la porte se ferme.' },
 ] })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im-rythme', steps: [
   { id: 'imiter', title: 'Rejouer des phrases qui concluent', preset: 'n1-penta-la', mode: 'echo', echo: { rhythms: [[1, 1, 2], [1.5, 0.5, 2]], end: 'close', count: 4 },
     what: 'L’appli joue une phrase qui finit sur la ; chante-la, puis rejoue-la. Écoute bien la dernière note : longue, et sur la tonique.',
@@ -258,7 +258,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
       'Au changement d’accord, va vers la note du nouvel accord <b>la plus proche</b> : la ligne devient chantante.',
     ],
     goals: ['Connaître les notes de I, IV et V7 en do majeur.', 'Poser une note de l’accord sur chaque temps fort, dans trois tonalités.'],
-    goal: 'le dernier palier (la même grille en sol et en fa majeur) est réussi : 70 % des temps forts sur une note de l’accord.',
+    goal: 'le dernier exercice (la même grille en sol et en fa majeur) est validé : 70 % des temps forts sur une note de l’accord.',
     body: W => `
 <p>Jusqu’ici, toutes les notes allaient bien. Avec une vraie harmonie, certaines notes « frottent ». On n’apprend pas à les éviter : on apprend où <b>s’appuyer</b>. Les ${W.term('temps forts', 'les temps qui portent l’accent de la mesure : le 1er (et le 3e à quatre temps)')} sont les moments où l’oreille vérifie l’harmonie ; c’est là qu’on place une note de l’accord.</p>
 
@@ -282,13 +282,13 @@ ${W.ecoute({ title: 'Les mêmes touches, deux places', bpm: 66, items: [
 <h2>Le modèle : un squelette, puis le même squelette habillé</h2>
 ${W.score({ abc: EX_ACCORDS, title: 'Do majeur : I – IV – V7 – I, deux fois', bpm: 72, startBpm: 60, caption: 'Mesures 1 à 4 : le <b>squelette</b>, une note de l’accord par mesure (mi, fa, ré, do), chacune voisine de la précédente. Mesures 5 à 8 : le même squelette au premier temps, d’autres notes de l’accord sur les autres temps.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im-5notes', steps: [
-  { id: 'longues', title: 'Le squelette : une note par mesure', preset: 'n1-IIVVI', mode: 'libre', loops: 2, dim: 1,
+  { id: 'longues', title: 'Le squelette : une note par mesure', preset: 'n1-IIVVI', mode: 'libre', loops: 2,
     what: 'Une seule note par mesure (une ronde, ou deux blanches), une note de l’accord, la plus proche de la précédente. Écoute comme elle se fond dans l’accord.',
     why: 'Le squelette donne la direction ; c’est lui que l’oreille suit sous les ornements. On le pose d’abord seul.',
     checks: [{ k: 'rhythm', v: 'longues' }, { k: 'strong', min: 0.8 }, { k: 'stepwise', max: 4, min: 0.6 }] },
-  { id: 'noires', title: 'Une note par temps', preset: 'n1-IIVVI', mode: 'libre', loops: 2, dim: 2,
+  { id: 'noires', title: 'Une note par temps', preset: 'n1-IIVVI', mode: 'libre', loops: 2,
     what: 'Garde ton squelette au premier temps ; sur les autres temps, d’autres notes du même accord (un arpège), en noires.',
     why: 'Uniquement des notes de l’accord : rien ne peut sonner faux. C’est le terrain sûr d’où partiront les ornements.',
     checks: [{ k: 'rhythm', v: 'noires' }, { k: 'strong', min: 0.7 }] },
@@ -325,7 +325,7 @@ ${W.more('La note la plus proche : pourquoi ça marche', '<p>Quand l’accord ch
       'Elles se placent <b>entre</b> les temps forts ; le squelette, lui, reste sur les temps forts.',
     ],
     goals: ['Remplir un squelette donné par des notes de passage et des broderies.', 'Inventer ton propre squelette et l’habiller.'],
-    goal: 'le dernier palier (ton squelette habillé, sans notes en or) est réussi deux jours différents.',
+    goal: 'le dernier exercice (ton squelette habillé, sans notes en or) est validé.',
     body: W => `
 <p>Le squelette donne la direction ; la gamme sert de chemin entre ses notes. Deux outils suffisent, qui viennent de la <a href="#/lecon/n1-th-etrangeres">théorie des notes étrangères</a>. On travaille en <b>la mineur</b> : n’oublie pas le <b>sol♯</b> (la sensible) sur l’accord de V7 (mi – sol♯ – si – ré).</p>
 
@@ -342,17 +342,17 @@ ${W.score({ abc: EX_SQUELETTE, title: '1. Le squelette (une note d’appui par m
 ${W.score({ abc: EX_PASSAGES, title: '2. Notes de passage, aux 2e et 4e temps', bpm: 66, practice: false, caption: 'Aux 1er et 3e temps, des notes de l’accord ; entre elles, la note de la gamme qui les relie (mi – ré – do, fa – mi – ré…).' })}
 ${W.score({ abc: EX_BRODERIES, title: '3. En croches : broderies et passages', bpm: 66, startBpm: 54, practice: false, caption: 'Chaque note d’appui est brodée (mi – fa – mi, fa – sol – fa, si – do – si), puis reliée à la suivante. Les temps forts n’ont pas bougé : c’est toujours le squelette.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im-accords', steps: [
-  { id: 'or', title: 'Le squelette en or', preset: 'n1-am-squelette', mode: 'squelette', loops: 1, dim: 1,
+  { id: 'or', title: 'Le squelette en or', preset: 'n1-am-squelette', mode: 'squelette', loops: 1,
     what: 'La note d’appui de chaque mesure s’allume en or : pose-la au premier temps et tiens-la, rien d’autre.',
     why: 'D’abord les appuis seuls : on entend la ligne que les ornements vont habiller.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'rhythm', v: 'longues' }] },
-  { id: 'passage', title: 'Relier par des notes de passage', preset: 'n1-am-squelette', mode: 'squelette', loops: 1, dim: 4,
+  { id: 'passage', title: 'Relier par des notes de passage', preset: 'n1-am-squelette', mode: 'squelette', loops: 1,
     what: 'Pose la note en or au premier temps, puis va vers la suivante <b>par la gamme</b>, en noires (mi – ré – do…).',
     why: 'La note de passage est l’ornement le plus naturel : elle remplit le trajet entre deux appuis.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'figure', f: 'passage', min: 3 }] },
-  { id: 'broderie', title: 'Une broderie par mesure', preset: 'n1-am-squelette', mode: 'squelette', loops: 1, dim: 3,
+  { id: 'broderie', title: 'Une broderie par mesure', preset: 'n1-am-squelette', mode: 'squelette', loops: 1,
     what: 'Autour de chaque note en or, une broderie : la note, sa voisine (au-dessus ou au-dessous), la note. Puis va vers la suivante.',
     why: 'La broderie fait vivre une note sans la quitter : le squelette reste audible.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'figure', f: 'broderie', min: 4 }] },
@@ -385,7 +385,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
       'Une ou deux par phrase : trop d’appoggiatures, et plus rien n’est expressif.',
     ],
     goals: ['Placer une appoggiature au premier temps et la résoudre.', 'Doser son poids : appui, puis détente.'],
-    goal: 'le palier « appuyer, puis alléger » et les suivants sont réussis : l’appoggiature plus forte que sa résolution.',
+    goal: 'l’exercice « appuyer, puis alléger » et les suivants sont validés : l’appoggiature plus forte que sa résolution.',
     body: W => `
 <p>Jusqu’ici, les temps forts étaient sur l’accord. L’${W.term('appoggiature', 'note étrangère à l’accord, placée sur le temps fort, qui se résout ensuite par degré sur une note de l’accord')} renverse la règle, exprès : une note qui n’appartient pas à l’accord tombe sur le temps, crée une tension, puis glisse sur la note voisine. Chopin, Liszt, Rachmaninov en remplissent leurs mélodies. Tu en entends une dans ton nocturne : le ré♭ qui retombe sur do.</p>
 
@@ -398,9 +398,9 @@ ${W.ecoute({ title: 'Avec ou sans soupir', bpm: 56, items: [
 
 ${W.score({ abc: EX_SOUPIRS, title: 'Mi mineur : une appoggiature par mesure', bpm: 56, startBpm: 48, practice: false, pedal: [0, 4, 8, 12, 16, 20, 24, 28], pedalEnd: 32, caption: 'Chaque mesure commence par une note étrangère (marquée « app. ») : do sur l’accord de mi mineur, ré sur do majeur… Elle descend d’un degré au 3e temps, sur une note de l’accord. La mesure 4 s’arrête sur ré♯ (la sensible) : c’est la question ; la mesure 8 conclut sur mi.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im-gammes', steps: [
-  { id: 'soupir', title: 'Le soupir en or', preset: 'n1-soupirs', mode: 'squelette', loops: 1, dim: 6,
+  { id: 'soupir', title: 'Le soupir en or', preset: 'n1-soupirs', mode: 'squelette', loops: 1,
     what: 'La note en or est l’appoggiature de la mesure : pose-la au premier temps, puis descends d’un degré (un ton ou un demi-ton) sur une note de l’accord.',
     why: 'Le geste d’abord, guidé : la note étrangère sur le temps, la résolution juste après.',
     checks: [{ k: 'appog', min: 0.75 }] },
@@ -440,7 +440,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
       'Le caractère vient du phrasé : la question monte et se suspend, la réponse retombe et se pose.',
     ],
     goals: ['Jouer la main gauche en arpèges sur la grille de mi mineur.', 'Improviser huit mesures dans ce style, avec une question et une réponse.'],
-    goal: 'le palier « huit mesures » est réussi : une question qui se suspend en mesure 4, une réponse qui finit sur mi.',
+    goal: 'l’exercice « huit mesures » est validé : une question qui se suspend en mesure 4, une réponse qui finit sur mi.',
     body: W => `
 <p>C’est le style des romances sans paroles, de la <a href="#/piece/liszt-s169">Romance de Liszt</a> à l’Élégie de Rachmaninov : une tonalité mineure, une main gauche qui ondule en arpèges larges, une mélodie qui chante par-dessus. Tout ce que tu as appris s’y retrouve : notes de l’accord sur les temps, passages, soupirs.</p>
 
@@ -467,7 +467,7 @@ ${W.score({ abc: EX_ROMANCE_MG, title: 'La main gauche de la romance', bpm: 63, 
 <h2>Le modèle : huit mesures phrasées</h2>
 ${W.score({ abc: EX_ROMANCE, title: 'Romance en mi mineur', bpm: 63, startBpm: 54, pedal: [0, 3, 6, 9, 12, 15, 18, 21], pedalEnd: 24, variants: [{ label: 'Écouter' }, { label: 'Phrasé', ...PH_ROMANCE }], caption: 'Compare les deux écoutes. Phrasé : la première phrase monte vers le fa♯ de la mesure 4 et s’y suspend (une respiration) ; la seconde part du sol aigu, soupire en mesure 6 (ré → do) et se pose sur mi en ralentissant.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im2', steps: [
   { id: 'main-gauche', title: 'La main gauche seule', preset: 'romance-mi', mode: 'libre', loops: 1, lh: 'moi',
     what: 'Joue toi-même la main gauche (les notes en brun) : la basse au premier temps, puis l’accord déroulé jusqu’à la dixième et retour. Le clic garde le temps.',
@@ -515,7 +515,7 @@ ${W.listen([W.yt('Liszt Romance S.169 O pourquoi donc', 'Liszt, Romance S. 169',
       'Improviser sur la même boucle, c’est comprendre de l’intérieur ce que fait sa mélodie.',
     ],
     goals: ['Improviser un autre thème sur les harmonies de l’op. 55.', 'Orner son squelette avec des broderies chromatiques et des rythmes pointés.'],
-    goal: 'le palier « question – réponse sur les harmonies de Chopin » est réussi deux jours différents.',
+    goal: 'l’exercice « question – réponse sur les harmonies de Chopin » est validé.',
     body: W => `
 <p>Cette fois, la grille n’est pas inventée pour l’exercice : ce sont les accords des mesures 1 à 8 de ton nocturne, avec les voicings de Chopin à la main gauche (basse au 1er et au 3e temps, accord au 2e et au 4e). Un accord <b>par demi-mesure</b> : les temps forts sont le 1 et le 3.</p>
 
@@ -533,9 +533,9 @@ ${W.ecoute({ title: 'La voisine du dessous : si♭ ou si♮', bpm: 56, items: [
 ${W.score({ abc: EX_NOCT_SQ, title: '1. Un autre squelette', bpm: 56, practice: false, caption: 'La♭ – si♭ | do – si♭ | la♭ – sol | la♭ – sol : deux notes de l’accord par mesure, voisines les unes des autres.' })}
 ${W.score({ abc: EX_NOCT_HAB, title: '2. Le même, habillé', bpm: 56, startBpm: 46, practice: false, caption: 'Broderie sol autour de la♭ (mesure 1), broderie chromatique si♮ autour de do (mesure 2, comme Chopin), passage la♭ – fa – sol (mesure 3), et mi♮ (la sensible) à la fin, qui appelle fa.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im3', steps: [
-  { id: 'chopin', title: 'Le squelette de Chopin', preset: 'nocturne-op55', mode: 'squelette', loops: 1, dim: 1,
+  { id: 'chopin', title: 'Le squelette de Chopin', preset: 'nocturne-op55', mode: 'squelette', loops: 1,
     what: 'Les notes en or sont celles de Chopin aux temps 1 et 3 : joue-les seules, en blanches. C’est sa mélodie, sans ses ornements.',
     why: 'Sous les ornements, une ligne très simple : do, mi♭, do, do… La voir nue explique tout le reste.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'rhythm', v: 'longues' }] },
@@ -543,11 +543,11 @@ ${W.paliers({ lesson: 'n1-im3', steps: [
     what: 'Un autre squelette : deux notes de l’accord par mesure (temps 1 et 3), chacune voisine de la précédente, comme le modèle (la♭ – si♭ | do – si♭…).',
     why: 'Tu choisis ta propre ligne dans les mêmes accords : c’est déjà composer.',
     checks: [{ k: 'rhythm', v: 'longues' }, { k: 'strong', min: 0.8 }, { k: 'stepwise', max: 4, min: 0.7 }] },
-  { id: 'chromatique', title: 'La broderie chromatique', preset: 'nocturne-op55', mode: 'libre', loops: 1, dim: 4,
+  { id: 'chromatique', title: 'La broderie chromatique', preset: 'nocturne-op55', mode: 'libre', loops: 1,
     what: 'Habille ton squelette d’au moins deux broderies chromatiques, comme Chopin : la note, le demi-ton en dessous (hors de la gamme), la note.',
     why: 'La couleur du nocturne tient en partie à ces demi-tons qui tirent vers la note.',
     checks: [{ k: 'figure', f: 'chromatique', min: 2 }, { k: 'strong', min: 0.7 }] },
-  { id: 'pointe', title: 'Le rythme pointé de Chopin', preset: 'nocturne-op55', mode: 'libre', loops: 1, dim: 7,
+  { id: 'pointe', title: 'Le rythme pointé de Chopin', preset: 'nocturne-op55', mode: 'libre', loops: 1,
     what: 'Le thème de l’op. 55 avance en rythmes pointés (une longue, puis une brève qui lance la note suivante). Glisses-en au moins deux dans ton thème.',
     why: 'Le rythme pointé donne à la mélodie son élan de marche lente, presque funèbre.',
     checks: [{ k: 'rhythm', v: 'pointe', min: 2 }, { k: 'strong', min: 0.7 }] },
@@ -585,7 +585,7 @@ ${W.score({ abc: EX_PERIODE, title: 'Une période en fa mineur', bpm: 60, startB
 <h2>Pourquoi ça marche</h2>
 <p>La période joue sur l’attente. La demi-cadence (sur V, en mesure 4) pose une question : on attend la suite. Le conséquent commence comme l’antécédent, pour qu’on reconnaisse la phrase, puis il prend un autre chemin et conclut sur la tonique. Le sommet placé juste avant la cadence donne l’élan final ; placé trop tôt, il n’y a plus rien à attendre.</p>
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im4', steps: [
   { id: 'cadences', title: 'Une question, une réponse', preset: 'n1-qr', mode: 'libre', loops: 2,
     what: 'Huit mesures : la question (mesures 1 à 4) s’arrête sur une note de do majeur (do, mi ou sol), <b>tenue</b> ; la réponse (mesures 5 à 8) finit sur fa.',

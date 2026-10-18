@@ -1,9 +1,9 @@
-// Niveau 2 — Improvisation (V5) : le langage, puis les styles de Chopin et des romantiques, travaillés en paliers.
+// Niveau 2 — Improvisation (V5.1) : le langage, puis les styles de Chopin et des romantiques, en exercices progressifs.
 // 1. la cadence (et la Quiescenza)  2. la règle de l'octave  3. ouvrir et répondre (Romanesca, Do-Ré-Mi, Meyer, Prinner)
-// 4. la marche : Monte et Fonte  5. orner comme Chopin (l'échelle d'ornementation)  6. style : l'élégie et la marche par quintes
+// 4. la marche : Monte et Fonte  5. orner comme Chopin (du plus simple au plus orné)  6. style : l'élégie et la marche par quintes
 // 7. style : le prélude de Chopin (op. 28 n° 4)  8. la forme ABA, comme l'op. 15.
 // Chaque leçon : l'essentiel en tête, les accords redonnés, « pourquoi ça marche » (écoute comparée), un modèle, les
-// paliers (W.paliers), les erreurs fréquentes.
+// exercices (W.paliers), les erreurs fréquentes.
 // Extraits de Chopin : tirés des sources vérifiées note à note (tools/chopin_cmp.py) ; exemples : tools/impro_examples.py.
 import { OP28 } from './content-excerpts.js';
 
@@ -231,7 +231,7 @@ export default [
       'On l’apprend <b>par cœur</b>, dans plusieurs tonalités : elle devient un réflexe, qu’on orne ensuite. Après elle, la <b>Quiescenza</b> éteint la pièce.',
     ],
     goals: ['Jouer la cadence en do et en la mineur, sans regarder.', 'La transposer, l’orner, et finir une pièce par une Quiescenza.'],
-    goal: 'le dernier palier (seize mesures improvisées sur la cadence en boucle) est réussi deux jours différents.',
+    goal: 'le dernier exercice (seize mesures improvisées sur la cadence en boucle) est validé.',
     body: W => `
 <p>Au XVIIIe siècle, à Naples, les futurs compositeurs apprenaient à improviser avec des ${W.term('partimenti', 'exercices où l’on reçoit une ligne de basse et où l’on invente les voix du dessus au clavier')} : on leur donnait une basse, ils inventaient les voix au-dessus. Tout commençait par la cadence, jouée dans toutes les tonalités jusqu’à devenir un réflexe. On apprend le langage par ses formules, comme une langue par ses expressions.</p>
 
@@ -262,7 +262,7 @@ ${W.ecoute({ title: 'Sol 7, puis do : la sensible au soprano', bpm: 60, items: [
 <p>Une pièce ne s’arrête pas net sur l’accord final. Les compositeurs ajoutaient souvent une ${W.term('Quiescenza', 'formule de repos après la cadence : sur la basse do tenue, le soprano fait si♭ – la – si – do')} : la basse reste sur la tonique, et le soprano descend au si♭, passe par la, remonte par si et se pose sur do. Comme une lumière qu’on éteint doucement.</p>
 ${W.score({ abc: QUIESCENZA_EX, title: 'La cadence, puis la Quiescenza', bpm: 56, practice: false, caption: 'Mesures 3-4 : la basse do ne bouge plus. Au-dessus, do 7 (le si♭ frotte), fa/do, sol 7/do, puis do : le soprano si♭ – la – si – do.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n2-im-cadences', steps: [
   { id: 'soprano-do', title: 'Le soprano en or (do majeur)', preset: 'n2-cadence', mode: 'squelette', loops: 4,
     what: 'L’appli joue la basse ; à la main droite, l’accord avec la note en or au-dessus (do – do – si – do). Si c’est trop, joue seulement la note en or.',
@@ -309,7 +309,7 @@ ${W.more('Dans ta pièce', '<p>Les cadences de l’op. 15 n° 1 sont des modèle
       'La main droite bouge le moins possible : <b>notes communes gardées</b>, sensible qui monte, septième qui descend.',
     ],
     goals: ['Jouer la règle de l’octave en do, montée et descente, par cœur.', 'La transposer en sol et en fa majeur, puis improviser au-dessus.'],
-    goal: 'le palier « des notes de passage sur la basse » est réussi deux jours différents.',
+    goal: 'l’exercice « des notes de passage sur la basse » est validé.',
     body: W => `
 <p>Une basse qui avance par degrés appelle, sur chaque note, un accord typique. Les claviéristes du XVIIIe siècle le savaient par cœur : avec cette ${W.term('règle de l’octave', 'un accord type pour chaque degré de la gamme à la basse, en montant et en descendant (François Campion, 1716)')}, on harmonise presque n’importe quelle basse conjointe, et on accompagne une mélodie sans partition.</p>
 <table>
@@ -330,7 +330,7 @@ ${W.more('Dans ta pièce', '<p>Les cadences de l’op. 15 n° 1 sont des modèle
 <p>Les degrés stables (1, 3, 5) portent l’accord de tonique ou de dominante. Les autres sont des moments de passage : on y place un accord qui <b>tend vers la note suivante</b> de la basse. En montant, le 7e degré (si) porte V6/5 parce qu’il est la sensible : il doit monter vers do. En descendant, le 4e degré (fa) porte V4/2 parce qu’il est la septième de sol 7 : il doit descendre vers mi. La règle n’est pas arbitraire : elle suit la direction naturelle de chaque note.</p>
 ${W.score({ abc: OCTAVE_EX, title: 'La règle de l’octave en do majeur', bpm: 60, startBpm: 50, practice: false, caption: 'Les voix de la main droite gardent leurs notes communes : sensible qui monte, septième qui descend. En descendant, le fa♯ (sur la, 6e degré) annonce sol : une dominante secondaire.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n2-im-octave', steps: [
   { id: 'basse', title: 'La basse seule, en disant les degrés', preset: 'n2-octave', mode: 'libre', loops: 1, lh: 'moi',
     what: 'Joue la basse de la règle à la main gauche (do – ré – mi … do, puis la descente), au clic, en disant à voix haute le degré et l’accord (1 : I, 2 : V4/3…).',
@@ -373,7 +373,7 @@ ${W.more('Dans ta pièce', '<p>Dans la descente, la règle place déjà une domi
       'Pour <b>répondre</b> : le <b>Prinner</b>, basse fa – mi – ré – do, mélodie la – sol – fa – mi, qui redescend vers la tonique.',
     ],
     goals: ['Enchaîner une ouverture, un Prinner et une cadence par cœur en do.', 'Improviser une mélodie sur ces schémas, puis l’orner.'],
-    goal: 'le dernier palier (enchaîner librement les schémas, sans t’arrêter) est réussi deux jours différents.',
+    goal: 'le dernier exercice (enchaîner librement les schémas, sans t’arrêter) est validé.',
     body: W => `
 <p>Le musicologue Robert Gjerdingen a montré que la musique du XVIIIe siècle est faite de ${W.term('schémas', 'enchaînements de quelques accords, avec une basse et une mélodie caractéristiques, que les compositeurs combinaient comme des mots')} : des enchaînements que tous connaissaient et combinaient. Une phrase type : une <b>ouverture</b>, une <b>réponse</b> qui redescend, une <b>cadence</b>. En apprendre quelques-uns, c’est se faire un vocabulaire ; improviser, c’est les enchaîner et les orner.</p>
 
@@ -399,7 +399,7 @@ ${W.ecoute({ title: 'La Romanesca : soprano en dixièmes ou en octaves', bpm: 60
 ${W.score({ abc: DOREMI_EX, title: 'Do-Ré-Mi, demi-cadence, Prinner', bpm: 60, startBpm: 50, practice: false, caption: 'Le soprano monte do – ré – mi pendant que la basse fait do – si – do ; arrêt sur sol (V) avec ré au soprano : la question. Le Prinner répond, en dixièmes avec la basse.' })}
 ${W.score({ abc: MEYER_EX, title: 'Le Meyer', bpm: 60, practice: false, caption: 'Soprano do – si, puis fa – mi, sur I – V4/3, puis V6/5 – I : deux gestes qui se répondent.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n2-im-romanesca', steps: [
   { id: 'duo', title: 'Le duo à la dixième', preset: 'n2-romanesca', mode: 'squelette', loops: 1, lh: 'moi',
     what: 'Joue la basse (main gauche) et le soprano en or (main droite), sans les voix du milieu : les deux mains descendent ensemble, à la dixième.',
@@ -446,7 +446,7 @@ ${W.more('Où on les entend', '<p>Le Canon de Pachelbel repose sur une variante 
       'Dans chaque paire, la <b>septième</b> descend et la <b>sensible</b> monte : c’est ce qui tire la musique vers l’accord suivant. Le même motif, recopié à chaque étage : c’est une <b>marche</b>.',
     ],
     goals: ['Jouer le Monte et la Fonte, et les reconnaître à l’oreille.', 'Improviser un motif et le recopier un degré plus haut, puis plus bas ; enchaîner seize mesures.'],
-    goal: 'le palier « seize mesures » est réussi deux jours différents : ouverture, Monte, Fonte, cadence, sans t’arrêter.',
+    goal: 'l’exercice « seize mesures » est validé : ouverture, Monte, Fonte, cadence, sans t’arrêter.',
     body: W => `
 <p>Après une ouverture, il faut avancer avant de conclure. Les compositeurs du XVIIIe siècle utilisaient pour cela des ${W.term('marches', 'un motif repris plusieurs fois à des hauteurs différentes, sur des accords qui s’enchaînent de la même façon')} : un petit enchaînement, recopié un degré plus haut (le Monte) ou un degré plus bas (la Fonte). Une phrase type devient : ouverture, Monte ou Fonte, cadence.</p>
 
@@ -459,7 +459,7 @@ ${W.ecoute({ title: 'Do, puis fa : avec ou sans la septième', bpm: 60, items: [
 
 ${W.score({ abc: MONTE_FONTE_EX, title: 'Monte, puis Fonte (do majeur)', bpm: 60, startBpm: 50, practice: false, caption: 'Monte : do 7/mi → fa, puis ré 7/fa♯ → sol, un ton plus haut. Fonte : la 7/do♯ → ré mineur, puis sol 7/si → do, un ton plus bas. Chaque septième (si♭, do, sol, fa) descend d’un degré et chaque sensible (mi, fa♯, do♯, si) monte.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n2-im-schemas', steps: [
   { id: 'soprano', title: 'Le soprano en or', preset: 'n2-monte-fonte', mode: 'squelette', loops: 2,
     what: 'L’appli joue les accords du Monte puis de la Fonte ; pose le soprano en or au premier temps de chaque mesure.',
@@ -498,7 +498,7 @@ ${W.more('Dans ta pièce', '<p>Mesures 41 à 44 de l’op. 15 : la♭ 7, puis si
       'Les ornements sont <b>plus légers</b> que les notes qu’ils ornent, et la <b>main gauche ne ralentit pas</b> : c’est elle qui garde le temps.',
     ],
     goals: ['Reconnaître les ornements de Chopin dans tes deux nocturnes.', 'Orner une mélodie, un ornement après l’autre, sans perdre ses notes d’appui ni la pulsation.'],
-    goal: 'le dernier palier (sur les harmonies de ton nocturne) est réussi deux jours différents.',
+    goal: 'le dernier exercice (sur les harmonies de ton nocturne) est validé.',
     body: W => `
 <p>Les ornements de Chopin viennent de l’improvisation et du chant : quand un thème revient, il le chante autrement, comme une cantatrice qui varie sa reprise. Ses élèves ont noté dans leurs partitions des variantes qu’il jouait (pour l’op. 9 n° 2, une version différente à chaque retour du thème). La méthode se lit dans ses partitions : il garde les notes d’appui et l’harmonie, et ne change que le chemin.</p>
 
@@ -507,7 +507,7 @@ ${W.score({ abc: EX_OP55_VAR, title: 'Op. 55 n° 1 : le thème (m. 3-4), puis sa
 ${W.score({ abc: EX_OP15_VAR, title: 'Op. 15 n° 1 : mesures 5 à 7, puis leur reprise (m. 53-55)', bpm: 69, startBpm: 50, practice: false, caption: 'Tout est identique, sauf la mesure 54 : le petit triolet ré – mi – fa de la mesure 6 devient un ' + W.term('septolet', 'sept notes égales dans la durée d’un temps : une fioriture, à jouer souplement, comme une vocalise') + ' qui brode autour de ré (ré – mi – ré – do♯ – ré) avant de monter vers fa.' })}
 
 <h2>La boîte à outils, du plus simple au plus orné</h2>
-<p>C’est aussi l’<a href="#/outils/impro">échelle d’ornementation</a> de l’appli : chaque ornement est un palier ci-dessous.</p>
+<p>Chaque ornement est l’un des exercices ci-dessous, du plus simple au plus orné.</p>
 <table>
 <thead><tr><th>Ornement</th><th>Ce que c’est</th><th>Chez Chopin</th></tr></thead>
 <tbody>
@@ -524,29 +524,29 @@ ${W.score({ abc: EX_OP15_VAR, title: 'Op. 15 n° 1 : mesures 5 à 7, puis leur r
 ${W.score({ abc: PLAIN, title: 'La mélodie simple (i – iv – V7 – i)', bpm: 60, practice: false, pedal: PED4, pedalEnd: 16 })}
 ${W.score({ abc: ORNATE, title: 'La même mélodie, ornée', bpm: 60, startBpm: 52, practice: false, pedal: PED4, pedalEnd: 16, caption: 'Mêmes notes d’appui aux mêmes endroits. Mesures 1 à 3 : un groupe autour de la note (ré♭ – do – si♮ – do) ; mesure 1 : l’appoggiature sol retarde le fa d’un temps ; mesure 4 : une fioriture de six notes avant le fa final.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n2-im1', steps: [
   { id: 'appuis', title: 'Les notes d’appui seules', preset: 'n2-orner', mode: 'squelette', loops: 2,
     what: 'Les notes en or sont celles de la mélodie simple (do, fa, do, la♭) : joue-les seules, en valeurs longues, deux fois.',
     why: 'On n’orne bien que ce qu’on entend : d’abord la mélodie nue.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'rhythm', v: 'longues' }] },
-  { id: 'broderie', title: 'Une broderie, simple ou chromatique', preset: 'n2-orner', mode: 'squelette', loops: 2, dim: 3,
+  { id: 'broderie', title: 'Une broderie, simple ou chromatique', preset: 'n2-orner', mode: 'squelette', loops: 2,
     what: 'Autour des notes en or, des broderies : la note, sa voisine (un demi-ton dessous, comme Chopin), la note.',
     why: 'L’ornement le plus simple : la note vit sans être quittée.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'figure', f: 'broderie', min: 2 }] },
-  { id: 'double', title: 'La double broderie', preset: 'n2-orner', mode: 'squelette', loops: 2, dim: 5,
+  { id: 'double', title: 'La double broderie', preset: 'n2-orner', mode: 'squelette', loops: 2,
     what: 'Juste avant une note en or, ses deux voisines (celle du dessous puis celle du dessus, ou l’inverse), puis la note, à temps — comme Chopin à la reprise de l’op. 55 (mi♮ – sol – fa).',
     why: 'Une figure d’approche : on encercle la note visée avant de s’y poser. Elle se pense à partir de la note d’arrivée.',
     checks: [{ k: 'targets', min: 0.7 }, { k: 'figure', f: 'double', min: 2 }] },
-  { id: 'appoggiature', title: 'L’appoggiature qui retarde', preset: 'n2-orner', mode: 'squelette', loops: 2, dim: 6,
+  { id: 'appoggiature', title: 'L’appoggiature qui retarde', preset: 'n2-orner', mode: 'squelette', loops: 2,
     what: 'Retarde certaines notes en or : joue d’abord la note du dessus sur le temps, puis la note en or (sol → fa, comme à la mesure 1 de la mélodie ornée). Au moins deux fois.',
     why: 'La note visée arrive en retard : l’attente devient expressive.',
     checks: [{ k: 'figure', f: 'appoggiature', min: 2 }, { k: 'nonstop', bars: 7 }] },
-  { id: 'fioriture', title: 'La fioriture', preset: 'n2-orner', mode: 'squelette', loops: 2, dim: 8,
+  { id: 'fioriture', title: 'La fioriture', preset: 'n2-orner', mode: 'squelette', loops: 2,
     what: 'Avant une note en or, une fioriture : cinq à sept notes rapides, d’un seul geste, qui retombent pile sur la note. La main gauche ne t’attend pas.',
     why: 'L’ornement le plus libre de Chopin, et le plus exigeant : il doit tenir dans le temps.',
     checks: [{ k: 'figure', f: 'fioriture', min: 1 }, { k: 'targets', min: 0.6 }] },
-  { id: 'reprise', title: 'La reprise ornée', preset: 'n2-orner', mode: 'squelette', loops: 2, dim: 8,
+  { id: 'reprise', title: 'La reprise ornée', preset: 'n2-orner', mode: 'squelette', loops: 2,
     what: 'Premier tour : la mélodie simple (les notes en or seules). Deuxième tour : la même, ornée, avec les figures de ton choix.',
     why: 'Chez Chopin, l’ornement arrive à la reprise, quand on connaît déjà la mélodie : c’est là qu’il prend son sens.',
     checks: [{ k: 'reprise', ratio: 1.5 }, { k: 'targets', min: 0.6 }] },
@@ -575,7 +575,7 @@ ${W.links([W.informance('/content/pages/5-anyone-can-improvise', 'Anyone Can Imp
       'C’est la répétition qui fait la marche : on ne varie qu’ensuite, et on en sort par une <b>cadence</b>.',
     ],
     goals: ['Jouer la main gauche de l’élégie sur la marche par quintes.', 'Improviser un modèle, ses deux reprises et la cadence.'],
-    goal: 'le palier « ton modèle » est réussi deux jours différents : un modèle, deux reprises un degré plus bas, et la fin sur ré.',
+    goal: 'l’exercice « ton modèle » est validé : un modèle, deux reprises un degré plus bas, et la fin sur ré.',
     body: W => `
 <p>C’est le style des élégies russes, de Tchaïkovski à l’Élégie op. 3 n° 1 de Rachmaninov : une tonalité mineure, une main gauche qui roule en grandes vagues, une mélodie lente qui monte vers un sommet et retombe. Ici, on lui ajoute la ${W.term('marche', 'un motif repris plusieurs fois à des hauteurs différentes, sur des accords qui s’enchaînent de la même façon')} par quintes : la basse descend de quinte en quinte (ou monte de quarte), et un même motif suit le mouvement.</p>
 
@@ -603,7 +603,7 @@ ${W.score({ abc: EX_MARCHE_ELEGIE, title: 'Marche par quintes en élégie (ré m
 <h2>Une élégie sur une basse qui descend</h2>
 ${W.score({ abc: EX_ELEGIE, title: 'Élégie en ré mineur', bpm: 54, startBpm: 46, pedal: PED8, pedalEnd: 32, variants: [{ label: 'Écouter' }, { label: 'Phrasé', ...PH_ELEGIE }], caption: 'Autre grille du même style : la basse descend (ré – do – si♭ – la). La phrase se suspend sur la (mesure 4), monte vers le sommet (la aigu, mesure 6) et retombe sur la dominante : la grille recommence.' })}
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n2-im2', steps: [
   { id: 'vague', title: 'La vague à la main gauche', preset: 'n2-marche-elegie', mode: 'libre', loops: 1, lh: 'moi',
     what: 'Joue toi-même les arpèges de la main gauche (les notes en brun s’allument) : la basse au premier temps, puis la vague, une pédale à chaque basse.',
@@ -648,7 +648,7 @@ ${W.listen([W.yt('Rachmaninoff Elegie op 3 no 1', 'Rachmaninov, Élégie op. 3 n
       'Pour improviser dans ce style : <b>tenir</b> une note tant qu’elle sonne, et ne bouger que d’un degré quand l’accord la rend dure.',
     ],
     goals: ['Comprendre la conduite des voix du Prélude op. 28 n° 4.', 'Improviser une mélodie presque immobile sur ses accords, puis sur une basse qui descend.'],
-    goal: 'le palier « ta note, qui bouge par degrés » est réussi deux jours différents.',
+    goal: 'l’exercice « ta note, qui bouge par degrés » est validé.',
     body: W => `
 <p>Dans le Prélude en mi mineur, Chopin fait presque tout avec l’harmonie. La main droite chante si – do – si pendant quatre mesures, puis la – si – la ; la main gauche répète ses accords en croches et, à chaque changement, une seule de ses trois voix descend d’un demi-ton. C’est la ${W.term('conduite des voix', 'la manière dont chaque note d’un accord rejoint une note de l’accord suivant ; ici, par demi-tons, sans saut')} poussée à l’extrême.</p>
 ${W.score({ abc: OP28.n4a, title: 'Prélude op. 28 n° 4, mesures 1 à 12', qpm: 54, startBpm: 22, pedal: PED_PRELUDE, pedalEnd: 49, caption: 'Suis une voix de la main gauche : le mi du haut descend (mi – mi♭ – ré – do♯ – do – si…), puis celle du milieu, puis la basse. La mélodie, elle, tient son si, qui change de rôle à chaque accord : quinte de mi mineur, calme (mesure 1) ; partie d’une sixte augmentée fa – la – si – mi♭, très tendue (mesure 3) ; fondamentale de si – ré – fa – la deux temps plus tard. Mesure 12 : la demi-cadence sur si 7, puis le silence.' })}
@@ -673,7 +673,7 @@ ${W.ecoute({ title: 'Une note, trois couleurs', bpm: 40, items: [
 <tr><td class="num">12</td><td>si 7 : demi-cadence</td><td>la fioriture, puis silence</td></tr>
 </tbody></table>
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n2-im4', steps: [
   { id: 'tenir', title: 'Tenir la note de Chopin', preset: 'prelude-mi', mode: 'squelette', loops: 1,
     what: 'Une note en or par mesure (si, si, si, si, la…) : tiens-la toute la mesure. Écoute-la changer de couleur sous les accords.',
@@ -713,7 +713,7 @@ ${W.listen([W.yt('Chopin Prelude op 28 no 4', 'Chopin, Prélude op. 28 n° 4', '
       'Fa majeur et fa mineur ont la <b>même dominante</b> (do 7) : le retour se fait par elle, sensible mi♮ qui monte vers fa.',
     ],
     goals: ['Improviser deux sections de caractère opposé.', 'Préparer le retour et rejouer A, orné.'],
-    goal: 'le palier « toute la forme » est réussi : 21 mesures sans t’arrêter, un vrai contraste, et le retour du thème.',
+    goal: 'l’exercice « toute la forme » est validé : 21 mesures sans t’arrêter, un vrai contraste, et le retour du thème.',
     body: W => `
 <p>Tu as tout ce qu’il faut : un chant appuyé sur l’harmonie, des ornements, un style. Il reste à l’organiser en une forme. Celle de ton nocturne est la plus simple et la plus forte : A, un contraste B, puis le retour de A, transformé par le voyage.</p>
 ${W.diagram('form', { total: 21, sections: [
@@ -736,14 +736,14 @@ ${W.diagram('form', { total: 21, sections: [
 <h2>Pourquoi le contraste doit être franc</h2>
 <p>Un contraste qui ne change que les accords passe inaperçu : l’oreille suit d’abord le registre, le nombre de notes, la nuance et le toucher. Changer deux de ces paramètres à la fois rend B évident ; le retour de A n’en est que plus attendu. Le retour, lui, doit être <b>reconnaissable</b> : mêmes premières notes ou même rythme que le début.</p>
 
-<h2>Les paliers</h2>
+<h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n2-im3', steps: [
   { id: 'chant', title: 'Le chant de A', preset: 'n2-op15-A', mode: 'libre', loops: 1,
     what: 'Huit mesures de A, en fa majeur à trois temps : un chant <b>lié</b>, sans hâte, dans le médium. Chaque note tenue jusqu’à la suivante.',
     why: 'Le caractère de A d’abord, seul : c’est lui que B va contredire, et que le retour va retrouver.',
     checks: [{ k: 'legato', min: 0.7 }, { k: 'strong', min: 0.7 }] },
   { id: 'contraste', title: 'A, puis B : le contraste', preset: 'n2-aba-op15', mode: 'libre', loops: 1,
-    what: 'La forme entière : A comme au palier précédent, puis B (fa mineur, la main gauche s’agite) en changeant <b>au moins deux choses</b> : registre, nombre de notes, nuance, toucher.',
+    what: 'La forme entière : A comme à l’exercice précédent, puis B (fa mineur, la main gauche s’agite) en changeant <b>au moins deux choses</b> : registre, nombre de notes, nuance, toucher.',
     why: 'Deux caractères opposés : c’est le cœur de la forme.',
     checks: [{ k: 'contrast', a: [1, 8], b: [9, 16] }] },
   { id: 'retour', title: 'Le retour', preset: 'n2-aba-op15', mode: 'libre', loops: 1,
