@@ -1,19 +1,24 @@
-// Accompagnateur d'improvisation (V4).
+// Accompagnateur d'improvisation (V5).
 // - Des grilles par style : ostinato et pentatonique, harmonie simple, romance en arpèges (Liszt), élégie
 //   (arpèges larges à la russe), nocturne (les harmonies de l'op. 55 n° 1), valse, prélude et choral (Chopin),
 //   et le langage classique (cadences, règle de l'octave, schémas).
 // - La grille entière est affichée : on voit l'accord en cours ET les suivants, avec leurs notes.
 // - La main gauche est jouée par l'appli, ou par toi (l'appli montre alors la basse et l'accord à jouer).
-// - Jeu guidé « question – réponse » : l'appli pose une question (une ou deux mesures), tu réponds ; chaque réponse
-//   est évaluée (notes de l'accord sur les temps forts, fin stable, reprise du rythme de la question).
-// - Mode « squelette » : la note d'appui de chaque mesure est indiquée en or ; tu la poses au premier temps et tu
-//   remplis entre elles.
+// - Décompte commun avant le premier accord.
+// - Question – réponse : l'appli pose une question (deux mesures), tu réponds ; chaque réponse est évaluée
+//   (notes de l'accord sur les temps forts, fin stable, et selon la variante : rythme, dessin, registre, figure).
+// - Imitation : l'appli joue une phrase, tu la chantes, puis tu la rejoues.
+// - Mode « squelette » : la note d'appui de chaque mesure est indiquée en or.
+// - Palier (cfg.step) : mode, grille et vérifications imposés par la leçon ; la prise est vérifiée à l'arrêt
+//   (impro-check.js) et le résultat renvoyé à la leçon (cfg.onResult).
 // - Réécoute : ta main droite rejouée avec l'accompagnement.
 import { h, esc, fmtPct, noteNameFr, pc, pick, CHORDS, SCALES } from './util.js';
 import { audio } from './audio.js';
 import { midi } from './midi.js';
 import { store } from './store.js';
 import { keyboard, COLORS } from './diagrams.js';
+import { scheduleCountIn, countInPosition } from './countin.js';
+import { analyzeTake, evaluate, judgeAnswer, judgeEcho, FIG_LABEL } from './impro-check.js';
 
 const PC_NAMES_FLAT = ['do', 'ré♭', 'ré', 'mi♭', 'mi', 'fa', 'sol♭', 'sol', 'la♭', 'la', 'si♭', 'si'];
 const PC_NAMES_SHARP = ['do', 'do♯', 'ré', 'ré♯', 'mi', 'fa', 'fa♯', 'sol', 'sol♯', 'la', 'la♯', 'si'];
@@ -175,6 +180,26 @@ export const IMPROV_PRESETS = {
     // la mélodie de Chopin au premier temps de chaque mesure (si ×4, la ×4, sol♯, fa♯, fa♯, sol)
     targets: [71, 71, 71, 71, 69, 69, 69, 69, 68, 66, 66, 67], ...CHOPIN,
     targetHelp: 'La note en or est celle de Chopin au premier temps : tiens-la tant qu’elle sonne ; ajoute au plus une broderie.' },
+  /* ---- V5 : schémas et formes ---- */
+  // Do-Ré-Mi (soprano do – ré – mi sur la basse do – si – do), demi-cadence, puis Prinner (la – sol – fa – mi sur fa – mi – ré – do)
+  'n2-doremi': { title: 'Do-Ré-Mi, demi-cadence, puis Prinner (do majeur)', tonic: 0, mode: 'maj', meter: 4, custom: [
+    C('I', 0, 'M', 48, { name: 'do majeur', section: 'Do-Ré-Mi' }), C('V6', 7, 'M', 47, { name: 'sol majeur / si' }), C('I', 0, 'M', 48, { name: 'do majeur' }), C('V', 7, 'M', 43, { name: 'sol majeur', section: 'demi-cadence' }),
+    C('IV', 5, 'M', 41, { name: 'fa majeur', section: 'Prinner' }), C('I6', 0, 'M', 40, { name: 'do majeur / mi' }), C('V4/3', 7, '7', 38, { name: 'sol 7 / ré' }), C('I', 0, 'M', 36, { name: 'do majeur' })], pattern: 'accords', bpm: 60,
+    targets: [72, 74, 76, 74, 69, 67, 65, 64], ...SOPRANO },
+  // La cadence, puis la Quiescenza sur la basse do tenue (soprano si♭ – la – si – do) : la formule qui « éteint » une pièce
+  'n2-cadence-q': { title: 'Cadence, puis Quiescenza (do majeur)', tonic: 0, mode: 'maj', meter: 4, custom: [
+    C('I6', 0, 'M', 52, { name: 'do majeur / mi', section: 'cadence' }), C('IV', 5, 'M', 53, { name: 'fa majeur' }), C('V7', 7, '7', 55, { name: 'sol 7' }), C('I', 0, 'M', 48, { name: 'do majeur' }),
+    C('I7', 0, '7', 48, { name: 'do 7', notes: [52, 58], beats: 2, section: 'Quiescenza' }), C('IV6/4', 5, 'M', 48, { name: 'fa majeur / do', notes: [53, 57], beats: 2 }),
+    C('V7/do', 7, '7', 48, { name: 'sol 7 / do', notes: [53, 59], beats: 2 }), C('I', 0, 'M', 48, { name: 'do majeur', notes: [52, 55], beats: 2 })], pattern: 'accords', bpm: 56,
+    chordTargets: [72, 72, 71, 72, 70, 69, 71, 72], ...SOPRANO,
+    targetHelp: 'Les notes en or : le soprano de la cadence (do – do – si – do), puis celui de la Quiescenza (si♭ – la – si – do) sur la basse do tenue.' },
+  // Une phrase du XVIIIe siècle en seize mesures : ouvrir (Do-Ré-Mi), avancer (Monte, Fonte), conclure (cadence)
+  'n2-phrase16': { title: 'Seize mesures : Do-Ré-Mi, Monte, Fonte, cadence (do majeur)', tonic: 0, mode: 'maj', meter: 4, custom: [
+    C('I', 0, 'M', 48, { name: 'do majeur', section: 'Do-Ré-Mi' }), C('V6', 7, 'M', 47, { name: 'sol majeur / si' }), C('I', 0, 'M', 48, { name: 'do majeur' }), C('V', 7, 'M', 43, { name: 'sol majeur' }),
+    C('V6/5 de IV', 0, '7', 52, { name: 'do 7 / mi', section: 'Monte' }), C('IV', 5, 'M', 53, { name: 'fa majeur' }), C('V6/5 de V', 2, '7', 54, { name: 'ré 7 / fa♯' }), C('V', 7, 'M', 55, { name: 'sol majeur' }),
+    C('V6/5 de ii', 9, '7', 49, { name: 'la 7 / do♯', section: 'Fonte' }), C('ii', 2, 'm', 50, { name: 'ré mineur' }), C('V6/5', 7, '7', 47, { name: 'sol 7 / si' }), C('I', 0, 'M', 48, { name: 'do majeur' }),
+    C('I6', 0, 'M', 52, { name: 'do majeur / mi', section: 'Cadence' }), C('ii6', 2, 'm', 53, { name: 'ré mineur / fa' }), C('V7', 7, '7', 43, { name: 'sol 7' }), C('I', 0, 'M', 36, { name: 'do majeur' })], pattern: 'accords', bpm: 60 },
+  'n2-op15-A': { title: 'Fa majeur, cantabile (comme la section A de l’op. 15)', tonic: 5, mode: 'maj', meter: 3, bars: ['I', 'IV', 'V7', 'I', 'vi', 'ii', 'V7', 'I'], pattern: 'arpege', bpm: 66 },
   'n2-napolitaine': { title: 'Cadence avec sixte napolitaine (fa mineur)', tonic: 5, mode: 'min', meter: 4, bars: ['i', 'iv', 'N6', 'V7', 'i', 'VI', 'N6', 'V7'], pattern: 'accords', bpm: 60 },
   'choral-ut': { title: 'Choral en do mineur (à la manière du Prélude op. 28 n° 20)', style: 'choral', tonic: 0, mode: 'min', meter: 4, bars: ['i', 'iv', 'V7', 'i', 'VI', 'iv', 'V7', 'i'], pattern: 'choral', bpm: 50 },
 };
@@ -208,13 +233,15 @@ export function buildTimeline(P) {
   if (P.custom) P.custom.forEach(c => {
     if (!tr) { list.push({ ...c, tonic: P.tonic, mode: P.mode }); return; }
     const root = (c.root + tr + 120) % 12;
+    const key = { tonic: (P.tonic + tr + 120) % 12, mode: P.mode };
     list.push({ ...c, root, bass: c.bass != null ? (c.bass + tr + 120) % 12 : undefined, bassM: c.bassM != null ? c.bassM + tr : undefined,
       notes: c.notes ? c.notes.map(n => n + tr) : undefined,
-      name: `${PC_NAMES_FLAT[root]} ${CHORDS[c.q].fr}${c.bassM != null && pc(c.bassM) !== pc(c.root) ? ' / ' + PC_NAMES_FLAT[pc(c.bassM + tr)] : ''}`,
-      tonic: (P.tonic + tr + 120) % 12, mode: P.mode });
+      name: `${pcName(root, key)} ${CHORDS[c.q].fr}${c.bassM != null && pc(c.bassM) !== pc(c.root) ? ' / ' + pcName(pc(c.bassM + tr), key) : ''}`,
+      ...key });
   });
-  else if (P.sections) P.sections.forEach(s => s.bars.forEach((b, i) => list.push({ ...chordFromRoman(b, s.tonic ?? P.tonic, s.mode ?? P.mode), section: i === 0 ? s.label : null, pattern: s.pattern || null })));
-  else P.bars.forEach(b => list.push(chordFromRoman(b, P.tonic, P.mode)));
+  // transposition des grilles en chiffres romains : la tonique se déplace
+  else if (P.sections) P.sections.forEach(s => s.bars.forEach((b, i) => list.push({ ...chordFromRoman(b, ((s.tonic ?? P.tonic) + tr + 120) % 12, s.mode ?? P.mode), section: i === 0 ? s.label : null, pattern: s.pattern || null })));
+  else P.bars.forEach(b => list.push(chordFromRoman(b, (P.tonic + tr + 120) % 12, P.mode)));
   // durée de chaque accord (en temps) et numéro de mesure
   let beat = 0;
   for (const c of list) { c.beats = c.beats || P.meter; c.at = beat; c.bar = Math.floor(beat / P.meter); beat += c.beats; }
@@ -330,15 +357,17 @@ const chordTones = ch => CHORDS[ch.q].iv.map(x => (ch.root + x) % 12);
  * Mélodie sur une suite d'accords (un par mesure ou plus) : notes de l'accord sur les temps, notes de passage
  * entre elles, fin « ouverte » (question : une note de l'accord autre que la tonique) ou « fermée » (tonique).
  */
-function genMelody(P, chords, { meter, rhythm = null, end = 'open', start = 72 }) {
+function genMelody(P, chords, { meter, rhythm = null, end = 'open', start = 72, lo = 62, hi = 84 }) {
   const notes = [];
   let prev = start, t = 0;
   const rh = rhythm || pick(RHY[meter] || RHY[4]);
   chords.forEach((ch, bi) => {
-    const sc = scaleNotes(P, ch);
+    const sc = scaleNotes(P, ch, lo, hi);
     const ct = chordTones(ch);
     const lastBar = bi === chords.length - 1;
-    const r = lastBar ? (meter === 3 ? [1, 2] : meter === 2 ? [1, 1] : [1, 1, 2]) : rh;
+    const beats = ch.beats || meter;
+    // la dernière mesure : une valeur longue à la fin ; un accord plus court qu'une mesure : un rythme simple
+    const r = lastBar ? (beats === 3 ? [1, 2] : beats === 2 ? [1, 1] : beats === 1 ? [1] : [1, 1, 2]) : beats === meter ? rh : Array.from({ length: beats }, () => 1);
     let beat = 0;
     r.forEach((d, k) => {
       const onBeat = Math.abs(beat - Math.round(beat)) < 1e-6;
@@ -350,6 +379,7 @@ function genMelody(P, chords, { meter, rhythm = null, end = 'open', start = 72 }
       } else if (onBeat) cand = sc.filter(m => ct.includes(pc(m)));
       else cand = sc.filter(m => Math.abs(m - prev) <= 2 && m !== prev);
       if (!cand.length) cand = sc.filter(m => ct.includes(pc(m)));
+      if (!cand.length) cand = sc.slice();
       // le plus proche de la note précédente, avec parfois un petit saut pour la variété
       cand.sort((a, b) => Math.abs(a - prev) - Math.abs(b - prev));
       const choice = onBeat && !isLast && cand.length > 1 && Math.random() < 0.3 ? cand[1] : cand[0];
@@ -357,46 +387,30 @@ function genMelody(P, chords, { meter, rhythm = null, end = 'open', start = 72 }
       prev = choice;
       beat += d;
     });
-    t += ch.beats || meter;
+    t += beats;
   });
   return { notes, rhythm: rh };
-}
-
-/** Jugement d'une réponse : notes de l'accord sur les temps forts, fin stable, rythme repris de la question. */
-function judgeAnswer(played, seg, question, isEnd) {
-  const lines = [];
-  if (played.length < 2) return { score: 0, lines: ['Je n’ai presque rien reçu : réponds avec au moins trois ou quatre notes, à la main droite.'] };
-  const strong = played.filter(p => p.strong);
-  const okStrong = strong.filter(p => p.kind === 'chord').length;
-  const pctStrong = strong.length ? okStrong / strong.length : 0;
-  lines.push(pctStrong >= 0.7 ? `✓ Temps forts sur une note de l’accord (${okStrong}/${strong.length}).` : `→ Temps forts : ${okStrong}/${strong.length} sur une note de l’accord. Vise une note de l’accord à chaque temps fort.`);
-  const last = played[played.length - 1];
-  const lastCh = seg.chords[seg.chords.length - 1];
-  const tonicPc = lastCh.tonic % 12;
-  const stable = isEnd ? pc(last.note) === tonicPc : chordTones(lastCh).includes(pc(last.note));
-  lines.push(stable ? (isEnd ? '✓ Fin sur la tonique : la phrase est close.' : '✓ Fin sur une note de l’accord : la réponse se pose.') : (isEnd ? `→ Finis sur la tonique (${pcName(tonicPc, lastCh)}).` : '→ Finis sur une note de l’accord, en valeur longue.'));
-  // rythme : attaques de la première mesure (en croches) comparées à la question
-  const q8 = new Set(question.notes.filter(n => n.t < (seg.meter || 4)).map(n => Math.round(n.t * 2)));
-  const a8 = new Set(played.filter(p => p.beat < (seg.meter || 4)).map(p => Math.round(p.beat * 2)));
-  const inter = [...q8].filter(x => a8.has(x)).length;
-  const sim = q8.size ? inter / Math.max(q8.size, a8.size) : 0;
-  lines.push(sim >= 0.5 ? '✓ Tu reprends le rythme de la question : on entend que c’est une réponse.' : '→ Reprends le rythme de la question au début de ta réponse (même rythme, autres notes).');
-  const score = (pctStrong >= 0.7 ? 1 : pctStrong) * 0.4 + (stable ? 0.35 : 0) + Math.min(1, sim / 0.5) * 0.25;
-  return { score, lines, pctStrong, stable, sim };
 }
 
 /* ------------------------------------------------------------------ */
 /* Widget                                                              */
 /* ------------------------------------------------------------------ */
+// cfg.step (palier d'une leçon) : { preset, presets?, mode ('libre' | 'qr' | 'echo' | 'squelette'), loops, lh ('app' | 'moi'),
+//   tr (transposition, en demi-tons), bpm?, qr: { variant, figure }, echo: { rhythms, end, count, sing }, checks: [...] }
+// cfg.onResult(res) : appelé à la fin d'une prise de palier, avec { ok, lines, score }.
 export function mountImprov(el, cfg = {}) {
-  let presetId = cfg.preset || 'n1-nocturne';
-  const presetIds = (cfg.presets || Object.keys(IMPROV_PRESETS)).filter(p => IMPROV_PRESETS[p]);
-  const frame = h('div', { class: 'w-frame improv' });
-  const head = h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, cfg.title || 'Accompagnateur d’improvisation'));
+  const step = cfg.step || null;
+  let presetId = step?.preset || cfg.preset || 'n1-nocturne';
+  const presetIds = (step ? (step.presets || [step.preset]) : (cfg.presets || Object.keys(IMPROV_PRESETS))).filter(p => IMPROV_PRESETS[p]);
+  if (!IMPROV_PRESETS[presetId]) presetId = presetIds[0];
+  const split = store.get('settings.split') || 60;
+  const frame = h('div', { class: 'w-frame improv' + (step ? ' improv-step' : '') });
+  const head = h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, cfg.title || (step ? 'Accompagnateur' : 'Accompagnateur d’improvisation')));
   const sel = h('select', { class: 'improv-sel' }, ...presetIds.map(p => h('option', { value: p, selected: p === presetId }, IMPROV_PRESETS[p].title)));
   if (presetIds.length > 1) head.append(sel);
   const body = h('div', { class: 'w-body' });
   const styleNote = h('p', { class: 'small improv-style', hidden: true });
+  const cue = h('div', { class: 'improv-cue', hidden: true, 'aria-live': 'polite' });
   const gridBox = h('div', { class: 'improv-grid', role: 'list', 'aria-label': 'La grille' });
   const chordBox = h('div', { class: 'improv-now' });
   const kbHost = h('div');
@@ -406,69 +420,90 @@ export function mountImprov(el, cfg = {}) {
     h('span', {}, h('i', { class: 'lg-dot', style: { background: COLORS.warn } }), 'note chromatique (à résoudre)'),
     h('span', { class: 'lg-target' }, h('i', { class: 'lg-dot', style: { background: '#c99a2e' } }), 'note d’appui à poser (squelette)'));
   const qrBox = h('div', { class: 'qr-box', hidden: true });
+  const resBox = h('div', { class: 'improv-res', hidden: true, 'aria-live': 'polite' });
   const foot = h('div', { class: 'w-foot' });
   const status = h('div', { class: 'score-status' });
   frame.append(head, body, foot);
-  body.append(styleNote, gridBox, chordBox, kbHost, legend, qrBox);
+  body.append(styleNote, cue, gridBox, chordBox, kbHost, legend, qrBox, resBox);
   el.append(frame);
 
   let P, timeline, kb, playing = false, timer = null, nextTime, idx, chordLog = [], played = [], offNote = null, offOff = null, bpm;
-  let mode = 'libre', lhMode = 'app', clickOn = false, rec = [], recStart = null, lastRec = null, replaying = false;
-  let qr = null; // état du jeu question – réponse
+  let mode = step?.mode || 'libre', lhMode = step?.lh || 'app', clickOn = lhMode === 'moi', rec = [], recStart = null, lastRec = null, replaying = false;
+  let segs = null; // question – réponse ou imitation
   let patOverride = false; // le motif choisi à la main remplace celui des sections
   let tgState = new Map(), lastTarget = null; // squelette : une entrée par mesure (ou par accord) jouée
-  let replayTimer = null;
-  const playBtn = h('button', { class: 'btn primary play-btn', type: 'button' }, 'Lancer l’accompagnement');
+  let replayTimer = null, countTimer = null, countNodes = [], perf0 = 0, beatMs = 1000, takeNotes = [];
+  const restsCheck = step?.checks?.find(c => c.k === 'rests') || null;
+  const playBtn = h('button', { class: 'btn primary play-btn', type: 'button' }, step ? 'Commencer' : 'Lancer l’accompagnement');
   const out = h('output');
   const rng = h('input', { type: 'range', min: 30, max: 180, 'aria-label': 'Tempo' });
   const loops = h('select', { 'aria-label': 'Répétition' }, h('option', { value: 0 }, 'en boucle'), h('option', { value: 1 }, '1 fois'), h('option', { value: 2 }, '2 fois'), h('option', { value: 4 }, '4 fois'));
   const patSel = h('select', { 'aria-label': 'Main gauche' }, ...PATTERN_LABELS.map(([v, l]) => h('option', { value: v }, l)));
   const modeSeg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Mode' });
   const lhSeg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Main gauche jouée par' });
-  const clickBtn = h('button', { class: 'btn sm', type: 'button', title: 'Clic sur chaque temps' }, 'Clic');
+  const clickBtn = h('button', { class: 'btn sm' + (clickOn ? ' on' : ''), type: 'button', title: 'Clic sur chaque temps' }, 'Clic');
   const replayBtn = h('button', { class: 'btn sm', type: 'button', hidden: true, title: 'Réécouter ta dernière improvisation avec l’accompagnement' }, 'Réécouter');
   const modelBtn = h('button', { class: 'btn sm ghost', type: 'button', hidden: true }, 'Écouter une réponse possible');
   // l'essentiel d'abord ; le motif de main gauche, la répétition et le clic dans « Options »
-  const optRow = h('div', { class: 'score-ctrl score-ctrl-opt' }, h('label', { class: 'field inline' }, 'Main gauche', patSel), h('label', { class: 'field inline' }, 'Répétition', loops), clickBtn);
+  const loopsField = h('label', { class: 'field inline' }, 'Répétition', loops);
+  const optRow = h('div', { class: 'score-ctrl score-ctrl-opt' }, h('label', { class: 'field inline' }, 'Main gauche', patSel), loopsField, clickBtn);
   optRow.hidden = store.get('ui.improvOpts') !== true;
   const optBtn = h('button', { class: 'btn sm ghost more-btn' + (optRow.hidden ? '' : ' on'), type: 'button', 'aria-expanded': String(!optRow.hidden), title: 'Motif de main gauche, répétition, clic' }, 'Options');
   optBtn.addEventListener('click', () => { optRow.hidden = !optRow.hidden; optBtn.classList.toggle('on', !optRow.hidden); optBtn.setAttribute('aria-expanded', String(!optRow.hidden)); store.set('ui.improvOpts', !optRow.hidden); });
+  const modeLbl = h('span', { class: 'small' }, 'Mode');
+  const lhLbl = h('span', { class: 'small' }, 'Main gauche jouée par');
   foot.append(
     h('div', { class: 'score-ctrl' }, playBtn, h('label', { class: 'range' }, 'Tempo', rng, out), replayBtn),
-    h('div', { class: 'score-ctrl score-ctrl-2' }, h('span', { class: 'small' }, 'Mode'), modeSeg, h('span', { class: 'small' }, 'Main gauche jouée par'), lhSeg, modelBtn, optBtn),
+    h('div', { class: 'score-ctrl score-ctrl-2' }, modeLbl, modeSeg, lhLbl, lhSeg, modelBtn, optBtn),
     optRow,
     h('div', { style: { width: '100%' } }, status));
+  if (step) {
+    modeLbl.hidden = true; modeSeg.hidden = true; loopsField.hidden = true;
+    if (step.lh) { lhLbl.hidden = true; lhSeg.hidden = true; }
+  }
   rng.addEventListener('input', () => { bpm = +rng.value; out.textContent = `♩ = ${bpm}`; });
   clickBtn.addEventListener('click', () => { clickOn = !clickOn; clickBtn.classList.toggle('on', clickOn); });
 
   const segBtn = (seg, value, label, cur, on) => { const b = h('button', { type: 'button', class: value === cur ? 'on' : '' }, label); b.addEventListener('click', () => { seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); on(value); }); seg.append(b); return b; };
   const renderModes = () => {
     modeSeg.innerHTML = '';
+    if (step) return;
     segBtn(modeSeg, 'libre', 'Libre', mode, v => { stop(); mode = v; updateModeUI(); });
     segBtn(modeSeg, 'qr', 'Question – réponse', mode, v => { stop(); mode = v; updateModeUI(); });
+    segBtn(modeSeg, 'echo', 'Imitation', mode, v => { stop(); mode = v; updateModeUI(); });
     if (hasTargets()) segBtn(modeSeg, 'squelette', P.targetName || (P.targetLabel === 'appoggiature' ? 'Appoggiatures' : 'Squelette'), mode, v => { stop(); mode = v; updateModeUI(); });
   };
   segBtn(lhSeg, 'app', 'l’appli', lhMode, v => { lhMode = v; showChord(idx || 0, playing); });
   segBtn(lhSeg, 'moi', 'moi', lhMode, v => { lhMode = v; if (!clickOn) clickBtn.click(); showChord(idx || 0, playing); });
+  const segIntro = {
+    qr: 'L’appli joue une question (deux mesures), puis c’est à toi : réponds en reprenant son rythme et finis sur une note stable — la tonique à la fin de la grille. Chaque réponse est commentée ici.',
+    echo: 'L’appli joue une phrase de deux mesures ; chante-la pendant les deux mesures suivantes, puis rejoue-la au piano. Chaque imitation est commentée ici.',
+  };
   const updateModeUI = () => {
-    qrBox.hidden = mode !== 'qr';
+    qrBox.hidden = !(mode === 'qr' || mode === 'echo');
     modelBtn.hidden = mode !== 'qr';
     legend.querySelector('.lg-target').hidden = !(mode === 'squelette' && hasTargets());
-    qrBox.innerHTML = mode === 'qr' ? '<p class="small mb-0">L’appli joue une question (deux mesures), puis c’est à toi : réponds en reprenant son rythme et finis sur une note stable — la tonique à la fin de la grille. Chaque réponse est commentée ici.</p>' : '';
+    qrBox.innerHTML = segIntro[mode] && !step ? `<p class="small mb-0">${segIntro[mode]}</p>` : '';
     status.textContent = statusIdle();
     showChord(0, false);
   };
   const statusIdle = () => !timeline ? '' : mode === 'qr' ? `${timeline.length} accords · question – réponse : écoute, puis réponds à la main droite (au-dessus du do3).`
-    : mode === 'squelette' ? (P.targetHelp || (P.targetLabel === 'appoggiature' ? 'Pose la note en or (l’appoggiature) au premier temps de chaque mesure, appuie-la, puis descends d’un degré sur une note de l’accord.'
-      : P.chordTargets ? 'Pose la note en or au début de chaque accord, puis relie-la à la suivante.' : 'Pose la note en or au premier temps de chaque mesure, puis relie-la à la suivante.'))
-      : `${Math.round(timeline.totalBeats / P.meter)} mesures · ${P.meter} temps par mesure. Improvise à la main droite (au-dessus du do3).`;
+    : mode === 'echo' ? 'Imitation : écoute la phrase, chante-la, puis rejoue-la à la main droite.'
+      : mode === 'squelette' ? squeletteHelp()
+        : `${Math.round(timeline.totalBeats / P.meter)} mesures · ${P.meter} temps par mesure. Improvise à la main droite (au-dessus du do3).`;
+  const squeletteHelp = () => P.targetHelp || (P.targetLabel === 'appoggiature' ? 'Pose la note en or (l’appoggiature) au premier temps de chaque mesure, appuie-la, puis descends d’un degré sur une note de l’accord.'
+    : P.chordTargets ? 'Pose la note en or au début de chaque accord, puis relie-la à la suivante.' : 'Pose la note en or au premier temps de chaque mesure, puis relie-la à la suivante.');
+  const runningText = () => mode === 'squelette' ? squeletteHelp() : restsCheck ? 'Joue quand le bandeau dit « Joue », écoute quand il dit « Écoute ».' : 'À toi : improvise à la main droite, sans t’arrêter.';
+  const setCue = (txt, kind = '') => { cue.hidden = !txt; cue.textContent = txt; cue.className = 'improv-cue' + (kind ? ' ' + kind : ''); };
 
   const load = () => {
     stop();
     P = IMPROV_PRESETS[presetId];
+    if (step?.tr) P = { ...P, tr: (P.tr || 0) + step.tr };
     timeline = buildTimeline(P);
-    bpm = P.bpm; rng.value = bpm; out.textContent = `♩ = ${bpm}`;
+    bpm = step?.bpm || P.bpm; rng.value = bpm; out.textContent = `♩ = ${bpm}`;
     patSel.value = P.pattern;
+    if (step && (mode === 'libre' || mode === 'squelette')) loops.value = String(step.loops ?? 2);
     kbHost.innerHTML = '';
     kb = keyboard({ from: 36, to: 89, names: 'c', height: 100 });
     kbHost.append(kb);
@@ -538,6 +573,13 @@ export function mountImprov(el, cfg = {}) {
     }
     kb.setMarks(marks);
     curMarks = new Map(marks.map(x => [x.m, x.color]));
+    // phrases et silences : « Joue » ou « Écoute », mesure par mesure
+    if (live && playing && restsCheck && !segs) {
+      const absAt = Math.floor(i / timeline.length) * timeline.totalBeats + ch.at;
+      const bar = Math.floor(absAt / P.meter + 1e-6);
+      const pl = restsCheck.play || 2, cyc = pl + (restsCheck.rest || 2);
+      if (bar % cyc < pl) setCue('Joue', 'play'); else setCue('Écoute', 'rest');
+    }
   };
   let curMarks = new Map();
 
@@ -553,10 +595,10 @@ export function mountImprov(el, cfg = {}) {
   const schedule = () => {
     if (!playing) return;
     const spb = 60 / bpm;
-    const maxLoops = qr ? 0 : +loops.value;
+    const maxLoops = segs ? 0 : +loops.value;
     while (nextTime < audio.now() + 0.3) {
       if (maxLoops && idx >= timeline.length * maxLoops) { const end = nextTime; setTimeout(() => stop(true), Math.max(0, (end - audio.now()) * 1000) + 300); playing = false; return; }
-      if (qr && qr.done) { const end = nextTime; setTimeout(() => stop(true), Math.max(0, (end - audio.now()) * 1000) + 300); playing = false; return; }
+      if (segs && segs.done) { const end = nextTime; setTimeout(() => stop(true), Math.max(0, (end - audio.now()) * 1000) + 300); playing = false; return; }
       const ch = timeline[idx % timeline.length];
       const v = voicing(ch);
       const t = nextTime;
@@ -569,7 +611,7 @@ export function mountImprov(el, cfg = {}) {
       const barStart = ch.at % P.meter === 0;
       if (clickOn || lhMode === 'moi') for (let b = 0; b < ch.beats; b++) audio.click(t + b * spb, barStart && b === 0 ? 'accent' : 'beat');
       chordLog.push({ start: audio.ctxToPerf(t), end: audio.ctxToPerf(t + dur), ch, beatMs: spb * 1000, meter: P.meter, i: idx, at0: ch.at });
-      qr?.onChord(idx, t, dur);
+      segs?.onChord(idx, t, dur);
       const delay = Math.max(0, audio.ctxToPerf(t) - performance.now());
       const i = idx;
       setTimeout(() => { if (playing || i < idx) showChord(i); }, delay);
@@ -578,57 +620,76 @@ export function mountImprov(el, cfg = {}) {
     }
   };
 
-  /* ---------- jeu question – réponse ---------- */
-  // segments de deux mesures : question (appli), réponse (toi), en alternance, sur deux tours de grille au plus
-  const buildQR = (t0) => {
+  /* ---------- question – réponse et imitation ---------- */
+  // segments de deux mesures : question (appli) et réponse (toi) en alternance ; imitation : phrase (appli), chant, rejeu
+  const answerHint = seg => {
+    const v = step?.qr?.variant || 'rythme';
+    const what = v === 'contour' ? 'suis le dessin de la question' : v === 'inverse' ? 'renverse le dessin de la question' : v === 'registre' ? 'réponds dans le registre de la question'
+      : v === 'figure' ? `glisse ${FIG_LABEL[step.qr.figure]?.[3] ? 'une' : 'un'} ${FIG_LABEL[step.qr.figure]?.[0] || 'figure'}` : 'reprends son rythme';
+    return `${what}, finis ${seg.isEnd ? 'sur la tonique' : 'sur une note de l’accord'}`;
+  };
+  const buildSegs = kind => {
     const barsTotal = Math.round(timeline.totalBeats / P.meter);
     const segBars = barsTotal >= 4 ? 2 : 1;
-    const rounds = Math.max(2, Math.min(8, Math.floor((barsTotal * 2) / segBars)));
-    const segs = [];
-    for (let s = 0; s < rounds; s++) {
+    const sing = kind === 'echo' && step?.echo?.sing !== false;
+    const pattern = kind === 'qr' ? ['q', 'a'] : sing ? ['q', 's', 'a'] : ['q', 'a'];
+    // palier : toujours quatre réponses (même sur une grille de quatre mesures, qui tourne alors deux fois)
+    const count = kind === 'qr' ? (step ? 8 : Math.max(2, Math.min(8, Math.floor((barsTotal * 2) / segBars)))) : (step?.echo?.count || 4) * pattern.length;
+    const list = [];
+    for (let s = 0; s < count; s++) {
       const fromBar = (s * segBars) % barsTotal;
       const chords = timeline.filter(c => c.bar >= fromBar && c.bar < fromBar + segBars);
-      segs.push({ kind: s % 2 === 0 ? 'q' : 'a', fromBar, chords, meter: P.meter, absBar: s * segBars, isEnd: (fromBar + segBars) % barsTotal === 0 });
+      list.push({ kind: pattern[s % pattern.length], fromBar, chords, meter: P.meter, isEnd: (fromBar + segBars) % barsTotal === 0 });
     }
+    const lastA = list.filter(x => x.kind === 'a').pop();
     return {
-      segs, cur: -1, segBars, results: [], done: false, question: null,
-      onChord(i, t, dur) {
+      list, cur: -1, segBars, results: [], done: false, question: null, kind,
+      onChord(i, t) {
         const absBeat = timeline[i % timeline.length].at + Math.floor(i / timeline.length) * timeline.totalBeats;
         const absBar = Math.floor(absBeat / P.meter);
         const s = Math.floor(absBar / segBars);
-        if (s >= segs.length) { this.done = true; return; }
-        if (s !== this.cur && absBeat % (P.meter * segBars) === 0) {
-          this.cur = s;
-          const seg = segs[s];
-          seg.startCtx = t; seg.startPerf = audio.ctxToPerf(t);
-          if (seg.kind === 'q') {
-            const q = genMelody(P, seg.chords, { meter: P.meter, end: 'open', start: this.lastNote || 72 });
-            this.question = q; seg.q = q;
-            const spb = 60 / bpm;
-            for (const n of q.notes) {
-              const at = t + n.t * spb;
-              const vo = audio.noteOn(n.m, 74, at, { owner: 'improv' }); if (vo) audio.noteOff(vo, at + n.d * spb * 0.92);
-              setTimeout(() => flashKey(n.m, '#c99a2e', n.d * spb * 900), Math.max(0, audio.ctxToPerf(at) - performance.now()));
-            }
-            this.lastNote = q.notes[q.notes.length - 1].m;
-            setTimeout(() => setQRStatus(`Question ${Math.floor(s / 2) + 1} : écoute…`), Math.max(0, seg.startPerf - performance.now()));
-          } else {
-            seg.q = this.question;
-            seg.played = [];
-            setTimeout(() => setQRStatus(`<b>À toi !</b> Réponse ${Math.floor(s / 2) + 1} : reprends le rythme, finis ${seg.isEnd ? 'sur la tonique' : 'sur une note de l’accord'}.`), Math.max(0, seg.startPerf - performance.now()));
-            // jugement à la fin du segment
-            const endPerf = seg.startPerf + segBars * P.meter * (60000 / bpm);
-            setTimeout(() => this.judge(seg), Math.max(0, endPerf - performance.now()) + 250);
+        if (s >= list.length) { this.done = true; return; }
+        if (s === this.cur || absBeat % (P.meter * segBars) !== 0) return;
+        this.cur = s;
+        const seg = list[s];
+        seg.startPerf = audio.ctxToPerf(t);
+        const n = Math.floor(s / pattern.length) + 1;
+        const when = Math.max(0, seg.startPerf - performance.now());
+        if (seg.kind === 'q') {
+          let start = this.lastNote || 72, lo = 62, hi = 84;
+          if (kind === 'qr' && step?.qr?.variant === 'registre') { const high = Math.random() < 0.5; start = high ? 81 : 64; lo = high ? 72 : 57; hi = high ? 90 : 74; }
+          const rhythm = kind === 'echo' && step?.echo?.rhythms ? pick(step.echo.rhythms) : null;
+          const q = genMelody(P, seg.chords, { meter: P.meter, end: kind === 'echo' ? (step?.echo?.end || 'close') : 'open', start, rhythm, lo, hi });
+          this.question = q; seg.q = q;
+          const spb = 60 / bpm;
+          for (const nn of q.notes) {
+            const at = t + nn.t * spb;
+            const vo = audio.noteOn(nn.m, 74, at, { owner: 'improv' }); if (vo) audio.noteOff(vo, at + nn.d * spb * 0.92);
+            setTimeout(() => flashKey(nn.m, '#c99a2e', nn.d * spb * 900), Math.max(0, audio.ctxToPerf(at) - performance.now()));
           }
+          if (kind === 'qr') this.lastNote = q.notes[q.notes.length - 1].m;
+          setTimeout(() => { setQRStatus(kind === 'echo' ? `Phrase ${n} : écoute…` : `Question ${n} : écoute…`); setCue('Écoute', 'rest'); }, when);
+        } else if (seg.kind === 's') {
+          seg.q = this.question;
+          setTimeout(() => { setQRStatus(`Phrase ${n} : <b>chante-la</b>, en mesure (à voix haute, ou dans ta tête).`); setCue('Chante', 'sing'); }, when);
+        } else {
+          seg.q = this.question; seg.played = [];
+          setTimeout(() => { setQRStatus(kind === 'echo' ? `<b>À toi !</b> Rejoue la phrase ${n}.` : `<b>À toi !</b> Réponse ${n} : ${answerHint(seg)}.`); setCue('À toi', 'play'); }, when);
+          // jugement à la fin du segment
+          const endPerf = seg.startPerf + segBars * P.meter * (60000 / bpm);
+          setTimeout(() => this.judge(seg), Math.max(0, endPerf - performance.now()) + 250);
         }
       },
       judge(seg) {
-        if (!seg.q) return;
-        const r = judgeAnswer(seg.played, seg, seg.q, seg.isEnd);
+        if (!seg.q || seg.judged) return;
+        seg.judged = true;
+        const r = kind === 'echo' ? judgeEcho(seg.played, seg.q)
+          : judgeAnswer(seg.played, seg, seg.q, { isEnd: seg.isEnd, variant: step?.qr?.variant || 'rythme', figure: step?.qr?.figure || null });
         this.results.push(r);
-        const n = this.results.length;
-        qrBox.append(h('div', { class: 'qr-res' + (r.score >= 0.75 ? ' ok' : '') }, h('b', {}, `Réponse ${n}`), h('ul', {}, ...r.lines.map(l => h('li', {}, l)))));
-        if (seg === segs[segs.length - 1]) this.done = true;
+        const k = this.results.length;
+        qrBox.hidden = false;
+        qrBox.append(h('div', { class: 'qr-res' + (r.ok ? ' ok' : '') }, h('b', {}, kind === 'echo' ? `Imitation ${k}` : `Réponse ${k}`), h('ul', {}, ...r.lines.map(l => h('li', {}, l)))));
+        if (seg === lastA) this.done = true;
       },
     };
   };
@@ -638,11 +699,34 @@ export function mountImprov(el, cfg = {}) {
     audio.claim('improv', () => stop());
     await audio.ensure();
     audio.prime?.();
-    playing = true; idx = 0; chordLog = []; played = []; tgState = new Map(); lastTarget = null;
-    nextTime = audio.now() + 0.5;
-    const t0 = nextTime;
-    if (opts.replay) qr = null;
-    else if (mode === 'qr') { qrBox.querySelectorAll('.qr-res').forEach(x => x.remove()); qr = buildQR(t0); } else qr = null;
+    playing = true; idx = 0; chordLog = []; played = []; tgState = new Map(); lastTarget = null; takeNotes = [];
+    resBox.hidden = true; resBox.innerHTML = '';
+    const spb = 60 / bpm;
+    beatMs = spb * 1000;
+    let t0;
+    if (opts.replay) t0 = audio.now() + 0.5;
+    else {
+      // décompte commun : au moins quatre temps entendus avant le premier accord
+      const plan = scheduleCountIn({ beatsPerBar: P.meter, beatSec: spb });
+      countNodes = plan.nodes;
+      t0 = plan.end;
+      countTimer = setInterval(() => {
+        const p = countInPosition(plan);
+        if (!playing) { clearInterval(countTimer); countTimer = null; return; }
+        if (p.done) {
+          clearInterval(countTimer); countTimer = null;
+          if (!segs) { status.textContent = runningText(); if (!restsCheck) setCue(''); }
+          return;
+        }
+        status.textContent = p.waiting ? 'Décompte…' : `Décompte : ${p.inBar}${plan.bars > 1 ? ` (mesure ${p.bar} sur ${plan.bars})` : ''} — tu commences au premier accord.`;
+        setCue(p.waiting ? '…' : String(p.inBar), 'count');
+      }, 40);
+    }
+    nextTime = t0;
+    perf0 = audio.ctxToPerf(t0);
+    rng.disabled = true;
+    if (opts.replay) segs = null;
+    else if (mode === 'qr' || mode === 'echo') { qrBox.querySelectorAll('.qr-res').forEach(x => x.remove()); segs = buildSegs(mode); } else segs = null;
     playBtn.textContent = 'Arrêter';
     playBtn.classList.add('on');
     timer = setInterval(schedule, 30);
@@ -660,10 +744,13 @@ export function mountImprov(el, cfg = {}) {
       replayTimer = setTimeout(() => stop(true), end + 1500 + (t0 - audio.now()) * 1000);
       return;
     }
-    rec = []; recStart = audio.ctxToPerf(t0);
-    const openNotes = new Map();
+    rec = []; recStart = perf0;
+    const openNotes = new Map(), openAll = new Map();
     offNote = midi.on('noteon', ev => {
-      if (ev.note < 60) return; // main gauche ignorée
+      // toutes les notes (deux mains) pour la vérification du palier, en temps depuis le début de la grille
+      const tn = { m: ev.note, b: (ev.time - perf0) / beatMs, d: 0.5, v: ev.velocity, t: ev.time };
+      takeNotes.push(tn); openAll.set(ev.note, tn);
+      if (ev.note < split) return; // main gauche : seulement pour la vérification
       const seg = chordLog.find(c => ev.time >= c.start - 60 && ev.time < c.end - 60) || chordLog[chordLog.length - 1];
       if (!seg) return;
       const chPcs = CHORDS[seg.ch.q].iv.map(x => (seg.ch.root + x) % 12);
@@ -673,7 +760,7 @@ export function mountImprov(el, cfg = {}) {
       const nearBeat = Math.abs(posInBar - Math.round(posInBar)) < 0.18;
       const rb = Math.round(posInBar) % seg.meter;
       const strong = nearBeat && (rb === 0 || (seg.meter === 4 && rb === 2));
-      const rec1 = { note: ev.note, kind, strong, time: ev.time, bar: seg.ch.bar };
+      const rec1 = { note: ev.note, m: ev.note, kind, strong, time: ev.time, bar: seg.ch.bar };
       played.push(rec1);
       // squelette : la note d'appui de la mesure au premier temps
       if (mode === 'squelette' && hasTargets()) {
@@ -683,47 +770,84 @@ export function mountImprov(el, cfg = {}) {
         const tgt = targetAt(seg.i);
         if (atStart && tgt != null && !seg.ch.silent) {
           const st = tgState.get(seg.i) || { hit: false, resolved: null, note: tgt, at: 0 };
-          if (ev.note === tgt && !st.hit) { st.hit = true; st.at = ev.time; lastTarget = st; }
+          if (pc(ev.note) === pc(tgt) && !st.hit) { st.hit = true; st.at = ev.time; st.note = ev.note; lastTarget = st; }
           tgState.set(seg.i, st);
-          rec1.target = ev.note === tgt;
+          rec1.target = pc(ev.note) === pc(tgt);
         }
       }
-      // question – réponse : note jouée pendant une réponse
-      if (qr && qr.cur >= 0) {
-        const sg = qr.segs[qr.cur];
-        if (sg && sg.kind === 'a' && sg.played) sg.played.push({ ...rec1, beat: (ev.time - sg.startPerf) / (60000 / bpm) });
+      // question – réponse, imitation : note jouée pendant ton tour
+      if (segs && segs.cur >= 0) {
+        const sg = segs.list[segs.cur];
+        if (sg && sg.kind === 'a' && sg.played) sg.played.push({ ...rec1, beat: (ev.time - sg.startPerf) / beatMs });
       }
       const n = { note: ev.note, vel: ev.velocity, t: ev.time - recStart, d: 300 };
       rec.push(n); openNotes.set(ev.note, n);
       flashKey(ev.note, kind === 'chord' ? COLORS.ok : kind === 'scale' ? '#3b6bb5' : COLORS.warn);
     });
-    offOff = midi.on('noteoff', ev => { const n = openNotes.get(ev.note); if (n) { n.d = ev.time - recStart - n.t; openNotes.delete(ev.note); } });
+    offOff = midi.on('noteoff', ev => {
+      const tn = openAll.get(ev.note); if (tn) { tn.d = Math.max(0.05, (ev.time - tn.t) / beatMs); openAll.delete(ev.note); }
+      const n = openNotes.get(ev.note); if (n) { n.d = ev.time - recStart - n.t; openNotes.delete(ev.note); }
+    });
+  };
+
+  /** Fin d'une prise de palier : vérifications, résultat affiché, rappel de la leçon. */
+  const finishStep = elapsed => {
+    const take = { meter: P.meter, timeline, scale: P.scale, split, notes: takeNotes.map(({ m, b, d, v }) => ({ m, b, d, v })), end: elapsed };
+    const A = analyzeTake(take);
+    const segResults = segs ? segs.results : [];
+    const barsGrid = Math.round(timeline.totalBeats / P.meter);
+    // assez de matière : deux réponses jugées, ou au moins trois mesures jouées (à une main ou à deux)
+    const span = A.all.length ? (A.all[A.all.length - 1].b - A.all[0].b) / P.meter : 0;
+    const enough = segs ? segResults.length >= 2 : A.all.length >= 3 && span >= Math.min(3, barsGrid - 1);
+    if (!enough) { status.textContent = 'Prise trop courte : rien n’est enregistré. Relance quand tu es prêt.'; return; }
+    const res = evaluate(A, step.checks || [], { segResults, targetAt: hasTargets() ? targetAt : null, chordTargets: !!P.chordTargets });
+    resBox.hidden = false;
+    resBox.innerHTML = '';
+    resBox.append(
+      h('div', { class: 'ir-head ' + (res.ok ? 'ok' : 'todo') }, res.ok ? '✓ Palier réussi pour aujourd’hui' : 'Pas encore : voici ce qui manque'),
+      h('ul', { class: 'cp-checks' }, ...res.lines.map(l => h('li', { class: l.ok ? 'ok' : 'todo' }, (l.ok ? '✓ ' : '→ ') + l.text))));
+    status.textContent = res.ok ? 'Réussi. Réécoute-toi, ou passe au palier suivant.' : 'Relance quand tu veux : un essai de plus, un peu plus lentement si besoin (curseur du tempo).';
+    cfg.onResult?.(res);
   };
 
   const stop = (natural = false) => {
     const wasPlaying = playing || timer;
     playing = false;
     clearInterval(timer); timer = null;
+    clearInterval(countTimer); countTimer = null;
+    countNodes.forEach(nd => { try { nd.stop(); } catch (e) { /* */ } });
+    countNodes = [];
     audio.stopAll('improv');
     audio.release('improv');
     offNote?.(); offNote = null; offOff?.(); offOff = null;
-    playBtn.textContent = 'Lancer l’accompagnement';
+    rng.disabled = false;
+    setCue('');
+    playBtn.textContent = step ? 'Commencer' : 'Lancer l’accompagnement';
     playBtn.classList.remove('on');
     gridBox.querySelectorAll('.ig-cell.on').forEach(c => c.classList.remove('on'));
     clearTimeout(replayTimer); replayTimer = null;
     if (replaying) { replaying = false; status.textContent = statusIdle(); return; }
     if (rec.length >= 3) { lastRec = { notes: rec.slice(), presetId, bpm, pattern: patSel.value }; replayBtn.disabled = false; replayBtn.hidden = false; }
-    if (wasPlaying && qr) {
-      const rs = qr.results;
-      if (rs.length) {
-        const avg = rs.reduce((a, r) => a + r.score, 0) / rs.length;
-        status.innerHTML = `<b>${rs.length}</b> réponse${rs.length > 1 ? 's' : ''} · réussite moyenne <b>${fmtPct(avg)}</b>. ${avg >= 0.75 ? 'Très bien : tes réponses tiennent debout.' : 'Relis les remarques ci-dessus, puis recommence plus lentement.'}`;
-        store.push('stats.analyzer', { mode: 'improv-qr', at: Date.now(), pct: avg, id: presetId });
-      } else status.textContent = statusIdle();
-      qr = null;
+    const elapsed = (performance.now() - perf0) / beatMs;
+    if (wasPlaying && step) {
+      // la dernière réponse n'a pas encore été jugée (arrêt pendant le jugement) : on la juge maintenant
+      if (segs) segs.list.filter(s => s.kind === 'a' && s.played && !s.judged && s.played.length).forEach(s => segs.judge(s));
+      finishStep(elapsed);
+      segs = null;
       return;
     }
-    qr = null;
+    if (wasPlaying && segs) {
+      const rs = segs.results;
+      if (rs.length) {
+        const avg = rs.reduce((a, r) => a + r.score, 0) / rs.length;
+        const what = segs.kind === 'echo' ? 'imitation' : 'réponse';
+        status.innerHTML = `<b>${rs.length}</b> ${what}${rs.length > 1 ? 's' : ''} · réussite moyenne <b>${fmtPct(avg)}</b>. ${avg >= 0.75 ? 'Très bien.' : 'Relis les remarques ci-dessus, puis recommence plus lentement.'}`;
+        store.push('stats.analyzer', { mode: segs.kind === 'echo' ? 'improv-echo' : 'improv-qr', at: Date.now(), pct: avg, id: presetId });
+      } else status.textContent = statusIdle();
+      segs = null;
+      return;
+    }
+    segs = null;
     if (wasPlaying && played.length >= 4) {
       const strong = played.filter(p => p.strong);
       const chordStrong = strong.filter(p => p.kind === 'chord').length;
@@ -784,5 +908,7 @@ export function mountImprov(el, cfg = {}) {
   sel.addEventListener('change', () => { presetId = sel.value; load(); });
   patSel.addEventListener('change', () => { patOverride = true; });
   load();
+  // accès de test (automatisation) : début de la grille et durée d'un temps
+  frame.__improv = { get perf0() { return perf0; }, get beatMs() { return beatMs; }, get playing() { return playing; }, get timeline() { return timeline; }, get segs() { return segs; } };
   return () => stop();
 }

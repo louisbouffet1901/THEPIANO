@@ -995,3 +995,35 @@ details.cp-tips ul { margin: 2px 0 8px; padding-left: 18px; }
 .ear-free .free-title { width: 100%; font-weight: 650; color: var(--text-2); margin: 6px 0 2px; }
 .ear-free .btn.ok { border-color: var(--ok); }
 .ear-free .es-quiz { padding: 0 14px 14px; }
+
+/* ---------- V5 : paliers d'improvisation ---------- */
+.improv-cue { margin: 0 0 10px; padding: 8px 12px; border-radius: var(--radius-sm); text-align: center; font-size: 22px; font-weight: 700; letter-spacing: .01em; background: var(--surface-2); color: var(--text-2); }
+.improv-cue[hidden] { display: none; }
+.improv-cue.play { background: var(--accent); color: #fff; }
+.improv-cue.rest { background: var(--surface-2); color: var(--text-3); }
+.improv-cue.sing { background: var(--gold-tint); color: var(--gold); }
+.improv-cue.count { background: var(--accent-tint); color: var(--accent-strong); font-variant-numeric: tabular-nums; }
+.improv-res { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.improv-res[hidden] { display: none; }
+.improv-res .ir-head { font-weight: 700; margin-bottom: 6px; }
+.improv-res .ir-head.ok { color: var(--ok); }
+.improv-res .ir-head.todo { color: var(--warn); }
+.paliers-head { margin-bottom: 10px; }
+.palier .pal-what { margin: 0 0 8px; }
+.palier .pal-crit { margin: 0 0 8px; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--surface-2); color: var(--text-2); }
+.palier .pal-tip, .palier .pal-dim { margin: 0 0 8px; color: var(--text-2); }
+.pal-keyrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 8px; }
+.pal-host { margin-top: 8px; }
+.pal-host .w-frame { margin: 0; }
+.ok-txt { color: var(--ok); font-weight: 600; }
+.echelle { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.echelle li { display: flex; gap: 12px; align-items: flex-start; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+.echelle li .ech-n { flex: none; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-3); color: var(--text-2); font-weight: 700; font-size: 13px; }
+.echelle li.reached .ech-n { background: var(--ok); color: #fff; }
+.echelle li.started .ech-n { background: var(--accent-tint); color: var(--accent-strong); }
+.echelle li .ech-t { display: flex; flex-direction: column; gap: 2px; line-height: 1.35; }
+.echelle li .ech-t b { font-weight: 650; }
+@media (max-width: 600px) { .improv-cue { font-size: 19px; } }
+.prose ol.ear-steps { padding-left: 0; margin-left: 0; }
+.prose ol.ear-steps > li { margin: 0; }
+.impro-top { align-items: start; }
