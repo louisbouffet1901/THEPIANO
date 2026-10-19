@@ -110,7 +110,7 @@ export const ANALYSES = new Map([
       { m: 44, ch: [['la♭', 'III', 'T', 1], ['do 7/mi', 'V6/5', 'D', 3]] },
     ],
     notes: [
-      'Mesure 44 : le septolet (sept notes dans un temps) orne l’accord de la♭ ; l’harmonie reste celle des mesures 27-28.',
+      'Mesure 44 : le septolet (sept croches dans le temps de quatre, sur deux temps) orne l’accord de la♭ ; l’harmonie reste celle des mesures 27-28.',
       'La main gauche ne bouge pas pendant l’ornement : c’est elle qui garde le temps.',
     ],
   }],

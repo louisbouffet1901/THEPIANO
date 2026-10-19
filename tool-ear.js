@@ -8,6 +8,7 @@ import { keyboard } from './diagrams.js';
 import { pitch, octaveDiff, sungName } from './pitch.js';
 import { VoiceTrace, coachLine, adviceFor, seriesAdvice, voiceRange, voiceRangeLabel } from './voice.js';
 import { inputLatency } from './latency.js';
+import * as TH from './theory.js';
 
 const PLAY = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M7 4.5v15l12-7.5-12-7.5z" fill="currentColor"/></svg>';
 
@@ -194,6 +195,13 @@ const TIPS = {
   keydegree: ['Écris (ou chante) toute la gamme depuis la tonique, puis compte jusqu’au degré demandé.', 'N’oublie pas les altérations de l’armure : en ré majeur, fa et do sont dièses.'],
   playchord: ['Construis l’accord en empilant des tierces depuis la fondamentale.', 'Vérifie la tierce : c’est elle qui fait majeur ou mineur.'],
   chordsight: ['Range les notes en tierces pour trouver la fondamentale, puis regarde quelle note est à la basse.'],
+  relative: ['Relative mineure : trois demi-tons (une tierce mineure) sous la tonique majeure. Sur le clavier : compte trois touches vers la gauche.', 'Relative majeure : trois demi-tons au-dessus de la tonique mineure.', 'Une tonalité et sa relative ont la même armure : seule la note de repos change.'],
+  sigcount: ['Avec des dièses, le dernier dièse est la sensible : un demi-ton sous la tonique (fa♯ → sol majeur, do♯ → ré majeur).', 'Avec des bémols, l’avant-dernier bémol est la tonique (si♭ mi♭ la♭ → mi♭ majeur). Un seul bémol : fa majeur.', 'Une tonalité mineure a l’armure de sa relative majeure, trois demi-tons plus haut.'],
+  triadkey: ['Écris la gamme, puis empile une note sur deux à partir du degré : degré 2 en do → ré, fa, la.', 'En majeur : majeurs sur 1, 4, 5 ; mineurs sur 2, 3, 6 ; diminué sur 7.'],
+  funckey: ['Tonique : I (et vi qui la remplace). Sous-dominante : IV et ii. Dominante : V, V7 et vii°.', 'Retrouve d’abord le degré de l’accord dans la tonalité, puis sa fonction.'],
+  ivfind: ['Compte d’abord les noms de notes (une tierce = trois noms : ré, mi, fa), puis les demi-tons pour l’altération.', 'Le nom de la note est fixé par la quantité : une tierce au-dessus de ré est toujours une sorte de fa (fa, fa♯…), jamais un sol♭.'],
+  chordspell: ['Fondamentale, puis une note sur deux : ré (mi) fa (sol) la. Puis ajuste la tierce : 4 demi-tons pour majeur, 3 pour mineur.', 'La quinte juste fait 7 demi-tons au-dessus de la fondamentale.'],
+  secdom: ['La dominante se bâtit une quinte au-dessus de l’accord visé : la dominante de ré est la (la, si, do, ré, mi : cinq noms).', 'Sur cette note, un accord majeur avec septième mineure : la 7 = la – do♯ – mi – sol. Sa tierce (do♯) est la sensible de l’accord visé.'],
 };
 const tipFor = (kind, q) => q.tip || pick(TIPS[q.tipKind || kind] || TIPS.degree);
 
@@ -221,6 +229,26 @@ function pieceMotif(cfg, st) {
   const beat = cfg.beat || 0.5;
   const timed = (ms, t0, slow = 1) => { let t = t0; return ms.map((m, i) => { const n = { m, t, d: M.durs[i] * beat * slow * 0.95, v: 80 }; t += M.durs[i] * beat * slow; return n; }); };
   return { M, k, cad, timed, beat, key: keyFr(M.tonic, M.mode) };
+}
+
+
+/* Aides des séries de théorie V6 */
+const CH_FR = { M: 'majeur', m: 'mineur', dim: 'diminué', aug: 'augmenté', '7': '7', maj7: 'maj7', m7: 'm7', hdim7: 'ø7', dim7: '°7' };
+const uniq = arr => [...new Set(arr)];
+const keyLabel = (t, mode) => `${TH.noteName(t)} ${mode === 'maj' ? 'majeur' : 'mineur'}`;
+const sigLabel = sig => (sig.count === 0 ? 'aucune altération' : `${Math.abs(sig.count)} ${sig.count > 0 ? 'dièse' : 'bémol'}${Math.abs(sig.count) > 1 ? 's' : ''} (${sig.list.join(', ')})`);
+/** Tonalité d'après un code ('Bb', 'Fm') ou un nom français ('si♭', 'fa mineur'). */
+function tonicOf(k) {
+  if (KEYS[k]) { const [n] = KEYS[k].fr.split(' '); return { t: TH.parseNote(n), mode: KEYS[k].mode }; }
+  const m = String(k).match(/^(\S+)(?:\s+(majeur|mineur))?$/);
+  return { t: TH.parseNote(m[1]), mode: m[2] === 'mineur' ? 'min' : 'maj' };
+}
+/** Tirage sans répéter le précédent. */
+function pickNew(pool, st, key) {
+  let x = pick(pool), g = 0;
+  while (pool.length > 1 && x === st[key] && g++ < 20) x = pick(pool);
+  st[key] = x;
+  return x;
 }
 
 const GEN = {
@@ -804,6 +832,170 @@ const GEN = {
     };
   },
 
+
+  /* ---------- V6 : tonalités, accords et intervalles par le nom (théorie, sans piano) ---------- */
+  /** Relative mineure d'une tonalité majeure (ou l'inverse). */
+  relative(cfg, st) {
+    const pool = cfg.keys || ['C', 'G', 'D', 'A', 'E', 'F', 'Bb', 'Eb', 'Ab', 'Db'];
+    const k = pickNew(pool, st, 'lastRel');
+    const { t, mode } = tonicOf(k);
+    const relMode = mode === 'maj' ? 'min' : 'maj';
+    const rel = TH.relative(t, mode);
+    const right = keyLabel(rel, relMode);
+    const opts = uniq([right, keyLabel(t, relMode), keyLabel(TH.relative(TH.transpose(t, '5J'), mode), relMode), keyLabel(TH.relative(TH.transpose(t, '5J', 'down'), mode), relMode)]);
+    const sig = TH.keySignature(t, mode);
+    return {
+      prompt: mode === 'maj' ? `Quelle est la <b>relative mineure</b> de <b>${keyLabel(t, 'maj')}</b> ?` : `Quelle est la <b>relative majeure</b> de <b>${keyLabel(t, 'min')}</b> ?`,
+      answers: shuffle(opts).map(o => ({ id: o, label: o })), correct: right,
+      explain: `${mode === 'maj' ? `Trois demi-tons sous ${TH.noteName(t)}` : `Trois demi-tons au-dessus de ${TH.noteName(t)}`} : <b>${right}</b>. Même armure : ${sigLabel(sig)}.`,
+    };
+  },
+  /** Nombre d'altérations à l'armure d'une tonalité. */
+  sigcount(cfg, st) {
+    const pool = cfg.keys || ['C', 'G', 'D', 'A', 'E', 'F', 'Bb', 'Eb', 'Ab', 'Db'];
+    const k = pickNew(pool, st, 'lastSig');
+    const { t, mode } = tonicOf(k);
+    const sig = TH.keySignature(t, mode);
+    const c = sig.count;
+    const vals = uniq([c, c + 1, c - 1, -c || (c > 0 ? -1 : 1), c + 2].filter(v => v >= -7 && v <= 7)).slice(0, 4);
+    const lab = v => (v === 0 ? 'aucune' : v > 0 ? `${v} dièse${v > 1 ? 's' : ''}` : `${-v} bémol${v < -1 ? 's' : ''}`);
+    let how = '';
+    if (mode === 'min') how = ` C’est l’armure de sa relative, ${keyLabel(sig.relMajor, 'maj')}.`;
+    else if (c > 0) how = ` Le dernier dièse, ${sig.list[sig.list.length - 1]}, est la sensible : un demi-ton sous ${TH.noteName(t)}.`;
+    else if (c < -1) how = ` L’avant-dernier bémol, ${sig.list[sig.list.length - 2]}, est la tonique.`;
+    return {
+      prompt: `Combien d’altérations à l’armure de <b>${keyLabel(t, mode)}</b> ?`,
+      answers: shuffle(vals).map(v => ({ id: v, label: lab(v) })), correct: c,
+      explain: `${capitalize(keyLabel(t, mode))} : <b>${sigLabel(sig)}</b>.${how}`,
+    };
+  },
+  /** L'accord de trois sons d'un degré : « en sol majeur, quel accord sur le 6e degré ? » */
+  triadkey(cfg, st) {
+    const pool = cfg.keys || ['C', 'G', 'F', 'D', 'Bb'];
+    const k = pickNew(pool, st, 'lastTk');
+    const { t, mode } = tonicOf(k);
+    const sev = !!cfg.seventh;
+    // avec septième, en mineur : seulement les degrés dont l'accord a un nom usuel (ii ø7, iv m7, V7, VI maj7, vii °7)
+    const degs = cfg.degrees || (mode === 'maj' ? [1, 2, 3, 4, 5, 6, 7] : sev ? [2, 4, 5, 6, 7] : [1, 4, 5, 6]);
+    const d = pick(degs);
+    const on = x => TH.triadOn(t, mode, x, { seventh: sev });
+    const tri = on(d);
+    const lab = x => `${TH.noteName(x.root)} ${CH_FR[x.q]}`;
+    const right = lab(tri);
+    const other = { M: 'm', m: 'M', dim: 'm', aug: 'M', '7': 'maj7', maj7: '7', m7: '7', hdim7: 'dim7', dim7: 'hdim7' }[tri.q];
+    // distracteurs : les accords voisins (en mineur avec septième, d'autres degrés de la liste, dont l'accord a un nom)
+    const near = sev && mode !== 'maj' ? shuffle(degs.filter(x => x !== d)).slice(0, 2) : [d % 7 + 1, (d + 5) % 7 + 1];
+    const opts = uniq([right, `${TH.noteName(tri.root)} ${CH_FR[other]}`, ...near.map(x => lab(on(x)))].filter(o => !/undefined/.test(o)));
+    const sc = TH.scale(t, mode === 'maj' ? 'maj' : 'harmMin').slice(0, 7).map(n => TH.noteName(n));
+    return {
+      prompt: `En <b>${keyLabel(t, mode)}</b>, quel accord${sev ? ' de septième' : ''} est construit sur le <b>${d === 1 ? '1<sup>er</sup>' : d + '<sup>e</sup>'} degré</b> ?`,
+      answers: shuffle(opts).map(o => ({ id: o, label: o })), correct: right,
+      explain: `Gamme : ${sc.join(' – ')}. Sur le degré ${d}, une note sur deux : ${tri.notes.map(n => TH.noteName(n)).join(' – ')} → <b>${right}</b> (${tri.roman}).`,
+    };
+  },
+  /** Fonction d'un accord dans une tonalité : T, SD ou D. */
+  funckey(cfg, st) {
+    const pool = cfg.keys || ['C', 'G', 'F', 'D', 'Fm'];
+    const k = pickNew(pool, st, 'lastFk');
+    const { t, mode } = tonicOf(k);
+    const FN = { 1: 'T', 6: 'T', 4: 'SD', 2: 'SD', 5: 'D', 7: 'D' };
+    const degs = (cfg.degrees || [1, 2, 4, 5, 6, 7]).filter(x => FN[x]);
+    const d = pickNew(degs, st, 'lastFd');
+    const tri = TH.triadOn(t, mode, d, { seventh: d === 5 && Math.random() < 0.4 });
+    const nm = `${TH.noteName(tri.root)} ${CH_FR[tri.q] || ''}`.trim();
+    const why = { 1: 'l’accord de tonique : le repos', 6: 'il remplace la tonique (deux notes communes avec elle)', 4: 'la sous-dominante : on s’éloigne, on prépare', 2: 'il remplace la sous-dominante, et prépare la dominante', 5: 'la dominante : la tension, qui appelle la tonique', 7: 'il contient la sensible : une dominante sans fondamentale' }[d];
+    return {
+      prompt: `En <b>${keyLabel(t, mode)}</b>, quelle est la fonction de l’accord de <b>${nm}</b> ?`,
+      answers: [{ id: 'T', label: 'Tonique (T)' }, { id: 'SD', label: 'Sous-dominante (SD)' }, { id: 'D', label: 'Dominante (D)' }], correct: FN[d],
+      explain: `${capitalize(nm)} est le <b>${tri.roman}</b> de ${keyLabel(t, mode)} : ${why}.`,
+    };
+  },
+  /** Trouver la note à un intervalle donné au-dessus d'une note, avec le bon nom. */
+  ivfind(cfg, st) {
+    const set = cfg.set || ['2m', '2M', '3m', '3M', '4J', '5J', '6m', '6M', '7m', '8ve'];
+    const roots = cfg.roots || ['do', 'ré', 'mi', 'fa', 'sol', 'la', 'si', 'si♭', 'mi♭', 'la♭'];
+    for (let tries = 0; tries < 50; tries++) {
+      const r = TH.parseNote(pick(roots)), ivs = pickNew(set, st, 'lastIvf');
+      const tg = TH.transpose(r, ivs);
+      if (Math.abs(tg.a) > 1) continue;
+      const iv = TH.parseIv(ivs);
+      const name = TH.ivName(iv.number, iv.q);
+      const right = TH.noteName(tg);
+      const sameLetter = TH.noteName({ ...tg, a: tg.a === 0 ? (Math.random() < 0.5 ? -1 : 1) : 0 });
+      const enh = TH.noteName(TH.spellNear(TH.midiOf({ ...tg, o: 3 }), { l: (tg.l + (tg.a > 0 ? 1 : 6)) % 7, a: 0 }));
+      const near = TH.noteName({ l: (tg.l + (Math.random() < 0.5 ? 1 : 6)) % 7, a: 0, o: null });
+      const exotic = x => /mi♯|si♯|fa♭|do♭|𝄫|𝄪/.test(x);
+      if (exotic(right)) continue;
+      const opts = uniq([right, ...[sameLetter, enh, near].filter(x => x !== TH.noteName(r) && !exotic(x))]).slice(0, 4);
+      if (opts.length < 3) continue;
+      const letters = []; for (let i = 0; i < iv.number; i++) letters.push(TH.LETTERS_FR[(r.l + i) % 7]);
+      const a = /^[aeiouo]/.test(name) ? 'à l’' : 'à la ';
+      return {
+        prompt: `Quelle note est ${a}<b>${name}</b> au-dessus de <b>${TH.noteName(r)}</b> ?`,
+        answers: shuffle(opts).map(o => ({ id: o, label: o })), correct: right,
+        explain: `${iv.number === 8 ? 'L’octave porte le même nom' : `${letters.join(', ')} : ${iv.number} noms, donc une ${TH.NUM_NAME[iv.number]}`} ; ${iv.semis} demi-ton${iv.semis > 1 ? 's' : ''} au-dessus de ${TH.noteName(r)} → <b>${right}</b>.${enh !== right && TH.parseNote(enh).l !== tg.l && opts.includes(enh) ? ` ${enh} est la même touche, mais le nom doit être ${TH.LETTERS_FR[tg.l]}.` : ''}`,
+      };
+    }
+  },
+  /** Les notes d'un accord, bien écrites. */
+  chordspell(cfg, st) {
+    const set = cfg.set || ['M', 'm'];
+    const roots = cfg.roots || ['do', 'ré', 'mi', 'fa', 'sol', 'la', 'si', 'si♭', 'mi♭', 'la♭'];
+    for (let tries = 0; tries < 50; tries++) {
+      const r = TH.parseNote(pick(roots)), q = pickNew(set, st, 'lastCs');
+      const ns = TH.chord(r, q);
+      const fmt = arr => arr.map(n => TH.noteName(n)).join(' – ');
+      const right = fmt(ns);
+      const exotic = x => /mi♯|si♯|fa♭|do♭|𝄫|𝄪/.test(x);
+      if (!cfg.exotic && exotic(right)) continue;
+      const alt = { M: 'm', m: 'M', dim: 'm', aug: 'M', '7': 'maj7', maj7: '7', m7: '7', hdim7: 'dim7', dim7: 'hdim7' }[q];
+      const third = ns[1];
+      // l'orthographe : une tierce altérée écrite avec le mauvais nom (fa♯ → sol♭), sinon une « seconde » à la place
+      const enhThird = third.a !== 0 ? TH.spellNear(TH.midiOf({ ...third, o: 3 }), { l: (third.l + (third.a > 0 ? 1 : 6)) % 7, a: 0 }) : TH.transpose(r, '2M');
+      const wrongFifth = ns.map((n, i) => (i === 2 ? { ...n, a: n.a + (q === 'aug' ? -1 : 1) } : n));
+      const opts = uniq([right, ...[fmt(TH.chord(r, alt)), fmt([ns[0], enhThird, ...ns.slice(2)]), fmt(wrongFifth)].filter(o => !exotic(o))]);
+      if (opts.length < 3) continue;
+      return {
+        prompt: `Quelles notes forment l’accord de <b>${TH.noteName(r)} ${CH_FR[q]}</b> ?`,
+        answers: shuffle(opts).map(o => ({ id: o, label: o })), correct: right,
+        explain: `${TH.noteName(r)}, puis une note sur deux : ${ns.map(n => TH.LETTERS_FR[n.l]).join(', ')}. Tierce ${TH.interval(r, ns[1]).q === 'M' ? 'majeure (4 demi-tons)' : 'mineure (3 demi-tons)'}, quinte ${TH.QUAL_NAME[TH.interval(r, ns[2]).q]} (${TH.interval(r, ns[2]).semis} demi-tons)${ns[3] ? `, septième ${TH.QUAL_NAME[TH.interval(r, ns[3]).q]} (${TH.interval(r, ns[3]).semis} demi-tons)` : ''} : <b>${right}</b>.`,
+      };
+    }
+  },
+
+  /** Dominante secondaire : « en fa majeur, quelle est la dominante de ré mineur (vi) ? » */
+  secdom(cfg, st) {
+    const pool = cfg.keys || ['C', 'G', 'F', 'D', 'Bb'];
+    const exotic = x => /mi♯|si♯|fa♭|do♭|𝄫|𝄪/.test(x);
+    let k, t, mode, d, tgt, r, dom, domNotes;
+    for (let tries = 0; tries < 30; tries++) {
+      k = pickNew(pool, st, 'lastSd');
+      ({ t, mode } = tonicOf(k));
+      d = pickNew(cfg.degrees || [2, 3, 4, 5, 6], st, 'lastSdd');
+      tgt = TH.triadOn(t, mode, d);
+      r = { ...tgt.root, o: null };
+      dom = TH.transpose(r, '5J');
+      domNotes = TH.chord(dom, '7');
+      if (!exotic(domNotes.map(n => TH.noteName(n)).join(' '))) break;   // pas de mi♯ ni de si♯ à ce niveau
+    }
+    const right = `${TH.noteName(dom)} 7`;
+    const diat = TH.triadOn(t, mode, ((d + 3) % 7) + 1, { seventh: true });     // l'accord de la gamme sur la même note, sans altération
+    const below = TH.transpose(r, '5J', 'down');                                  // l'erreur classique : une quinte en dessous
+    const nextDom = TH.transpose({ ...TH.triadOn(t, mode, d % 7 + 1).root, o: null }, '5J');
+    const opts = uniq([right, `${TH.noteName(diat.root)} ${CH_FR[diat.q]}`, `${TH.noteName(below)} 7`, `${TH.noteName(nextDom)} 7`].filter(o => o === right || !exotic(o))).slice(0, 4);
+    const inKey = TH.scale(t, mode === 'maj' ? 'maj' : 'harmMin').slice(0, 7).map(n => TH.noteName({ ...n, o: null }));
+    const alt = domNotes.filter(n => !inKey.includes(TH.noteName(n)));
+    const third = TH.noteName(domNotes[1]);
+    const how = alt.some(n => TH.noteName(n) === third)
+      ? ` Le ${third}, étranger à la gamme, est la sensible de ${TH.noteName(r)} : c’est lui qui attire.`
+      : alt.length ? ` Le ${TH.noteName(alt[0])}, étranger à la gamme, signale l’accord ; ${third} est la sensible de ${TH.noteName(r)}.` : '';
+    return {
+      prompt: `En <b>${keyLabel(t, mode)}</b>, quelle est la dominante (V7) de <b>${TH.noteName(r)} ${CH_FR[tgt.q]}</b> (${tgt.roman}) ?`,
+      answers: shuffle(opts).map(o => ({ id: o, label: o })), correct: right,
+      explain: `Une quinte au-dessus de ${TH.noteName(r)} : ${TH.noteName(dom)}. ${capitalize(right)} = <b>${domNotes.map(n => TH.noteName(n)).join(' – ')}</b>.${how}`,
+    };
+  },
+
   /** Jouer un accord de fonction : « joue le V7 de fa mineur » */
   playchord(cfg) {
     const items = cfg.items || [
@@ -1366,6 +1558,7 @@ export function mountQuiz(el, cfg) {
       return;
     }
     body.innerHTML = '';
+    el.dispatchEvent(new CustomEvent('exo-done', { bubbles: true, detail: { ok: state.ok, n: total } })); // étape de leçon (V6)
     body.append(h('div', { class: 'big-score' },
       h('div', {}, h('div', { class: 'v' }, fmtPct(pct)), h('div', { class: 'l' }, 'réussite du premier coup')),
       h('div', {}, h('div', { class: 'v' }, `${state.solved}/${total}`), h('div', { class: 'l' }, 'réussies au total')),
@@ -1504,13 +1697,22 @@ export const THEORY_PRESETS = [
   { group: 'Gammes et tonalités', id: 'kdeg', title: 'Les degrés d’une gamme majeure', kind: 'keydegree' },
   { group: 'Gammes et tonalités', id: 'ks-maj', title: 'Armures : tonalités majeures', kind: 'keysig', keys: ['C', 'G', 'D', 'A', 'E', 'B', 'F', 'Bb', 'Eb', 'Ab', 'Db'] },
   { group: 'Gammes et tonalités', id: 'ks-min', title: 'Armures : tonalités mineures', kind: 'keysig', minor: true, keys: ['C', 'G', 'D', 'A', 'E', 'F', 'Bb', 'Eb', 'Ab'] },
+  { group: 'Gammes et tonalités', id: 'sigc', title: 'Combien d’altérations à l’armure ?', kind: 'sigcount' },
+  { group: 'Gammes et tonalités', id: 'rel', title: 'Relatives : majeur et mineur', kind: 'relative', keys: ['C', 'G', 'D', 'A', 'E', 'F', 'Bb', 'Eb', 'Ab', 'Am', 'Em', 'Dm', 'Gm', 'Cm', 'Fm'] },
+  { group: 'Intervalles et accords', id: 'ivf', title: 'Trouver la note à un intervalle donné', kind: 'ivfind' },
   { group: 'Intervalles et accords', id: 'ivs-q', title: 'Intervalles écrits : la quantité', kind: 'intervalsight', quality: false, set: ['2M', '3M', '4J', '5J', '6M', '7m', '8ve'] },
   { group: 'Intervalles et accords', id: 'ivs', title: 'Intervalles écrits : quantité et qualité', kind: 'intervalsight', set: ['2m', '2M', '3m', '3M', '4J', '5J', '6m', '6M', '7m', '7M', '8ve'] },
+  { group: 'Intervalles et accords', id: 'chsp', title: 'Les notes d’un accord', kind: 'chordspell', set: ['M', 'm', 'dim'] },
+  { group: 'Intervalles et accords', id: 'trk', title: 'Les accords d’une tonalité', kind: 'triadkey' },
+  { group: 'Intervalles et accords', id: 'fnk', title: 'Fonctions : tonique, sous-dominante, dominante', kind: 'funckey' },
   { group: 'Intervalles et accords', id: 'chs', title: 'Accords écrits : nature et renversement', kind: 'chordsight', set: ['M', 'm'], inversions: [0, 1, 2] },
   { group: 'Intervalles et accords', id: 'chs4', title: 'Accords écrits : les quatre natures', kind: 'chordsight', set: ['M', 'm', 'dim', 'aug'], inversions: [0] },
   { group: 'Intervalles et accords', id: 'chs7', title: 'Accords de septième écrits : nature', kind: 'chordsight', set: ['7', 'maj7', 'm7', 'hdim7', 'dim7'], inversions: [0] },
   { group: 'Intervalles et accords', id: 'chs-v7', title: 'Septième de dominante écrite : quel renversement ?', kind: 'chordsight', set: ['7'], inversions: [0, 1, 2, 3] },
   { group: 'Intervalles et accords', id: 'play-fm', title: 'Jouer les fonctions en fa mineur', kind: 'playchord', mode: 'play' },
+  { group: 'Intervalles et accords', id: 'chsp7', title: 'Les notes d’un accord de septième', kind: 'chordspell', set: ['7', 'maj7', 'm7', 'hdim7', 'dim7'] },
+  { group: 'Intervalles et accords', id: 'trk7', title: 'Les septièmes d’une tonalité', kind: 'triadkey', seventh: true, keys: ['C', 'G', 'F', 'D', 'Bb', 'Am', 'Fm'] },
+  { group: 'Intervalles et accords', id: 'sdom', title: 'Dominantes secondaires', kind: 'secdom' },
 ];
 
 /** Compatibilité : toutes les séries. */

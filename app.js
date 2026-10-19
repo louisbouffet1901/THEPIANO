@@ -4,7 +4,7 @@ import { store } from './store.js';
 import { midi } from './midi.js';
 import { audio } from './audio.js';
 import { sharedMetronome } from './metronome.js';
-import { makeW, mountWidgets, ICONS } from './widgets.js';
+import { makeW, mountWidgets, ICONS, notionToggle } from './widgets.js';
 import { keyboard } from './diagrams.js';
 import { toast } from './toast.js';
 import { ensureAbcjs, mountLazy } from './lazy.js';
@@ -66,7 +66,7 @@ const routes = [
     const b = ns.mountNoteSpeed(box);
     return () => { try { a?.(); } catch (e) { /* */ } try { b?.(); } catch (e) { /* */ } };
   }))],
-  [/^#\/maitrise$/, () => toolPage('En cours de maîtrise', 'Cinq minutes par jour : les notions des leçons de théorie terminées et l’analyse de tes pièces, revues juste avant de les oublier.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)))],
+  [/^#\/maitrise$/, () => toolPage('En cours de maîtrise', 'Cinq minutes par jour : les notions que tu as cochées « À apprendre par cœur » et l’analyse de tes pièces, revues juste avant de les oublier.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)))],
   [/^#\/outils\/rythme$/, () => toolPage('Rythme', 'Lire le rythme : compter, subdiviser, placer chaque attaque. Dix niveaux, des noires aux polyrythmies, et les rythmes de tes pièces.', () => Promise.all([import('./tool-rhythm.js'), ensureAbcjs()]).then(([m]) => el => m.mountRhythmPage(el)))],
   [/^#\/outils\/oreille$/, pageEar],
   [/^#\/outils\/theorie$/, () => pagePresets('theorie')],
@@ -258,6 +258,103 @@ function renderRich(container, bodyFn) {
   return unmount;
 }
 /**
+ * Leçon en étapes (V6, leçons avec steps: true) : chaque titre h2 ouvre une étape repliable, une seule ouverte à la
+ * fois. Une étape est cochée quand ses exercices sont faits (ou, sans exercice, quand on passe à la suivante).
+ * Les widgets d'une étape fermée ne sont montés qu'à son ouverture. Ce qui précède le premier h2 reste visible.
+ */
+function renderSteps(container, l) {
+  const { W, cfgs } = makeW();
+  container.innerHTML = l.body(W);
+  container._core = W._core.slice();
+  container._notions = W._notions.slice();
+  const heads = [...container.children].filter(x => x.tagName === 'H2');
+  if (!heads.length) { const un = mountWidgets(container, cfgs); frenchSpacing(container); return un; }
+  const key = `lessonSteps.${l.id}`;
+  const saved = store.get(key) || {};
+  const doneSet = new Set(saved.done || []);
+  const save = patch => store.set(key, { ...(store.get(key) || {}), ...patch });
+  const cleanups = [];
+  // exercices qui cochent l'étape : « À toi », construction, partition ; les séries d'entraînement restent facultatives
+  const counts = x => /\bw-(check|build|spot)\b/.test(x.className) || (/\bw-quiz\b/.test(x.className) && /^À toi/.test(((cfgs.get(x.dataset.wid || x.dataset.widLazy) || {}).cfg || {}).title || ''));
+  const steps = heads.map((hd, i) => {
+    const nodes = [];
+    let n = hd.nextElementSibling;
+    while (n && n.tagName !== 'H2') { nodes.push(n); n = n.nextElementSibling; }
+    const det = h('details', { class: 'step' });
+    const tick = h('span', { class: 'step-tick', title: 'Étape faite', hidden: !doneSet.has(i) }, '✓');
+    const sum = h('summary', {}, h('span', { class: 'step-num' }, `Étape ${i + 1}`), h('span', { class: 'step-title', html: hd.innerHTML }), tick);
+    const body = h('div', { class: 'step-body' });
+    hd.replaceWith(det);
+    det.append(sum, body);
+    nodes.forEach(x => body.append(x));
+    const exos = [...body.querySelectorAll('[data-wid]')].filter(counts).length;
+    body.querySelectorAll('[data-wid]').forEach(x => { x.dataset.widLazy = x.dataset.wid; delete x.dataset.wid; });
+    return { det, body, tick, title: hd.textContent.trim(), exos, got: new Set(), mounted: false };
+  });
+  const markDone = i => {
+    if (doneSet.has(i)) return;
+    doneSet.add(i);
+    steps[i].tick.hidden = false;
+    save({ done: [...doneSet] });
+  };
+  const mount = st => {
+    if (st.mounted) return;
+    st.mounted = true;
+    st.body.querySelectorAll('[data-wid-lazy]').forEach(x => { x.dataset.wid = x.dataset.widLazy; delete x.dataset.widLazy; });
+    cleanups.push(mountWidgets(st.body, cfgs));
+    frenchSpacing(st.body);
+  };
+  let all = false;
+  steps.forEach((st, i) => {
+    st.det.addEventListener('toggle', () => {
+      if (!st.det.open) return;
+      mount(st);
+      save({ open: i });
+      if (!all) steps.forEach((o, j) => { if (j !== i && o.det.open) o.det.open = false; });
+    });
+    // exercices de l'étape : coche quand tous ont été faits une fois
+    st.body.addEventListener('exo-done', e => {
+      const w = e.target.closest('[data-wid]');
+      if (w && !counts(w)) return;
+      st.got.add(w ? w.dataset.wid : String(st.got.size));
+      if (st.got.size >= st.exos) markDone(i);
+    });
+    const foot = h('div', { class: 'step-foot' });
+    if (i < steps.length - 1) {
+      const nx = steps[i + 1];
+      const b = h('button', { class: 'btn primary step-next', type: 'button', html: `Étape suivante : <span class="step-next-t">${esc(nx.title)}</span> →` });
+      b.addEventListener('click', () => {
+        if (!st.exos) markDone(i);
+        nx.det.open = true;
+        requestAnimationFrame(() => nx.det.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+      });
+      foot.append(b);
+      if (st.exos) foot.append(h('span', { class: 'small muted' }, 'L’étape se coche quand ses exercices sont faits.'));
+    } else {
+      foot.append(h('span', { class: 'small muted' }, 'Dernière étape. Quand tout est fait, marque la leçon comme terminée, en bas de la page.'));
+      if (!st.exos) st.det.addEventListener('toggle', () => { if (st.det.open) markDone(i); });
+    }
+    st.body.append(foot);
+  });
+  // en tête : nombre d'étapes, tout ouvrir
+  const allBtn = h('button', { class: 'btn sm ghost', type: 'button' }, 'Tout ouvrir');
+  allBtn.addEventListener('click', () => {
+    all = !all;
+    allBtn.textContent = all ? 'Une étape à la fois' : 'Tout ouvrir';
+    if (all) steps.forEach(st => { st.det.open = true; });
+    else steps.forEach((st, j) => { st.det.open = j === (store.get(key)?.open ?? 0); });
+  });
+  const intro = h('div', { class: 'steps-head' }, h('span', { class: 'small' }, `${steps.length} étapes, une à la fois : une idée, un exemple, un exercice.`), allBtn);
+  steps[0].det.before(intro);
+  // d'abord ce qui est hors des étapes (les étapes fermées gardent leurs widgets en attente), puis l'étape ouverte
+  cleanups.push(mountWidgets(container, cfgs));
+  frenchSpacing(container);
+  const openIdx = Number.isInteger(saved.open) && saved.open < steps.length ? saved.open : 0;
+  steps[openIdx].det.open = true;
+  mount(steps[openIdx]);
+  return () => cleanups.forEach(fn => { try { fn(); } catch (e) { /* */ } });
+}
+/**
  * Page de pièce : comme renderRich, mais les passages (les h3 qui suivent « Les passages, un par un ») deviennent des
  * sections repliables. Une seule ouverte d'emblée (la dernière consultée, sinon la première) ; les partitions d'un
  * passage fermé ne sont dessinées qu'à son ouverture.
@@ -313,13 +410,18 @@ function renderPieceBody(container, bodyFn, pieceId) {
   return () => cleanups.forEach(fn => { try { fn(); } catch (e) { /* */ } });
 }
 /** Encadré de tête d'une leçon : l'essentiel (à retenir), l'objectif mesurable et les objectifs. */
-function essentialsCard(l, core) {
-  const ess = l.essentials && l.essentials.length ? `<ul>${l.essentials.map(x => `<li>${x}</li>`).join('')}</ul>` : core.join('');
+function essentialsCard(l, core, notions = []) {
+  const ess = notions.length ? '<ul class="ess-notions"></ul>' : l.essentials && l.essentials.length ? `<ul>${l.essentials.map(x => `<li>${x}</li>`).join('')}</ul>` : core.join('');
   const goals = l.goals && l.goals.length ? `<ul class="goals">${l.goals.map(g => `<li>${g}</li>`).join('')}</ul>` : '';
   if (!ess && !goals && !l.goal) return null;
   const card = h('div', { class: 'card essentials' + (ess && goals ? ' two' : '') });
-  card.innerHTML = (ess ? `<div class="ess-col"><div class="ess-title">${ICONS.star}L’essentiel</div>${ess}</div>` : '') +
+  card.innerHTML = (ess ? `<div class="ess-col"><div class="ess-title">${ICONS.star}${notions.length ? 'Les notions clés' : 'L’essentiel'}</div>${ess}</div>` : '') +
     (goals || l.goal ? `<div class="ess-col"><div class="ess-title muted-title">À la fin de cette leçon</div>${goals}${l.goal ? `<p class="ess-goal"><b>Réussi quand :</b> ${l.goal}</p>` : ''}</div>` : '');
+  if (notions.length) {
+    const ul = card.querySelector('.ess-notions');
+    for (const n of notions) ul.append(h('li', {}, h('div', { class: 'ess-n', html: `<b>${esc(n.title)}</b>${n.short ? ` : ${n.short}` : ''}` }), notionToggle(n, 'par cœur')));
+    ul.after(h('p', { class: 'small muted ess-hint' }, 'Coche « par cœur » ce que tu veux mémoriser : ces notions reviennent dans ', h('a', { href: '#/maitrise' }, 'En cours de maîtrise'), ', au bon moment.'));
+  }
   return card;
 }
 /** Typographie française : espace fine insécable avant ? ! ; : et à l'intérieur des guillemets. */
@@ -395,7 +497,7 @@ function pageHome() {
       ${toolCard('#/outils/theorie', 'Théorie', 'Tous les cours, et des exercices : notes, gammes, intervalles, accords.')}
       ${toolCard('#/outils/exercices', 'Exercices', 'Indépendance des mains, polyrythmes, lié contre détaché ; lecture de notes chronométrée.')}
       ${toolCard('#/outils/composition', 'Composition', 'Écrire ta pièce de 8 mesures : élégie, romance ou nocturne, notée et vérifiée.')}
-      <a class="card" href="#/maitrise" id="masteryCard"><h3>En cours de maîtrise</h3><p>5 minutes par jour : la théorie des leçons terminées et l’analyse de tes pièces, revues au bon moment.</p></a>
+      <a class="card" href="#/maitrise" id="masteryCard"><h3>En cours de maîtrise</h3><p>5 minutes par jour : les notions que tu as cochées et l’analyse de tes pièces, revues au bon moment.</p></a>
     </div>
     <div id="midiHelp"></div>`;
   main.append(page);
@@ -417,6 +519,7 @@ function pageHome() {
   if (sc) $('#sessionBox', page).append(sc);
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '6.0': '<ul><li><b>Théorie du niveau 1, refaite</b> : chaque leçon avance par étapes, une à la fois. Chaque étape donne l’idée en une phrase, un exemple résolu, le piège à éviter, puis un exercice tout de suite : questions corrigées, construction au clavier, notes à toucher sur la partition de ton nocturne.</li><li><b>À apprendre par cœur</b> : chaque notion importante a sa case. Coche-la pour la mettre dans tes cartes (En cours de maîtrise). Seules les notions cochées y entrent. Celles des leçons que tu avais déjà terminées sont cochées pour toi, avec leur progression.</li><li>Le niveau 2 passera au même format dans une prochaine version.</li></ul>',
     '4.3': '<ul><li><b>Oreille</b> refaite en deux parcours, une étape après l’autre : <b>Chanter juste</b> (13 étapes, de la voix stable aux intervalles et aux motifs de ta pièce) et <b>Reconnaître à l’oreille</b> (16 étapes). L’étape en cours est ouverte ; toutes les séries restent dans « Entraînement libre ».</li><li><b>Chanter juste</b> : nouveaux exercices « Tenir une note » et « Glisser jusqu’à la note », une aiguille qui montre l’écart à la note, ta tendance (trop bas, trop haut…) et la méthode en cinq points.</li><li><b>Lecture de notes chronométrée</b> : jusqu’à 4 lignes supplémentaires ; les altérations se cochent à part.</li></ul>',
     '5.1': '<ul><li><b>Improvisation, plus simple</b> : chaque leçon se travaille en <b>exercices</b> (« Exercice 2 sur 5 »), du plus simple au plus difficile. Un exercice est <b>validé</b> quand tu le réussis deux jours différents. L’« échelle d’ornementation », qui recomptait les mêmes exercices, est retirée.</li></ul>',
     '5.0': '<ul><li><b>Improvisation en paliers</b> : chaque leçon se travaille en 4 à 7 paliers, une seule nouveauté à chacun (imiter, squelette, rythme, ornement, question – réponse, silences, transposition). L’appli vérifie ta prise au piano à l’arrêt ; un palier est réussi deux jours différents.</li><li><b>Nouveaux exercices</b> : l’imitation (écouter, chanter, rejouer), la question – réponse qui suit le dessin ou le registre, les phrases et silences, le rythme pointé, la marche, le contraste ABA. Un décompte avant chaque départ.</li><li><b>Explications</b> : « pourquoi ça marche », avec des écoutes comparées, et les erreurs fréquentes de chaque leçon. Nouveaux schémas : Do-Ré-Mi et Quiescenza ; la leçon Monte et Fonte réécrite.</li><li><b>Séance du jour</b> : 10 min d’improvisation chaque jour, au palier en cours. L’<b>échelle d’ornementation</b> est dans l’outil Improvisation.</li></ul>',
@@ -701,8 +804,9 @@ async function pageLesson(id) {
   const body = h('div', { class: 'prose mt-2' });
   page.append(body);
   main.append(page);
-  const unmount = renderRich(body, l.body);
-  const top = essentialsCard(l, body._core || []);
+  if (l.steps) { try { await (await import('./tool-mastery.js')).migrateNotions(); } catch (e) { console.warn(e); } if (!stillHere(tok)) return; }
+  const unmount = l.steps ? renderSteps(body, l) : renderRich(body, l.body);
+  const top = essentialsCard(l, body._core || [], body._notions || []);
   if (top) { body.before(top); frenchSpacing(top); }
   const foot = h('div', { class: 'lesson-foot' });
   const doneBtn = h('button', { class: 'btn ' + (store.isDone(l.id) ? 'ok' : 'primary'), type: 'button' }, store.isDone(l.id) ? '✓ Leçon terminée' : 'Marquer comme terminée');

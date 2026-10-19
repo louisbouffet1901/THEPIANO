@@ -1,10 +1,11 @@
-// « En cours de maîtrise » : cinq minutes par jour pour revoir, au bon moment, les notions des cours de théorie
-// terminés et l'analyse des pièces (accords, fonctions), plus « Qu'est-ce qui vient après ? » pour les pièces
+// « En cours de maîtrise » : cinq minutes par jour pour revoir, au bon moment, les notions de théorie cochées
+// « À apprendre par cœur » et l'analyse des pièces (accords, fonctions), plus « Qu'est-ce qui vient après ? » pour les pièces
 // apprises par cœur. Répétition espacée en boîtes de Leitner : une carte réussie revient de plus en plus tard.
 import { h, shuffle, clamp } from './util.js';
 import { store } from './store.js';
 import { LESSONS, PIECES_META } from './content-meta.js';
-import { FACTS, QUIZ_KINDS } from './content-mastery-facts.js';
+/** Séries d'exercices utilisables en révision (sans piano ni oreille). */
+export const QUIZ_KINDS = new Set(['keysig', 'keydegree', 'intervalsight', 'chordsight', 'measurefill', 'keyname', 'notes', 'relative', 'sigcount', 'triadkey', 'funckey', 'ivfind', 'chordspell', 'secdom']);
 import { ensureAbcjs } from './lazy.js';
 
 /* ------------------------------------------------------------------ */
@@ -45,22 +46,82 @@ const capture = (body, names) => {
 const chordLabel = c => (c[1] ? `${c[0]} (${c[1]})` : c[0]);
 const FUNC = { T: 'tonique (T)', SD: 'sous-dominante (SD)', D: 'dominante (D)' };
 
-/** Toutes les cartes disponibles : leçons de théorie terminées, analyses des pièces, pièces apprises par cœur. */
-export async function collectCards({ isDone = id => store.isDone(id), byHeart = null } = {}) {
-  const list = [];
-  // identifiants sans point : ils servent de clés dans la sauvegarde (store.set découpe les chemins aux points)
-  const cards = { push: c => list.push({ ...c, id: c.id.replace(/\./g, '_') }) };
-  const theory = LESSONS.filter(l => l.module === 'theorie' && isDone(l.id));
-  const { loadLesson, loadPiece } = await import('./content-index.js');
+/* ------------------------------------------------------------------ */
+/* Notions clés (V6) : seules les notions cochées « À apprendre par cœur » donnent des cartes de théorie          */
+/* ------------------------------------------------------------------ */
+/** Toutes les notions des leçons de théorie : [{ ...notion, lesson, lessonTitle, rank }]. */
+export async function allNotions() {
+  const { loadLesson } = await import('./content-index.js');
+  const out = [];
+  const theory = LESSONS.filter(l => l.module === 'theorie');
   for (const [i, l] of theory.entries()) {
-    (FACTS[l.id] || []).forEach((f, k) => cards.push({ id: `fact:${l.id}:${k}`, type: 'fact', src: l.title, rank: i * 10 + k, w: 1, q: f[0], answer: f[1][0], options: f[1], why: f[2] }));
+    const full = await loadLesson(l.id);
+    if (!full) continue;
+    capture(full.body, ['notion']).forEach(([, cfg], k) => { if (cfg && cfg.id) out.push({ ...cfg, lesson: l.id, lessonTitle: l.title, rank: i * 100 + k * 10 }); });
+  }
+  return out;
+}
+/** Cartes d'une notion : questions à choix [q, [bonne, …autres], explication] ou { q, a, why, id }, et séries
+ *  d'exercices { quiz: { kind, … }, id }. Identifiant par défaut : n:<notion>:<rang>. */
+export function notionCards(n) {
+  const src = n.title;
+  return (n.cards || []).map((c, k) => {
+    const base = { id: c.id || `n:${n.id}:${k}`, src, notion: n.id, lesson: n.lesson, rank: (n.rank || 0) + k };
+    if (Array.isArray(c)) return { ...base, type: 'fact', w: 1, q: c[0], answer: c[1][0], options: c[1], why: c[2] };
+    if (c.quiz) return QUIZ_KINDS.has(c.quiz.kind) && c.quiz.mode !== 'play' ? { ...base, type: 'quiz', w: 4, cfg: c.quiz } : null;
+    return { ...base, type: 'fact', w: 1, q: c.q, answer: c.a[0], options: c.a, why: c.why };
+  }).filter(Boolean);
+}
+/**
+ * Reprise des cartes d'avant la V6, leçon par leçon : avant, toutes les notions d'une leçon de théorie terminée
+ * étaient dans les cartes. Quand une leçon reçoit ses notions (niveau 1 en V6.0, niveau 2 ensuite), les notions
+ * d'une leçon déjà terminée sont cochées une fois ; les cartes reprises (même identifiant) gardent leur boîte.
+ */
+let migrating = null;
+export function migrateNotions() {
+  if (!migrating) migrating = (async () => {
+    const notions = await allNotions();
+    const done = { ...(store.get('mastery.migrated') || {}) };
+    const fresh = [...new Set(notions.map(x => x.lesson))].filter(l => !done[l]);
+    if (!fresh.length) return 0;
+    const o = { ...(store.get('mastery.notions') || {}) };
+    let n = 0;
+    for (const x of notions) if (fresh.includes(x.lesson) && store.isDone(x.lesson) && !o[x.id]) { o[x.id] = isoDay(); n++; }
+    fresh.forEach(l => { done[l] = 1; });
+    store.set('mastery.notions', o);
+    store.set('mastery.migrated', done);
+    return n;
+  })().finally(() => { migrating = null; });
+  return migrating;
+}
+/** Leçons de théorie pas encore passées aux notions : leurs anciennes cartes, comme avant, si la leçon est terminée. */
+async function legacyCards(notions, push) {
+  const withNotions = new Set(notions.map(x => x.lesson));
+  const theory = LESSONS.filter(l => l.module === 'theorie' && !withNotions.has(l.id) && store.isDone(l.id));
+  if (!theory.length) return;
+  const [{ FACTS }, { loadLesson }] = await Promise.all([import('./content-mastery-facts.js'), import('./content-index.js')]);
+  for (const [i, l] of theory.entries()) {
+    (FACTS[l.id] || []).forEach((f, k) => push({ id: `fact:${l.id}:${k}`, type: 'fact', src: l.title, rank: 5000 + i * 10 + k, w: 1, q: f[0], answer: f[1][0], options: f[1], why: f[2] }));
     const full = await loadLesson(l.id);
     if (!full) continue;
     capture(full.body, ['quiz']).forEach(([, cfg], k) => {
       if (!cfg || !QUIZ_KINDS.has(cfg.kind) || cfg.mode === 'play') return;
-      cards.push({ id: `quiz:${l.id}:${cfg.stat || cfg.kind + k}`, type: 'quiz', src: l.title, rank: i * 10 + 5 + k, w: 4, cfg });
+      push({ id: `quiz:${l.id}:${cfg.stat || cfg.kind + k}`, type: 'quiz', src: l.title, rank: 5000 + i * 10 + 5 + k, w: 4, cfg });
     });
   }
+}
+
+/** Toutes les cartes disponibles : notions cochées, analyses des pièces, pièces apprises par cœur. */
+export async function collectCards({ byHeart = null } = {}) {
+  const list = [];
+  // identifiants sans point : ils servent de clés dans la sauvegarde (store.set découpe les chemins aux points)
+  const cards = { push: c => list.push({ ...c, id: c.id.replace(/\./g, '_') }) };
+  await migrateNotions();
+  const { loadPiece } = await import('./content-index.js');
+  const ticked = store.get('mastery.notions') || {};
+  const notions = await allNotions();
+  for (const n of notions) if (ticked[n.id]) notionCards(n).forEach(c => cards.push(c));
+  await legacyCards(notions, c => cards.push(c));
   const [{ ANALYSES }, ex] = await Promise.all([import('./content-analyses.js'), import('./content-excerpts.js')]);
   const sets = [[ex.OP55, 'op55-1'], [ex.OP15, 'op15-1'], [ex.CLAIR, 'clair-de-lune']];
   const heart = byHeart || Object.entries(store.get('pieces') || {}).filter(([, v]) => v && v.byHeart).map(([k]) => k);
@@ -213,7 +274,7 @@ export function mountMastery(el, cfg = {}) {
     const nNew = sess.cards.filter(c => !st[c.id]).length;
     const head = h('div', { class: 'card mastery-today' });
     if (!cards.length) {
-      head.append(h('h2', {}, 'Rien à revoir pour l’instant'), h('p', {}, 'Les cartes viennent des leçons de théorie terminées (bouton « Marquer comme terminée » en bas de chaque leçon) et de l’analyse de tes pièces.'));
+      head.append(h('h2', {}, 'Rien à revoir pour l’instant'), h('p', {}, 'Les cartes viennent des notions que tu coches « À apprendre par cœur » dans les leçons de théorie, et de l’analyse de tes pièces.'));
     } else if (!sess.cards.length) {
       const next = Object.values(st).map(s => s.d).filter(d => d > isoDay()).sort()[0];
       head.append(h('h2', {}, 'C’est fait pour aujourd’hui'), h('p', {}, next ? `Prochaine révision : ${fmtDay(next)}.` : 'Reviens demain.'));
@@ -231,8 +292,28 @@ export function mountMastery(el, cfg = {}) {
     const counts = { fact: 0, quiz: 0, analysis: 0, next: 0, form: 0 };
     for (const c of cards) counts[c.type]++;
     const src = h('div', { class: 'small muted' },
-      `${counts.fact + counts.quiz} cartes de théorie (leçons terminées) · ${counts.analysis} d’analyse de tes pièces` + (counts.next + counts.form ? ` · ${counts.next + counts.form} « par cœur »` : '') + ` · ${sum.boxes[0]} pas encore vues.`);
-    box.replaceChildren(head, h('div', { class: 'section-title' }, h('h2', {}, 'Tes cartes')), boxes, src, heartBlock());
+      `${counts.fact + counts.quiz} cartes de théorie · ${counts.analysis} d’analyse de tes pièces` + (counts.next + counts.form ? ` · ${counts.next + counts.form} « par cœur »` : '') + ` · ${sum.boxes[0]} pas encore vues.`);
+    box.replaceChildren(head, h('div', { class: 'section-title' }, h('h2', {}, 'Tes cartes')), boxes, src, await notionsBlock(st), heartBlock());
+  }
+
+  /** Les notions cochées, par leçon : on peut en retirer une (sa progression est gardée si on la recoche). */
+  async function notionsBlock(st) {
+    const wrap = h('details', { class: 'callout key mt-2 notions-list' });
+    const ticked = store.get('mastery.notions') || {};
+    const all = (await allNotions()).filter(n => ticked[n.id]);
+    wrap.append(h('summary', { class: 'c-title' }, `Notions à apprendre par cœur : ${all.length}`));
+    if (!all.length) { wrap.append(h('p', { class: 'small' }, 'Aucune pour l’instant. Dans les leçons de théorie, coche « À apprendre par cœur » sous chaque notion clé que tu veux retenir.')); return wrap; }
+    let lesson = null, ul = null;
+    for (const n of all) {
+      if (n.lesson !== lesson) { lesson = n.lesson; wrap.append(h('div', { class: 'nl-lesson' }, h('a', { href: `#/lecon/${n.lesson}` }, n.lessonTitle))); ul = h('ul', { class: 'nl' }); wrap.append(ul); }
+      const cs = notionCards(n);
+      const seen = cs.filter(c => st[c.id.replace(/\./g, '_')]);
+      const cb = h('input', { type: 'checkbox', checked: true });
+      cb.addEventListener('change', () => { const o = { ...(store.get('mastery.notions') || {}) }; if (cb.checked) o[n.id] = o[n.id] || isoDay(); else delete o[n.id]; store.set('mastery.notions', o); });
+      ul.append(h('li', {}, h('label', { class: 'check' }, cb, h('span', {}, n.title)), h('span', { class: 'small muted' }, ` · ${cs.length} carte${cs.length > 1 ? 's' : ''}${seen.length ? `, ${seen.length} déjà vue${seen.length > 1 ? 's' : ''}` : ''}`)));
+    }
+    wrap.append(h('p', { class: 'small muted' }, 'Décocher retire la notion des révisions ; ta progression est gardée si tu la recoches.'));
+    return wrap;
   }
 
   function heartBlock() {

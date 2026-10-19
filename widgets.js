@@ -6,6 +6,7 @@ import { store } from './store.js';
 import { keyboard, mountDiagram, circleOfFifths } from './diagrams.js';
 import { ICONS } from './icons.js';
 import { ensureAbcjs, mountLazy } from './lazy.js';
+import { toast } from './toast.js';
 
 export { ICONS };
 
@@ -54,6 +55,20 @@ export function makeW() {
     ecoute: cfg => ph('ecoute', cfg),
     /** « Trouver ma voix » : sirène au micro et tessiture mesurée (voice.js). */
     voix: cfg => ph('voice', cfg || {}),
+    /** Notion clé (V6) : encadré à retenir, avec la case « À apprendre par cœur » qui met ses cartes dans
+     *  « En cours de maîtrise ». { id, title, short, text, cards } — voir notionCards (tool-mastery.js). */
+    notion: cfg => { W._notions.push(cfg); return ph('notion', cfg); },
+    /** « À toi » : questions corrigées à l'instant. { title, questions: [{ q, options, answer, why, hint, abc, kbd, seq }] } */
+    check: cfg => ph('check', cfg),
+    /** « Construis au clavier » : gamme, accord, intervalle, note par note. { title, guide, tasks: [...] } */
+    build: cfg => ph('build', cfg),
+    /** « Sur la partition » : toucher la note demandée. { abc, title, tasks: [{ q, targets: [{ bar, beat, note }], why }] } */
+    spot: cfg => ph('spot', cfg),
+    /** Une portée seule (sans lecture ni options) : { abc, title, caption, width }. */
+    staff: cfg => ph('staff', cfg),
+    /** Tirage au hasard (points de départ de mémoire…) : { title, items, n, caption }. */
+    draw: cfg => ph('draw', cfg),
+    _notions: [],
     /** Glossaire en ligne : un terme, sa définition au toucher. */
     term: (word, def) => `<span class="term" tabindex="0" role="button" aria-label="${esc(word)} : ${esc(def.replace(/<[^>]+>/g, ''))}">${word}<span class="term-def" role="tooltip">${def}</span></span>`,
     _core: [],
@@ -91,7 +106,10 @@ defineWidget('kbd', (el, cfg) => {
   const wrap = h('div', { class: 'w-frame' });
   const body = h('div', { class: 'w-body' });
   if (cfg.title) wrap.append(h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, cfg.title), cfg.sub ? h('span', { class: 'w-sub' }, cfg.sub) : null));
-  const kb = keyboard({ ...cfg, label: cfg.title || 'Clavier' });
+  // un petit clavier ne s'étire pas sur toute la largeur : environ 38 px par touche blanche
+  let whites = 0;
+  for (let m = cfg.from ?? 48; m <= (cfg.to ?? 72); m++) if (![1, 3, 6, 8, 10].includes(m % 12)) whites++;
+  const kb = keyboard({ maxWidth: Math.max(340, whites * 38), ...cfg, label: cfg.title || 'Clavier' });
   body.append(kb);
   wrap.append(body);
   if (cfg.play) {
@@ -338,7 +356,68 @@ defineWidget('paliers', (el, cfg) => mountLazy(el, () => import('./tool-paliers.
 defineWidget('voice', (el, cfg) => mountLazy(el, () => import('./voice.js').then(m => e => m.mountVoiceFinder(e, cfg))));
 defineWidget('metronome', (el, cfg) => mountLazy(el, () => import('./tool-metronome-ui.js').then(m => e => m.mountMetronome(e, cfg))));
 defineWidget('localscore', (el, cfg) => mountLazy(el, () => import('./local-scores.js').then(m => e => m.mountLocalScores(e, cfg))));
+defineWidget('staff', (el, cfg) => mountLazy(el, () => ensureAbcjs().then(() => e => {
+  const frame = h('div', { class: 'w-frame staff-only' });
+  if (cfg.title) frame.append(h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, cfg.title)));
+  const host = h('div', { class: 'w-body staff-host' });
+  frame.append(host);
+  e.append(frame);
+  window.ABCJS.renderAbc(host, cfg.abc, { responsive: 'resize', staffwidth: cfg.width || 520, scale: cfg.scale || 1.15, paddingtop: 2, paddingbottom: 2, paddingleft: 4, paddingright: 8, add_classes: true, format: { annotationfont: 'Inter 12' } });
+  if (cfg.caption) e.append(h('div', { class: 'w-caption', html: cfg.caption }));
+})));
+defineWidget('check', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-lesson.js')).then(m => e => m.mountCheck(e, cfg))));
+defineWidget('build', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-lesson.js')).then(m => e => m.mountBuild(e, cfg))));
+defineWidget('spot', (el, cfg) => mountLazy(el, () => withAbc(Promise.all([import('./tool-lesson.js'), import('./score.js')])).then(([m, sc]) => e => m.mountSpot(e, cfg, sc.Score)), 'Chargement de la partition…'));
 defineWidget('rhythm', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-rhythm.js')).then(m => e => (cfg.mode === 'dictation' ? m.mountDictation(e, cfg) : m.mountRhythm(e, cfg)))));
+
+/* Notion clé : la case « À apprendre par cœur » (V6) */
+const isoToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+export const notionTicked = id => !!(store.get('mastery.notions') || {})[id];
+export function setNotion(id, on) {
+  const o = { ...(store.get('mastery.notions') || {}) };
+  if (on) o[id] = o[id] || isoToday(); else delete o[id];
+  store.set('mastery.notions', o);
+  document.querySelectorAll(`input[data-notion="${CSS.escape(id)}"]`).forEach(cb => { cb.checked = on; });
+}
+export const notionCardCount = cfg => (cfg.cards || []).length;
+/** Case à cocher d'une notion (encadré, ou liste « L'essentiel » en tête de leçon). */
+export function notionToggle(cfg, label = 'À apprendre par cœur') {
+  const n = notionCardCount(cfg);
+  const cb = h('input', { type: 'checkbox', 'data-notion': cfg.id });
+  cb.checked = notionTicked(cfg.id);
+  cb.addEventListener('change', () => {
+    setNotion(cfg.id, cb.checked);
+    toast(cb.checked ? `« ${cfg.title} » : ${n} carte${n > 1 ? 's' : ''} ajoutée${n > 1 ? 's' : ''} à En cours de maîtrise` : `« ${cfg.title} » retirée des cartes`, 'ok', 3200);
+  });
+  return h('label', { class: 'check notion-check' }, cb, h('span', {}, label), n ? h('span', { class: 'small muted' }, ` · ${n} carte${n > 1 ? 's' : ''}`) : null);
+}
+defineWidget('notion', (el, cfg) => {
+  const box = h('div', { class: 'callout key notion' });
+  box.innerHTML = `<div class="c-title">${ICONS.star}<span class="nt-kind">Notion clé</span>${esc(cfg.title)}</div><div class="nt-text">${cfg.text || ''}</div>`;
+  box.append(notionToggle(cfg));
+  el.append(box);
+});
+
+/* Tirage au hasard : quelques éléments d'une liste, dans un ordre aléatoire */
+defineWidget('draw', (el, cfg) => {
+  const items = cfg.items || [];
+  const n = Math.min(cfg.n || 3, items.length);
+  const frame = h('div', { class: 'w-frame lx lx-draw' });
+  frame.append(h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, cfg.title || 'Tirage au hasard')));
+  const body = h('div', { class: 'w-body' });
+  const out = h('ol', { class: 'draw-out', 'aria-live': 'polite' });
+  const btn = h('button', { class: 'btn primary', type: 'button' }, cfg.button || 'Tirer au hasard');
+  btn.addEventListener('click', () => {
+    const pool = items.slice();
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    out.replaceChildren(...pool.slice(0, n).map(x => h('li', { html: x })));
+    btn.textContent = cfg.again || 'Tirer à nouveau';
+  });
+  body.append(btn, out);
+  frame.append(body);
+  el.append(frame);
+  if (cfg.caption) el.append(h('div', { class: 'w-caption', html: cfg.caption }));
+});
 
 /* Liste à cocher persistante */
 defineWidget('checklist', (el, cfg) => {
