@@ -678,16 +678,55 @@ details.card summary { cursor: pointer; }
 .sight-hist { padding: 0 14px 12px; color: var(--text-3); }
 .score-svg .n-hint, .score-svg .n-hint path { fill: var(--gold) !important; }
 
-/* En cours de maîtrise */
-.mastery-today h2 { margin: 6px 0 4px; }
-.mastery-boxes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 8px; }
-.mastery-box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 8px 6px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
-.mastery-box b { font-size: 20px; font-variant-numeric: tabular-nums; }
-.mastery-box span { font-size: 13px; font-weight: 600; }
-.mastery-box small { font-size: 11.5px; color: var(--text-3); }
-.mastery-box.done { background: var(--ok-tint); border-color: var(--ok-tint); }
-@media (max-width: 560px) { .mastery-boxes { grid-template-columns: repeat(3, 1fr); } }
-.mastery-card .w-head .tag { margin-left: auto; }
+/* En cours de maîtrise (V6.1) : leçons cochées, fiches, exercices */
+.mastery { max-width: var(--wide-w); }
+.mastery-pick > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; list-style: none; padding: 2px 0; }
+.mastery-pick > summary::-webkit-details-marker { display: none; }
+.mastery-pick > summary::before { content: '▸'; color: var(--accent); transition: transform .15s; }
+.mastery-pick[open] > summary::before { transform: rotate(90deg); }
+.mastery-pick .mp-title { flex: 1; font-weight: 650; font-size: 15.5px; color: var(--text); }
+.mp-level { margin: 14px 0 4px; font-size: 12.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.mp-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0 18px; }
+.mp-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.mp-list .check { flex: 1; line-height: 1.35; }
+.mp-list .check input { accent-color: var(--gold); flex: none; }
+.mastery-mix { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; border-color: var(--accent-tint-2); background: var(--accent-tint); }
+.mastery-mix h3 { margin: 0 0 2px; }
+.mastery-mix p { margin: 0; }
+.mastery-mix .mm-text { flex: 1 1 280px; }
+.card.mlesson { padding: 0; margin-bottom: 10px; scroll-margin-top: calc(var(--topbar-h) + 12px); border-left: 4px solid var(--gold); }
+.card.mlesson > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; padding: 12px 16px; cursor: pointer; list-style: none; color: var(--text); font-weight: 400; }
+.card.mlesson > summary::-webkit-details-marker { display: none; }
+.card.mlesson > summary::before { content: '▸'; color: var(--gold); transition: transform .15s; }
+.card.mlesson[open] > summary::before { transform: rotate(90deg); }
+.card.mlesson[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 0; }
+.ml-title { font-family: var(--font-read); font-size: 18px; font-weight: 650; flex: 1 1 auto; }
+.ml-meta { flex: 1 1 100%; padding-left: 1.1em; }
+.ml-body { padding: 12px 16px 16px; }
+.fiche-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; }
+.fiche-n { background: var(--gold-tint); border: 1px solid #eadbbd; border-radius: 8px; padding: 10px 12px; font-size: 14.5px; line-height: 1.5; }
+.fiche-n.wide { grid-column: 1 / -1; }
+.fiche-n.trap { background: var(--warn-tint); border-color: #f0dfb9; }
+.fiche-t { font-weight: 700; font-size: 14px; color: var(--gold); margin-bottom: 4px; }
+.fiche-n.trap .fiche-t { color: var(--warn); }
+.fiche-x p { margin: 0 0 4px; }
+.fiche-x p:last-child, .fiche-x ul:last-child { margin-bottom: 0; }
+.fiche-x ul { margin: 2px 0 4px; padding-left: 18px; }
+.fiche-x li { margin: 2px 0; }
+.fiche-extra { margin-top: 14px; }
+.fiche-extra .fiche-t { color: var(--text-2); }
+.fiche-tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px 16px; }
+.fiche-table { border-collapse: collapse; width: 100%; font-size: 14.5px; margin: 4px 0 6px; }
+.fiche-table th, .fiche-table td { border-bottom: 1px solid var(--line); padding: 5px 8px; text-align: left; line-height: 20px; }
+.fiche-table th { font-size: 12.5px; font-weight: 650; color: var(--text-2); background: var(--surface-2); }
+.fiche-table td:first-child { white-space: nowrap; color: var(--text-2); }
+.mastery-pieces h3 { margin-bottom: 4px; }
+.mp-piece { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding: 8px 0; border-top: 1px solid var(--line); }
+.mp-piece .mp-pt { flex: 1 1 260px; }
+.mastery-end h2 { margin: 4px 0 6px; font-size: 26px; }
+.mastery-missed { margin: 4px 0 0; padding-left: 18px; }
+.mastery-missed li { margin: 4px 0; font-size: 14.5px; line-height: 1.45; }
+.mastery-run .w-head .btn { margin-left: auto; }
 .mastery-q { margin-bottom: 14px; }
 .mastery-q .quiz-q { font-size: 16px; }
 .mastery-answers { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
@@ -1067,15 +1106,10 @@ details.cp-tips ul { margin: 2px 0 8px; padding-left: 18px; }
 .notion-check { margin-top: 10px; padding: 7px 12px 7px 10px; border-radius: 999px; background: #fff; border: 1px solid #eadbbd; font-weight: 600; color: var(--text); }
 .notion-check input { accent-color: var(--gold); }
 .ess-notions { list-style: none; padding-left: 0 !important; }
-.ess-notions li { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.ess-notions li { padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; line-height: 1.4; }
 .ess-notions li:last-child { border-bottom: 0; }
-.ess-notions .ess-n { flex: 1 1 220px; font-size: 14.5px; line-height: 1.4; }
-.ess-notions .notion-check { margin: 0; padding: 3px 10px 3px 8px; font-size: 13px; }
-.ess-hint { margin: 6px 0 0 !important; font-size: 13px !important; }
-.notions-list > summary { cursor: pointer; list-style: none; }
-.notions-list .nl-lesson { margin: 10px 0 2px; font-weight: 650; font-size: 14px; }
-.notions-list ul.nl { list-style: none; padding: 0; margin: 0; }
-.notions-list ul.nl li { padding: 3px 0; }
+.ess-heart { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; padding-top: 12px; border-top: 1px solid #eadbbd; }
+.ess-heart .notion-check { margin: 0; }
 
 /* Exercices : « À toi », « Construis au clavier », « Sur la partition » */
 .lx .w-head .w-title::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: middle; }

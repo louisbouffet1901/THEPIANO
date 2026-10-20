@@ -55,8 +55,8 @@ export function makeW() {
     ecoute: cfg => ph('ecoute', cfg),
     /** « Trouver ma voix » : sirène au micro et tessiture mesurée (voice.js). */
     voix: cfg => ph('voice', cfg || {}),
-    /** Notion clé (V6) : encadré à retenir, avec la case « À apprendre par cœur » qui met ses cartes dans
-     *  « En cours de maîtrise ». { id, title, short, text, cards } — voir notionCards (tool-mastery.js). */
+    /** Notion clé (V6) : encadré à retenir. Son texte fait partie de la fiche de la leçon et ses questions (cards) de ses
+     *  exercices, dans « En cours de maîtrise ». { id, title, short, text, cards } — voir lessonData (tool-mastery.js). */
     notion: cfg => { W._notions.push(cfg); return ph('notion', cfg); },
     /** « À toi » : questions corrigées à l'instant. { title, questions: [{ q, options, answer, why, hint, abc, kbd, seq }] } */
     check: cfg => ph('check', cfg),
@@ -370,31 +370,28 @@ defineWidget('build', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-le
 defineWidget('spot', (el, cfg) => mountLazy(el, () => withAbc(Promise.all([import('./tool-lesson.js'), import('./score.js')])).then(([m, sc]) => e => m.mountSpot(e, cfg, sc.Score)), 'Chargement de la partition…'));
 defineWidget('rhythm', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-rhythm.js')).then(m => e => (cfg.mode === 'dictation' ? m.mountDictation(e, cfg) : m.mountRhythm(e, cfg)))));
 
-/* Notion clé : la case « À apprendre par cœur » (V6) */
+/* « À apprendre par cœur » (V6.1) : une case par leçon de théorie, en tête de la leçon et dans « En cours de maîtrise » */
 const isoToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
-export const notionTicked = id => !!(store.get('mastery.notions') || {})[id];
-export function setNotion(id, on) {
-  const o = { ...(store.get('mastery.notions') || {}) };
-  if (on) o[id] = o[id] || isoToday(); else delete o[id];
-  store.set('mastery.notions', o);
-  document.querySelectorAll(`input[data-notion="${CSS.escape(id)}"]`).forEach(cb => { cb.checked = on; });
+export const lessonOn = id => !!(store.get(`mastery.lessons.${id}`) || {}).on;
+export function setLessonOn(id, on) {
+  const cur = store.get(`mastery.lessons.${id}`) || {};
+  store.set(`mastery.lessons.${id}`, { ...cur, on: on ? cur.on || isoToday() : null });
+  document.querySelectorAll(`input[data-heart-lesson="${CSS.escape(id)}"]`).forEach(cb => { cb.checked = on; });
 }
-export const notionCardCount = cfg => (cfg.cards || []).length;
-/** Case à cocher d'une notion (encadré, ou liste « L'essentiel » en tête de leçon). */
-export function notionToggle(cfg, label = 'À apprendre par cœur') {
-  const n = notionCardCount(cfg);
-  const cb = h('input', { type: 'checkbox', 'data-notion': cfg.id });
-  cb.checked = notionTicked(cfg.id);
+/** Case d'une leçon (encadré de tête) : sa fiche et ses exercices vont dans « En cours de maîtrise ». */
+export function lessonToggle(l, label = 'À apprendre par cœur') {
+  const cb = h('input', { type: 'checkbox', 'data-heart-lesson': l.id });
+  cb.checked = lessonOn(l.id);
   cb.addEventListener('change', () => {
-    setNotion(cfg.id, cb.checked);
-    toast(cb.checked ? `« ${cfg.title} » : ${n} carte${n > 1 ? 's' : ''} ajoutée${n > 1 ? 's' : ''} à En cours de maîtrise` : `« ${cfg.title} » retirée des cartes`, 'ok', 3200);
+    setLessonOn(l.id, cb.checked);
+    toast(cb.checked ? `« ${l.title} » : fiche et exercices dans En cours de maîtrise` : `« ${l.title} » retirée de En cours de maîtrise`, 'ok', 3200);
   });
-  return h('label', { class: 'check notion-check' }, cb, h('span', {}, label), n ? h('span', { class: 'small muted' }, ` · ${n} carte${n > 1 ? 's' : ''}`) : null);
+  return h('label', { class: 'check notion-check' }, cb, h('span', {}, label));
 }
+/* Notion clé : encadré à retenir ; ses questions servent aux exercices de « En cours de maîtrise ». */
 defineWidget('notion', (el, cfg) => {
   const box = h('div', { class: 'callout key notion' });
   box.innerHTML = `<div class="c-title">${ICONS.star}<span class="nt-kind">Notion clé</span>${esc(cfg.title)}</div><div class="nt-text">${cfg.text || ''}</div>`;
-  box.append(notionToggle(cfg));
   el.append(box);
 });
 

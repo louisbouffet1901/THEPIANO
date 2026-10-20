@@ -1,4 +1,5 @@
-// Notions clés des cours de théorie, en questions à choix (répétition espacée, onglet « En cours de maîtrise »).
+// Notions clés des cours de théorie, en questions à choix (exercices de l’onglet « En cours de maîtrise »). Depuis la V6,
+// les leçons du niveau 1 ont leurs propres questions (notions) : seules celles du niveau 2 servent encore ici.
 // Chaque carte : leçon, question, réponses (la bonne en premier : l'ordre est mélangé à l'affichage), explication.
 // Rédigées d'après les encadrés « À retenir » et « Erreurs fréquentes » de chaque leçon.
 export const FACTS = {

@@ -29,7 +29,7 @@ const DEFAULTS = () => ({
   },
   pieces: {},          // options par pièce (ex. { byHeart: true })
   sight: {},           // lecture à vue : niveau choisi, progression par niveau (cible, extraits lus, essais), tempo
-  mastery: {},         // « En cours de maîtrise » : boîte et date de chaque carte, nouvelles cartes du jour
+  mastery: {},         // « En cours de maîtrise » (V6.1) : leçons cochées (lessons.<id>.on), questions manquées, derniers résultats
   rhythm: {},          // progression de l'onglet Rythme
   improv: {},          // improvisation (V5) : paliers réussis (p), résumé par leçon (lessons)
   backup: { exportedAt: null, remindAfter: 0 }, // rappel de sauvegarde

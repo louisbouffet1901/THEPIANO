@@ -4,7 +4,7 @@ import { store } from './store.js';
 import { midi } from './midi.js';
 import { audio } from './audio.js';
 import { sharedMetronome } from './metronome.js';
-import { makeW, mountWidgets, ICONS, notionToggle } from './widgets.js';
+import { makeW, mountWidgets, ICONS, lessonToggle } from './widgets.js';
 import { keyboard } from './diagrams.js';
 import { toast } from './toast.js';
 import { ensureAbcjs, mountLazy } from './lazy.js';
@@ -66,7 +66,7 @@ const routes = [
     const b = ns.mountNoteSpeed(box);
     return () => { try { a?.(); } catch (e) { /* */ } try { b?.(); } catch (e) { /* */ } };
   }))],
-  [/^#\/maitrise$/, () => toolPage('En cours de maîtrise', 'Cinq minutes par jour : les notions que tu as cochées « À apprendre par cœur » et l’analyse de tes pièces, revues juste avant de les oublier.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)))],
+  [/^#\/maitrise$/, () => toolPage('En cours de maîtrise', 'Les leçons que tu apprends par cœur : une fiche pour relire l’essentiel, de petits exercices corrigés pour vérifier que tu le sais.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)))],
   [/^#\/outils\/rythme$/, () => toolPage('Rythme', 'Lire le rythme : compter, subdiviser, placer chaque attaque. Dix niveaux, des noires aux polyrythmies, et les rythmes de tes pièces.', () => Promise.all([import('./tool-rhythm.js'), ensureAbcjs()]).then(([m]) => el => m.mountRhythmPage(el)))],
   [/^#\/outils\/oreille$/, pageEar],
   [/^#\/outils\/theorie$/, () => pagePresets('theorie')],
@@ -409,19 +409,21 @@ function renderPieceBody(container, bodyFn, pieceId) {
   frenchSpacing(container);
   return () => cleanups.forEach(fn => { try { fn(); } catch (e) { /* */ } });
 }
-/** Encadré de tête d'une leçon : l'essentiel (à retenir), l'objectif mesurable et les objectifs. */
+/** Encadré de tête d'une leçon : l'essentiel (à retenir), l'objectif mesurable et les objectifs ; pour une leçon de
+ *  théorie, la case « À apprendre par cœur » (sa fiche et ses exercices vont dans « En cours de maîtrise »). */
 function essentialsCard(l, core, notions = []) {
   const ess = notions.length ? '<ul class="ess-notions"></ul>' : l.essentials && l.essentials.length ? `<ul>${l.essentials.map(x => `<li>${x}</li>`).join('')}</ul>` : core.join('');
   const goals = l.goals && l.goals.length ? `<ul class="goals">${l.goals.map(g => `<li>${g}</li>`).join('')}</ul>` : '';
-  if (!ess && !goals && !l.goal) return null;
+  const heart = l.module === 'theorie' && l.id;
+  if (!ess && !goals && !l.goal && !heart) return null;
   const card = h('div', { class: 'card essentials' + (ess && goals ? ' two' : '') });
   card.innerHTML = (ess ? `<div class="ess-col"><div class="ess-title">${ICONS.star}${notions.length ? 'Les notions clés' : 'L’essentiel'}</div>${ess}</div>` : '') +
     (goals || l.goal ? `<div class="ess-col"><div class="ess-title muted-title">À la fin de cette leçon</div>${goals}${l.goal ? `<p class="ess-goal"><b>Réussi quand :</b> ${l.goal}</p>` : ''}</div>` : '');
   if (notions.length) {
     const ul = card.querySelector('.ess-notions');
-    for (const n of notions) ul.append(h('li', {}, h('div', { class: 'ess-n', html: `<b>${esc(n.title)}</b>${n.short ? ` : ${n.short}` : ''}` }), notionToggle(n, 'par cœur')));
-    ul.after(h('p', { class: 'small muted ess-hint' }, 'Coche « par cœur » ce que tu veux mémoriser : ces notions reviennent dans ', h('a', { href: '#/maitrise' }, 'En cours de maîtrise'), ', au bon moment.'));
+    for (const n of notions) ul.append(h('li', { html: `<b>${esc(n.title)}</b>${n.short ? ` : ${n.short}` : ''}` }));
   }
+  if (heart) card.append(h('div', { class: 'ess-heart' }, lessonToggle(l), h('span', { class: 'small muted' }, 'Sa fiche et ses exercices t’attendent dans ', h('a', { href: '#/maitrise' }, 'En cours de maîtrise'), '.')));
   return card;
 }
 /** Typographie française : espace fine insécable avant ? ! ; : et à l'intérieur des guillemets. */
@@ -497,7 +499,7 @@ function pageHome() {
       ${toolCard('#/outils/theorie', 'Théorie', 'Tous les cours, et des exercices : notes, gammes, intervalles, accords.')}
       ${toolCard('#/outils/exercices', 'Exercices', 'Indépendance des mains, polyrythmes, lié contre détaché ; lecture de notes chronométrée.')}
       ${toolCard('#/outils/composition', 'Composition', 'Écrire ta pièce de 8 mesures : élégie, romance ou nocturne, notée et vérifiée.')}
-      <a class="card" href="#/maitrise" id="masteryCard"><h3>En cours de maîtrise</h3><p>5 minutes par jour : les notions que tu as cochées et l’analyse de tes pièces, revues au bon moment.</p></a>
+      <a class="card" href="#/maitrise" id="masteryCard"><h3>En cours de maîtrise</h3><p>Les leçons que tu apprends par cœur : leurs fiches et de petits exercices.</p></a>
     </div>
     <div id="midiHelp"></div>`;
   main.append(page);
@@ -510,15 +512,16 @@ function pageHome() {
     later.addEventListener('click', () => { postponeReminder(7); box.remove(); });
     $('.page-head', page).after(box);
   }
-  // cartes du jour (calculées à part, sans retarder l'accueil)
-  import('./tool-mastery.js').then(m => m.dueToday()).then(r => {
+  // leçons à apprendre par cœur (calculées à part, sans retarder l'accueil)
+  import('./tool-mastery.js').then(m => m.homeSummary()).then(r => {
     const c = $('#masteryCard', page);
-    if (c && r && r.total) c.querySelector('p').textContent = r.n ? `${r.n} carte${r.n > 1 ? 's' : ''} à revoir aujourd’hui (≈ ${r.minutes} min).` : 'C’est fait pour aujourd’hui. Prochaines cartes demain.';
+    if (c && r) c.querySelector('p').textContent = r.n ? `${r.n} leçon${r.n > 1 ? 's' : ''} à apprendre par cœur : relis leur fiche, puis fais une petite série d’exercices.` : 'Coche les leçons à apprendre par cœur : pour chacune, une fiche et de petits exercices.';
   }).catch(() => {});
   const sc = sessionCard(L);
   if (sc) $('#sessionBox', page).append(sc);
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '6.1': '<ul><li><b>En cours de maîtrise, refait</b> : coche les leçons de théorie que tu veux savoir par cœur (dans l’onglet, ou en tête de chaque leçon). Pour chacune, une <b>fiche</b> qui résume l’essentiel et de <b>petits exercices</b> corrigés ; les questions manquées reviennent en premier à la série suivante. « Tout réviser » mêle tes leçons.</li><li>Les boîtes et les dates de révision sont retirées. Les leçons qui étaient dans tes cartes restent cochées : décoche celles que tu ne veux pas.</li></ul>',
     '6.0': '<ul><li><b>Théorie du niveau 1, refaite</b> : chaque leçon avance par étapes, une à la fois. Chaque étape donne l’idée en une phrase, un exemple résolu, le piège à éviter, puis un exercice tout de suite : questions corrigées, construction au clavier, notes à toucher sur la partition de ton nocturne.</li><li><b>À apprendre par cœur</b> : chaque notion importante a sa case. Coche-la pour la mettre dans tes cartes (En cours de maîtrise). Seules les notions cochées y entrent. Celles des leçons que tu avais déjà terminées sont cochées pour toi, avec leur progression.</li><li>Le niveau 2 passera au même format dans une prochaine version.</li></ul>',
     '4.3': '<ul><li><b>Oreille</b> refaite en deux parcours, une étape après l’autre : <b>Chanter juste</b> (13 étapes, de la voix stable aux intervalles et aux motifs de ta pièce) et <b>Reconnaître à l’oreille</b> (16 étapes). L’étape en cours est ouverte ; toutes les séries restent dans « Entraînement libre ».</li><li><b>Chanter juste</b> : nouveaux exercices « Tenir une note » et « Glisser jusqu’à la note », une aiguille qui montre l’écart à la note, ta tendance (trop bas, trop haut…) et la méthode en cinq points.</li><li><b>Lecture de notes chronométrée</b> : jusqu’à 4 lignes supplémentaires ; les altérations se cochent à part.</li></ul>',
     '5.1': '<ul><li><b>Improvisation, plus simple</b> : chaque leçon se travaille en <b>exercices</b> (« Exercice 2 sur 5 »), du plus simple au plus difficile. Un exercice est <b>validé</b> quand tu le réussis deux jours différents. L’« échelle d’ornementation », qui recomptait les mêmes exercices, est retirée.</li></ul>',
@@ -804,7 +807,7 @@ async function pageLesson(id) {
   const body = h('div', { class: 'prose mt-2' });
   page.append(body);
   main.append(page);
-  if (l.steps) { try { await (await import('./tool-mastery.js')).migrateNotions(); } catch (e) { console.warn(e); } if (!stillHere(tok)) return; }
+  if (l.module === 'theorie') { try { await (await import('./tool-mastery.js')).migrateMastery(); } catch (e) { console.warn(e); } if (!stillHere(tok)) return; }
   const unmount = l.steps ? renderSteps(body, l) : renderRich(body, l.body);
   const top = essentialsCard(l, body._core || [], body._notions || []);
   if (top) { body.before(top); frenchSpacing(top); }
@@ -844,9 +847,9 @@ async function pagePiece(id) {
     const cb = h('input', { type: 'checkbox', checked: !!store.get(`pieces.${id}.byHeart`) });
     cb.addEventListener('change', () => {
       store.set(`pieces.${id}.byHeart`, cb.checked);
-      toast(cb.checked ? 'Questions « Qu’est-ce qui vient après ? » ajoutées à En cours de maîtrise' : 'Pièce retirée du par cœur', 'ok', 3500);
+      toast(cb.checked ? 'Le plan et l’accord suivant s’ajoutent aux exercices de la pièce (En cours de maîtrise)' : 'Pièce retirée du par cœur', 'ok', 3500);
     });
-    page.append(h('label', { class: 'check heart-toggle' }, cb, 'Je l’apprends par cœur', h('span', { class: 'small muted' }, ' — le plan et les enchaînements d’accords s’ajoutent à ', h('a', { href: '#/maitrise' }, 'En cours de maîtrise'), '.')));
+    page.append(h('label', { class: 'check heart-toggle' }, cb, 'Je l’apprends par cœur', h('span', { class: 'small muted' }, ' — le plan et les enchaînements d’accords s’ajoutent à ses exercices, dans ', h('a', { href: '#/maitrise' }, 'En cours de maîtrise'), '.')));
   }
   const body = h('div', { class: 'prose' });
   page.append(body);
