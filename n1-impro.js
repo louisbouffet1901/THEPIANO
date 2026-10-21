@@ -40,8 +40,8 @@ K:Am
 %%score {RH | LH}
 V:RH clef=treble
 V:LH clef=bass
-[V:RH] "^squelette"e8 | f8 | B8 | c8 |]
-[V:LH] "_i"A,,2 [A,CE]2 E,,2 [A,CE]2 | "_iv"D,,2 [F,A,D]2 D,,2 [F,A,D]2 | "_V7"E,,2 [^G,B,DE]2 E,,2 [G,B,DE]2 | "_i"A,,2 [A,CE]2 E,,2 [A,CE]2 |]`;
+[V:RH] "^mi"e8 | "^fa"f8 | "^si"B8 | "^do"c8 | "^do"c8 | "^ré"d8 | "^si"B8 | "^la"A8 |]
+[V:LH] "_i"A,,2 [A,CE]2 E,,2 [A,CE]2 | "_iv"D,,2 [F,A,D]2 D,,2 [F,A,D]2 | "_V7"E,,2 [^G,B,DE]2 E,,2 [G,B,DE]2 | "_i"A,,2 [A,CE]2 E,,2 [A,CE]2 | "_VI"F,,2 [F,A,C]2 C,,2 [F,A,C]2 | "_iv"D,,2 [F,A,D]2 D,,2 [F,A,D]2 | "_V7"E,,2 [^G,B,DE]2 E,,2 [G,B,DE]2 | "_i"A,,2 [A,CE]2 E,,2 [A,CE]2 |]`;
 const EX_PASSAGES = `X:1
 M:4/4
 L:1/8
@@ -338,15 +338,32 @@ ${W.ecoute({ title: 'La note étrangère : elle mène quelque part, ou non', bpm
 ] })}
 
 <h2>Le modèle, en trois étages</h2>
-${W.score({ abc: EX_SQUELETTE, title: '1. Le squelette (une note d’appui par mesure)', bpm: 66, practice: false, caption: 'Mi, fa, si, do : une note de chaque accord (i, iv, V7, i).' })}
+${W.score({ abc: EX_SQUELETTE, title: '1. Le squelette : les notes en or des exercices', bpm: 66, practice: false, caption: 'Une note de chaque accord par mesure : mi – fa – si – do, puis do – ré – si – la. Ce sont exactement les notes en or des exercices ci-dessous. Les étages 2 et 3 habillent les quatre premières mesures.' })}
 ${W.score({ abc: EX_PASSAGES, title: '2. Notes de passage, aux 2e et 4e temps', bpm: 66, practice: false, caption: 'Aux 1er et 3e temps, des notes de l’accord ; entre elles, la note de la gamme qui les relie (mi – ré – do, fa – mi – ré…).' })}
 ${W.score({ abc: EX_BRODERIES, title: '3. En croches : broderies et passages', bpm: 66, startBpm: 54, practice: false, caption: 'Chaque note d’appui est brodée (mi – fa – mi, fa – sol – fa, si – do – si), puis reliée à la suivante. Les temps forts n’ont pas bougé : c’est toujours le squelette.' })}
+
+<h2>Les notes en or : pourquoi celles-là</h2>
+<p>Sur un temps fort, n’importe quelle note de l’accord sonne juste : la note en or n’est pas « la seule bonne note ». C’est la note de la <b>ligne</b> choisie pour les exercices, la mélodie du modèle réduite à une note par mesure. Trois règles l’ont fixée : une note de l’accord ; proche de la précédente, ou reliée à elle par la gamme ; une fin en suspens à la mesure 4 (la question), puis sur la tonique à la mesure 8 (la réponse).</p>
+<table>
+<thead><tr><th>Mesure</th><th>Note en or</th><th>Pourquoi celle-là</th></tr></thead>
+<tbody>
+<tr><td><b>1 · i</b><br><span class="small">la do mi</span></td><td><b>mi</b></td><td>On part de la quinte de l’accord, assez haut pour que la ligne puisse redescendre jusqu’à la, à la fin.</td></tr>
+<tr><td><b>2 · iv</b><br><span class="small">ré fa la</span></td><td><b>fa</b></td><td>La note de l’accord la plus proche de mi : un demi-ton au-dessus.</td></tr>
+<tr><td><b>3 · V7</b><br><span class="small">mi sol♯ si ré</span></td><td><b>si</b></td><td>La ligne redescend par la gamme : fa – mi – ré – do – si. Ce chemin, c’est la place des notes de passage (étage 2).</td></tr>
+<tr><td><b>4 · i</b><br><span class="small">la do mi</span></td><td><b>do</b></td><td>La plus proche de si : un demi-ton au-dessus. Fin sur do et non sur la : la phrase reste en suspens, c’est la question.</td></tr>
+<tr><td><b>5 · VI</b><br><span class="small">fa la do</span></td><td><b>do</b></td><td>Note commune : do appartient aussi à l’accord de fa majeur, on la garde.</td></tr>
+<tr><td><b>6 · iv</b><br><span class="small">ré fa la</span></td><td><b>ré</b></td><td>La plus proche de do : un ton au-dessus.</td></tr>
+<tr><td><b>7 · V7</b><br><span class="small">mi sol♯ si ré</span></td><td><b>si</b></td><td>La descente finale commence : ré – do – si, puis la.</td></tr>
+<tr><td><b>8 · i</b><br><span class="small">la do mi</span></td><td><b>la</b></td><td>La tonique : la réponse conclut.</td></tr>
+</tbody></table>
+<p class="small">Dans les exercices, la grille affiche toutes les notes en or avant le départ, sous chaque accord. Pendant une mesure, la suivante est déjà marquée en or pâle sur le clavier : regarde-la avant le changement d’accord. Au dernier exercice, plus de notes en or : tu choisis ta propre ligne, avec les mêmes règles.</p>
 
 <h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im-accords', steps: [
   { id: 'or', title: 'Le squelette en or', preset: 'n1-am-squelette', mode: 'squelette', loops: 1,
-    what: 'La note d’appui de chaque mesure s’allume en or : pose-la au premier temps et tiens-la, rien d’autre.',
+    what: 'Les notes en or sont écrites dans la grille, sous chaque accord : mi, fa, si, do, puis do, ré, si, la (le squelette ci-dessus). Pose chacune au premier temps et tiens-la, rien d’autre. Pendant que tu la tiens, regarde la suivante : elle est déjà en or pâle sur le clavier.',
     why: 'D’abord les appuis seuls : on entend la ligne que les ornements vont habiller.',
+    tip: 'Avant de commencer, écoute le squelette (partition 1) et chante-le deux fois : quand tu connais la ligne par cœur, tu n’as plus besoin de la lire.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'rhythm', v: 'longues' }] },
   { id: 'passage', title: 'Relier par des notes de passage', preset: 'n1-am-squelette', mode: 'squelette', loops: 1,
     what: 'Pose la note en or au premier temps, puis va vers la suivante <b>par la gamme</b>, en noires (mi – ré – do…).',

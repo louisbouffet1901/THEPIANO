@@ -85,12 +85,30 @@ export function keyboard(opts = {}) {
     if (k) k.classList.toggle('press', !!on);
   };
   el.clearPress = () => el.querySelectorAll('.press').forEach(k => k.classList.remove('press'));
+  // repères changés en cours de route : couleur, et nom écrit sur la touche (label, labelColor) au-dessus
+  // de l'étiquette fixe des do
   el.setMarks = (list) => {
     el.querySelectorAll('.wk').forEach(k => k.setAttribute('fill', '#fff'));
     el.querySelectorAll('.bk').forEach(k => k.setAttribute('fill', '#2a2a2e'));
+    el.querySelectorAll('text.mk-lbl').forEach(t => t.remove());
     for (const mk of list) {
       const k = el.querySelector(`[data-m="${mk.m}"]`);
-      if (k) k.setAttribute('fill', mk.color || (isBlack(mk.m) ? '#476aa3' : C.tint2));
+      if (!k) continue;
+      k.setAttribute('fill', mk.color || (isBlack(mk.m) ? '#476aa3' : C.tint2));
+      if (mk.label == null || mk.label === '' || xOf[mk.m] == null) continue;
+      const black = isBlack(mk.m);
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('class', 'mk-lbl');
+      t.setAttribute('x', xOf[mk.m] + (black ? BW / 2 : WW / 2));
+      t.setAttribute('y', black ? top + BH - 8 : top + BH + 14);
+      t.setAttribute('font-size', black ? 9.5 : 11);
+      t.setAttribute('font-weight', '700');
+      t.setAttribute('text-anchor', 'middle');
+      t.setAttribute('pointer-events', 'none');
+      t.setAttribute('font-family', 'Inter, system-ui, sans-serif');
+      t.setAttribute('fill', mk.labelColor || (black ? '#fff' : '#1d1f24'));
+      t.textContent = mk.label;
+      el.append(t);
     }
   };
   if (opts.interactive) {
