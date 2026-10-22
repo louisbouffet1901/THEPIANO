@@ -11,6 +11,8 @@ import { ensureAbcjs, mountLazy } from './lazy.js';
 import { initUpdates, checkForUpdate, applyUpdate, hasUpdate, version } from './updates.js';
 import { exportProgress, importProgress, resetAll, needsBackupReminder, postponeReminder, lastBackupLabel, requestPersistence } from './backup.js';
 import { LEVELS, MODULES, PIECES, lessonById, levelById, allLessons, lessonsOf, loadLesson, loadPiece } from './content-index.js';
+import { mountSessionBox, weekCard, updateSessionBar, improNext } from './session.js';
+import { backfillActivity } from './activity.js';
 
 const main = $('#main');
 const sidebar = $('#sidebar');
@@ -54,8 +56,9 @@ const routes = [
   [/^#\/niveau\/(n\d)$/, pageLevel],
   [/^#\/niveau\/(n\d)\/(technique|interpretation|theorie|oreille|lecture|impro)$/, pageModule],
   [/^#\/lecon\/([\w-]+)$/, pageLesson],
-  [/^#\/piece\/([\w-]+)$/, pagePiece],
-  [/^#\/plan\/(n\d)$/, pagePlan],
+  [/^#\/piece\/([\w-]+)(?:\/([\w-]+))?$/, pagePiece],
+  // le plan hebdomadaire (V2 à V6) est remplacé par la carte de la pièce
+  [/^#\/plan\/(n\d)$/, id => { location.hash = `#/piece/${levelById(id)?.piece || ''}`; }],
   [/^#\/validation\/(n\d)$/, pageValidation],
   [/^#\/outils$/, pageTools],
   [/^#\/outils\/metronome$/, () => toolPage('Métronome', 'Mesures muettes, accélération progressive, tempo tapé.', () => import('./tool-metronome-ui.js').then(m => el => m.mountMetronome(el, { title: false })))],
@@ -73,7 +76,7 @@ const routes = [
   [/^#\/outils\/analyseur$/, () => toolPage('Analyse technique', 'Pour les gammes, arpèges et exercices joués sans partition : régularité, legato, pédale, équilibre des mains. Pour un passage de tes pièces, utilise plutôt « Analyser » sous l’extrait : l’analyse compare alors ton jeu à la partition.', () => import('./tool-analyzer.js').then(m => el => m.mountAnalyzer(el, { modes: ['evenness', 'legato', 'pedal', 'balance', 'voicing', 'dynamics'] })))],
   [/^#\/outils\/impro$/, pageImproTool],
   [/^#\/outils\/composition$/, pageCompose],
-  [/^#\/outils\/exercices$/, pageExercises],
+  [/^#\/outils\/exercices(?:\/([\w-]+))?$/, pageExercises],
   [/^#\/outils\/clavier$/, pageKeyboardTest],
   [/^#\/reglages$/, pageSettings],
 ];
@@ -134,8 +137,7 @@ function renderNav(hash) {
     html += `<div class="nav-progress"><i style="width:${ls.length ? done / ls.length * 100 : 0}%"></i></div>`;
     if (open) {
       html += `<div class="nav-sub">`;
-      html += link(`#/piece/${L.piece}`, 'Pièce phare', 'piece');
-      html += link(`#/plan/${L.id}`, 'Plan hebdomadaire', 'plan');
+      html += link(`#/piece/${L.piece}`, 'Pièce phare', 'piece', { prefix: `#/piece/${L.piece}/` });
       html += link(`#/validation/${L.id}`, 'Valider le niveau', 'check');
       html += `</div>`;
     }
@@ -359,11 +361,11 @@ function renderSteps(container, l) {
  * sections repliables. Une seule ouverte d'emblée (la dernière consultée, sinon la première) ; les partitions d'un
  * passage fermé ne sont dessinées qu'à son ouverture.
  */
-function renderPieceBody(container, bodyFn, pieceId) {
+function renderPieceBody(container, bodyFn, pieceId, want = null) {
   const { W, cfgs } = makeW();
   container.innerHTML = bodyFn(W);
   container._core = W._core.slice();
-  const h2 = [...container.querySelectorAll('h2')].find(x => /^Les passages/.test(x.textContent.trim()));
+  const h2 = [...container.querySelectorAll('h2')].find(x => /^Les (passages|sections)/.test(x.textContent.trim()));
   const groups = [];
   if (h2) {
     let n = h2.nextElementSibling;
@@ -375,12 +377,14 @@ function renderPieceBody(container, bodyFn, pieceId) {
     }
   }
   const key = `pieces.${pieceId}.openPassage`;
-  const want = store.get(key);
-  const openIdx = Number.isInteger(want) && want < groups.length ? want : 0;
+  const saved = store.get(key);
+  const asked = want ? groups.findIndex(g => g.h.dataset.sec === want) : -1;
+  const openIdx = asked >= 0 ? asked : Number.isInteger(saved) && saved < groups.length ? saved : 0;
   const cleanups = [];
   const lazy = new Map(); // details → monté ?
   groups.forEach((g, i) => {
     const det = h('details', { class: 'passage' });
+    if (g.h.dataset.sec) { det.dataset.sec = g.h.dataset.sec; det.id = `sec-${g.h.dataset.sec}`; }
     const m = g.h.textContent.match(/\(([^)]*)\)\s*$/);
     const sum = h('summary', {}, h('span', { class: 'ps-title' }, m ? g.h.textContent.slice(0, m.index).trim() : g.h.textContent.trim()), m ? h('span', { class: 'ps-bars' }, m[1]) : null);
     const bodyEl = h('div', { class: 'passage-body' });
@@ -401,10 +405,28 @@ function renderPieceBody(container, bodyFn, pieceId) {
     });
     if (i === openIdx) det.open = true;
   });
-  if (groups.length > 1) {
+  // V7 : l'état de chaque section (carte de la pièce) dans son titre
+  if (groups.some(g => g.h.dataset.sec)) {
+    const dets = [...container.querySelectorAll('details.passage[data-sec]')];
+    Promise.all([import('./piecemap.js'), import('./content-piecemap.js')]).then(([pm, cpm]) => {
+      const paint = () => dets.forEach(det => {
+        const { st } = pm.sectionState(pieceId, det.dataset.sec);
+        const sum = det.querySelector(':scope > summary');
+        let tag = sum.querySelector('.pm-state');
+        if (!tag) { tag = h('span', { class: 'pm-state' }); sum.append(tag); }
+        tag.className = `pm-state s${st}`;
+        tag.textContent = cpm.SECTION_STATES[st].short;
+      });
+      paint();
+      cleanups.push(store.subscribe(p => { if (p === `pieces.${pieceId}.sections`) paint(); }));
+    }).catch(() => {});
+  }
+  if (groups.length > 1 && !groups.some(g => g.h.dataset.sec)) {
     const nav = h('p', { class: 'small ps-hint' }, `${groups.length} passages : touche un titre pour l’ouvrir ou le fermer.`);
     h2.after(nav);
   }
+  container._openIdx = openIdx;
+  container._groups = groups.length;
   cleanups.push(mountWidgets(container, cfgs));
   frenchSpacing(container);
   return () => cleanups.forEach(fn => { try { fn(); } catch (e) { /* */ } });
@@ -442,67 +464,41 @@ export function frenchSpacing(root) {
 function lessonListHTML(lessons) {
   return `<ul class="lesson-list">${lessons.map((l, i) => `<li class="${store.isDone(l.id) ? 'done' : ''}${l.prio === 2 ? ' opt' : ''}"><a href="#/lecon/${l.id}"><span class="num">${store.isDone(l.id) ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b>${l.prio === 2 ? '<em class="tag opt-tag">complément</em>' : ''}<span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a></li>`).join('')}</ul>`;
 }
-/** Priorité d'une tâche du plan : 2 = « si tu as le temps » (indiquée dans le plan, ou leçon de complément). */
-function taskPrio(t) {
-  if (t.prio) return t.prio;
-  const l = t.lesson ? lessonById(t.lesson) : null;
-  return l && l.prio === 2 ? 2 : 1;
-}
-function nextUndone(L) {
-  // ordre du plan hebdomadaire
-  for (const wk of L.plan) for (const t of wk.tasks) {
-    if (t.lesson && !store.isDone(t.lesson)) return lessonById(t.lesson);
-  }
-  return allLessons().find(x => x.level === L.id && !store.isDone(x.id));
-}
-
 /* ================================================================== */
 /* Pages                                                               */
 /* ================================================================== */
 function pageHome() {
   const L = currentLevel();
   const p = levelProgress(L);
-  const next = nextUndone(L);
-  const piece = PIECES[L.piece];
-  const week = store.get(`plan.week_${L.id}`) || 1;
-  const wk = L.plan[week - 1];
   const page = h('div', { class: 'page' });
   page.innerHTML = `
-    <div class="page-head"><h1>Bonjour Louis</h1><p class="lead">Ton parcours de piano classique : chaque semaine, la pièce phare et les six modules avancent ensemble.</p></div>
-    <div class="hero">
-      <div class="card">
-        <div class="card-top"><span class="eyebrow">Niveau ${L.num} — en cours</span><span class="tag accent">${p.done}/${p.total} leçons</span></div>
-        <h2>${esc(L.title)}</h2>
-        <p class="small">${esc(L.subtitle)}</p>
-        <div class="progress mt-1"><i style="width:${p.total ? p.done / p.total * 100 : 0}%"></i></div>
-        ${next ? `<p class="small mt-2 mb-0">Prochaine leçon du plan : <a href="#/lecon/${next.id}">${esc(next.title)}</a></p>` : ''}
-        <div class="btn-row mt-2">
-          ${next ? '' : `<a class="btn primary" href="#/validation/${L.id}">Valider le niveau</a>`}
-          <a class="btn" href="#/niveau/${L.id}">Voir le niveau</a>
-        </div>
-      </div>
-      <a class="card piece" href="#/piece/${piece.id}">
-        <div class="card-top"><span class="eyebrow">Pièce phare</span></div>
-        <h2 style="font-size:21px">${esc(piece.title)}</h2>
-        <p class="small">${esc(piece.composer)} · ${esc(piece.short || '')}</p>
-        <p class="small mt-1">Plan de travail, extraits jouables, analyse et écoutes.</p>
-      </a>
-    </div>
-    <div class="section-title"><h2>Ta séance d’aujourd’hui</h2><span class="small"><a href="#/plan/${L.id}">Semaine ${week} sur ${L.plan.length} — tout le plan</a></span></div>
+    <div class="page-head"><h1>Bonjour Louis</h1><p class="lead">Choisis ce que tu travailles aujourd’hui. L’appli te propose la suite de chaque domaine et te signale ce que tu laisses de côté depuis trop longtemps.</p></div>
     <div id="sessionBox"></div>
-    <div id="weekBox" class="mt-2"></div>
-    <div class="section-title"><h2>Outils du quotidien</h2></div>
-    <div class="grid cols-2">
-      ${toolCard('#/outils/rythme', 'Rythme', 'Lire et taper des rythmes, dix niveaux, et ceux de tes pièces.')}
-      ${toolCard('#/outils/lecture', 'Lecture à vue', '10 minutes par jour, de vrais extraits à ton niveau, jamais deux fois le même.')}
-      ${toolCard('#/outils/oreille', 'Oreille', 'Deux parcours pas à pas : chanter juste, et reconnaître à l’oreille. 10 minutes par jour.')}
-      ${toolCard('#/outils/theorie', 'Théorie', 'Tous les cours, et des exercices : notes, gammes, intervalles, accords.')}
-      ${toolCard('#/outils/exercices', 'Exercices', 'Indépendance des mains, polyrythmes, lié contre détaché ; lecture de notes chronométrée.')}
-      ${toolCard('#/outils/composition', 'Composition', 'Écrire ta pièce de 8 mesures : élégie, romance ou nocturne, notée et vérifiée.')}
+    <div class="grid cols-2 home-row">
+      <div id="pieceBox"></div>
+      <div id="weekBox"></div>
+    </div>
+    <p class="small home-theory" id="theoryLine" hidden></p>
+    <div class="section-title"><h2>Niveau ${L.num} — ${esc(L.title)}</h2><span class="small"><a href="#/niveau/${L.id}">Voir le niveau</a></span></div>
+    <div class="card level-mini">
+      <div class="card-top"><span class="small">${esc(L.subtitle)}</span><span class="tag accent">${p.done}/${p.total} leçons</span></div>
+      <div class="progress"><i style="width:${p.total ? p.done / p.total * 100 : 0}%"></i></div>
+      <div class="btn-row mt-2"><a class="btn sm" href="#/niveau/${L.id}">Les six modules</a><a class="btn sm ghost" href="#/validation/${L.id}">Valider le niveau</a></div>
+    </div>
+    <div class="section-title"><h2>Outils</h2></div>
+    <div class="grid cols-3 tools-grid">
+      ${toolCard('#/outils/lecture', 'Lecture à vue', 'De vrais extraits à ton niveau, jamais deux fois le même.')}
+      ${toolCard('#/outils/rythme', 'Rythme', 'Lire et taper des rythmes : dix niveaux, et ceux de tes pièces.')}
+      ${toolCard('#/outils/oreille', 'Oreille', 'Chanter juste, et reconnaître à l’oreille, pas à pas.')}
+      ${toolCard('#/outils/impro', 'Improvisation', 'L’exercice où tu en es, et l’accompagnateur pour jouer librement.')}
+      ${toolCard('#/outils/exercices', 'Exercices', 'Indépendance des mains, polyrythmes, lié contre détaché.')}
+      ${toolCard('#/outils/theorie', 'Théorie', 'Tous les cours, et des exercices pour réviser.')}
+      ${toolCard('#/outils/composition', 'Composition', 'Écrire ta pièce de 8 mesures, notée et vérifiée.')}
       <a class="card" href="#/maitrise" id="masteryCard"><h3>En cours de maîtrise</h3><p>Les leçons que tu apprends par cœur : leurs fiches et de petits exercices.</p></a>
     </div>
     <div id="midiHelp"></div>`;
   main.append(page);
+  const offs = [];
   if (needsBackupReminder()) {
     const later = h('button', { class: 'btn ghost sm', type: 'button' }, 'Plus tard');
     const go = h('button', { class: 'btn sm', type: 'button' }, 'Exporter maintenant');
@@ -512,15 +508,27 @@ function pageHome() {
     later.addEventListener('click', () => { postponeReminder(7); box.remove(); });
     $('.page-head', page).after(box);
   }
-  // leçons à apprendre par cœur (calculées à part, sans retarder l'accueil)
-  import('./tool-mastery.js').then(m => m.homeSummary()).then(r => {
+  // la séance : nouvelle séance (cases à cocher) ou séance en cours
+  offs.push(mountSessionBox($('#sessionBox', page), L));
+  // ta pièce : avancement par section, objectif de date, section du jour
+  import('./piecemap.js').then(pm => {
+    if (!page.isConnected) return;
+    const box = $('#pieceBox', page);
+    if (pm.hasMap(L.piece)) { const un = pm.mountPieceHead(box, { piece: L.piece, compact: true }); if (un) offs.push(un); }
+    else box.innerHTML = `<a class="card piece" href="#/piece/${L.piece}"><div class="card-top"><span class="eyebrow">Pièce phare</span></div><h3>${esc(PIECES[L.piece].title)}</h3></a>`;
+    frenchSpacing(box);
+  }).catch(e => console.warn(e));
+  $('#weekBox', page).append(weekCard());
+  // théorie : une ligne discrète quand des fiches sont à revoir
+  import('./tool-mastery.js').then(m => m.dueSummary()).then(r => {
     const c = $('#masteryCard', page);
-    if (c && r) c.querySelector('p').textContent = r.n ? `${r.n} leçon${r.n > 1 ? 's' : ''} à apprendre par cœur : relis leur fiche, puis fais une petite série d’exercices.` : 'Coche les leçons à apprendre par cœur : pour chacune, une fiche et de petits exercices.';
+    if (c && r) c.querySelector('p').textContent = r.n ? `${r.n} leçon${r.n > 1 ? 's' : ''} à apprendre par cœur${r.due ? `, dont ${r.due} à revoir` : ''}.` : 'Coche les leçons à apprendre par cœur : pour chacune, une fiche et de petits exercices.';
+    const line = $('#theoryLine', page);
+    if (line && r && r.due) { line.innerHTML = `Théorie : ${r.due} fiche${r.due > 1 ? 's' : ''} à revoir dans <a href="#/maitrise">En cours de maîtrise</a>.`; line.hidden = false; frenchSpacing(line); }
   }).catch(() => {});
-  const sc = sessionCard(L);
-  if (sc) $('#sessionBox', page).append(sc);
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '7.0': '<ul><li><b>Nouvelle séance</b> : coche ce que tu veux travailler (pièce, technique, improvisation, lecture, oreille, autres pièces) et choisis une durée. L’appli propose l’étape suivante de chaque case et coche d’avance ce que tu laisses de côté depuis trop longtemps. Le plan en 8 semaines disparaît.</li><li><b>La carte de ta pièce</b> : section par section, ce qui s’y passe, ce que ça change à ton jeu, les leçons et les exercices qu’elle demande (rubato, triolets, octaves…) et comment la travailler. Indique où tu en es dans chaque section : la section du jour et un objectif de date en dépendent.</li><li><b>Le plan de la pièce</b>, simplifié : à quoi il sert, et trois exercices (repartir d’un point de départ, situer un extrait, entendre ce qui change au retour). Et un <b>filage enregistré</b> environ une fois par semaine.</li><li><b>Tes 7 derniers jours</b> : les jours de pratique de chaque case, face à l’objectif.</li></ul>',
     '6.2': '<ul><li><b>Improvisation, notes en or</b> : toutes les notes en or sont écrites dans la grille, sous chaque accord, avant même le départ. Pendant une mesure, la suivante est annoncée (« puis … ») et marquée en or pâle sur le clavier, avec son nom : tu as le temps de la préparer.</li><li>Leçon « Entre les notes de l’accord » : le squelette complet des exercices en partition, et un tableau qui explique pourquoi chaque note en or a été choisie.</li></ul>',
     '6.1':'<ul><li><b>En cours de maîtrise, refait</b> : coche les leçons de théorie que tu veux savoir par cœur (dans l’onglet, ou en tête de chaque leçon). Pour chacune, une <b>fiche</b> qui résume l’essentiel et de <b>petits exercices</b> corrigés ; les questions manquées reviennent en premier à la série suivante. « Tout réviser » mêle tes leçons.</li><li>Les boîtes et les dates de révision sont retirées. Les leçons qui étaient dans tes cartes restent cochées : décoche celles que tu ne veux pas.</li></ul>',
     '6.0': '<ul><li><b>Théorie du niveau 1, refaite</b> : chaque leçon avance par étapes, une à la fois. Chaque étape donne l’idée en une phrase, un exemple résolu, le piège à éviter, puis un exercice tout de suite : questions corrigées, construction au clavier, notes à toucher sur la partition de ton nocturne.</li><li><b>À apprendre par cœur</b> : chaque notion importante a sa case. Coche-la pour la mettre dans tes cartes (En cours de maîtrise). Seules les notions cochées y entrent. Celles des leçons que tu avais déjà terminées sont cochées pour toi, avec leur progression.</li><li>Le niveau 2 passera au même format dans une prochaine version.</li></ul>',
@@ -536,196 +544,18 @@ function pageHome() {
     ok.addEventListener('click', () => { store.set('seenVersion', version.app); box.remove(); });
     $('.page-head', page).after(box);
   }
-  const weekBox = $('#weekBox', page);
-  if (wk) weekBox.append(weekCard(L, wk, week, true, { open: false }));
   if (midi.status !== 'ready') {
     $('#midiHelp', page).innerHTML = `<div class="callout tip mt-3"><div class="c-title">${ICONS.bulb}Brancher le piano</div>
       <ol><li>Relie le piano à la tablette. <b>Kawai ES110</b> : en Bluetooth MIDI (connecte d’abord le piano avec l’appli gratuite « MIDI BLE Connect »), ou avec une interface USB-MIDI branchée sur la prise ronde <b>MIDI OUT</b>. Piano avec prise <b>USB TO HOST</b> : câble USB-C ↔ USB-B.</li>
       <li>Ouvre l’appli dans <b>Chrome</b>, puis touche <b>Connecter le piano</b> en haut à droite et accepte l’accès MIDI.</li>
       <li>Vérifie dans <a href="#/outils/clavier">Test du clavier</a> : les touches jouées s’allument.</li></ol></div>`;
   }
+  return () => offs.forEach(f => { try { f(); } catch (e) { /* */ } });
 }
 function toolCard(href, title, txt) {
   return `<a class="card" href="${href}"><h3>${esc(title)}</h3><p>${esc(txt)}</p></a>`;
 }
 
-function weekCard(L, wk, week, compact, fold = null) {
-  const card = h('div', { class: 'card week', style: { padding: 0 } });
-  const done = wk.tasks.filter((t, i) => store.get('plan')?.[`${L.id}:s${week}:${i}`]).length;
-  const head = h('div', { class: 'week-head' }, h('h3', {}, `Semaine ${week} — ${wk.title}`), h('span', { class: 'small' }, `${done}/${wk.tasks.length}`));
-  const body = h('div', { class: 'week-body' });
-  if (fold) {
-    // semaine repliable : seule la semaine en cours est ouverte d'emblée
-    card.classList.add('foldable');
-    head.setAttribute('role', 'button'); head.tabIndex = 0;
-    const set = o => { body.hidden = !o; card.classList.toggle('open', o); head.setAttribute('aria-expanded', String(o)); };
-    set(!!fold.open);
-    const flip = () => set(body.hidden);
-    head.addEventListener('click', flip);
-    head.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
-  }
-  if (wk.focus && !compact) body.append(h('p', { class: 'small mt-0' }, wk.focus));
-  const mkRow = (t, i) => {
-    const key = `${L.id}:s${week}:${i}`;
-    const cb = h('input', { type: 'checkbox', 'aria-label': 'Fait' });
-    cb.checked = !!store.get('plan')?.[key];
-    const row = h('div', { class: 'task' + (cb.checked ? ' done' : '') + (taskPrio(t) === 2 ? ' opt' : '') }, cb, h('span', { class: 'mod' }, t.mod), h('span', { class: 'txt', html: taskHTML(t) }));
-    cb.addEventListener('change', () => {
-      const pl = { ...(store.get('plan') || {}) };
-      pl[key] = cb.checked; store.set('plan', pl);
-      row.classList.toggle('done', cb.checked);
-      if (t.lesson && cb.checked && !store.isDone(t.lesson)) store.setDone(t.lesson, true);
-      const d = wk.tasks.filter((_, j) => store.get('plan')?.[`${L.id}:s${week}:${j}`]).length;
-      head.lastChild.textContent = `${d}/${wk.tasks.length}`;
-    });
-    return row;
-  };
-  // d'abord l'incontournable, puis ce qui se fait « si tu as le temps »
-  const main1 = wk.tasks.map((t, i) => [t, i]).filter(([t]) => taskPrio(t) === 1);
-  const opt = wk.tasks.map((t, i) => [t, i]).filter(([t]) => taskPrio(t) === 2);
-  body.append(h('div', { class: 'task-group-title' }, 'Incontournable'));
-  main1.forEach(([t, i]) => body.append(mkRow(t, i)));
-  if (opt.length) {
-    if (compact) body.append(h('p', { class: 'small task-more' }, h('a', { href: `#/plan/${L.id}` }, `+ ${opt.length} tâche${opt.length > 1 ? 's' : ''} si tu as le temps`)));
-    else {
-      body.append(h('div', { class: 'task-group-title opt' }, 'Si tu as le temps'));
-      opt.forEach(([t, i]) => body.append(mkRow(t, i)));
-    }
-  }
-  card.append(head, body);
-  return card;
-}
-function taskHTML(t) {
-  let s = t.text;
-  if (t.lesson) { const l = lessonById(t.lesson); s = s.replace('{l}', l ? `<a href="#/lecon/${l.id}">${esc(l.title)}</a>` : '<span class="muted">leçon à venir</span>'); }
-  if (t.piece) s = s.replace('{p}', `<a href="#/piece/${t.piece}">${esc(PIECES[t.piece]?.title || '')}</a>`);
-  if (t.tool) s = s.replace('{t}', `<a href="${t.tool[0]}">${esc(t.tool[1])}</a>`);
-  return s;
-}
-
-/* ================================================================== */
-/* Séance du jour : ≈ 1 h 15 tirée de la semaine en cours               */
-/* ================================================================== */
-const MOD_ORDER = ['Technique', 'Lecture', 'Pièce', 'Interprétation', 'Oreille', 'Théorie', 'Impro', 'Compléments', 'Révisions', 'Validation'];
-const dayKey = () => new Date().toDateString();
-const fmtMin = m => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ' ' + String(m % 60).padStart(2, '0') : ''}` : `${m} min`);
-/**
- * Chaque jour : la pièce phare (30 min) et la lecture à vue (10 min), puis les leçons de la semaine pas encore faites
- * (une par module, ≈ 35 min, l'incontournable d'abord), dans l'ordre de la séance type. Figée pour la journée.
- */
-/**
- * Improvisation (V5.1) : la leçon dont un exercice reste à valider — celle de la semaine d'abord, puis les précédentes
- * du niveau (révision). Le résumé de chaque leçon (exercices validés, exercice en cours) est tenu par tool-paliers.js.
- */
-function improStep(L, week) {
-  const ids = [];
-  L.plan.slice(0, week).forEach(wk => wk.tasks.forEach(t => { if (t.mod === 'Impro' && t.lesson && lessonById(t.lesson) && !ids.includes(t.lesson)) ids.push(t.lesson); }));
-  const order = ids.length ? [ids[ids.length - 1], ...ids.slice(0, -1)] : [];
-  const sums = store.get('improv.lessons') || {};
-  const id = order.find(x => !sums[x] || sums[x].mastered < sums[x].total);
-  if (!id) return { mod: 'Impro', min: 10, html: '<a href="#/outils/impro">Improvisation</a> : jeu libre sur une grille de ton choix, sans t’arrêter.', href: '#/outils/impro' };
-  const l = lessonById(id), s = sums[id];
-  const where = s && s.cur != null ? `exercice ${s.cur + 1} sur ${s.total} (${esc(s.curTitle)})` : 'le premier exercice';
-  return { mod: 'Impro', min: 10, html: `<a href="#/lecon/${l.id}">${esc(l.title)}</a> : ${where}, puis une minute de jeu libre.`, href: `#/lecon/${l.id}` };
-}
-function todaySession(L, create = true) {
-  const week = store.get(`plan.week_${L.id}`) || 1;
-  const wk = L.plan[week - 1];
-  if (!wk) return null;
-  const saved = store.get('session');
-  if (saved && saved.day === dayKey() && saved.level === L.id && saved.week === week) return saved;
-  if (!create) return null;
-  const plan = store.get('plan') || {};
-  const tasks = wk.tasks.map((t, i) => ({ t, i, done: !!plan[`${L.id}:s${week}:${i}`] || !!(t.lesson && store.isDone(t.lesson)) }));
-  const steps = [];
-  const add = st => steps.push({ id: 's' + steps.length, ...st });
-  const piece = tasks.find(x => x.t.mod === 'Pièce');
-  if (piece) add({ mod: 'Pièce', min: 30, html: taskHTML(piece.t), href: `#/piece/${piece.t.piece}` });
-  const sight = tasks.find(x => x.t.mod === 'Lecture' && x.t.tool);
-  add({ mod: 'Lecture', min: 10, html: (sight ? taskHTML(sight.t) : '<a href="#/outils/lecture">Lecture à vue</a> : un ou deux extraits nouveaux, sans t’arrêter.') + ' Commence par une minute de lecture de notes chronométrée (sous l’outil).', href: sight ? sight.t.tool[0] : '#/outils/lecture' });
-  // improvisation : 10 min chaque jour, à l'exercice en cours (V5) ; les autres leçons se partagent ≈ 25 min
-  add(improStep(L, week));
-  let budget = 25;
-  const used = new Set();
-  const cand = tasks.filter(x => x.t.lesson && x.t.mod !== 'Impro' && !x.done && lessonById(x.t.lesson)).sort((a, b) => taskPrio(a.t) - taskPrio(b.t) || a.i - b.i);
-  for (const x of cand) {
-    const l = lessonById(x.t.lesson);
-    const min = l.minutes || 15;
-    if (used.has(x.t.mod) || (used.size && min > budget)) continue;
-    add({ mod: x.t.mod, min, html: taskHTML(x.t), href: `#/lecon/${l.id}`, lesson: l.id, task: x.i });
-    used.add(x.t.mod); budget -= min;
-    if (budget <= 5) break;
-  }
-  if (!used.has('Technique')) add({ mod: 'Technique', min: 10, html: '<a href="#/outils/exercices">Exercices</a> : l’exercice du jour (indépendance des mains), en rythme avec le clic.', href: '#/outils/exercices' });
-  if (!used.size) { // semaine bouclée : entraînement libre
-    add({ mod: 'Oreille', min: 10, html: '<a href="#/outils/oreille">Oreille</a> : l’étape en cours de tes deux parcours (chanter juste, reconnaître).', href: '#/outils/oreille' });
-  }
-  steps.sort((a, b) => MOD_ORDER.indexOf(a.mod) - MOD_ORDER.indexOf(b.mod));
-  const sess = { day: dayKey(), level: L.id, week, steps, done: {} };
-  store.set('session', sess);
-  return sess;
-}
-const stepDone = (sess, st) => (st.lesson ? store.isDone(st.lesson) : !!sess.done[st.id]);
-function setStepDone(sess, st, v) {
-  if (st.lesson) {
-    store.setDone(st.lesson, v);
-    if (st.task != null) { const pl = { ...(store.get('plan') || {}) }; pl[`${sess.level}:s${sess.week}:${st.task}`] = v; store.set('plan', pl); }
-  } else { sess.done[st.id] = v; store.set('session', sess); }
-}
-const stepText = st => { const d = document.createElement('div'); d.innerHTML = st.html; return d.textContent.trim(); };
-
-function sessionCard(L) {
-  const sess = todaySession(L);
-  if (!sess) return null;
-  const total = sess.steps.reduce((a, st) => a + st.min, 0);
-  const prog = h('span', { class: 'tag accent' });
-  const go = h('a', { class: 'btn primary' });
-  const fin = h('p', { class: 'small session-fin', hidden: true }, 'Séance terminée. S’il te reste du temps : une pièce complémentaire, pour le plaisir, ou la suite du plan de la semaine.');
-  const list = h('ol', { class: 'session-steps' });
-  const refresh = () => {
-    const d = sess.steps.filter(st => stepDone(sess, st)).length;
-    prog.textContent = `${d}/${sess.steps.length}`;
-    const nxt = sess.steps.find(st => !stepDone(sess, st));
-    go.hidden = !nxt; fin.hidden = !!nxt;
-    if (nxt) { go.href = nxt.href; go.textContent = d ? 'Continuer la séance' : 'Commencer la séance'; }
-  };
-  sess.steps.forEach(st => {
-    const cb = h('input', { type: 'checkbox', 'aria-label': 'Fait' });
-    cb.checked = stepDone(sess, st);
-    const li = h('li', { class: 'task' + (cb.checked ? ' done' : '') }, cb, h('span', { class: 'mod' }, st.mod), h('span', { class: 'txt', html: st.html }), h('span', { class: 'dur' }, `${st.min} min`));
-    cb.addEventListener('change', () => { setStepDone(sess, st, cb.checked); li.classList.toggle('done', cb.checked); refresh(); renderNav(location.hash); });
-    list.append(li);
-  });
-  refresh();
-  return h('div', { class: 'card session' },
-    h('div', { class: 'card-top' }, h('span', {}, h('span', { class: 'eyebrow' }, `Semaine ${sess.week}`), h('span', { class: 'small muted' }, ` · environ ${fmtMin(total)}`)), prog),
-    list, h('div', { class: 'btn-row mt-1' }, go), fin);
-}
-
-/** Barre « séance du jour » sur la page d'une étape : la marquer faite et passer à la suivante. */
-const sessionBar = h('div', { class: 'session-bar', hidden: true, role: 'region', 'aria-label': 'Séance du jour' });
-document.body.append(sessionBar);
-function updateSessionBar(hash) {
-  sessionBar.hidden = true;
-  sessionBar.innerHTML = '';
-  const sess = todaySession(currentLevel(), false);
-  if (!sess) return;
-  const i = sess.steps.findIndex(st => st.href === hash);
-  if (i < 0) return;
-  const st = sess.steps[i];
-  const nxt = sess.steps.slice(i + 1).find(x => !stepDone(sess, x)) || sess.steps.find(x => x !== st && !stepDone(sess, x));
-  const label = h('div', { class: 'sb-txt' }, h('b', {}, `Séance du jour · ${i + 1}/${sess.steps.length}`), h('span', {}, ` ${st.mod} · ${st.min} min`));
-  const btn = h('button', { class: 'btn primary sm', type: 'button' }, nxt ? 'Fait, étape suivante' : 'Fait, fin de la séance');
-  if (stepDone(sess, st)) btn.textContent = nxt ? 'Étape suivante' : 'Retour à l’accueil';
-  btn.addEventListener('click', () => {
-    if (!stepDone(sess, st)) setStepDone(sess, st, true);
-    location.hash = nxt ? nxt.href : '#/';
-  });
-  const close = h('button', { class: 'sb-close', type: 'button', 'aria-label': 'Masquer' }, '×');
-  close.addEventListener('click', () => { sessionBar.hidden = true; });
-  sessionBar.append(label, btn, close);
-  sessionBar.hidden = false;
-}
 
 function pageParcours() {
   const page = h('div', { class: 'page' });
@@ -754,13 +584,13 @@ function pageLevel(id) {
   const page = h('div', { class: 'page' });
   let html = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Le parcours', href: '#/parcours' }, { label: `Niveau ${L.num}` }]);
   html += `<div class="page-head"><h1>Niveau ${L.num} — ${esc(L.title)}</h1><p class="lead">${esc(L.subtitle)}</p>
-    <div class="tags"><span class="tag accent">${p.done}/${p.total} leçons</span><span class="tag">${L.plan.length} semaines</span><span class="tag">≈ 1 h 15 par jour</span>${isLevelValidated(L) ? '<span class="tag ok">niveau validé</span>' : ''}</div></div>`;
+    <div class="tags"><span class="tag accent">${p.done}/${p.total} leçons</span>${isLevelValidated(L) ? '<span class="tag ok">niveau validé</span>' : ''}</div></div>`;
   html += `<div class="grid cols-2">
     <a class="card piece" href="#/piece/${L.piece}"><div class="card-top"><span class="eyebrow">Pièce phare</span></div><h3>${esc(PIECES[L.piece].title)}</h3><p>${esc(PIECES[L.piece].short || '')}</p></a>
     <div class="card"><div class="card-top"><span class="eyebrow">Pièces complémentaires</span></div>${L.complements.map(cid => `<p class="mb-0"><a href="#/piece/${cid}">${esc(PIECES[cid].title)}</a> <span class="small">${esc(PIECES[cid].status || '')}</span></p>`).join('')}</div>
   </div>`;
   html += `<div class="section-title"><h2>Objectifs du niveau</h2></div><div class="card"><ul class="goals">${L.goals.map(g => `<li>${g}</li>`).join('')}</ul></div>`;
-  html += `<div class="btn-row mt-2"><a class="btn primary" href="#/plan/${L.id}">Plan hebdomadaire</a><a class="btn" href="#/validation/${L.id}">Grille de validation</a></div>`;
+  html += `<div class="btn-row mt-2"><a class="btn primary" href="#/piece/${L.piece}">La carte de la pièce</a><a class="btn" href="#/validation/${L.id}">Grille de validation</a></div>`;
   // les six modules en un coup d'œil : avancement et prochaine leçon ; la liste complète est sur la page du module
   html += `<div class="section-title"><h2>Les six modules</h2></div><div class="grid cols-3 module-grid">`;
   for (const M of MODULES) {
@@ -823,7 +653,7 @@ async function pageLesson(id) {
     updateSessionBar(location.hash);
     if (v) toast('Leçon terminée', 'ok');
   });
-  foot.append(doneBtn, h('a', { class: 'small', href: `#/plan/${L.id}` }, 'Retour au plan de la semaine'));
+  foot.append(doneBtn, h('a', { class: 'small', href: `#/niveau/${L.id}/${M.id}` }, `Retour au module ${M.label}`));
   page.append(foot);
   const nav = h('div', { class: 'lesson-nav' });
   if (prev) nav.append(h('a', { href: `#/lecon/${prev.id}` }, h('small', {}, '← Précédente'), prev.title));
@@ -832,7 +662,7 @@ async function pageLesson(id) {
   return unmount;
 }
 
-async function pagePiece(id) {
+async function pagePiece(id, sec = null) {
   const tok = navToken;
   if (!PIECES[id]) { location.hash = '#/'; return; }
   main.append(h('div', { class: 'page' }, h('p', { class: 'w-loading' }, 'Chargement…')));
@@ -855,38 +685,20 @@ async function pagePiece(id) {
   const body = h('div', { class: 'prose' });
   page.append(body);
   main.append(page);
-  const unmount = renderPieceBody(body, P.body, id);
+  const unmount = renderPieceBody(body, P.body, id, sec && sec !== 'filage' ? sec : null);
   const top = essentialsCard({ essentials: P.essentials }, body._core || []);
   if (top) { body.before(top); frenchSpacing(top); }
   if (['op55-1', 'op15-1', 'clair-de-lune'].includes(id)) {
-    import('./analysis-panel.js').then(m => m.weekTakesSection(id)).then(sec => { if (stillHere(tok)) { page.append(sec); frenchSpacing(sec); } }).catch(e => console.warn(e));
+    import('./analysis-panel.js').then(m => m.weekTakesSection(id)).then(box => { if (stillHere(tok)) { page.append(box); frenchSpacing(box); } }).catch(e => console.warn(e));
+  }
+  // section demandée par la séance ou la carte : ouverte et amenée à l'écran
+  if (sec) {
+    requestAnimationFrame(() => {
+      const target = sec === 'filage' ? $('.w-filage', page) : $(`#sec-${CSS.escape(sec)}`, page);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
   return unmount;
-}
-
-function pagePlan(id) {
-  const L = levelById(id);
-  if (!L) { location.hash = '#/'; return; }
-  const page = h('div', { class: 'page' });
-  const cur = store.get(`plan.week_${L.id}`) || 1;
-  page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: `Niveau ${L.num}`, href: `#/niveau/${L.id}` }, { label: 'Plan hebdomadaire' }]) +
-    `<div class="page-head"><h1>Plan hebdomadaire</h1><p class="lead">${esc(L.planIntro || 'Chaque semaine : des objectifs par module. Répartis-les toi-même sur tes séances ; coche au fur et à mesure.')}</p></div>`;
-  const sel = h('div', { class: 'row mb-0', style: { marginBottom: '14px' } }, h('span', { class: 'small' }, 'Semaine en cours :'));
-  const seg = h('div', { class: 'seg' });
-  L.plan.forEach((_, i) => {
-    const b = h('button', { type: 'button', class: i + 1 === cur ? 'on' : '' }, String(i + 1));
-    b.addEventListener('click', () => { store.set(`plan.week_${L.id}`, i + 1); router(); });
-    seg.append(b);
-  });
-  sel.append(seg);
-  page.append(sel);
-  if (L.weekRoutine) page.append(h('details', { class: 'callout tip routine', html: `<summary class="c-title">${ICONS.bulb}Une séance type (≈ 1 h 15)</summary>${L.weekRoutine}<p class="small">L’accueil propose chaque jour une séance toute prête, tirée de la semaine en cours.</p>` }));
-  L.plan.forEach((wk, i) => {
-    const c = weekCard(L, wk, i + 1, false, { open: i + 1 === cur });
-    if (i + 1 === cur) c.style.borderColor = 'var(--accent)';
-    page.append(c);
-  });
-  main.append(page);
 }
 
 function pageValidation(id) {
@@ -1057,18 +869,17 @@ function pageImproTool() {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Improvisation' }]) +
     `<div class="page-head"><h1>Improvisation</h1><p class="lead">Chaque leçon d’improvisation se travaille en exercices progressifs, vérifiés au piano. Ici : l’exercice où tu en es, et l’accompagnateur pour jouer librement.</p></div>`;
-  // l'exercice en cours : celui de la leçon d'improvisation de la semaine (niveau en cours)
+  // l'exercice en cours : la première leçon d'improvisation pas encore validée, dans l'ordre du module
   const L = currentLevel();
-  const week = store.get(`plan.week_${L.id}`) || 1;
-  const tl = L.plan[week - 1]?.tasks.find(t => t.mod === 'Impro' && t.lesson);
-  const l = tl ? lessonById(tl.lesson) : null;
+  const nx = improNext(L);
+  const l = nx ? nx.l : null;
   const sm = l ? (store.get('improv.lessons') || {})[l.id] : null;
-  const cur = h('div', { class: 'card impro-top' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Où tu en es'), h('span', { class: 'small' }, `Niveau ${L.num} · semaine ${week}`)));
+  const cur = h('div', { class: 'card impro-top' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Où tu en es'), h('span', { class: 'small' }, l ? `Niveau ${l.level.slice(1)}` : '')));
   if (l) {
     cur.append(h('h3', {}, l.title),
       h('p', { class: 'small' }, sm ? (sm.cur != null ? `Exercice ${sm.cur + 1} sur ${sm.total} : ${sm.curTitle}. ${sm.mastered} validé${sm.mastered > 1 ? 's' : ''} sur ${sm.total}.` : `Les ${sm.total} exercices sont validés.`) : 'Pas encore commencée : le premier exercice t’attend.'),
       h('a', { class: 'btn primary sm', href: `#/lecon/${l.id}` }, !sm ? 'Commencer' : sm.cur == null ? 'Revoir la leçon' : 'Continuer'));
-  } else cur.append(h('p', { class: 'small' }, 'Pas de leçon d’improvisation cette semaine : joue librement ci-dessous.'));
+  } else cur.append(h('p', { class: 'small' }, 'Toutes les leçons sont validées : joue librement ci-dessous, ou reprends une leçon pour la transposer.'));
   const host = h('div', { class: 'w' });
   page.append(cur, h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Jouer librement')), h('p', { class: 'small' }, 'L’accompagnateur joue la main gauche (ou la basse seule) ; improvise à la main droite. Les notes jouées s’allument selon leur rôle dans l’harmonie. Modes : libre, question – réponse, imitation, squelette.'), host);
   page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3"><h2>La méthode, leçon par leçon</h2></div>` + moduleIndexHTML('impro'));
@@ -1076,14 +887,14 @@ function pageImproTool() {
   return mountLazy(host, () => import('./tool-improv.js').then(m => el => m.mountImprov(el, {})));
 }
 
-function pageExercises() {
+function pageExercises(exId = null) {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Exercices' }]) +
     `<div class="page-head"><h1>Exercices</h1><p class="lead">Une minute de lecture de notes chronométrée, puis l’indépendance des mains : deux rythmes à la fois, polyrythmes, lié contre détaché, une main qui chante, notes tenues. Joue « En rythme » : l’appli mesure chaque main et monte le tempo à chaque réussite.</p></div>`;
   const host = h('div');
   page.append(host);
   main.append(page);
-  return mountLazy(host, () => Promise.all([import('./tool-exercises.js'), ensureAbcjs()]).then(([m]) => el => m.mountExercisesPage(el)));
+  return mountLazy(host, () => Promise.all([import('./tool-exercises.js'), ensureAbcjs()]).then(([m]) => el => m.mountExercisesPage(el, { open: exId })));
 }
 
 function pageCompose() {
@@ -1272,6 +1083,7 @@ window.addEventListener('hashchange', router);
 // Appli mise en arrière-plan (écran éteint, autre appli) : on arrête proprement la lecture en cours.
 document.addEventListener('visibilitychange', () => { if (document.hidden) audio.stopCurrent(); });
 function boot() {
+  try { backfillActivity(); } catch (e) { console.warn(e); }
   renderMidi(midi.status, midi.deviceName);
   midi.autoInit();
   if (!location.hash && store.get('lastRoute') && store.get('lastRoute') !== '#/') location.hash = store.get('lastRoute');

@@ -48,6 +48,17 @@ export function mountScore(el, cfg) {
   const rangeQ = () => (range ? [bars.barStart(range[0]), range[1] >= measures[measures.length - 1] ? score.totalQ + 1 : bars.barStart(range[1] + 1)] : null);
   const pid = cfg.passage || passageKey(cfg.abc);
   const piece = cfg.piece || pieceOf(cfg.abc);
+  // V7 : travail sur une pièce → les sections de la carte touchées sont « travaillées aujourd'hui », et le journal
+  // d'activité note la pièce phare du niveau en cours (ou « Autres pièces » pour les autres).
+  const notePiece = () => {
+    if (!piece) return;
+    const m0 = range ? range[0] : measures[0], m1 = range ? range[1] : measures[measures.length - 1];
+    Promise.all([import('./piecemap.js'), import('./content-index.js')]).then(([pm, ci]) => {
+      const val = store.get('validation') || {};
+      const L = ci.LEVELS.find(l => !l.locked && !(l.validation.length && l.validation.every(c => (val[`${l.id}:${c.id}`] ?? 0) >= 2)));
+      pm.touchRange(piece, m0, m1, L && L.piece !== piece ? 'autres' : 'piece');
+    }).catch(() => {});
+  };
 
   const foot = h('div', { class: 'w-foot' });
   const ctrl = h('div', { class: 'score-ctrl' });
@@ -227,6 +238,7 @@ export function mountScore(el, cfg) {
           status.textContent = 'Terminé.';
           results.innerHTML = `<span><b>${res.clean}</b> / ${res.steps} sans faute</span><span><b>${res.errors}</b> fausse${res.errors > 1 ? 's' : ''} note${res.errors > 1 ? 's' : ''}</span><span><b>${fmtNum(res.seconds, 0)}</b> s</span>`;
           if (cfg.stat) store.push('stats.sight', { id: cfg.stat, mode: 'wait', at: Date.now(), ...res });
+          notePiece();
         },
       });
       follower.start();
@@ -245,6 +257,7 @@ export function mountScore(el, cfg) {
           reader = null;
           results.innerHTML = `<span>Notes justes <b>${fmtPct(res.accuracy)}</b></span><span>Dans le temps <b>${fmtPct(res.precision)}</b></span><span>Écart moyen <b>${fmtNum(res.meanAbsMs)} ms</b></span><span>Notes en trop <b>${res.extra}</b></span>`;
           if (cfg.stat) store.push('stats.sight', { id: cfg.stat, mode: 'tempo', bpm, at: Date.now(), ...res });
+          notePiece();
           // retour propre à l'exercice (onglet Exercices : main par main, articulation, nuances…)
           if (cfg.onTempo) {
             const extra = cfg.onTempo(res, { bpm, baseBpm, hands, setBpm, range: range ? range.slice() : null });
@@ -349,6 +362,7 @@ export function mountScore(el, cfg) {
     const prevAll = await db.takesOf(pid);
     const prev = prevAll.find(t => t.hands === hands && t.range && t.range[0] === m0 && t.range[1] === m1);
     const id = await db.addTake(takeRec);
+    notePiece();
     await addToErrMap(pid, hands, res.measures.map(m => ({ m: m.m, errors: m.errors + m.extra, total: m.total })));
     refreshMap();
     lastTake = { ...take, id };

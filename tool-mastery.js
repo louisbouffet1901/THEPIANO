@@ -188,9 +188,10 @@ async function pieceItems(piece) {
   if (store.get(`pieces.${piece}.byHeart`)) {
     const n = shuffle(nx).find(x => !out.some(o => o.abc === x.abc)) || nx[0];
     if (n) out.push(n);
-    const P = await loadPiece(piece);
-    const forms = P ? capture(P.body, ['diagram']).filter(([, name]) => name === 'form').map(([, , o]) => (o && o.sections) || []).filter(s => s.length >= 3) : [];
-    if (forms.length) out.push({ id: `form:${piece}`, type: 'form', src: 'le plan', sections: forms[0] });
+    // le plan : la carte de la pièce (V7), source unique
+    const { PIECE_MAPS } = await import('./content-piecemap.js');
+    const M = PIECE_MAPS[piece];
+    if (M && M.sections.length >= 3) out.push({ id: `form:${piece}`, type: 'form', src: 'le plan', sections: M.sections.map(s => ({ label: s.name, from: s.from, to: s.to })) });
   }
   return out;
 }
@@ -572,4 +573,20 @@ export function mountMastery(el) {
 export async function homeSummary() {
   await migrateMastery();
   return { n: chosenLessons().length };
+}
+/**
+ * Accueil (V7) : leçons cochées, et celles « à revoir » : jamais révisées, révisées il y a plus d'une semaine, ou avec
+ * des questions manquées la dernière fois.
+ */
+export async function dueSummary(now = Date.now()) {
+  await migrateMastery();
+  const chosen = chosenLessons();
+  const due = chosen.filter(l => {
+    const r = rec(l.id);
+    const last = r.last;
+    if (!last || !last.at) return true;
+    if ((r.miss || []).length) return true;
+    return now - (typeof last.at === 'number' ? last.at : Date.parse(last.at)) > 7 * 864e5;
+  }).length;
+  return { n: chosen.length, due };
 }

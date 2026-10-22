@@ -3,7 +3,7 @@
 // (Functional Ear Trainer, Improvise for Real : chaque note entendue par rapport à la tonique).
 import { OP55 } from './content-excerpts.js';
 
-const ROUTINE = (items) => `<div class="callout exo"><div class="c-title">Ta routine de la semaine (10 minutes par jour)</div><ol>${items.map(i => `<li>${i}</li>`).join('')}</ol></div>`;
+const ROUTINE = (items) => `<div class="callout exo"><div class="c-title">Ta routine (10 minutes par jour)</div><ol>${items.map(i => `<li>${i}</li>`).join('')}</ol></div>`;
 
 export default [
   {
@@ -36,7 +36,7 @@ ${ROUTINE([
   'Cinq minutes : série « Plus grave ou plus aigu ? ». L’écart se resserre quand tu réussis et s’élargit quand tu te trompes : tu travailles toujours à la limite de ce que tu perçois.',
   'Trois minutes : série « Le dessin d’une mélodie », à trois notes puis à quatre.',
 ])}
-${W.quiz({ kind: 'highlow', minSt: 1, maxSt: 12, title: 'Plus grave ou plus aigu ?', count: 12, stat: 'hl', intro: 'Douze questions. L’écart diminue quand tu réponds juste ; vise un écart d’un ou deux demi-tons d’ici la fin de la semaine.' })}
+${W.quiz({ kind: 'highlow', minSt: 1, maxSt: 12, title: 'Plus grave ou plus aigu ?', count: 12, stat: 'hl', intro: 'Douze questions. L’écart diminue quand tu réponds juste ; vise un écart d’un ou deux demi-tons en quelques jours.' })}
 ${W.tip('Fredonne', '<p>Fredonne les deux notes à mi-voix après les avoir entendues : ta voix sent très nettement si elle monte ou descend, souvent mieux que ton oreille seule.</p>')}
 ${W.quiz({ kind: 'contour', notes: 3, title: 'Le dessin d’une mélodie (3 notes)', count: 10, stat: 'contour' })}
 ${W.tip('Dessine avec la main', '<p>Pendant l’écoute, suis la mélodie avec la main, de bas en haut : le geste fixe l’attention sur la direction.</p>')}

@@ -37,11 +37,11 @@ export const TIPS = [
   { mod: 'Interprétation', html: 'Un thème qui revient ne se joue jamais deux fois pareil : le chemin parcouru l’a changé.' },
   { mod: 'Pièce', html: 'Commence parfois ton travail par la fin de la pièce : les dernières pages sont souvent les moins travaillées.' },
   { mod: 'Pièce', html: 'Joue un passage mains séparées les yeux fermés : si tu le peux, tu le connais vraiment.' },
-  { mod: 'Pièce', html: 'Un jour par semaine, joue toute la pièce sans t’arrêter, comme en concert, et enregistre-toi.' },
+  { mod: 'Pièce', html: 'Un jour par semaine, joue tout ce qui est en place sans t’arrêter, comme en concert : c’est le filage enregistré, en bas de la page de ta pièce.' },
   { mod: 'Pièce', html: 'Repère les « points de départ » de ta pièce (début de chaque phrase) : en cas de trou de mémoire, tu sauras où repartir.' },
   { mod: 'Méthode', html: 'Fixe un objectif précis à chaque séance (« les mesures 17 à 20 à ♩ = 50, mains ensemble ») plutôt qu’une durée.' },
   { mod: 'Méthode', html: 'Le sommeil consolide ce que tu as travaillé : une courte révision le lendemain matin vaut une longue séance.' },
-  { mod: 'Méthode', html: 'Coche ton plan hebdomadaire au fur et à mesure : voir le chemin parcouru entretient la motivation.' },
+  { mod: 'Méthode', html: 'Dans la carte de ta pièce, indique où en est chaque section : voir les sections passer au tempo, puis par cœur, entretient la motivation.' },
 ];
 
 /** Conseil du jour : change chaque jour, identique toute la journée. */

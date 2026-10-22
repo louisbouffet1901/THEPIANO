@@ -68,6 +68,13 @@ export function makeW() {
     staff: cfg => ph('staff', cfg),
     /** Tirage au hasard (points de départ de mémoire…) : { title, items, n, caption }. */
     draw: cfg => ph('draw', cfg),
+    /** Carte de la pièce (V7) : le plan (frise et sections), une section, l'en-tête « où tu en es », les exercices du
+     *  plan et le filage. { piece[, id] } — voir piecemap.js et content-piecemap.js. */
+    plan: cfg => ph('plan', cfg),
+    section: cfg => ph('section', cfg),
+    piecehead: cfg => ph('piecehead', cfg),
+    planexos: cfg => ph('planexos', cfg),
+    filage: cfg => ph('filage', cfg),
     _notions: [],
     /** Glossaire en ligne : un terme, sa définition au toucher. */
     term: (word, def) => `<span class="term" tabindex="0" role="button" aria-label="${esc(word)} : ${esc(def.replace(/<[^>]+>/g, ''))}">${word}<span class="term-def" role="tooltip">${def}</span></span>`,
@@ -354,6 +361,11 @@ defineWidget('sight', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-si
 defineWidget('improv', (el, cfg) => mountLazy(el, () => import('./tool-improv.js').then(m => e => m.mountImprov(e, cfg))));
 defineWidget('paliers', (el, cfg) => mountLazy(el, () => import('./tool-paliers.js').then(m => e => m.mountPaliers(e, cfg))));
 defineWidget('voice', (el, cfg) => mountLazy(el, () => import('./voice.js').then(m => e => m.mountVoiceFinder(e, cfg))));
+defineWidget('plan', (el, cfg) => mountLazy(el, () => import('./piecemap.js').then(m => e => m.mountPlan(e, cfg))));
+defineWidget('section', (el, cfg) => mountLazy(el, () => import('./piecemap.js').then(m => e => m.mountSection(e, cfg))));
+defineWidget('piecehead', (el, cfg) => mountLazy(el, () => import('./piecemap.js').then(m => e => m.mountPieceHead(e, cfg))));
+defineWidget('planexos', (el, cfg) => mountLazy(el, () => import('./piecemap.js').then(m => e => m.mountPlanExercises(e, cfg))));
+defineWidget('filage', (el, cfg) => mountLazy(el, () => import('./piecemap.js').then(m => e => m.mountFilage(e, cfg))));
 defineWidget('metronome', (el, cfg) => mountLazy(el, () => import('./tool-metronome-ui.js').then(m => e => m.mountMetronome(e, cfg))));
 defineWidget('localscore', (el, cfg) => mountLazy(el, () => import('./local-scores.js').then(m => e => m.mountLocalScores(e, cfg))));
 defineWidget('staff', (el, cfg) => mountLazy(el, () => ensureAbcjs().then(() => e => {

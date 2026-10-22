@@ -2,7 +2,7 @@
 // Même principe qu'au niveau 1 : chanter d'abord, situer chaque son par rapport à la tonique, dix minutes par jour.
 import { OP15, CLAIR } from './content-excerpts.js';
 
-const ROUTINE = (items) => `<div class="callout exo"><div class="c-title">Ta routine de la semaine (10 minutes par jour)</div><ol>${items.map(i => `<li>${i}</li>`).join('')}</ol></div>`;
+const ROUTINE = (items) => `<div class="callout exo"><div class="c-title">Ta routine (10 minutes par jour)</div><ol>${items.map(i => `<li>${i}</li>`).join('')}</ol></div>`;
 
 export default [
   {

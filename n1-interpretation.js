@@ -179,12 +179,7 @@ ${W.warn('Ce que le rubato n’est pas', '<ul><li>Ce n’est pas jouer plus lent
     goal: 'tu racontes le plan de la pièce (A – B – A′, coda) et l’harmonie des mesures 1 à 8, et tu en tires trois décisions de jeu.',
     body: W => `
 <h2>La forme</h2>
-${W.diagram('form', { total: 101, sections: [
-  { label: 'A', kind: 'A', from: 1, to: 47, key: 'fa mineur', note: 'thème chanté trois fois' },
-  { label: 'B', kind: 'B', from: 48, to: 72, key: 'modulant', note: 'Più mosso' },
-  { label: 'A′', kind: 'A', from: 73, to: 76 },
-  { label: 'Coda', kind: 'coda', from: 77, to: 101, key: 'fa mineur → fa majeur', note: 'triolets, choral' },
-] })}
+${W.plan({ piece: 'op55-1', states: false, title: 'La forme, section par section' })}
 <p>Une forme ternaire (A – B – A′) dont le retour est très court : quatre mesures seulement, puis la coda. Dans la section A, le thème (8 mesures) revient trois fois, à chaque fois varié, en alternance avec une phrase b qui monte par marches.</p>
 
 <h2>L’harmonie des mesures 1 à 8</h2>

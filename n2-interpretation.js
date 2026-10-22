@@ -189,7 +189,7 @@ ${W.diagram('form', { total: 74, sections: [
   { label: 'a′', kind: 'A', from: 57, to: 64 },
   { label: 'b', kind: 'A', from: 65, to: 72 },
   { label: '', kind: 'coda', from: 73, to: 74 },
-] }, 'A (Andante cantabile) : a 1-8, a′ 9-16, b 17-24. B (Con fuoco) : x 25-28, y 29-36, x 37-40, y′ 41-48. A′ (a Tempo primo) : a 49-56, a′ 57-64, b 65-72, deux accords arpégés 73-74.')}
+] }, 'A (Andante cantabile) : a 1-8, a′ 9-16, b 17-24. B (Con fuoco) : x 25-28, y 29-36, x 37-40, y′ 41-48. A′ (a Tempo primo) : a 49-56, a′ 57-64, b 65-72, deux accords arpégés 73-74. Le plan de la pièce en mots, section par section, est dans <a href="#/piece/op15-1">la carte de ta pièce</a>.')}
 <ul>
 <li><b>A</b> (mesures 1 à 24) : deux phrases presque identiques (a et a′), puis une phrase b plus chromatique, qui culmine sur le ré aigu accentué de la mesure 20 — la note la plus haute de l’Andante — suivie de la fioriture <i>dolcissimo</i>. Le thème revient (mesure 22) et s’interrompt sur un silence.</li>
 <li><b>B</b> (mesures 25 à 48) : deux grandes vagues. Chaque fois, quatre mesures d’orage (x : doubles notes et traits), puis huit mesures où la mélodie passe d’abord à la main gauche avant de revenir à la main droite (y : à la main gauche aux mesures 29-30, au-dessus d’une longue pédale de ré♭ ; y′ : dans le grave, en partie en octaves, mesures 41 à 44). Les mesures à 6/8 (36 et 48) regroupent leurs six croches en deux temps : la fin de chaque vague s’élargit, sans que la mesure dure plus longtemps.</li>

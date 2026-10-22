@@ -265,7 +265,7 @@ function mountTrainer(host, ex, onChange) {
 }
 
 /** La page : lecture de notes chronométrée, puis l'exercice du jour et tous les exercices par famille. */
-export function mountExercisesPage(el) {
+export function mountExercisesPage(el, opts = {}) {
   const cleanups = [];
   const nsHost = h('div');
   el.append(h('div', { class: 'section-title' }, h('h2', {}, 'Échauffement : lecture de notes')), nsHost);
@@ -311,5 +311,7 @@ export function mountExercisesPage(el) {
     }
   }
   renderList();
+  // exercice demandé (séance, carte de la pièce) : ouvert d'emblée
+  if (opts.open) { const ex = byId(opts.open); if (ex) open(ex); }
   return () => { cleanups.forEach(f => { try { f?.(); } catch (e) { /* */ } }); try { trainerCleanup?.(); } catch (e) { /* */ } };
 }

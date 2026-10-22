@@ -12,65 +12,60 @@ export const PIECE_PAGES = {
     body: W => `
 <p>Publié en 1844 avec son jumeau en mi♭ majeur, et dédié à son élève Jane Stirling, ce nocturne est l’un des plus dépouillés de Chopin : une mélodie simple, chantée trois fois, au-dessus d’une main gauche qui marche à pas réguliers. Sa difficulté n’est pas la vitesse, c’est le <b>chant</b> : tenir une ligne en notes longues, la faire dominer, la faire respirer.</p>
 
-<h2>Plan de la pièce</h2>
-${W.diagram('form', { total: 101, sections: [
-  { label: 'A', kind: 'A', from: 1, to: 47, key: 'fa mineur', note: 'thème chanté trois fois' },
-  { label: 'B', kind: 'B', from: 48, to: 72, key: 'modulant', note: 'Più mosso' },
-  { label: 'A′', kind: 'A', from: 73, to: 76, key: '', note: '' },
-  { label: 'Coda', kind: 'coda', from: 77, to: 101, key: 'fa mineur → fa majeur', note: 'triolets, choral' },
-] }, 'Forme ternaire avec coda. Le retour du thème (A′) ne dure que quatre mesures : la coda prend le relais.')}
-${W.diagram('form', { total: 48, sections: [
-  { label: 'a', kind: 'A', from: 1, to: 8, key: 'fa mineur' }, { label: 'a', kind: 'A', from: 9, to: 16, key: '' },
-  { label: 'b', kind: 'B', from: 17, to: 24, key: 'vers la♭, puis do' }, { label: 'a′', kind: 'A', from: 25, to: 32, note: 'triolets' },
-  { label: 'b', kind: 'B', from: 33, to: 40 }, { label: 'a″', kind: 'A', from: 41, to: 48, note: 'septolet' },
-] }, 'Détail de la section A (mesures 1 à 48) : le thème a alterne avec une phrase b qui monte par marches et s’immobilise sur une pédale de do (la dominante).')}
+${W.piecehead({ piece: 'op55-1' })}
 
-<h2>Les passages, un par un</h2>
-<h3>Le thème (mesures 1 à 8)</h3>
+<h2>Le plan de la pièce</h2>
+${W.tip('À quoi sert le plan', '<ul><li><b>Travailler par sections</b> : chaque section est une unité de travail, avec ce qu’elle demande et un critère « au tempo ».</li><li><b>Mémoriser</b> : on repart de n’importe quel point de départ ; c’est ce qui sauve d’un trou de mémoire, et les pianistes qui mémorisent le mieux travaillent ainsi.</li><li><b>Interpréter</b> : savoir ce qui revient et ce qui change, et où se trouve le sommet.</li></ul>')}
+${W.plan({ piece: 'op55-1' })}
+
+<h2>Les sections, une par une</h2>
+<h3 data-sec="theme">Le thème, deux fois (mesures 1 à 16)</h3>
+${W.section({ piece: 'op55-1', id: 'theme' })}
 <p>La mélodie tient sur quelques notes : do, puis une descente fa – mi♭ – ré♭ – do, puis do brodé par si♮ et ré♭. Tout l’art est dans la ligne : la levée part de rien, le fa est le sommet, la descente se détend. La main gauche, notée <i>staccato</i>, est légère ; la pédale relie chaque basse à son accord.</p>
-${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4', bpm: 60, startBpm: 50, pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17, caption: 'Démonstration avec une pédale par demi-mesure. Travail : <a href="#/lecon/n1-t3">legato</a>, <a href="#/lecon/n1-t4">plans sonores</a>, <a href="#/lecon/n1-t5">pédale</a>.' })}
+${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4', bpm: 60, startBpm: 50, pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17, caption: 'Démonstration avec une pédale par demi-mesure.' })}
 ${W.score({ abc: OP55.e2, title: 'Mesures 5 à 8 : trille, accord arpégé, cadence', bpm: 60, startBpm: 50, caption: 'Mesure 6 : trille sur si♭ terminé par deux petites notes (la – si♭) ; mesure 7 : accord arpégé de bas en haut, la note du haut (la♭) arrive sur le temps et chante.' })}
+<p>Au deuxième passage du thème, Chopin orne la cadence : trille sur si♭, puis cinq petites notes à jouer dans le quatrième temps (mesures 13-14). Elles ne doivent ni presser ni retarder la main gauche : la première tombe avec l’accord du 4e temps, les autres s’égrènent jusqu’à la mesure suivante.</p>
+${W.score({ abc: OP55.e3, title: 'Mesures 13 et 14 : la première fioriture', bpm: 60, startBpm: 44 })}
 
-<h3>La première fioriture (mesures 13-14)</h3>
-<p>Au deuxième passage du thème, Chopin orne la cadence : trille sur si♭, puis cinq petites notes à jouer dans le quatrième temps. Elles ne doivent ni presser ni retarder la main gauche : la première tombe avec l’accord du 4e temps, les autres s’égrènent jusqu’à la mesure suivante.</p>
-${W.score({ abc: OP55.e3, title: 'Mesures 13 et 14', bpm: 60, startBpm: 44 })}
-
-<h3>La phrase b (mesures 17 à 24)</h3>
+<h3 data-sec="montee">La montée (mesures 17 à 24)</h3>
+${W.section({ piece: 'op55-1', id: 'montee' })}
 <p>Une phrase qui monte par marches (si♭ – do, puis ré – mi♮) avec des crescendos courts, avant de s’immobiliser sur une longue <b>pédale de dominante</b> (do à la basse, mesures 22 à 24) qui ramène le thème. Le ré♮ et le fa♯ annoncent qu’on quitte fa mineur : laisse-les colorer le son.</p>
 ${W.score({ abc: OP55.e4, title: 'Mesures 17 à 20', bpm: 60, startBpm: 46 })}
 
-<h3>Les variations du thème (mesures 27-28 et 43-44)</h3>
-<p>Aux retours, la mélodie s’orne de triolets, puis d’un septolet (sept croches dans deux temps). Pour ces groupes irréguliers, on aligne seulement le départ et l’arrivée sur la main gauche : entre les deux, les notes se répartissent librement, sans à-coups.</p>
+<h3 data-sec="triolets">Le thème en triolets, puis la montée (mesures 25 à 40)</h3>
+${W.section({ piece: 'op55-1', id: 'triolets' })}
+<p>Au retour, la mélodie s’orne de triolets. Pour ces groupes, on aligne seulement le départ et l’arrivée sur la main gauche : entre les deux, les notes se répartissent librement, sans à-coups. Puis la montée revient (mesures 33 à 40), comme aux mesures 17 à 24.</p>
 ${W.score({ abc: OP55.e5, title: 'Mesures 27 et 28 : triolets', bpm: 60, startBpm: 44 })}
+
+<h3 data-sec="septolet">Le thème le plus orné (mesures 41 à 48)</h3>
+${W.section({ piece: 'op55-1', id: 'septolet' })}
+<p>Troisième passage du thème : un septolet, sept croches dans deux temps (mesure 44). Comme pour les triolets, seuls le départ et l’arrivée sont alignés sur la main gauche.</p>
 ${W.score({ abc: OP55.e5b, title: 'Mesures 43 et 44 : septolet', bpm: 60, startBpm: 40 })}
 ${W.diagram('meeting', { n: 7, beats: 2, lhPer: 1 }, 'Mesure 44 : sept croches de la main droite pour les deux premiers temps de la main gauche. Seul le premier temps est commun ; le deuxième temps de la main gauche tombe entre la 4e et la 5e note.')}
 
-<h3>Le Più mosso (mesures 48 à 72)</h3>
+<h3 data-sec="piumosso">Più mosso (mesures 48 à 72)</h3>
+${W.section({ piece: 'op55-1', id: 'piumosso' })}
 <p>Changement de climat : un motif en triolets, joué en octaves par les deux mains dans le grave, auquel répondent des accords. C’est un dialogue, presque un récitatif. Les triolets se travaillent par temps (impulsion sur la première note de chaque groupe), poignet souple ; les accords se jouent avec le poids, sans frapper.</p>
 ${W.score({ abc: OP55.e6, title: 'Mesures 48 à 52', bpm: 72, startBpm: 56 })}
 ${W.score({ abc: OP55.e7, title: 'Mesures 57 à 60 : le chant revient, orné', bpm: 72, startBpm: 56, caption: 'À la main gauche, l’arpège mi – ré♭ – si♭ – sol forme un accord de septième diminuée qui se résout sur fa mineur.' })}
+<p>Mesures 69-70 : deux mesures de doubles croches qui descendent sur trois octaves, mêlant chromatisme et degrés conjoints. Travaille-les par temps (quatre notes), en rythmes, puis en groupes avec arrêt sur chaque premier temps. Elles débouchent sur un bref choral (mesures 71-72, <i>stretto</i> puis <i>ritenuto</i>) qui s’arrête sur un point d’orgue, sur la dominante.</p>
+${W.score({ abc: OP55.e8, title: 'Mesures 69 et 70 : les traits', bpm: 72, startBpm: 40 })}
 
-<h3>Les traits et le point d’orgue (mesures 69 à 72)</h3>
-<p>Deux mesures de doubles croches qui descendent sur trois octaves, mêlant chromatisme et degrés conjoints. Travaille-les par temps (quatre notes), en rythmes, puis en groupes avec arrêt sur chaque premier temps. Elles débouchent sur un bref choral (mesures 71-72, <i>stretto</i> puis <i>ritenuto</i>) qui s’arrête sur un point d’orgue, sur la dominante.</p>
-${W.score({ abc: OP55.e8, title: 'Mesures 69 et 70', bpm: 72, startBpm: 40 })}
+<h3 data-sec="retour">Le retour (mesures 73 à 76)</h3>
+${W.section({ piece: 'op55-1', id: 'retour' })}
+<p>Le thème revient, <i>p</i>, pour quatre mesures seulement : la coda prend aussitôt le relais. Joue-les comme le début, en plus intime.</p>
 
-<h3>La coda (mesures 77 à 101)</h3>
+<h3 data-sec="coda">La coda (mesures 77 à 101)</h3>
+${W.section({ piece: 'op55-1', id: 'coda' })}
 <p>Molto legato : des triolets de croches tracent de grands arcs au-dessus d’une main gauche qui reprend son pas. À partir de la mesure 89, tout bascule en <b>fa majeur</b> ; les arpèges montent vers l’aigu en accélérant légèrement, puis le choral final pose l’accord de fa majeur, arpégé, avec un point d’orgue.</p>
 ${W.score({ abc: OP55.e9, title: 'Mesures 77 à 80', bpm: 60, startBpm: 44, caption: 'Le signe fait de deux bémols accolés (𝄫) est un double bémol : il baisse la note d’un ton. Chopin écrit si𝄫 et la𝄫, qui sonnent la et sol, parce que la mélodie descend par demi-tons (si𝄫 – la♭ – la𝄫 – sol♭). Comme toute altération, il vaut pour toute la mesure.' })}
 ${W.score({ abc: OP55.e10, title: 'Mesures 97 à 101 : le choral final', bpm: 60, startBpm: 50 })}
 
-<h2>Plan de travail sur huit semaines</h2>
-<ol>
-<li>Mesures 1 à 8, mains séparées ; écoute de deux versions.</li>
-<li>Mesures 1 à 16 mains ensemble ; phrase b mains séparées.</li>
-<li>Mesures 17 à 48 ; triolets et septolet à part.</li>
-<li>Più mosso, mesures 48 à 64.</li>
-<li>Mesures 65 à 76 ; enchaîner A et Più mosso.</li>
-<li>Coda.</li>
-<li>Toute la pièce, tempo progressif de ♩ = 50 à ♩ = 60.</li>
-<li>Interprétation, enregistrements, <a href="#/validation/n1">grille de validation</a>.</li>
-</ol>
-<p>Le détail, semaine par semaine, avec les autres modules : <a href="#/plan/n1">plan hebdomadaire</a>.</p>
+<h2>Exercices sur le plan</h2>
+${W.planexos({ piece: 'op55-1' })}
+
+<h2>Filage</h2>
+${W.filage({ piece: 'op55-1' })}
 
 <h2>Écouter</h2>
 <p>Écoute au moins deux versions avant de commencer, puis d’autres une fois la pièce en place. Compare le tempo du thème, la façon de traiter la main gauche, la liberté dans la phrase b, la vitesse de la coda. Guide d’écoute détaillé : <a href="#/lecon/n1-i5">Écouter les grands interprètes</a>.</p>
@@ -177,45 +172,45 @@ ${W.links([imslp('Romance,_S.169_(Liszt,_Franz)', 'Romance S. 169 sur IMSLP')])}
     body: W => `
 <p>Le premier des trois nocturnes de l’op. 15, dédiés au pianiste et compositeur Ferdinand Hiller, ami de Chopin à Paris. Une pièce construite sur un contraste violent : un <b>Andante cantabile</b> en fa majeur, marqué <i>semplice e tranquillo</i>, encadre une partie centrale <b>Con fuoco</b> en fa mineur, sombre et tourmentée. Le défi du niveau 2 est là : deux mondes, deux techniques, deux sonorités, et des transitions qui les relient.</p>
 
-<h2>Plan de la pièce</h2>
-${W.diagram('form', { total: 74, sections: [
-  { label: 'A', kind: 'A', from: 1, to: 24, key: 'fa majeur', note: 'Andante cantabile' },
-  { label: 'B', kind: 'B', from: 25, to: 48, key: 'fa mineur', note: 'Con fuoco' },
-  { label: 'A′', kind: 'A', from: 49, to: 74, key: 'fa majeur', note: 'a Tempo primo, orné' },
-] }, 'Forme ternaire simple. Les mesures 36 et 48 passent à 6/8 : leurs six croches se regroupent en deux temps, et la fin des phrases du Con fuoco s’élargit.')}
+${W.piecehead({ piece: 'op15-1' })}
 
-<h2>Les passages, un par un</h2>
-<h3>L’Andante : une main gauche à trois voix (mesures 1 à 8)</h3>
+<h2>Le plan de la pièce</h2>
+${W.tip('À quoi sert le plan', '<ul><li><b>Travailler par sections</b> : chaque section est une unité de travail, avec ce qu’elle demande et un critère « au tempo ».</li><li><b>Mémoriser</b> : on repart de n’importe quel point de départ ; c’est ce qui sauve d’un trou de mémoire, et les pianistes qui mémorisent le mieux travaillent ainsi.</li><li><b>Interpréter</b> : savoir ce qui revient et ce qui change, et où se trouve le sommet.</li></ul>')}
+${W.plan({ piece: 'op15-1', caption: 'Les mesures 36 et 48 passent à 6/8 : leurs six croches se regroupent en deux temps, et la fin des phrases du Con fuoco s’élargit.' })}
+
+<h2>Les sections, une par une</h2>
+<h3 data-sec="chant">Le chant (mesures 1 à 16)</h3>
+${W.section({ piece: 'op15-1', id: 'chant' })}
 <p>La mélodie, d’une grande simplicité, flotte au-dessus d’une main gauche écrite à trois voix : une <b>basse</b> tenue (fa pendant trois mesures, puis une descente pas à pas, fa – mi – ré – ré♭ – do – si – la, à partir de la mesure 4), des <b>notes en noires</b> au-dessus, et des <b>triolets</b> intérieurs qui murmurent. Chopin écrit <i>sempre legato</i> : les trois voix doivent rester liées et transparentes.</p>
-${W.score({ abc: OP15.e1, title: 'Mesures 1 à 8', bpm: 69, startBpm: 52, caption: 'Travail : <a href="#/lecon/n2-t3">la polyphonie de la main gauche</a>. Écoute la main gauche seule (MG).' })}
+${W.score({ abc: OP15.e1, title: 'Mesures 1 à 8', bpm: 69, startBpm: 52, caption: 'Écoute la main gauche seule (MG) : trois voix, toutes liées.' })}
 
-<h3>La fin de l’Andante (mesures 17 à 24)</h3>
+<h3 data-sec="sommet">Le sommet et la fioriture (mesures 17 à 24)</h3>
+${W.section({ piece: 'op15-1', id: 'sommet' })}
 <p>Une harmonie plus chromatique (mi♭ à la basse, mesures 17-18), une fioriture de huit notes à la mesure 20 (<i>dolcissimo</i>), puis le retour du début du thème qui s’arrête, suspendu, sur un point d’orgue.</p>
 ${W.score({ abc: OP15.e2, title: 'Mesures 17 à 24', bpm: 69, startBpm: 50 })}
 
-<h3>Le Con fuoco (mesures 25 à 28)</h3>
+<h3 data-sec="vague1">L’orage, puis le chant à gauche (mesures 25 à 36)</h3>
+${W.section({ piece: 'op15-1', id: 'vague1' })}
 <p>La main droite joue des doubles notes alternées en sextolets de doubles croches : c’est le terrain de la <b>rotation de l’avant-bras</b>. La main gauche alterne traits descendants rapides et arpèges ascendants terminés par une note accentuée.</p>
-${W.score({ abc: OP15.e3, title: 'Mesures 25 à 28', bpm: 84, startBpm: 40, caption: 'Travail : <a href="#/lecon/n2-t2">la rotation</a> et <a href="#/lecon/n2-t1">la méthode pour les passages rapides</a>.' })}
-
-<h3>La mélodie de la main gauche (mesures 29 à 32)</h3>
+${W.score({ abc: OP15.e3, title: 'Mesures 25 à 28', bpm: 84, startBpm: 40 })}
 <p>Sous l’agitation de la main droite, la mélodie passe à la main gauche, dans le registre du violoncelle, au-dessus d’une longue pédale de ré♭. Elle doit dominer : la main droite, pourtant pleine de notes, reste au second plan. Puis la mélodie remonte à la main droite (mesures 31-32).</p>
 ${W.score({ abc: OP15.e4, title: 'Mesures 29 à 32', bpm: 84, startBpm: 40 })}
 
-<h3>La reprise ornée (mesures 49 à 74)</h3>
-<p>Le thème revient (<i>a Tempo primo</i>), cette fois orné : septolet à la mesure 54, petites notes à la mesure 56. La pièce s’achève sur deux accords arpégés : do 7 au-dessus d’une pédale de fa, puis fa majeur.</p>
-${W.score({ abc: OP15.e5, title: 'Mesures 53 à 55', bpm: 69, startBpm: 46, caption: 'Le septolet (sept doubles croches dans le temps de quatre) se joue souplement, comme une vocalise. Voir <a href="#/lecon/n2-i3">les ornements chopiniens</a>.' })}
+<h3 data-sec="vague2">Deuxième vague (mesures 37 à 48)</h3>
+${W.section({ piece: 'op15-1', id: 'vague2' })}
+<p>L’orage revient, puis la mélodie descend dans le grave, en partie en octaves, sur une marche : la♭ 7, puis si♭ 7, un ton plus haut. La mesure 48, à 6/8, élargit la fin et ramène le chant.</p>
+${W.score({ abc: OP15.e6, title: 'Mesures 41 à 44', bpm: 84, startBpm: 46 })}
 
-<h2>Plan de travail sur huit semaines</h2>
-<ol>
-<li>Écoute ; mesures 1 à 8, main gauche seule (basse, voix en noires, triolets).</li>
-<li>Mesures 1 à 24 mains ensemble ; fioriture de la mesure 20.</li>
-<li>Con fuoco, mesures 25 à 28 : main droite (rotation), main gauche (traits).</li>
-<li>Mesures 29 à 48 (mélodie à la main gauche, mesures à 6/8).</li>
-<li>Section B entière à tempo réduit ; reprise mesures 49 à 74.</li>
-<li>Enchaînement complet ; les transitions m. 24-25 et 48-49.</li>
-<li>Tempo final, analyse, interprétation.</li>
-<li>Enregistrements et <a href="#/validation/n2">grille de validation</a>.</li>
-</ol>
+<h3 data-sec="reprise">La reprise ornée (mesures 49 à 74)</h3>
+${W.section({ piece: 'op15-1', id: 'reprise' })}
+<p>Le thème revient (<i>a Tempo primo</i>), cette fois orné : septolet à la mesure 54, petites notes à la mesure 56. La pièce s’achève sur deux accords arpégés : do 7 au-dessus d’une pédale de fa, puis fa majeur.</p>
+${W.score({ abc: OP15.e5, title: 'Mesures 53 à 55', bpm: 69, startBpm: 46, caption: 'Le septolet (sept doubles croches dans le temps de quatre) se joue souplement, comme une vocalise.' })}
+
+<h2>Exercices sur le plan</h2>
+${W.planexos({ piece: 'op15-1' })}
+
+<h2>Filage</h2>
+${W.filage({ piece: 'op15-1' })}
 
 <h2>Écouter</h2>
 <p>Compare surtout le rapport de tempo entre l’Andante et le Con fuoco, et la manière de gérer les deux transitions.</p>
@@ -237,30 +232,43 @@ ${W.links([imslp('Nocturnes,_Op.15_(Chopin,_Fr%C3%A9d%C3%A9ric)', 'Nocturnes op.
     body: W => `
 <p>Troisième pièce de la <i>Suite bergamasque</i>, esquissée vers 1890 et publiée en 1905. Le titre renvoie au poème de Verlaine (<i>Fêtes galantes</i>). Après Chopin, c’est une autre manière de faire sonner le piano : moins de chant soliste, plus de <b>couleur</b>, de <b>résonance</b> et de nuances extrêmes (de <i>pp</i> à <i>ppp</i>).</p>
 
-<h2>Plan de la pièce</h2>
-${W.diagram('form', { total: 72, sections: [
-  { label: 'A', kind: 'A', from: 1, to: 14, key: 'ré♭ majeur', note: 'pp, con sordina' },
-  { label: 'a2', kind: 'A', from: 15, to: 26, key: '', note: 'Tempo rubato, cresc.' },
-  { label: 'B', kind: 'B', from: 27, to: 42, key: '→ do♯ mineur', note: 'Un poco mosso, En animant' },
-  { label: 'C', kind: 'C', from: 43, to: 50, key: 'ré♭', note: 'Calmato' },
-  { label: 'A′', kind: 'A', from: 51, to: 65, key: 'ré♭', note: 'a Tempo I, ppp' },
-  { label: 'Coda', kind: 'coda', from: 66, to: 72, note: 'morendo' },
-] }, 'Repères (mesures) : Tempo rubato 15, peu à peu cresc. et animé 19, Un poco mosso 27, En animant 37, Calmato 43, a Tempo I 51, morendo jusqu’à la fin 66.')}
+${W.piecehead({ piece: 'clair-de-lune' })}
 
-<h2>Les passages, un par un</h2>
-<h3>Le début (mesures 1 à 4)</h3>
+<h2>Le plan de la pièce</h2>
+${W.tip('À quoi sert le plan', '<ul><li><b>Travailler par sections</b> : chaque section est une unité de travail, avec ce qu’elle demande et un critère « au tempo ».</li><li><b>Mémoriser</b> : on repart de n’importe quel point de départ ; c’est ce qui sauve d’un trou de mémoire, et les pianistes qui mémorisent le mieux travaillent ainsi.</li><li><b>Interpréter</b> : savoir ce qui revient et ce qui change, et où se trouve le sommet.</li></ul>')}
+${W.plan({ piece: 'clair-de-lune', caption: 'Repères : Tempo rubato m. 15, peu à peu cresc. et animé m. 19, Un poco mosso m. 27, En animant m. 37, Calmato m. 43, a Tempo I m. 51, morendo jusqu’à la fin m. 66.' })}
+
+<h2>Les sections, une par une</h2>
+<h3 data-sec="debut">Le début (mesures 1 à 14)</h3>
+${W.section({ piece: 'clair-de-lune', id: 'debut' })}
 <p>Les deux mains jouent en clé de sol, <i>pp</i> et <i>con sordina</i> (avec la pédale douce). La mesure à 9/8 est troublée par des <b>duolets</b> (deux notes dans le temps de trois croches) : la musique semble flotter au-dessus de la barre de mesure. La voix supérieure des tierces porte la mélodie.</p>
 ${W.score({ abc: CLAIR.e1, title: 'Mesures 1 à 4', bpm: 40, startBpm: 36, caption: 'Debussy n’indique pas de métronome ; le curseur de tempo est en noire pointée (♩. ≈ 40 au début est un bon point de départ). Écoute la main droite seule pour entendre la ligne supérieure. Mesure 2, main gauche : si𝄫 (double bémol, deux bémols accolés) sonne la ; c’est la couleur empruntée à ré♭ mineur.' })}
 
-<h3>Tempo rubato (mesures 15 à 18)</h3>
+<h3 data-sec="rubato">Tempo rubato (mesures 15 à 26)</h3>
+${W.section({ piece: 'clair-de-lune', id: 'rubato' })}
 <p>Des accords parallèles aux deux mains, au-dessus d’une basse profonde tenue par la pédale. Chaque accord est marqué d’un tiret (<i>tenuto</i>) : appuyé, lié, sans dureté. La voix du haut chante, les autres notes la colorent.</p>
 ${W.score({ abc: CLAIR.e2, title: 'Mesures 15 à 18', bpm: 40, startBpm: 34 })}
 
-<h3>Un poco mosso et En animant (mesures 27 à 42)</h3>
+<h3 data-sec="arpeges">Les arpèges : Un poco mosso et En animant (mesures 27 à 42)</h3>
+${W.section({ piece: 'clair-de-lune', id: 'arpeges' })}
 <p>La main gauche (relayée par la droite) déroule des arpèges de doubles croches sur plusieurs octaves, sous une mélodie en accords. Tout est dans la fluidité de l’arpège : poignet souple, pouce qui passe sans bruit, pédale qui enveloppe sans brouiller (changements à chaque harmonie, parfois des demi-changements). L’<i>En animant</i> passe en do♯ mineur et culmine (<i>più cresc.</i>) avant de se calmer.</p>
 
-<h3>Le retour (mesures 51 à 72)</h3>
-<p>Le thème revient à l’octave supérieure, <i>ppp</i>, porté par les arpèges de la main gauche, puis la coda s’éteint (<i>morendo jusqu’à la fin</i>).</p>
+<h3 data-sec="calmato">Calmato (mesures 43 à 50)</h3>
+${W.section({ piece: 'clair-de-lune', id: 'calmato' })}
+
+<h3 data-sec="retour">Le retour (mesures 51 à 65)</h3>
+${W.section({ piece: 'clair-de-lune', id: 'retour' })}
+<p>Le thème revient à l’octave supérieure, <i>ppp</i>, porté par les arpèges de la main gauche.</p>
+
+<h3 data-sec="coda">La coda (mesures 66 à 72)</h3>
+${W.section({ piece: 'clair-de-lune', id: 'coda' })}
+<p>La coda s’éteint : <i>morendo jusqu’à la fin</i>.</p>
+
+<h2>Exercices sur le plan</h2>
+${W.planexos({ piece: 'clair-de-lune' })}
+
+<h2>Filage</h2>
+${W.filage({ piece: 'clair-de-lune' })}
 
 <h2>Points de travail</h2>
 <ul>

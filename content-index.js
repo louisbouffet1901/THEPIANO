@@ -1,10 +1,11 @@
-// Index du parcours : niveaux, modules, pièces, plans hebdomadaires, grilles de validation.
+// Index du parcours : niveaux, modules, pièces, grilles de validation. (Les plans hebdomadaires ont disparu en V7 :
+// la séance se choisit, et la carte de chaque pièce relie ses passages aux leçons ; voir session.js et piecemap.js.)
 import { LESSONS, PIECES_META } from './content-meta.js';
 
 export const MODULES = [
   { id: 'technique', label: 'Technique', intro: 'Le geste au service du son : posture, poids, legato, pédale, gammes — et surtout une méthode de travail efficace.' },
   { id: 'interpretation', label: 'Interprétation', intro: 'Phrasé, chant, rubato, couleurs : comprendre ce que dit la musique et le faire entendre.' },
-  { id: 'theorie', label: 'Théorie', intro: 'Des cours complets, en partant des bases : notes, rythme, gammes, intervalles, accords, fonctions, cadences… Chaque chapitre s’appuie sur le passage de la pièce travaillé la même semaine.' },
+  { id: 'theorie', label: 'Théorie', intro: 'Des cours complets, en partant des bases : notes, rythme, gammes, intervalles, accords, fonctions, cadences… Chaque chapitre s’appuie sur un passage de ta pièce.' },
   { id: 'oreille', label: 'Oreille', intro: 'Reprendre l’oreille à zéro : grave et aigu, chanter juste, sentir la tonique, reconnaître les degrés, puis les intervalles, les accords et les cadences. Dix minutes chaque jour, avec beaucoup de conseils.' },
   { id: 'lecture', label: 'Lecture à vue', intro: 'Une méthode et un entraînement quotidien court, sur de vrais extraits du répertoire classés en cinq niveaux, jamais deux fois les mêmes.' },
   { id: 'impro', label: 'Improvisation', intro: 'Improviser pas à pas : un motif, la question et la réponse, les notes de l’accord et leurs ornements, puis des styles (romance de Liszt, nocturne, élégie russe, prélude de Chopin), le langage classique (cadences, règle de l’octave, schémas) et les formes. Chaque leçon explique pourquoi ça marche, puis se travaille en 4 à 7 exercices progressifs : une seule nouveauté à chacun (imiter, squelette, rythme, ornement, question – réponse, silences, transposition), vérifiée au piano. Dix minutes par jour, à l’exercice en cours.' },
@@ -48,16 +49,6 @@ export async function loadPiece(id) {
   return mod.PIECE_PAGES[id] || null;
 }
 
-const ROUTINE = `<p>Pour une séance d’environ 1 h 15 :</p>
-<ul>
-<li><b>10 min de technique</b> : gammes et exercice de la semaine, avec le métronome ou l’analyseur.</li>
-<li><b>10 min de lecture à vue</b> : un ou deux extraits nouveaux, sans s’arrêter.</li>
-<li><b>30 min de pièce phare</b>, quand l’attention est encore fraîche : sections courtes, lentement, une intention à la fois.</li>
-<li><b>10 min d’oreille</b> : la routine de la leçon d’oreille de la semaine (chant, degrés, intervalles…).</li>
-<li><b>10 min d’improvisation</b>, chaque jour : l’exercice en cours de la leçon de la semaine, puis une minute de jeu libre sur la même grille.</li>
-<li><b>15 min de théorie</b>, deux ou trois jours par semaine : le chapitre de la semaine, qui s’appuie sur le passage que tu travailles.</li>
-</ul>
-<p>S’il te reste du temps, finis par une pièce complémentaire, pour le plaisir. Un jour par semaine, enregistre la pièce phare en entier et réécoute-la le lendemain.</p>`;
 
 export const LEVELS = [
   {
@@ -72,88 +63,6 @@ export const LEVELS = [
       'Comprendre et entendre <b>tonalités, intervalles, accords, fonctions, cadences et notes étrangères</b>.',
       'Lire à vue des pièces simples à deux mains (jusqu’à deux altérations) <b>sans s’arrêter</b>.',
       'Improviser <b>huit mesures</b> dans le style du nocturne sur une grille donnée.',
-    ],
-    weekRoutine: ROUTINE,
-    plan: [
-      { title: 'Mise en place', focus: 'Découvrir la pièce, poser la méthode, la posture et les repères.', tasks: [
-        { mod: 'Pièce', piece: 'op55-1', text: '{p} : écoute deux versions (section « Écouter »), puis mesures 1 à 8 mains séparées, très lentement.' },
-        { mod: 'Technique', lesson: 'n1-t1', text: '{l}' },
-        { mod: 'Technique', lesson: 'n1-t2', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-notes', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-portee', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n1-or1', text: '{l}' },
-        { mod: 'Lecture', lesson: 'n1-l1', text: '{l}' },
-        { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t} « niveau 1 · main droite » : 10 minutes, 5 jours sur 7.' },
-        { mod: 'Impro', lesson: 'n1-im-lancer', text: '{l}' },
-        { mod: 'Compléments', prio: 2, piece: 'valse-b150', text: '{p} (en cours) : stabiliser la partie A, caractère de valse.' },
-      ] },
-      { title: 'Le legato chanté', focus: 'La mélodie sans pédale, au doigt : le cœur du niveau.', tasks: [
-        { mod: 'Pièce', piece: 'op55-1', text: '{p} : mesures 1 à 16 mains ensemble à ♩ = 40 ; mesures 17 à 24 mains séparées.' },
-        { mod: 'Technique', lesson: 'n1-t3', text: '{l} — puis mesure la mélodie des mesures 1 à 4 avec l’analyseur (legato).' },
-        { mod: 'Théorie', lesson: 'n1-th-rythme', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-mesure', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n1-or2', text: '{l}' },
-        { mod: 'Lecture', lesson: 'n1-l2', text: '{l}' },
-        { mod: 'Impro', lesson: 'n1-im-rythme', text: '{l}' },
-        { mod: 'Compléments', prio: 2, piece: 'prokofiev-75-6', text: '{p} (en cours) : rythme pointé et poids des accords.' },
-      ] },
-      { title: 'Les plans sonores', focus: 'Faire chanter le dessus ; les retours variés du thème.', tasks: [
-        { mod: 'Pièce', piece: 'op55-1', text: '{p} : mesures 17 à 48 ; travaille à part les triolets (m. 27-28) et le septolet (m. 44).' },
-        { mod: 'Technique', lesson: 'n1-t4', text: '{l}' },
-        { mod: 'Interprétation', lesson: 'n1-i1', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-gamme', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-armures', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n1-or3', text: '{l}' },
-        { mod: 'Lecture', lesson: 'n1-l3', text: '{l}' },
-        { mod: 'Impro', lesson: 'n1-im-5notes', text: '{l}' },
-      ] },
-      { title: 'La pédale', focus: 'Pédale syncopée, puis le Più mosso.', tasks: [
-        { mod: 'Pièce', piece: 'op55-1', text: '{p} : Più mosso, mesures 48 à 64, mains séparées puis ensemble lentement.' },
-        { mod: 'Technique', lesson: 'n1-t5', text: '{l}' },
-        { mod: 'Interprétation', lesson: 'n1-i2', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-mineur', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-intervalles', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n1-or4', text: '{l}' },
-        { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t} « niveau 2 · deux mains, une note par main » : mode attente, puis en rythme.' },
-        { mod: 'Impro', lesson: 'n1-im-accords', text: '{l}' },
-      ] },
-      { title: 'Assembler', focus: 'Fin du Più mosso, gammes, rubato.', tasks: [
-        { mod: 'Pièce', piece: 'op55-1', text: '{p} : mesures 65 à 76 (traits chromatiques 69-70), puis enchaîne A et Più mosso.' },
-        { mod: 'Technique', lesson: 'n1-t6', text: '{l}' },
-        { mod: 'Interprétation', lesson: 'n1-i3', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-accords', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-renv', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n1-or5', text: '{l}' },
-        { mod: 'Lecture', lesson: 'n1-l4', text: '{l}' },
-        { mod: 'Impro', lesson: 'n1-im-gammes', text: '{l}' },
-        { mod: 'Compléments', prio: 2, piece: 'liszt-s169', text: '{p} : déchiffrage et mise en place de la première page.' },
-      ] },
-      { title: 'La coda', focus: 'Triolets molto legato, passage en fa majeur, choral final.', tasks: [
-        { mod: 'Pièce', piece: 'op55-1', text: '{p} : coda, mesures 77 à 101.' },
-        { mod: 'Théorie', lesson: 'n1-th-fonctions', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-cadences', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n1-or6', text: '{l}' },
-        { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t} « niveau 3 · pièces faciles » : 5 extraits dans la semaine.' },
-        { mod: 'Impro', lesson: 'n1-im2', text: '{l}' },
-        { mod: 'Compléments', prio: 2, piece: 'liszt-s169', text: '{p} : suite de la mise en place.' },
-      ] },
-      { title: 'Vue d’ensemble', focus: 'Toute la pièce, tempo progressif ; l’analyse éclaire l’interprétation.', tasks: [
-        { mod: 'Pièce', piece: 'op55-1', text: '{p} : enchaîne toute la pièce ; tempo progressif de ♩ = 50 à ♩ = 60 (métronome, accélération progressive).' },
-        { mod: 'Interprétation', lesson: 'n1-i4', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n1-th-etrangeres', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n1-or7', text: '{l}' },
-        { mod: 'Impro', lesson: 'n1-im3', text: '{l}' },
-        { mod: 'Compléments', prio: 2, piece: 'valse-b150', text: '{p} et Montaigus et Capulets : jouer en entier.' },
-      ] },
-      { title: 'Interpréter et valider', focus: 'Écouter, s’enregistrer, juger avec la grille.', tasks: [
-        { mod: 'Interprétation', lesson: 'n1-i5', text: '{l}' },
-        { mod: 'Pièce', piece: 'op55-1', text: '{p} : deux enregistrements complets dans la semaine, réécoutés le lendemain.' },
-        { mod: 'Théorie', lesson: 'n1-th-synthese', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n1-or8', text: '{l}' },
-        { mod: 'Impro', lesson: 'n1-im4', text: '{l}' },
-        { mod: 'Validation', tool: ['#/validation/n1', 'la grille de validation'], text: 'Remplis {t} honnêtement ; reprends les points « en cours ».' },
-        { mod: 'Révisions', prio: 2, tool: ['#/outils/oreille', 'l’outil Oreille'], text: 'Dans {t} et dans l’outil Théorie, refais les séries où tu étais sous 80 %.' },
-      ] },
     ],
     validation: [
       { id: 'p1', group: 'Pièce phare', text: 'Je joue le Nocturne op. 55 n° 1 en entier, sans arrêt, au tempo de ♩ = 60 au moins.' },
@@ -192,81 +101,6 @@ export const LEVELS = [
       'Lire à vue en <b>motifs</b>, dans les tonalités jusqu’à quatre altérations, en <b>regardant en avance</b>.',
       'Improviser une <b>forme ABA</b> avec modulation, et un <b>prélude</b> sur une basse descendante.',
       'Jouer <b>Clair de lune</b> avec une pédale et des couleurs propres à Debussy.',
-    ],
-    weekRoutine: ROUTINE,
-    plan: [
-      { title: 'Deux mondes', focus: 'Découvrir la pièce ; la main gauche à trois voix de l’Andante.', tasks: [
-        { mod: 'Pièce', piece: 'op15-1', text: '{p} : écoute deux versions ; mesures 1 à 8, main gauche seule (basse, voix en noires, triolets).' },
-        { mod: 'Technique', lesson: 'n2-t3', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n2-th1', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n2-or1', text: '{l}' },
-        { mod: 'Lecture', lesson: 'n2-l1', text: '{l}' },
-        { mod: 'Impro', lesson: 'n2-im-cadences', text: '{l}' },
-      ] },
-      { title: 'Le cantabile', focus: 'L’Andante mains ensemble ; ornements.', tasks: [
-        { mod: 'Pièce', piece: 'op15-1', text: '{p} : mesures 1 à 24 mains ensemble lentement ; la fioriture de la mesure 20.' },
-        { mod: 'Technique', lesson: 'n2-t1', text: '{l}' },
-        { mod: 'Interprétation', lesson: 'n2-i3', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n2-th-voix', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n2-th2', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n2-or2', text: '{l}' },
-        { mod: 'Lecture', lesson: 'n2-l2', text: '{l}' },
-        { mod: 'Impro', lesson: 'n2-im-octave', text: '{l}' },
-      ] },
-      { title: 'Le Con fuoco (1)', focus: 'Rotation pour les doubles notes, traits de la main gauche.', tasks: [
-        { mod: 'Pièce', piece: 'op15-1', text: '{p} : mesures 25 à 28, main droite (rotation) puis main gauche (traits), très lentement en rythmes.' },
-        { mod: 'Technique', lesson: 'n2-t2', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n2-th3', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n2-or3', text: '{l}' },
-        { mod: 'Lecture', tool: ['#/outils/lecture', 'Lecture à vue'], text: '{t}, niveau 3 (pièces faciles), puis niveau 4 quand l’outil te le propose : 10 minutes par jour.' },
-        { mod: 'Impro', lesson: 'n2-im-romanesca', text: '{l}' },
-      ] },
-      { title: 'Le Con fuoco (2)', focus: 'La mélodie à la main gauche ; octaves et accords.', tasks: [
-        { mod: 'Pièce', piece: 'op15-1', text: '{p} : mesures 29 à 48 (mélodie à la main gauche, mesures à 6/8).' },
-        { mod: 'Technique', lesson: 'n2-t5', text: '{l}' },
-        { mod: 'Interprétation', lesson: 'n2-i1', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n2-th4', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n2-or4', text: '{l}' },
-        { mod: 'Lecture', lesson: 'n2-l3', text: '{l}' },
-        { mod: 'Impro', lesson: 'n2-im-schemas', text: '{l}' },
-      ] },
-      { title: 'Le retour', focus: 'Assembler le B ; la reprise ornée ; Clair de lune commence.', tasks: [
-        { mod: 'Pièce', piece: 'op15-1', text: '{p} : section B en entier à tempo réduit ; reprise mesures 49 à 74 (ornements m. 54 et 56).' },
-        { mod: 'Technique', lesson: 'n2-t6', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n2-th5', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n2-or5', text: '{l}' },
-        { mod: 'Impro', lesson: 'n2-im1', text: '{l}' },
-        { mod: 'Compléments', prio: 2, piece: 'clair-de-lune', text: '{p} : mesures 1 à 26.' },
-      ] },
-      { title: 'L’harmonie', focus: 'Enchaîner ; l’harmonie guide le phrasé.', tasks: [
-        { mod: 'Pièce', piece: 'op15-1', text: '{p} : enchaînement complet, transitions m. 24-25 et 48-49.' },
-        { mod: 'Interprétation', lesson: 'n2-i2', text: '{l}' },
-        { mod: 'Technique', lesson: 'n2-t7', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n2-th-chopin', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n2-th-debussy', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n2-or6', text: '{l}' },
-        { mod: 'Lecture', lesson: 'n2-l4', text: '{l}' },
-        { mod: 'Impro', lesson: 'n2-im2', text: '{l}' },
-        { mod: 'Compléments', prio: 2, piece: 'clair-de-lune', text: '{p} : mesures 27 à 50 (arpèges, pédale).' },
-      ] },
-      { title: 'Vue d’ensemble', focus: 'Tempo final ; analyse ; pianissimo.', tasks: [
-        { mod: 'Pièce', piece: 'op15-1', text: '{p} : tempo final (Chopin indique ♩ = 69 pour l’Andante ; vise 60 à 69), toute la pièce.' },
-        { mod: 'Interprétation', lesson: 'n2-i4', text: '{l}' },
-        { mod: 'Technique', lesson: 'n2-t4', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n2-th6', text: '{l}' },
-        { mod: 'Théorie', lesson: 'n2-th-prelude4', text: '{l} — à faire avec la leçon d’improvisation « le prélude de Chopin ».' },
-        { mod: 'Oreille', lesson: 'n2-or7', text: '{l}' },
-        { mod: 'Impro', lesson: 'n2-im4', text: '{l}' },
-        { mod: 'Compléments', prio: 2, piece: 'clair-de-lune', text: '{p} : mesures 51 à la fin.' },
-      ] },
-      { title: 'Interpréter et valider', focus: 'Debussy et Chopin, deux sons ; enregistrement ; grille.', tasks: [
-        { mod: 'Interprétation', lesson: 'n2-i5', text: '{l}' },
-        { mod: 'Pièce', piece: 'op15-1', text: '{p} : deux enregistrements complets, réécoutés le lendemain.' },
-        { mod: 'Théorie', lesson: 'n2-th-synthese', text: '{l}' },
-        { mod: 'Oreille', lesson: 'n2-or8', text: '{l}' },
-        { mod: 'Impro', lesson: 'n2-im3', text: '{l}' },
-        { mod: 'Validation', tool: ['#/validation/n2', 'la grille de validation'], text: 'Remplis {t}.' },
-      ] },
     ],
     validation: [
       { id: 'p1', group: 'Pièce phare', text: 'Je joue le Nocturne op. 15 n° 1 en entier sans arrêt ; Andante ♩ ≈ 60–69.' },

@@ -1,6 +1,6 @@
-// Niveau 2 — Théorie : des cours complets, chacun ancré sur le passage travaillé la même semaine
+// Niveau 2 — Théorie : des cours complets, chacun ancré sur un passage de la pièce
 // (op. 15 n° 1, puis Clair de lune). Format : explication, « À retenir », « Erreurs fréquentes »,
-// « Dans ta pièce cette semaine » (extraits avec panneau d'analyse), exercices corrigés, quiz.
+// « Dans ta pièce » (extraits avec panneau d'analyse), exercices corrigés, quiz.
 import { OP15, OP55, CLAIR, OP28, OP70 } from './content-excerpts.js';
 
 // Prélude op. 28 n° 4 : une pédale à chaque changement d'accord (Chopin n'en note que deux, m. 17-18)
@@ -114,7 +114,7 @@ const PART1 = [
     goals: ['Construire les cinq accords de septième.', 'Connaître les septièmes d’une tonalité majeure et mineure.', 'Résoudre une septième : la septième descend, la sensible monte.', 'Nommer les septièmes des mesures 1 à 8 de l’op. 15 n° 1.'],
     goal: '70 % ou plus aux séries de septièmes (sur la portée et à l’oreille).',
     body: W => `
-<p>Au niveau 1, tu as rencontré la septième de dominante (do 7 en fa mineur) et ses renversements. Ce chapitre élargit : il existe <b>cinq accords de septième</b> courants, et Chopin les emploie presque à chaque temps dans l’Andante que tu commences cette semaine.</p>
+<p>Au niveau 1, tu as rencontré la septième de dominante (do 7 en fa mineur) et ses renversements. Ce chapitre élargit : il existe <b>cinq accords de septième</b> courants, et Chopin les emploie presque à chaque temps dans l’Andante de ton nocturne.</p>
 
 <h2>Construire un accord de septième</h2>
 <p>On empile <b>trois tierces</b> au-dessus de la fondamentale : fondamentale, tierce, quinte, septième. Le nom de l’accord dit deux choses : la nature de l’accord de trois sons de départ, et la septième ajoutée.</p>
@@ -166,7 +166,7 @@ ${W.score({ abc: DIM7_RES, title: 'vii°7 → i en fa mineur', bpm: 50, caption:
 ${W.key('À retenir', '<ul><li>Septième = accord de trois sons + une tierce. Cinq types : de dominante, majeure, mineure, demi-diminuée, diminuée.</li><li>Une seule septième de dominante par tonalité : V7 (en mineur, avec la sensible).</li><li>La septième descend ; la sensible monte.</li><li>ii7 – V7 – I (en mineur iiø7 – V7 – i) : la cadence la plus courante.</li><li>La septième diminuée divise l’octave en tierces mineures : trois accords seulement.</li></ul>')}
 ${W.warn('Erreurs fréquentes', '<ul><li>Confondre 7e de dominante et 7e majeure : écoute l’écart entre la septième et l’octave, un ton (7e mineure) ou un demi-ton (7e majeure).</li><li>Appeler « diminué » un accord demi-diminué : regarde la septième, mineure (demi-diminué) ou diminuée (diminué).</li><li>Oublier l’armure : en fa majeur, sol – si – ré – fa s’écrit avec si♭ (sol m7, un ii7), pas si♮ (sol 7).</li></ul>')}
 
-<h2>Dans ta pièce cette semaine : op. 15 n° 1, mesures 1 à 8</h2>
+<h2>Dans ta pièce : op. 15 n° 1, mesures 1 à 8</h2>
 <p>Ouvre le panneau « Analyse » sous la partition et joue les accords en blocs. En huit mesures, on trouve :</p>
 <ul>
 <li><b>des septièmes de dominante</b> : do 7 (mesures 2, 3, 5 et 8), mais aussi la 7 (mesure 4), sol 7 (mesure 5) et mi 7 (mesure 7), qui sont les dominantes d’autres degrés (chapitre suivant) ;</li>
@@ -223,7 +223,7 @@ ${W.ecoute({ title: 'Des voix qui chantent, ou des blocs qui sautent', bpm: 72, 
 ${W.key('À retenir', '<ul><li>Un enchaînement d’accords = plusieurs mélodies simultanées.</li><li>Notes communes gardées, mouvements courts.</li><li>Sensible ↑, septième ↓.</li><li>Ni quintes ni octaves parallèles.</li><li>Doubler la fondamentale, jamais la sensible.</li></ul>')}
 ${W.warn('Erreurs fréquentes', '<ul><li>Déplacer tout l’accord en bloc : c’est là que naissent les quintes et octaves parallèles.</li><li>Faire descendre la sensible dans une cadence : la conclusion perd sa force.</li><li>Croire que ces règles valent pour toute musique : chez Debussy, les accords parallèles sont un choix de couleur (Clair de lune, mesures 15 à 18), pas une maladresse.</li></ul>')}
 
-<h2>Dans ta pièce cette semaine : la main gauche de l’Andante</h2>
+<h2>Dans ta pièce : la main gauche de l’Andante</h2>
 <p>La main gauche de l’op. 15 n° 1 est écrite à trois voix : une <b>basse</b> tenue, une voix en <b>noires</b> et des <b>triolets</b> qui remplissent l’harmonie. Voici la mélodie avec la basse et la voix en noires seulement :</p>
 ${W.score({ abc: OP15_VOICES, title: 'Mesures 1 à 8 : mélodie, voix en noires et basse (sans les triolets)', bpm: 66, startBpm: 56, practice: false, analysis: false, caption: 'Réduction : les triolets de la main gauche sont supprimés pour faire entendre les deux lignes qui portent l’harmonie.' })}
 <ul>
@@ -281,7 +281,7 @@ ${W.score({ abc: SECDOM, title: 'I – V7/vi – vi – V7/V – V7 – I en fa 
 ${W.key('À retenir', '<ul><li>V/x : l’accord majeur (ou V7) bâti une quinte au-dessus de x.</li><li>Son altération est la sensible de x.</li><li>Tonicisation : un instant ; la tonalité ne change pas.</li><li>Les dominantes s’enchaînent souvent en quintes descendantes.</li></ul>')}
 ${W.warn('Erreurs fréquentes', '<ul><li>Voir une modulation dans chaque altération : sans cadence dans la nouvelle tonalité, c’est une tonicisation.</li><li>Construire la dominante sous l’accord visé au lieu d’au-dessus : la dominante de ré est la, pas sol.</li><li>Croire que la dominante dépend du mode de l’accord visé : ré majeur et ré mineur ont la même dominante (la 7).</li></ul>')}
 
-<h2>Dans ta pièce cette semaine : l’Andante, mesures 1 à 24</h2>
+<h2>Dans ta pièce : l’Andante, mesures 1 à 24</h2>
 <p><b>Mesures 4 à 8.</b> La basse descend pas à pas, et presque chaque étape est préparée par sa propre dominante. Cherche les altérations et l’accord qu’elles annoncent :</p>
 <ul>
 <li>Mesure 4 : do♯ → <b>la 7 = V7/vi</b>, résolu sur ré mineur au 3e temps.</li>
@@ -290,7 +290,7 @@ ${W.warn('Erreurs fréquentes', '<ul><li>Voir une modulation dans chaque altéra
 <li>Mesure 8 : mi majeur (V/iii), puis do 7 qui ramène vers fa.</li>
 </ul>
 ${W.score({ abc: OP15.e1, title: 'Op. 15 n° 1, mesures 1 à 8', bpm: 66, startBpm: 56 })}
-<p><b>Mesures 17 à 21.</b> Après mi♭ 7, l’accord mi♭ – sol – la – do♯ (une sixte augmentée, que tu étudieras à la semaine 5) s’ouvre sur <b>ré 7 = V7/ii</b>, qui va non pas sur sol mineur mais sur <b>sol 7 = V7/V</b>, puis sur do : une chaîne de dominantes, ré – sol – do. Au sommet (mesure 20), si – ré – fa – la♭ est la <b>septième diminuée de do</b> (vii°7/V).</p>
+<p><b>Mesures 17 à 21.</b> Après mi♭ 7, l’accord mi♭ – sol – la – do♯ (une sixte augmentée, que tu étudieras dans la leçon « La sixte napolitaine et la sixte augmentée ») s’ouvre sur <b>ré 7 = V7/ii</b>, qui va non pas sur sol mineur mais sur <b>sol 7 = V7/V</b>, puis sur do : une chaîne de dominantes, ré – sol – do. Au sommet (mesure 20), si – ré – fa – la♭ est la <b>septième diminuée de do</b> (vii°7/V).</p>
 ${W.score({ abc: OP15.e2, title: 'Op. 15 n° 1, mesures 17 à 24', bpm: 66, startBpm: 50 })}
 ${W.tip('À l’oreille', '<p>Une dominante secondaire sonne comme une petite surprise lumineuse (une note qui monte d’un demi-ton), aussitôt expliquée par l’accord suivant. Joue la chaîne de dominantes ci-dessus, puis la même suite sans altérations (fa – la m – ré m – sol m – do 7 – fa) : la différence est frappante.</p>')}
 
@@ -347,7 +347,7 @@ ${W.ecoute({ title: 'Moduler par un accord pivot', bpm: 72, items: [
 ${W.key('À retenir', '<ul><li>Modulation = nouvelle tonique confirmée par une cadence.</li><li>Tons voisins : relatif, dominante, sous-dominante et leurs relatifs.</li><li>Moyens : accord pivot, altération, changement de mode, modulation directe, enharmonie.</li><li>Homonymes (fa majeur / fa mineur) : même tonique, même dominante.</li></ul>')}
 ${W.warn('Erreurs fréquentes', '<ul><li>Confondre relatif (même armure : fa majeur / ré mineur) et homonyme (même tonique : fa majeur / fa mineur).</li><li>Annoncer une modulation à la première altération : attends la cadence.</li><li>Chercher le pivot après le changement : il se trouve juste avant la première note étrangère à l’ancienne tonalité.</li></ul>')}
 
-<h2>Dans ta pièce cette semaine : mesures 24 à 32</h2>
+<h2>Dans ta pièce : mesures 24 à 32</h2>
 <ul>
 <li><b>Mesures 24-25 : changement de mode.</b> L’Andante s’arrête sur do 7, suivi d’un silence. Do 7 est la dominante de fa majeur… et de fa mineur : c’est le mode mineur qui arrive, sans aucune préparation, <i>con fuoco</i>.</li>
 <li><b>Mesures 25 à 28 : fa mineur</b>, une harmonie par mesure : i, iv7, iiø7, puis do ø7 et la °7, qui préparent si♭ mineur.</li>
@@ -557,7 +557,7 @@ ${W.ecoute({ title: 'La marche par quintes, en accords', bpm: 84, chain: false, 
 ${W.key('À retenir', '<ul><li>Marche = modèle + reprises à d’autres hauteurs.</li><li>Par quintes descendantes : chaque accord prépare le suivant.</li><li>Ascendante : la tension monte ; descendante : elle se détend ou ramène.</li><li>On en sort par une cadence.</li></ul>')}
 ${W.warn('Erreurs fréquentes', '<ul><li>Prendre une simple répétition (même hauteur) pour une marche.</li><li>Chercher une reproduction exacte : dans une marche tonale, les intervalles s’adaptent à la gamme (seconde majeure ici, mineure là).</li><li>Jouer chaque reprise de la même façon : une marche se dirige, en crescendo ou en diminuendo.</li></ul>')}
 
-<h2>Dans ta pièce cette semaine : mesures 41 à 48</h2>
+<h2>Dans ta pièce : mesures 41 à 48</h2>
 <p><b>Mesures 41 à 44 : une marche ascendante.</b> Modèle de deux mesures : la♭ 7, avec la mélodie à la main gauche (mi♭ – fa – ré♭ – do, puis si – do – la♭). Reprise : si♭ 7, le même dessin <b>un ton plus haut</b> (fa – sol♭ – mi♭ – ré, puis do♯ – ré – si♭). La tension monte avant la redescente.</p>
 ${W.score({ abc: OP15.e6, title: 'Mesures 41 à 44 : la marche ascendante', bpm: 84, startBpm: 56 })}
 <p><b>Mesures 45 à 48 : une marche descendante.</b> La basse enchaîne si♭ – mi♭ – la♭ – ré♭ (quintes descendantes, comme dans l’exemple du cours), puis fa – si♭. La mélodie reprend son motif de plus en plus bas, et la♮ annonce le retour de fa majeur.</p>
@@ -614,7 +614,7 @@ ${W.ecoute({ title: 'La sixte augmentée : deux notes qui s’écartent', bpm: 6
   { label: 'Sixte augmentée – V', seq: 'réb2 fa3 lab3 si3:2 | do2 mi3 sol3 do4:3', note: 'Ré♭ descend, si♮ monte : les deux notes s’écartent d’un demi-ton chacune et s’ouvrent sur l’octave do – do. La tension est maximale juste avant la dominante.' },
 ] })}
 
-<h2>Dans ta pièce cette semaine : la reprise, mesures 63 à 67 (= 15 à 19)</h2>
+<h2>Dans ta pièce : la reprise, mesures 63 à 67 (= 15 à 19)</h2>
 <p>Dans la reprise, Chopin réutilise presque exactement le passage des mesures 15 à 19. Sous une mélodie aux valeurs longues, la basse descend par demi-tons, et le son de la sixte augmentée française apparaît deux fois :</p>
 ${W.score({ abc: OP15_RED_15, title: 'Mesures 15 à 19 (et 63 à 67) : réduction', bpm: 60, startBpm: 50, practice: false, analysis: AN_RED_15, caption: 'Réduction : les triolets de la main gauche sont ramenés à des accords, la fioriture de la mesure 18 est supprimée.' })}
 <ul>
@@ -726,7 +726,7 @@ ${W.score({ abc: CL_37, title: 'Mesures 37 à 43 (réduction harmonique)', bpm: 
 ${W.key('À retenir', '<ul><li>Clair de lune reste tonal (ré♭ majeur), mais les accords sont choisis pour leur couleur.</li><li>Septièmes, neuvièmes, onzièmes sans résolution obligée.</li><li>Accords parallèles : le bloc glisse en entier.</li><li>Pédales : une basse fixe sous des accords mobiles.</li><li>Mode mineur emprunté : si𝄫, fa♭, do♭… jusqu’à do♯ mineur (= ré♭ mineur).</li></ul>')}
 ${W.warn('Erreurs fréquentes', '<ul><li>Croire que Debussy « ne respecte pas les règles » : il en choisit d’autres, et l’oreille les suit très bien.</li><li>Chercher partout des cadences : beaucoup de phrases se terminent par un glissement, pas par V – I.</li><li>Jouer les accords parallèles en détachant chaque voix : c’est un seul timbre, à fondre avec la pédale.</li></ul>')}
 
-<h2>Dans ta pièce cette semaine : mesures 27 à 50</h2>
+<h2>Dans ta pièce : mesures 27 à 50</h2>
 <ul>
 <li><b>Un poco mosso (27-36)</b> : des arpèges sur la basse ré♭ – fa – la♭ ; fa♭ et do♭ apportent la couleur de ré♭ mineur ; aux mesures 30-31, mi♭ 9 puis la♭ 9 (dominante de la dominante, puis dominante) ; mesure 34, les deux accords augmentés.</li>
 <li><b>En animant (37-42)</b> : do♯ mineur, la basse qui descend, le forte des mesures 41-42 sur fa♯ m7.</li>
@@ -788,7 +788,7 @@ ${W.diagram('form', { total: 112, noBars: true, sections: [
 ${W.key('À retenir', '<ul><li>Ternaire ABA : contraste puis retour ; la forme du nocturne.</li><li>Rondo : un refrain entre des couplets.</li><li>Sonate : exposition (deux thèmes, deux tonalités), développement, réexposition.</li><li>Les limites des sections se repèrent aux cadences, aux changements de tonalité, de tempo et de texture.</li></ul>')}
 ${W.warn('Erreurs fréquentes', '<ul><li>Découper d’après la mise en page de la partition plutôt que d’après la musique.</li><li>Oublier les transitions : elles sont souvent les moments les plus délicats à jouer.</li><li>Jouer un retour (A′) exactement comme le début : le chemin parcouru l’a changé.</li></ul>')}
 
-<h2>Dans ta pièce cette semaine : les plans complets</h2>
+<h2>Dans ta pièce : les plans complets</h2>
 <table>
 <thead><tr><th>Section</th><th>Mesures</th><th>Tonalités et repères</th></tr></thead>
 <tbody>

@@ -1,5 +1,5 @@
 // Niveau 1 — Théorie : un cours complet en partant des bases.
-// Chaque chapitre s'appuie sur le passage du Nocturne op. 55 n° 1 travaillé la même semaine (voir le plan).
+// Chaque chapitre s'appuie sur un passage du Nocturne op. 55 n° 1 (voir la carte de la pièce).
 import { OP55 } from './content-excerpts.js';
 
 /* ---------- Partitions des chapitres ---------- */
@@ -1453,7 +1453,7 @@ ${W.diagram('form', { total: 101, sections: [
   { label: 'Più mosso', kind: 'C', from: 48, to: 72, key: 'fa m → do m → sol m' },
   { label: 'A′', kind: 'A', from: 73, to: 76 },
   { label: 'Coda', kind: 'coda', from: 77, to: 101, key: 'fa m → fa M' },
-] }, 'A (mesures 1 à 48) : le thème a, ses retours ornés (a′ en triolets, a″ avec un septolet) et la phrase b. Più mosso (48 à 72). Retour bref du thème (73 à 76). Coda (77 à 101).')}
+] }, 'A (mesures 1 à 48) : le thème a, ses retours ornés (a′ en triolets, a″ avec un septolet) et la phrase b. Più mosso (48 à 72). Retour bref du thème (73 à 76). Coda (77 à 101). Le même plan, en mots et section par section, est dans <a href="#/piece/op55-1">la carte de ta pièce</a>.')}
 ${W.check({ title: 'À toi : lis le plan', questions: [
   { q: 'Entre les mesures 1 et 48, combien de fois entends-tu le thème a, avec ses variantes ?', options: ['4 fois : a, a, a′, a″', '2 fois', '6 fois'], why: 'a (1-8), a (9-16), a′ (25-32), a″ (41-48). Entre eux, deux fois la phrase b.' },
   { q: 'Où commence le Più mosso ?', options: ['mesure 48', 'mesure 25', 'mesure 73'], why: 'La mesure 48 est partagée : son premier accord conclut a″, la suite lance le Più mosso.' },
