@@ -84,7 +84,7 @@ function otherPieces(L) {
 
 /** Pour chaque catégorie : { title, html, href, meta }. Asynchrone : quelques outils se chargent à la demande. */
 export async function proposals(L, now = Date.now()) {
-  const [pm, ex, ear] = await Promise.all([import('./piecemap.js'), import('./tool-exercises.js'), import('./tool-earpath.js')]);
+  const [pm, ex, ear, wu] = await Promise.all([import('./piecemap.js'), import('./tool-exercises.js'), import('./tool-earpath.js'), import('./tool-warmup.js')]);
   const out = {};
   // pièce phare : la section du jour
   const nx = pm.nextSection(L.piece, now);
@@ -118,7 +118,9 @@ export async function proposals(L, now = Date.now()) {
   // lecture à vue
   const lv = store.get('sight.level') || (L.id === 'n2' ? '2' : '1rh');
   const LVN = { '1rh': 'niveau 1, main droite', '1lh': 'niveau 1, main gauche', 2: 'niveau 2', 3: 'niveau 3', 4: 'niveau 4', 5: 'niveau 5' };
-  out.lecture = { title: 'Échauffement et extraits', html: `${link('#/outils/lecture', 'Lecture à vue')} : l’échauffement (rythme, notes), puis des extraits nouveaux, ${esc(LVN[lv] || 'à ton niveau')}, sans t’arrêter.`, href: '#/outils/lecture' };
+  const ws = wu.warmupStatus(now);
+  const warm = ws.done >= ws.total ? 'échauffement déjà fait aujourd’hui ; ' : 'l’échauffement de 3 minutes (le rythme, puis deux exercices parmi notes, intervalles et accords), puis ';
+  out.lecture = { title: 'Échauffement et extraits', html: `${link('#/outils/lecture', 'Lecture à vue')} : ${warm}des extraits nouveaux, ${esc(LVN[lv] || 'à ton niveau')}, sans t’arrêter.`, href: '#/outils/lecture' };
   // oreille : l'étape en cours du parcours
   const tid = store.get('ui.earTrack') === 'ecoute' ? 'ecoute' : 'chant';
   const pr = ear.trackProgress(tid);

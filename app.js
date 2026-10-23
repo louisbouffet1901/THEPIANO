@@ -62,11 +62,13 @@ const routes = [
   [/^#\/validation\/(n\d)$/, pageValidation],
   [/^#\/outils$/, pageTools],
   [/^#\/outils\/metronome$/, () => toolPage('Métronome', 'Mesures muettes, accélération progressive, tempo tapé.', () => import('./tool-metronome-ui.js').then(m => el => m.mountMetronome(el, { title: false })))],
-  [/^#\/outils\/lecture$/, () => toolPage('Lecture à vue', 'De vrais extraits du répertoire (Bach, Diabelli, Burgmüller, Schumann…), du plus simple au plus avancé. Prépare-toi 30 secondes, puis joue sans t’arrêter : la difficulté s’ajuste à tes résultats.', () => Promise.all([import('./tool-sight.js'), import('./tool-notespeed.js'), ensureAbcjs()]).then(([m, ns]) => el => {
-    const a = m.mountSight(el, { level: store.get('sight.level') || (currentLevel().id === 'n2' ? '2' : '1rh') });
-    const box = h('div', { class: 'mt-3' });
-    el.append(h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Échauffement : lecture de notes chronométrée')), box);
-    const b = ns.mountNoteSpeed(box);
+  [/^#\/outils\/lecture$/, () => toolPage('Lecture à vue', 'Trois minutes d’échauffement (le rythme, puis deux exercices d’une minute), puis de vrais extraits du répertoire (Bach, Diabelli, Burgmüller, Schumann…) : prépare-toi 30 secondes, puis joue sans t’arrêter. La difficulté s’ajuste à tes résultats.', () => Promise.all([import('./tool-sight.js'), import('./tool-warmup.js'), ensureAbcjs()]).then(([m, wu]) => el => {
+    const wuHost = h('div');
+    const sightHost = h('div');
+    const sightTitle = h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Les extraits'));
+    el.append(wuHost, sightTitle, sightHost);
+    const b = wu.mountWarmup(wuHost, { level: currentLevel().id, onDone: () => sightTitle.scrollIntoView({ behavior: 'smooth', block: 'start' }) });
+    const a = m.mountSight(sightHost, { level: store.get('sight.level') || (currentLevel().id === 'n2' ? '2' : '1rh') });
     return () => { try { a?.(); } catch (e) { /* */ } try { b?.(); } catch (e) { /* */ } };
   }))],
   [/^#\/maitrise$/, () => toolPage('En cours de maîtrise', 'Les leçons que tu apprends par cœur : une fiche pour relire l’essentiel, de petits exercices corrigés pour vérifier que tu le sais.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)))],
@@ -528,6 +530,7 @@ function pageHome() {
   }).catch(() => {});
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '7.1': '<ul><li><b>Échauffement de lecture</b> (Lecture à vue) : trois minutes avant les extraits. D’abord une minute de rythme à taper au clic, au niveau choisi dans l’onglet Rythme. Puis deux exercices d’une minute, qui tournent d’un jour à l’autre entre les notes, les <b>intervalles</b> et les <b>accords</b> : tu lis la forme et tu la joues d’un geste, sans la nommer. Ce qui te ralentit revient plus souvent.</li><li><b>Entends le début</b> : pendant les 30 secondes de préparation, chante la première mesure, puis vérifie en l’écoutant.</li><li>La lecture de notes chronométrée quitte la page Exercices : elle fait partie de l’échauffement.</li></ul>',
     '7.0': '<ul><li><b>Nouvelle séance</b> : coche ce que tu veux travailler (pièce, technique, improvisation, lecture, oreille, autres pièces) et choisis une durée. L’appli propose l’étape suivante de chaque case et coche d’avance ce que tu laisses de côté depuis trop longtemps. Le plan en 8 semaines disparaît.</li><li><b>La carte de ta pièce</b> : section par section, ce qui s’y passe, ce que ça change à ton jeu, les leçons et les exercices qu’elle demande (rubato, triolets, octaves…) et comment la travailler. Indique où tu en es dans chaque section : la section du jour et un objectif de date en dépendent.</li><li><b>Le plan de la pièce</b>, simplifié : à quoi il sert, et trois exercices (repartir d’un point de départ, situer un extrait, entendre ce qui change au retour). Et un <b>filage enregistré</b> environ une fois par semaine.</li><li><b>Tes 7 derniers jours</b> : les jours de pratique de chaque case, face à l’objectif.</li></ul>',
     '6.2': '<ul><li><b>Improvisation, notes en or</b> : toutes les notes en or sont écrites dans la grille, sous chaque accord, avant même le départ. Pendant une mesure, la suivante est annoncée (« puis … ») et marquée en or pâle sur le clavier, avec son nom : tu as le temps de la préparer.</li><li>Leçon « Entre les notes de l’accord » : le squelette complet des exercices en partition, et un tableau qui explique pourquoi chaque note en or a été choisie.</li></ul>',
     '6.1':'<ul><li><b>En cours de maîtrise, refait</b> : coche les leçons de théorie que tu veux savoir par cœur (dans l’onglet, ou en tête de chaque leçon). Pour chacune, une <b>fiche</b> qui résume l’essentiel et de <b>petits exercices</b> corrigés ; les questions manquées reviennent en premier à la série suivante. « Tout réviser » mêle tes leçons.</li><li>Les boîtes et les dates de révision sont retirées. Les leçons qui étaient dans tes cartes restent cochées : décoche celles que tu ne veux pas.</li></ul>',
@@ -538,9 +541,14 @@ function pageHome() {
     '4.2': '<ul><li><b>Exercices</b> (menu Outils) : indépendance des mains en 17 exercices (deux rythmes à la fois, polyrythmes, lié contre détaché, une main qui chante, notes tenues). Après « En rythme », un retour main par main, et le tempo monte à chaque réussite.</li><li><b>Lecture de notes chronométrée</b> : une minute, au piano ou par le nom ; notes par minute, notes lentes, record et courbe sur 30 jours. Dans Exercices et sous la Lecture à vue.</li></ul>',
     '4.1': '<ul><li><b>Ta séance d’aujourd’hui</b> : environ 1 h 15 tirée de la semaine, étape par étape. Sur chaque page, la barre du bas mène à l’étape suivante.</li><li><b>Pièce</b> : un passage ouvert à la fois ; l’analyse harmonique sous les extraits s’ouvre d’un toucher.</li><li><b>Partitions</b> : Boucle, Montée de tempo et Clavier sont rangés dans « Options ».</li><li><b>Oreille et Théorie</b> : la prochaine série est proposée en haut ; les séries sont rangées par groupe.</li><li><b>Plan</b> : seule la semaine en cours est dépliée. <b>Niveau</b> : les six modules en cartes.</li></ul>',
   };
-  if (NEWS[version.app] && store.get('seenVersion') !== version.app) {
+  // nouveautés de toutes les versions publiées depuis la dernière lue (trois au plus), la plus récente d'abord
+  const vnum = v => String(v || '0').split('.').map(Number).reduce((a, x, i) => a + x * (i ? 1 / 100 : 1), 0);
+  const seen = store.get('seenVersion');
+  const unseen = Object.keys(NEWS).filter(v => vnum(v) <= vnum(version.app) && (seen ? vnum(v) > vnum(seen) : v === version.app)).sort((a, b) => vnum(b) - vnum(a)).slice(0, 3);
+  if (unseen.length) {
     const ok = h('button', { class: 'btn sm', type: 'button' }, 'Compris');
-    const box = h('div', { class: 'callout tip mt-2 news' }, h('div', { class: 'c-title', html: `${ICONS.bulb}Nouveau dans la version ${version.app}` }), h('div', { html: NEWS[version.app] }), ok);
+    const box = h('div', { class: 'callout tip mt-2 news' }, h('div', { class: 'c-title', html: `${ICONS.bulb}${unseen.length > 1 ? `Nouveautés des versions ${unseen.join(', ').replace(/, ([^,]*)$/, ' et $1')}` : `Nouveau dans la version ${unseen[0]}`}` }),
+      ...unseen.map(v => h('div', { html: (unseen.length > 1 ? `<p class="small mb-0"><b>Version ${v}</b></p>` : '') + NEWS[v] })), ok);
     ok.addEventListener('click', () => { store.set('seenVersion', version.app); box.remove(); });
     $('.page-head', page).after(box);
   }
@@ -890,7 +898,7 @@ function pageImproTool() {
 function pageExercises(exId = null) {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Exercices' }]) +
-    `<div class="page-head"><h1>Exercices</h1><p class="lead">Une minute de lecture de notes chronométrée, puis l’indépendance des mains : deux rythmes à la fois, polyrythmes, lié contre détaché, une main qui chante, notes tenues. Joue « En rythme » : l’appli mesure chaque main et monte le tempo à chaque réussite.</p></div>`;
+    `<div class="page-head"><h1>Exercices</h1><p class="lead">L’indépendance des mains : deux rythmes à la fois, polyrythmes, lié contre détaché, une main qui chante, notes tenues. Joue « En rythme » : l’appli mesure chaque main et monte le tempo à chaque réussite.</p></div>`;
   const host = h('div');
   page.append(host);
   main.append(page);

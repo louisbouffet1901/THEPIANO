@@ -47,10 +47,11 @@ export function mountNoteSpeed(el, opts = {}) {
   const saved = store.get('notespeed') || {};
   const conf = { clef: 'treble', range: 'staff', acc: false, input: midi.status === 'ready' ? 'piano' : 'names', exact: true, ...(saved.conf || {}) };
   if (conf.range === 'acc') { conf.range = 'ledger'; conf.acc = true; } // réglage de la V4.2
-  const frame = h('div', { class: 'w-frame notespeed' });
+  const frame = h('div', { class: 'w-frame notespeed' + (opts.bare ? ' ns-bare' : '') });
   const head = h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, 'Lecture de notes chronométrée'), h('span', { class: 'w-sub' }, 'une minute, le plus de notes justes possible'));
   const body = h('div', { class: 'w-body' });
-  frame.append(head, body);
+  if (!opts.bare) frame.append(head);
+  frame.append(body);
   el.append(frame);
 
   /* ---------- réglages ---------- */

@@ -1,11 +1,10 @@
 // Onglet « Exercices » (V4.2) : indépendance des mains, polyrythmes, lié contre détaché, une main qui chante,
 // mouvements et notes tenues. Chaque exercice est une courte partition à deux mains : « En rythme » (décompte, clic),
 // puis un retour main par main (justesse, mise en place, tendance, tenue des notes, force), une progression de tempo
-// jusqu'au tempo visé, et l'exercice du jour. En tête de page : la lecture de notes chronométrée.
+// jusqu'au tempo visé, et l'exercice du jour.
 import { h, esc, mean, median, fmtPct } from './util.js';
 import { store } from './store.js';
 import { mountScore } from './score-widget.js';
-import { mountNoteSpeed } from './tool-notespeed.js';
 
 /* ------------------------------------------------------------------ */
 /* Les exercices                                                       */
@@ -264,14 +263,11 @@ function mountTrainer(host, ex, onChange) {
   });
 }
 
-/** La page : lecture de notes chronométrée, puis l'exercice du jour et tous les exercices par famille. */
+/** La page : l'exercice du jour et tous les exercices par famille (la lecture de notes chronométrée est passée dans
+ *  l'échauffement de la Lecture à vue en V7.1). */
 export function mountExercisesPage(el, opts = {}) {
   const cleanups = [];
-  const nsHost = h('div');
-  el.append(h('div', { class: 'section-title' }, h('h2', {}, 'Échauffement : lecture de notes')), nsHost);
-  cleanups.push(mountNoteSpeed(nsHost));
-
-  el.append(h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Indépendance des mains')));
+  el.append(h('div', { class: 'section-title mt-0' }, h('h2', {}, 'Indépendance des mains')));
   const recoBox = h('div');
   const trainer = h('div', { class: 'ex-trainer' });
   const list = h('div');

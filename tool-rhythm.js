@@ -1068,3 +1068,134 @@ export function mountRhythmPage(el) {
   renderChips(); renderIntro(); show('read');
   return () => cleanup.forEach(f => { try { f(); } catch (e) { /* */ } });
 }
+
+/* ------------------------------------------------------------------ */
+/* Une minute de rythme : l'échauffement de la lecture à vue (V7.1)      */
+/* ------------------------------------------------------------------ */
+const minuteDur = () => (typeof window !== 'undefined' && window.__nsDuration) || 60; // durée réduite pour les tests
+/**
+ * Des rythmes d'une mesure, puis de deux, au niveau choisi dans l'onglet Rythme : décompte, puis on tape chaque note
+ * au clic en comptant à voix haute. Deux réussites de suite : deux mesures, puis le tempo monte ; un échec net : retour
+ * à une mesure, tempo plus lent.
+ */
+export function mountRhythmMinute(el, opts = {}) {
+  const st0 = store.get('rhythm') || {};
+  const L = levelById(Math.min(9, st0.level || 1)); // le niveau 10 (deux mains) se travaille dans l'onglet
+  let bpm = clamp(st0.warmBpm || 60, 44, 100);
+  const frame = h('div', { class: 'w-frame rhythm rminute' + (opts.bare ? ' ns-bare' : '') });
+  if (!opts.bare) frame.append(h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, 'Une minute de rythme'), h('span', { class: 'w-sub' }, `niveau ${L.id}`)));
+  const body = h('div', { class: 'w-body' });
+  frame.append(body);
+  el.append(frame);
+  const info = h('p', { class: 'small ns-info' });
+  const startBtn = h('button', { class: 'btn primary', type: 'button' }, 'Commencer (1 minute)');
+  const idle = h('div', {}, info, h('div', { class: 'btn-row' }, startBtn));
+  const counter = h('div', { class: 'ns-count' });
+  const stopBtn = h('button', { class: 'btn ghost sm', type: 'button' }, 'Arrêter');
+  const timeBar = h('div', { class: 'progress ns-time' }, h('i'));
+  const scoreHost = h('div', { class: 'rhythm-score rm-score' });
+  const phaseBox = h('div', { class: 'rhythm-phase', 'aria-live': 'polite' });
+  const itemFb = h('div', { class: 'ns-fb rm-fb' });
+  const pad = h('button', { class: 'tap-pad', type: 'button', 'data-hand': 'rh' }, 'Taper ici — ou une touche du piano, ou la barre d’espace');
+  const stage = h('div', { hidden: true }, h('div', { class: 'ns-top' }, counter, stopBtn), timeBar, scoreHost, phaseBox, h('div', { class: 'rhythm-pads' }, pad), itemFb);
+  const results = h('div', { class: 'ns-results', hidden: true });
+  body.append(idle, stage, results);
+
+  const unit = () => (L.compound ? '♩.' : '♩');
+  const renderIdle = () => {
+    info.innerHTML = `Niveau ${L.id} de l’onglet Rythme (${esc(L.title.toLowerCase())}), ${unit()} = ${bpm}. Des rythmes d’une mesure, puis de deux : après le décompte, tape chaque note au clic en <b>comptant à voix haute</b> (« 1 et 2 et… »). Deux réussites de suite : le rythme s’allonge, puis le tempo monte.`;
+  };
+  let running = false, run = null, score = null, t0 = 0, raf = 0, timers = [], session = null, bars = 1, streak = 0;
+  pad.addEventListener('pointerdown', e => { e.preventDefault(); run?.tap((e.timeStamp > 0 ? e.timeStamp : performance.now()) - inputLatency('touch'), 'rh'); });
+  const flash = () => { pad.classList.add('hit'); setTimeout(() => pad.classList.remove('hit'), 90); };
+  const showPhase = (phase, inf) => {
+    const key = `${phase}:${inf.waiting ? 'w' : inf.inBar}`;
+    if (phaseBox.dataset.k === key) return;
+    phaseBox.dataset.k = key;
+    phaseBox.innerHTML = '';
+    if (phase === 'count') phaseBox.append(h('span', { class: 'ph-label count' }, inf.waiting ? 'Prépare-toi' : 'Décompte'), h('span', { class: 'ph-beat' }, inf.waiting ? '…' : String(inf.inBar)));
+    else phaseBox.append(h('span', { class: 'ph-label play' }, 'À toi !'), h('span', { class: 'ph-beat' }, String(Math.max(1, inf.inBar || 1))));
+  };
+  const showCounter = () => { counter.innerHTML = `<b>${session.good}</b> réussi${session.good > 1 ? 's' : ''} · ${session.items.length} rythme${session.items.length > 1 ? 's' : ''}`; };
+  const tick = () => {
+    if (!running) return;
+    const left = Math.max(0, minuteDur() - (performance.now() - t0) / 1000);
+    timeBar.firstChild.style.width = `${left / minuteDur() * 100}%`;
+    timeBar.classList.toggle('low', left < 10);
+    raf = requestAnimationFrame(tick);
+  };
+  const nextItem = async () => {
+    if (!running) return;
+    if ((performance.now() - t0) / 1000 >= minuteDur()) { finish(true); return; }
+    const phrase = genPhrase(L.id, { bars });
+    scoreHost.innerHTML = '';
+    score = new Score(scoreHost, phrase.abc, { staffwidth: bars === 1 ? 300 : 520 });
+    itemFb.textContent = ''; itemFb.className = 'ns-fb rm-fb';
+    phaseBox.dataset.k = '';
+    const sc = score;
+    const r = new RhythmRun(sc, { qpm: bpm * sc.beatQ, clicks: true, onTap: flash, onFrame: showPhase, onDone: res => done(res, sc) });
+    run = r;
+    await r.start();
+    if (!running) r.stop(); // arrêté pendant la mise en route du son
+  };
+  const done = (res, sc) => {
+    run = null;
+    if (!running) return;
+    for (const it of res.items) for (const c of it.chars) sc.mark(c, it.status === 'ok' ? 'n-ok' : it.status === 'near' ? 'n-late' : 'n-bad');
+    const good = res.score >= 0.85 && res.extra <= 1;
+    session.items.push({ res, sc, good, bars, bpm });
+    if (good) { session.good++; streak++; } else streak = 0;
+    if (good && streak >= 2) { if (bars === 1) bars = 2; else bpm = Math.min(100, bpm + 4); streak = 0; }
+    if (res.score < 0.6) { bpm = Math.max(44, bpm - 4); bars = 1; streak = 0; }
+    itemFb.className = 'ns-fb rm-fb ' + (good ? 'ok' : 'bad');
+    itemFb.textContent = good ? `✓ ${res.ok}/${res.total} à l’heure` : `${res.ok}/${res.total} à l’heure${res.extra ? ` · ${res.extra} frappe${res.extra > 1 ? 's' : ''} en trop` : ''}`;
+    showCounter();
+    phaseBox.innerHTML = ''; phaseBox.dataset.k = '';
+    timers.push(setTimeout(nextItem, 1400));
+  };
+  const start = async () => {
+    if (running) return;
+    try { await audio.ensure(); } catch (e) { /* */ }
+    session = { items: [], good: 0 };
+    bars = 1; streak = 0;
+    running = true;
+    idle.hidden = true; results.hidden = true; stage.hidden = false;
+    showCounter();
+    t0 = performance.now();
+    raf = requestAnimationFrame(tick);
+    nextItem();
+  };
+  const stop = () => {
+    running = false;
+    run?.stop(); run = null;
+    cancelAnimationFrame(raf);
+    timers.forEach(clearTimeout); timers = [];
+  };
+  const finish = complete => {
+    const elapsed = (performance.now() - t0) / 1000;
+    stop();
+    stage.hidden = true; idle.hidden = false;
+    if (!complete || !session || !session.items.length || elapsed < Math.min(20, minuteDur())) { results.hidden = true; renderIdle(); return; }
+    const its = session.items;
+    const ok = its.reduce((a, x) => a + x.res.ok, 0), total = its.reduce((a, x) => a + x.res.total, 0);
+    const hit = its.filter(x => x.res.meanAbs > 0);
+    const meanAbs = hit.length ? hit.reduce((a, x) => a + x.res.meanAbs, 0) / hit.length : 0;
+    const st = store.get('rhythm') || {};
+    store.set('rhythm', { ...st, warmBpm: bpm, warm: (st.warm || []).concat({ at: Date.now(), level: L.id, n: its.length, good: session.good, ok, total, bpm }).slice(-60) });
+    const worst = its.slice().sort((a, b) => a.res.score - b.res.score)[0];
+    results.innerHTML = '';
+    results.append(h('h4', { class: 'an-sub' }, 'Résultat'), h('div', { class: 'an-grid' },
+      h('div', { class: 'stat' }, h('div', { class: 'l' }, 'Rythmes réussis'), h('div', { class: 'v' }, `${session.good}/${its.length}`)),
+      h('div', { class: 'stat' }, h('div', { class: 'l' }, 'Attaques à l’heure'), h('div', { class: 'v' }, fmtPct(total ? ok / total : 0))),
+      h('div', { class: 'stat' }, h('div', { class: 'l' }, 'Écart moyen'), h('div', { class: 'v' }, `${Math.round(meanAbs)} ms`))));
+    const tip = worst && !worst.good ? advice(worst.res, worst.sc, false).replace('active « Temps et contretemps »', 'dans l’onglet Rythme, active « Temps et contretemps »') : 'Très bien. Demain, le tempo repart de là où tu l’as laissé.';
+    results.append(h('p', { class: 'small' }, `${tip} Tempo de départ la prochaine fois : ${unit()} = ${bpm}.`));
+    results.hidden = false;
+    renderIdle();
+    opts.onFinish?.({ good: session.good, n: its.length, acc: total ? ok / total : 0 });
+  };
+  startBtn.addEventListener('click', start);
+  stopBtn.addEventListener('click', () => finish(false));
+  renderIdle();
+  return () => stop();
+}

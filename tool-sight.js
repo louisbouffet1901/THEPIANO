@@ -363,7 +363,18 @@ export function mountSight(el, cfg = {}) {
       list.append(h('div', { class: 'callout warn sight-hard' }, h('b', {}, `Mesure ${hard.bar} : `), capitalize(hard.reasons.join(', ')) + '. C’est là qu’il faudra être le plus attentif.'));
       hintBar(hard.bar);
     }
-    list.append(h('p', { class: 'small muted mb-0' }, 'Pendant ce temps, repère aussi la première note de chaque main et entends le début dans ta tête.'));
+    // Entends le début (V7.1) : chanter ou entendre intérieurement la première mesure, puis vérifier
+    const firstEnd = (score.pickupQ || 0) + score.barQ;
+    const hearBtn = btn('Vérifier : écouter la 1re mesure', 'sm');
+    hearBtn.addEventListener('click', async () => {
+      if (player.playing) { player.stop(); return; }
+      player.set({ qpm: bpm * score.beatQ, hands: 'both', range: [0, firstEnd] });
+      try { await player.play(); } catch (e) { /* audio indisponible */ }
+      player.set({ range: null });
+    });
+    list.append(h('div', { class: 'sight-hear' },
+      h('p', { class: 'small mb-0' }, h('b', {}, 'Entends le début. '), 'Repère la première note de chaque main, puis chante à mi-voix (ou entends dans ta tête) la première mesure, au tempo. Ensuite seulement, vérifie.'),
+      hearBtn));
     const tick = () => {
       clock.textContent = `Lecture silencieuse : ${left} s`;
       if (left <= 0) { go(); return; }

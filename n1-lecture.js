@@ -32,6 +32,9 @@ export default [
     body: W => `
 <p>On ne progresse pas en lecture à vue en rejouant des pièces connues : il faut lire du <b>neuf</b>, un peu plus facile que ton répertoire, <b>chaque jour</b>, dix minutes. C’est ce que propose l’outil de lecture : de vrais extraits de pièces (Bach, Diabelli, Burgmüller, Schumann…), classés en cinq niveaux, jamais deux fois le même tant que le niveau n’est pas épuisé. La difficulté suit tes résultats.</p>
 
+<h2>D’abord, trois minutes d’échauffement</h2>
+<p>Dans l’outil de lecture, un échauffement court précède les extraits : <b>une minute de rythme</b> (tu tapes au clic en comptant à voix haute ; c’est l’entraînement de la lecture le mieux étudié, et le rythme est ton point faible), puis <b>deux exercices d’une minute</b> qui tournent d’un jour à l’autre entre les notes, les intervalles et les accords. Tu apprends ainsi à lire par motifs (un écart, une forme d’accord) plutôt que note par note. L’essentiel du temps reste aux vrais extraits.</p>
+
 <h2>Avant de jouer (30 secondes)</h2>
 <ol>
 <li><b>Armure</b> : quelle tonalité ? Majeur ou relatif mineur (regarde la dernière note de la basse et les altérations accidentelles : un sol♯ dans une pièce sans armure signale la mineur).</li>
@@ -39,7 +42,7 @@ export default [
 <li><b>Structure</b> : des mesures qui se répètent ? Un motif qui revient ? Des marches ?</li>
 <li><b>Difficultés</b> : sauts, altérations, changements de position. Repère-les.</li>
 <li><b>Position des mains</b> : première note de chaque main, doigté de départ.</li>
-<li><b>Entends</b> intérieurement le début et le rythme.</li>
+<li><b>Entends le début</b> : chante à mi-voix, ou dans ta tête, la première mesure au tempo ; l’outil te la fait ensuite écouter pour vérifier.</li>
 </ol>
 
 <h2>Pendant</h2>

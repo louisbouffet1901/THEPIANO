@@ -142,6 +142,7 @@ store.subscribe((path, value) => {
     else if (path === 'improv.p') cat = 'impro';
     else if (path === 'compose.projects') { if (Array.isArray(value) && value.some(x => x && fresh(x.at))) cat = 'impro'; }
     else if (path === 'stats.sightQuiz') { const x = lastOf(value); if (x && fresh(x.at)) cat = 'lecture'; }
+    else if (path.startsWith('readdrill')) cat = 'lecture'; // intervalles et accords chronométrés (V7.1)
     else if (path.startsWith('exercises.')) cat = 'technique';
     else if (path === 'stats.analyzer') { const x = lastOf(value); if (x && fresh(x.at)) cat = String(x.mode || '').startsWith('improv') ? 'impro' : 'technique'; }
   } catch (e) { cat = null; }
