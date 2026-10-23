@@ -16,15 +16,15 @@ import { lessonById } from './content-index.js';
 const DEG18 = [1, 2, 3, 4, 5, 6, 7, 8];
 const EXTRA = {
   'find-note': { kind: 'earnote', title: 'Retrouver au piano une note entendue', count: 8 },
-  'echo-3c': { kind: 'echo', degrees: [1, 2, 3, 4, 5], length: 3, maxStep: 2, key: 'random', startTonic: false, title: 'Rejouer 3 notes (la première est donnée)', count: 8 },
+  'echo-3c': { kind: 'echo', degrees: [1, 2, 3, 4, 5], length: 3, maxStep: 2, startTonic: false, map: true, title: 'Rejouer 3 notes en do majeur (la première est donnée)', count: 8 },
   'deg-1r': { kind: 'degree', binary: true, degrees: [1, 2, 3, 4, 5, 6, 7], key: 'random', title: 'La tonique ou pas ? (la tonalité change)', count: 12 },
   'play-tonic': { kind: 'playtonic', title: 'Jouer la tonique après la cadence', count: 8 },
   'deg-123r': { kind: 'degree', degrees: [1, 2, 3], key: 'random', keyEvery: 3, title: 'Degrés 1, 2, 3 (la tonalité change)', count: 12 },
   'sing-123r': { kind: 'sing', task: 'seq', seqs: [[1, 2, 3], [3, 2, 1], [1, 3, 1], [1, 2, 1]], key: 'random', title: 'Chanter 1-2-3 et 3-2-1 (la tonalité change)', count: 8 },
-  'echo-3r': { kind: 'echo', degrees: [1, 2, 3], length: 3, key: 'random', title: 'Rejouer 3 notes, degrés 1 à 3', count: 8 },
+  'echo-3r': { kind: 'echo', degrees: [1, 2, 3], length: 3, key: 'random', keys: [0, -5, 5], keyEvery: 4, map: true, title: 'Rejouer 3 notes, degrés 1 à 3 (do, sol, fa)', count: 8 },
   'deg-15r': { kind: 'degree', degrees: [1, 2, 3, 4, 5], key: 'random', keyEvery: 2, title: 'Degrés 1 à 5 (la tonalité change)', count: 12 },
   'sing-135r': { kind: 'sing', task: 'seq', seqs: [[1, 3, 5], [5, 3, 1], [5, 4, 3, 2, 1], [1, 2, 3, 4, 5]], key: 'random', title: 'Chanter 1-3-5 et 5-4-3-2-1 (la tonalité change)', count: 8 },
-  'echo-5r': { kind: 'echo', degrees: [1, 2, 3, 4, 5], length: 4, key: 'random', title: 'Rejouer 4 notes, degrés 1 à 5', count: 8 },
+  'echo-5r': { kind: 'echo', degrees: [1, 2, 3, 4, 5], length: 4, key: 'random', keys: [0, -5, 5, 2, -2], keyEvery: 4, map: true, title: 'Rejouer 4 notes, degrés 1 à 5', count: 8 },
   'sing-degr': { kind: 'sing', task: 'degree', degrees: DEG18, key: 'random', title: 'Chanter un degré après la cadence', count: 8 },
   'sing-minr': { kind: 'sing', mode: 'min', task: 'seq', seqs: [[1, 2, 3], [3, 2, 1], [5, 6, 5], [7, 8], [1, 3, 5]], key: 'random', title: 'Chanter en mineur (la tonalité change)', count: 8 },
   'sing-arp-r': { kind: 'sing', task: 'seq', seqs: [[1, 3, 5], [5, 3, 1], [1, 3, 5, 8]], key: 'random', title: 'Chanter l’arpège (la tonalité change)', count: 6 },

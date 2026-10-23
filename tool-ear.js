@@ -554,7 +554,19 @@ const GEN = {
       };
     }
     const mode = cfg.mode || 'maj';
-    const tr = cfg.key === 'random' ? randInt(-5, 6) : 0;
+    // V7.4.2 : la tonalité ne change plus à chaque question. Elle reste la même par blocs (keyEvery, 4 par défaut),
+    // tirée parmi cfg.keys (tonalités proches au début du parcours) ; le changement est annoncé.
+    if (st.tr == null || st.trCount == null || st.trCount <= 0) {
+      const prev = st.tr;
+      const pool = cfg.keys || (cfg.key === 'random' ? [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6] : [0]);
+      let t, g = 0;
+      do { t = pick(pool); g++; } while (pool.length > 1 && t === prev && g < 12);
+      st.tr = t;
+      st.trCount = cfg.keyEvery || (pool.length > 1 ? 4 : 999);
+      st.newKey = prev != null && t !== prev;
+    } else st.newKey = false;
+    st.trCount--;
+    const tr = st.tr;
     const tonicPc = ((mode === 'maj' ? 0 : 9) + tr + 12) % 12;
     const names = spelledScale(keyNameFor(tonicPc, mode));
     const nm = d => (d === 8 ? names[0] : names[d - 1]);
@@ -566,14 +578,25 @@ const GEN = {
     const lo = Math.min(...ms) - 7, hi = Math.max(...ms) + 7;
     return {
       type: 'play', tipKind: 'echo',
-      playTask: `Écoute, puis rejoue la mélodie (${mel.length} notes). Elle commence sur <b>${nm(mel[0])}</b>${cfg.cadence === false ? '' : ` (${keyFr(tonicPc, mode)})`}.`,
+      playTask: `${st.newKey ? `<b>Nouvelle tonalité : ${keyFr(tonicPc, mode)}.</b> Écoute bien la cadence, elle installe la tonique. ` : ''}Écoute, puis rejoue la mélodie (${mel.length} notes). Elle commence sur <b>${nm(mel[0])}</b>${cfg.cadence === false ? '' : ` (${keyFr(tonicPc, mode)})`}.`,
       play: () => playNotes([...cad.notes, ...ms.map((m, i) => ({ m, t: t0 + i * 0.62, d: i === ms.length - 1 ? 1.0 : 0.6, v: 80 }))]),
       extra: { label: 'Mélodie seule', fn: () => playNotes(ms.map((m, i) => ({ m, t: i * 0.62, d: 0.6, v: 80 }))) },
       expect: ms.length,
       check: played => played.length === ms.length && played.every((m, i) => pc(m) === pc(ms[i])),
       diff: played => played.map((m, i) => (pc(m) === pc(ms[i]) ? '✓' : '✗')).join(' '),
+      // ce qui ne va pas, précisément : le mouvement attendu depuis la note d'avant, et celui que tu as joué
+      why: played => {
+        const i = played.findIndex((m, k) => k < ms.length && pc(m) !== pc(ms[k]));
+        if (i < 0) return played.length < ms.length ? `Il manque ${ms.length - played.length === 1 ? 'une note' : `${ms.length - played.length} notes`}.` : '';
+        if (i === 0) return `La mélodie commence sur ${nm(mel[0])} : pars de cette note.`;
+        const mv = d => (d === 0 ? 'la même note' : `${Math.abs(d) <= 2 ? 'la note voisine' : Math.abs(d) <= 4 ? 'un petit saut (une tierce)' : 'un grand saut'} ${d > 0 ? 'au-dessus' : 'en dessous'}`);
+        return `${i + 1}e note : il fallait ${mv(ms[i] - ms[i - 1])} (${nm(mel[i])}) ; tu as joué ${mv(played[i] - played[i - 1])}.`;
+      },
       explain: `La mélodie : <b>${mel.join(' – ')}</b> (${mel.map(nm).join(' – ')}).`,
       kbRange: [lo, hi],
+      // V7.4.2 : chercher librement (les essais ne comptent pas) ; la gamme numérotée sur le clavier (premières étapes)
+      search: true,
+      scaleMap: cfg.map ? scaleMapOf(tonicPc, mode, ms[0]) : null,
     };
   },
 
@@ -1166,6 +1189,17 @@ const GEN = {
 };
 
 /** Mélodie aléatoire sur des degrés (marche aléatoire, pas de maxStep positions au plus). */
+/** Les touches de la gamme, numérotées en degrés (1 = la tonique, en or), autour de la note `m0`. */
+function scaleMapOf(tonicPc, mode, m0) {
+  const sc = mode === 'maj' ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 11];
+  const out = [];
+  for (let m = m0 - 16; m <= m0 + 20; m++) {
+    const k = sc.indexOf(((m - tonicPc) % 12 + 12) % 12);
+    if (k < 0) continue;
+    out.push(k === 0 ? { m, color: '#c99a2e', label: '1', labelColor: '#241a05' } : { m, color: isBlack(m) ? '#476aa3' : '#d2def0', label: String(k + 1), labelColor: isBlack(m) ? '#fff' : '#1d3a66' });
+  }
+  return out;
+}
 function randomMelody(pool, len, maxStep, startTonic, endTonic, minStep = 0) {
   const sorted = [...new Set(pool)].sort((a, b) => a - b);
   for (let tries = 0; tries < 100; tries++) {
@@ -1416,6 +1450,47 @@ export function mountQuiz(el, cfg) {
   };
 
   /* ---------- réponse jouée au piano ---------- */
+  /* V7.4.2 : rejouer une mélodie en cherchant librement. Les notes jouées en cherchant ne comptent pas ; la réponse est
+     reconnue dès que les dernières notes jouées sont justes. « Valider » dit ce qui ne va pas (trois fois au plus). */
+  const searchPlay = (ctx) => {
+    const { q, fb, nextBtn, row } = ctx;
+    const pressed = [];
+    let over = false;
+    const playedBox = h('div', { class: 'small quiz-played', 'aria-live': 'polite' });
+    const validate = h('button', { class: 'btn sm', type: 'button' }, 'Valider ma réponse');
+    row.append(validate);
+    body.insertBefore(playedBox, fb);
+    const names = list => list.map(m => noteNameFr(m, { octave: false })).join(', ');
+    const end = () => { over = true; off(); validate.hidden = true; };
+    const win = () => {
+      const first = pressed.length === q.expect && state.tries === 0;
+      end();
+      fb.className = 'quiz-feedback ok';
+      fb.innerHTML = (first ? 'Exact, du premier coup. ' : 'Trouvé. ') + q.explain;
+      ctx.done(true, first);
+      q.after?.();
+    };
+    const off = midi.on('noteon', ev => {
+      if (over || !nextBtn.hidden) return;
+      pressed.push(ev.note);
+      playedBox.textContent = `Tes notes : ${names(pressed.slice(-8))}`;
+      const last = pressed.slice(-q.expect);
+      if (last.length === q.expect && q.check(last)) win();
+      else if (pressed.length === q.expect && state.tries === 0) { fb.className = 'quiz-feedback'; fb.innerHTML = 'Pas encore. Cherche librement : tes essais ne comptent pas. Chante la note, puis cherche-la à partir de la tonique (la touche 1).'; }
+    });
+    addCleanup(off);
+    validate.addEventListener('click', () => {
+      if (over || !nextBtn.hidden) return;
+      const last = pressed.slice(-q.expect);
+      if (last.length === q.expect && q.check(last)) return win();
+      state.tries++;
+      fb.className = 'quiz-feedback bad';
+      const why = last.length ? q.why?.(last) || '' : '';
+      if (state.tries >= 3) { end(); fb.innerHTML = `${last.length ? `Tes dernières notes : ${names(last)}. ` : ''}${why} ${q.explain}`; ctx.done(false, false); q.after?.(); return; }
+      fb.innerHTML = `${last.length < q.expect ? `Joue les ${q.expect} notes de la mélodie, puis valide.` : `Tes ${q.expect} dernières notes : ${names(last)}. ${why}`} Réécoute, chante, et cherche encore.`;
+      ctx.showTip();
+    });
+  };
   const renderPlay = (ctx) => {
     const { q, fb, nextBtn, row, tipBox } = ctx;
     const skip = h('button', { class: 'btn ghost', type: 'button' }, 'Je passe');
@@ -1432,6 +1507,8 @@ export function mountQuiz(el, cfg) {
     body.append(fb, tipBox, nextBtn);
     if (midi.status !== 'ready') { toggleKb(true); fb.innerHTML = '<span class="small">Piano non connecté : réponds sur le clavier à l’écran.</span>'; }
     skip.addEventListener('click', () => { if (!nextBtn.hidden) return; fb.className = 'quiz-feedback bad'; fb.innerHTML = q.explain; ctx.done(false, false); clearQuestion(); });
+    if (q.scaleMap) { toggleKb(true); kb.firstChild?.setMarks?.(q.scaleMap); }
+    if (q.search) return searchPlay(ctx, () => kb);
     const wait = () => listenPlayed(played => {
       state.tries++;
       if (q.check(played)) {
@@ -1440,7 +1517,7 @@ export function mountQuiz(el, cfg) {
         q.after?.();
       } else {
         fb.className = 'quiz-feedback bad';
-        const detail = q.diff ? ` ${q.diff(played)}` : '';
+        const detail = (q.diff ? ` ${q.diff(played)}` : '') + (q.why ? ` ${q.why(played)}` : '');
         if (state.tries >= 3) {
           fb.innerHTML = `Tu as joué : ${played.map(m => noteNameFr(m, { octave: false })).join(', ')}.${detail} ${q.explain}`;
           ctx.done(false, false);
