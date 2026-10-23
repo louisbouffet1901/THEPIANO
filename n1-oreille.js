@@ -160,7 +160,7 @@ ${W.warn('Si tu tapes en retard', '<p>Si l’appli te dit que ton rythme est jus
       'Une cadence I – IV – V7 – I installe la tonalité ; après elle, chaque degré a sa couleur et sa tendance.',
       'Chanter la tonique d’une tonalité entendue : la base de toute la suite.',
     ],
-    goal: '80 % ou plus à la série « La tonique ou pas ? », et tu chantes juste la tonique après une cadence.',
+    goal: '80 % ou plus à la série « La tonique ou pas ? », dans toutes les tonalités, et tu chantes juste la tonique après une cadence.',
     body: W => `
 <p>Voici l’idée qui va transformer ton oreille : on ne reconnaît pas une note isolée (presque personne n’a l’« oreille absolue »), on la reconnaît <b>par rapport à la tonique</b>. Dans une tonalité, chaque degré a une couleur et une tendance propres : 1 repose, 7 tire vers le haut, 4 penche vers 3… C’est le principe des méthodes d’oreille « fonctionnelle » : avant chaque question, une courte cadence installe la tonalité, puis tu situes la note par rapport à elle.</p>
 
@@ -170,10 +170,11 @@ ${W.kbd({ from: 48, to: 72, title: 'La cadence en do majeur, puis la tonique', m
 
 ${ROUTINE([
   'Deux minutes : joue la cadence I – IV – V7 – I en do majeur, puis chante do (la tonique). Recommence en sol majeur et en fa majeur.',
-  'Cinq minutes : série « La tonique ou pas ? ».',
+  'Cinq minutes : série « La tonique ou pas ? » : la tonalité change à chaque question.',
   'Trois minutes : série « Chanter la tonique » (au micro).',
 ])}
-${W.quiz({ kind: 'degree', binary: true, degrees: [1, 2, 3, 4, 5, 6, 7], title: 'La tonique ou pas ?', count: 12, stat: 'deg-1' })}
+${W.warn('Pourquoi la tonalité change', '<p>En do majeur seulement, l’oreille finit par reconnaître des <b>hauteurs fixes</b> (ce mi-là, c’est « 3 ») au lieu d’entendre la relation à la tonique : dans une autre tonalité, tout s’effondre. Beaucoup de pianistes réussissent ainsi en do et échouent ailleurs. En changeant de tonalité dès le début, et en répondant par des chiffres plutôt que par des noms de notes, tu apprends la <b>relation</b>, qui marche partout.</p>')}
+${W.quiz({ kind: 'degree', binary: true, degrees: [1, 2, 3, 4, 5, 6, 7], key: 'random', title: 'La tonique ou pas ? (la tonalité change)', count: 12, stat: 'deg-1r' })}
 ${W.tip('La résolution', '<p>Après chaque réponse, écoute la petite descente (ou montée) qui ramène la note vers la tonique. C’est ce chemin que ton oreille apprend : bientôt, tu sentiras d’avance où chaque note veut aller.</p>')}
 ${W.quiz({ kind: 'sing', task: 'degree', degrees: [1], key: 'random', title: 'Chanter la tonique après la cadence', count: 8, stat: 'sing-tonic' })}
 ${W.tip('Chante en dedans', '<p>Prends l’habitude, après chaque cadence, de chanter intérieurement la tonique et de la garder en tête pendant toute la question. C’est ton point de repère.</p>')}
@@ -189,13 +190,13 @@ ${W.warn('Si tu hésites souvent', '<p>Chante la tonique juste après la cadence
     id: 'n1-or5', minutes: 10,
     title: 'Les degrés 1, 2, 3',
     summary: 'Trois notes, trois couleurs : la tonique, la sus-tonique qui retombe, la médiante lumineuse.',
-    goals: ['Reconnaître 1, 2 et 3 après une cadence, en do majeur puis dans d’autres tonalités.', 'Chanter 1-2-3 et 3-2-1.', 'Rejouer au piano une mélodie de trois notes.'],
+    goals: ['Reconnaître 1, 2 et 3 après une cadence, dans n’importe quelle tonalité.', 'Chanter 1-2-3 et 3-2-1.', 'Rejouer au piano une mélodie de trois notes.'],
     essentials: [
       '<b>1</b> repose, <b>2</b> est une légère question qui retombe, <b>3</b> est stable et lumineux (il fait le majeur).',
       'On chante les degrés par leurs <b>numéros</b> : ils restent les mêmes dans toutes les tonalités.',
       'Si la note veut tomber tout de suite d’un pas, c’est 2.',
     ],
-    goal: '80 % à la série « Degrés 1, 2, 3 » en do majeur, puis dans toutes les tonalités.',
+    goal: '80 % à la série « Degrés 1, 2, 3 », la tonalité changeant toutes les trois questions.',
     body: W => `
 <h2>Trois couleurs</h2>
 <table>
@@ -205,20 +206,19 @@ ${W.warn('Si tu hésites souvent', '<p>Chante la tonique juste après la cadence
 <tr><td class="num">2</td><td>ré</td><td>une tension légère, comme une question</td><td>descendre vers 1</td></tr>
 <tr><td class="num">3</td><td>mi</td><td>stable et lumineux (il fait le majeur)</td><td>peut rester, ou descendre 3-2-1</td></tr>
 </tbody></table>
-<p>On chante les degrés avec leurs <b>numéros</b> (« un, deux, trois ») : ils restent les mêmes dans toutes les tonalités. En do majeur, tu peux aussi chanter do, ré, mi. Certains s’aident des gestes de la main de la méthode Kodály (main fermée pour 1, main inclinée vers le haut pour 2, main à plat pour 3) : essaie, cela fixe la mémoire.</p>
+<p>On chante les degrés avec leurs <b>numéros</b> (« un, deux, trois ») : ils restent les mêmes dans toutes les tonalités. Évite les noms de notes (do, ré, mi) : ils collent aux degrés en do majeur, mais dans une autre tonalité ils trompent l’oreille. Certains s’aident des gestes de la main de la méthode Kodály (main fermée pour 1, main inclinée vers le haut pour 2, main à plat pour 3) : essaie, cela fixe la mémoire.</p>
 ${W.kbd({ from: 60, to: 67, title: '1, 2, 3 en do majeur', marks: [{ m: 60, label: '1' }, { m: 62, label: '2' }, { m: 64, label: '3' }], names: 'none', play: 'seq', seq: [60, 62, 64, 62, 60], step: 0.5 })}
 
 ${ROUTINE([
-  'Deux minutes : joue la cadence en do, chante 1-2-3-2-1 (« un, deux, trois, deux, un »), puis seulement 1 – 3 – 1.',
-  'Cinq minutes : série « Degrés 1, 2, 3 » en do majeur ; quand tu atteins 80 %, passe à la série « toutes tonalités ».',
+  'Deux minutes : joue la cadence dans une tonalité (do, sol, mi♭…), chante 1-2-3-2-1 (« un, deux, trois, deux, un »), puis 1 – 3 – 1 ; change de tonalité et recommence.',
+  'Cinq minutes : série « Degrés 1, 2, 3 » : la tonalité change toutes les trois questions.',
   'Trois minutes : série « Rejouer 3 notes » au piano.',
 ])}
-${W.quiz({ kind: 'degree', degrees: [1, 2, 3], names: true, title: 'Degrés 1, 2, 3 (do majeur)', count: 12, stat: 'deg-123' })}
 ${W.tip('Le sens de la résolution', '<p>2 et 3 descendent tous deux vers 1, mais 2 « tombe » tout de suite, alors que 3 pourrait rester. Si la note semble vouloir s’effondrer d’un seul pas, c’est 2.</p>')}
-${W.quiz({ kind: 'degree', degrees: [1, 2, 3], key: 'random', title: 'Degrés 1, 2, 3 (toutes tonalités)', count: 12, stat: 'deg-123r' })}
-${W.quiz({ kind: 'sing', task: 'seq', seqs: [[1, 2, 3], [3, 2, 1], [1, 3, 1], [1, 2, 1]], title: 'Chanter 1-2-3 et 3-2-1', count: 8, stat: 'sing-123' })}
+${W.quiz({ kind: 'degree', degrees: [1, 2, 3], key: 'random', keyEvery: 3, title: 'Degrés 1, 2, 3 (la tonalité change)', count: 12, stat: 'deg-123r' })}
+${W.quiz({ kind: 'sing', task: 'seq', seqs: [[1, 2, 3], [3, 2, 1], [1, 3, 1], [1, 2, 1]], key: 'random', title: 'Chanter 1-2-3 et 3-2-1 (la tonalité change)', count: 8, stat: 'sing-123r' })}
 ${W.tip('Chante avant de jouer', '<p>Pour rejouer une mélodie, chante-la d’abord en numéros (« un, deux, un… »), puis joue : tu ne cherches plus au hasard sur le clavier.</p>')}
-${W.quiz({ kind: 'echo', degrees: [1, 2, 3], length: 3, title: 'Rejouer 3 notes (degrés 1 à 3)', count: 8, stat: 'echo-3' })}
+${W.quiz({ kind: 'echo', degrees: [1, 2, 3], length: 3, key: 'random', title: 'Rejouer 3 notes, degrés 1 à 3', count: 8, stat: 'echo-3r' })}
 
 <h2>Dans ta pièce</h2>
 <p>La coda de l’op. 55 se termine en fa majeur. Joue l’accord final (fa – la – do) et chante fa – sol – la (1 – 2 – 3), puis la – sol – fa (3 – 2 – 1) : c’est la fin de très nombreuses mélodies.</p>
@@ -237,7 +237,7 @@ ${W.warn('Si 2 et 3 se confondent', '<p>Chante 1 juste après la cadence, puis m
       '<b>4</b> penche vers 3 (un demi-ton plus bas) ; <b>5</b> est stable mais ouvert, comme une porte.',
       'Dans une mélodie à rejouer, pars de la fin (souvent 1) si tu as perdu le milieu.',
     ],
-    goal: '80 % à la série « Degrés 1 à 5 », en do puis dans toutes les tonalités.',
+    goal: '80 % à la série « Degrés 1 à 5 », la tonalité changeant toutes les deux questions.',
     body: W => `
 <h2>Deux nouvelles couleurs</h2>
 <table>
@@ -250,15 +250,14 @@ ${W.warn('Si 2 et 3 se confondent', '<p>Chante 1 juste après la cadence, puis m
 ${W.kbd({ from: 60, to: 67, title: 'Les cinq premiers degrés en do', marks: [{ m: 60, label: '1' }, { m: 62, label: '2' }, { m: 64, label: '3' }, { m: 65, label: '4' }, { m: 67, label: '5' }], names: 'none', play: 'seq', seq: [60, 62, 64, 65, 67, 65, 64, 62, 60], step: 0.42 })}
 
 ${ROUTINE([
-  'Deux minutes : cadence, puis chante 1-3-5-3-1 et 5-4-3-2-1 en numéros.',
-  'Cinq minutes : série « Degrés 1 à 5 », d’abord en do, puis toutes tonalités.',
+  'Deux minutes : cadence dans une tonalité au hasard, puis chante 1-3-5-3-1 et 5-4-3-2-1 en numéros ; change de tonalité.',
+  'Cinq minutes : série « Degrés 1 à 5 » : la tonalité change toutes les deux questions.',
   'Trois minutes : série « Rejouer 4 notes ».',
 ])}
-${W.quiz({ kind: 'degree', degrees: [1, 2, 3, 4, 5], names: true, title: 'Degrés 1 à 5 (do majeur)', count: 12, stat: 'deg-15' })}
 ${W.tip('Le 4 et le 5', '<p>4 penche, il veut descendre d’un demi-ton vers 3. 5, lui, se tient debout : on pourrait presque s’arrêter dessus. Si la note semble suspendue mais stable, c’est 5.</p>')}
-${W.quiz({ kind: 'degree', degrees: [1, 2, 3, 4, 5], key: 'random', title: 'Degrés 1 à 5 (toutes tonalités)', count: 12, stat: 'deg-15r' })}
-${W.quiz({ kind: 'sing', task: 'seq', seqs: [[1, 3, 5], [5, 3, 1], [5, 4, 3, 2, 1], [1, 2, 3, 4, 5]], title: 'Chanter 1-3-5 et 5-4-3-2-1', count: 8, stat: 'sing-135' })}
-${W.quiz({ kind: 'echo', degrees: [1, 2, 3, 4, 5], length: 4, title: 'Rejouer 4 notes (degrés 1 à 5)', count: 8, stat: 'echo-5' })}
+${W.quiz({ kind: 'degree', degrees: [1, 2, 3, 4, 5], key: 'random', keyEvery: 2, title: 'Degrés 1 à 5 (la tonalité change)', count: 12, stat: 'deg-15r' })}
+${W.quiz({ kind: 'sing', task: 'seq', seqs: [[1, 3, 5], [5, 3, 1], [5, 4, 3, 2, 1], [1, 2, 3, 4, 5]], key: 'random', title: 'Chanter 1-3-5 et 5-4-3-2-1 (la tonalité change)', count: 8, stat: 'sing-135r' })}
+${W.quiz({ kind: 'echo', degrees: [1, 2, 3, 4, 5], length: 4, key: 'random', title: 'Rejouer 4 notes, degrés 1 à 5', count: 8, stat: 'echo-5r' })}
 ${W.tip('La dernière note', '<p>Dans les mélodies à rejouer, la dernière note revient souvent sur 1. Si tu as perdu le milieu, pars de la fin et remonte.</p>')}
 
 <h2>Dans ta pièce</h2>
@@ -293,17 +292,16 @@ ${W.kbd({ from: 60, to: 72, title: 'Toute la gamme de do', marks: [60, 62, 64, 6
 
 ${ROUTINE([
   'Deux minutes : chante la gamme en numéros, en montant et en descendant ; puis 8-7-8 et 5-6-5.',
-  'Cinq minutes : série « Toute la gamme (do majeur) », puis toutes tonalités quand tu atteins 70 %.',
+  'Cinq minutes : série « Toute la gamme » : la tonalité change à chaque question.',
   'Trois minutes : série « Rejouer 5 notes ».',
 ])}
-${W.quiz({ kind: 'degree', degrees: [1, 2, 3, 4, 5, 6, 7, 8], names: true, title: 'Toute la gamme (do majeur)', count: 12, stat: 'deg-18', goal: 0.7 })}
 ${W.tip('La sensible', '<p>7 est la note la plus facile à reconnaître une fois qu’on l’a sentie : elle donne une envie presque physique de monter d’un demi-ton. Si la note « démange », c’est 7.</p>')}
-${W.quiz({ kind: 'degree', degrees: [1, 2, 3, 4, 5, 6, 7, 8], key: 'random', title: 'Toute la gamme (toutes tonalités)', count: 12, stat: 'deg-18r', goal: 0.7 })}
-${W.quiz({ kind: 'echo', degrees: [1, 2, 3, 4, 5, 6, 7, 8], length: 5, maxStep: 2, title: 'Rejouer 5 notes (toute la gamme)', count: 8, stat: 'echo-8', goal: 0.7 })}
+${W.quiz({ kind: 'degree', degrees: [1, 2, 3, 4, 5, 6, 7, 8], key: 'random', title: 'Toute la gamme (la tonalité change)', count: 12, stat: 'deg-18r', goal: 0.7 })}
+${W.quiz({ kind: 'echo', degrees: [1, 2, 3, 4, 5, 6, 7, 8], length: 5, maxStep: 2, key: 'random', title: 'Rejouer 5 notes (la tonalité change)', count: 8, stat: 'echo-8r', goal: 0.7 })}
 <p>Même travail sur ta pièce : les motifs de l’op. 55, en fa mineur. Chante-les avant de les rejouer ; ensuite, tu les entendras dans la partition au lieu de seulement les lire.</p>
 ${W.quiz({ kind: 'echo', motifs: ['op55-a', 'op55-b', 'op55-c'], title: 'Les motifs de ta pièce (op. 55 n° 1)', count: 6, stat: 'echo-op55', goal: 0.7 })}
 ${W.quiz({ kind: 'sing', task: 'echo', motifs: ['op55-a', 'op55-b'], title: 'Chanter les motifs de ta pièce', count: 6, stat: 'sing-op55', goal: 0.6 })}
-${W.quiz({ kind: 'sing', task: 'degree', degrees: [1, 3, 5, 6, 7], title: 'Chanter un degré après la cadence', count: 8, stat: 'sing-deg', goal: 0.7 })}
+${W.quiz({ kind: 'sing', task: 'degree', degrees: [1, 2, 3, 4, 5, 6, 7, 8], key: 'random', title: 'Chanter un degré après la cadence', count: 8, stat: 'sing-degr', goal: 0.7 })}
 
 <h2>Dans ta pièce</h2>
 <p>À la mesure 2 de l’op. 55, la basse <b>mi♮</b> est la <b>sensible</b> de fa mineur (son 7e degré, haussé). Joue les mesures 2 et 3 en écoutant ce mi♮ monter vers fa : c’est exactement le chemin 7 → 8 de tes exercices.</p>

@@ -142,6 +142,51 @@ export const audio = {
     }
   },
 
+  /**
+   * Son tenu de synthèse (V7.2) : note de référence à chanter, ou bourdon de tonique. Une voix comme celles du piano :
+   * noteOff(voix) ou stopAll(propriétaire) l'arrêtent. dur = durée (s) ; sans durée, le son tient jusqu'à l'arrêt.
+   */
+  tone(midi, when = 0, { dur = null, gain = 0.16, owner = null } = {}) {
+    if (!ctx) return null;
+    const t = Math.max(when || 0, ctx.currentTime);
+    const f = 440 * Math.pow(2, (midi - 69) / 12);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.08);
+    const o1 = ctx.createOscillator(); o1.type = 'triangle'; o1.frequency.value = f;
+    const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 2;
+    const g2 = ctx.createGain(); g2.gain.value = 0.2;
+    const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = Math.min(5000, f * 6); filt.Q.value = 0.3;
+    o1.connect(g); o2.connect(g2).connect(g);
+    g.connect(filt).connect(masterGain);
+    o1.start(t); o2.start(t);
+    const src = { stop: w => { try { o1.stop(w); o2.stop(w); } catch (e) { /* déjà arrêté */ } } };
+    const voice = { midi, src, gain: g, filt, start: t, released: false, ownerId: owner };
+    voices.push(voice);
+    o1.onended = () => { const i = voices.indexOf(voice); if (i >= 0) voices.splice(i, 1); try { filt.disconnect(); } catch (e) { /* */ } };
+    if (dur != null) release(voice, t + dur, 0.15);
+    return voice;
+  },
+
+  /** Joue un enregistrement (ta voix, V7.2) à la vitesse rate (rate = 2^(demi-tons/12)) ; s'arrête comme une note. */
+  playBuffer(buffer, when = 0, { rate = 1, dur = null, gain = 1, owner = null } = {}) {
+    if (!ctx || !buffer) return null;
+    const t = Math.max(when || 0, ctx.currentTime);
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    src.playbackRate.value = rate;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.04);
+    src.connect(g).connect(masterGain);
+    src.start(t);
+    const voice = { midi: -1, src, gain: g, filt: null, start: t, released: false, ownerId: owner };
+    voices.push(voice);
+    src.onended = () => { const i = voices.indexOf(voice); if (i >= 0) voices.splice(i, 1); try { g.disconnect(); } catch (e) { /* */ } };
+    if (dur != null) release(voice, t + dur, 0.12);
+    return voice;
+  },
+
   /** Clic de métronome. kind : 'accent' | 'beat' | 'sub' */
   click(when = 0, kind = 'beat') {
     if (!ctx) return;

@@ -28,15 +28,15 @@ export default [
 ${W.kbd({ from: 57, to: 69, title: 'La mineur harmonique : 3, 6 et 7 mis en valeur', marks: [57, 59, 60, 62, 64, 65, 68, 69].map((m, i) => ({ m, label: String(i + 1), color: [2, 5, 6].includes(i) ? '#f2d9a8' : null })), names: 'none', play: 'seq', seq: [57, 59, 60, 62, 64, 65, 68, 69], step: 0.38, caption: 'Entre 6 (fa) et 7 (sol♯), une seconde augmentée : l’« accent oriental » du mineur harmonique.' })}
 
 ${ROUTINE([
-  'Deux minutes : joue la cadence i – iv – V7 – i en la mineur, puis chante 1-2-3-2-1, puis 5-6-5 et 7-8.',
-  'Cinq minutes : série « Degrés 1 à 5 en mineur », puis « Toute la gamme mineure » quand tu atteins 80 %.',
+  'Deux minutes : joue la cadence i – iv – V7 – i en la mineur, chante 1-2-3-2-1, puis 5-6-5 et 7-8 ; recommence en ré mineur et en fa mineur.',
+  'Cinq minutes : série « Degrés 1 à 5 en mineur » (la tonalité change), puis « Toute la gamme mineure » quand tu atteins 80 %.',
   'Trois minutes : série « Chanter en mineur ».',
 ])}
-${W.quiz({ kind: 'degree', mode: 'min', degrees: [1, 2, 3, 4, 5], names: true, title: 'Degrés 1 à 5 en mineur (la mineur)', count: 12, stat: 'deg-min15' })}
+${W.quiz({ kind: 'degree', mode: 'min', degrees: [1, 2, 3, 4, 5], key: 'random', keyEvery: 2, title: 'Degrés 1 à 5 en mineur (la tonalité change)', count: 12, stat: 'deg-min15r' })}
 ${W.tip('La tierce', '<p>En mineur, 3 est aussi stable qu’en majeur, mais voilé. Si la note semble reposante et sombre à la fois, c’est 3.</p>')}
-${W.quiz({ kind: 'degree', mode: 'min', degrees: [1, 2, 3, 4, 5, 6, 7], key: 'random', title: 'Toute la gamme mineure (toutes tonalités)', count: 12, stat: 'deg-min', goal: 0.7 })}
+${W.quiz({ kind: 'degree', mode: 'min', degrees: [1, 2, 3, 4, 5, 6, 7], key: 'random', title: 'Toute la gamme mineure (la tonalité change)', count: 12, stat: 'deg-min', goal: 0.7 })}
 ${W.tip('6 et 7', '<p>6 retombe d’un demi-ton sur 5 ; 7 monte d’un demi-ton vers 8. Écoute la résolution après chaque réponse : la direction te dit lequel tu as entendu.</p>')}
-${W.quiz({ kind: 'sing', mode: 'min', task: 'seq', seqs: [[1, 2, 3], [3, 2, 1], [5, 6, 5], [7, 8], [1, 3, 5]], title: 'Chanter en mineur', count: 8, stat: 'sing-min' })}
+${W.quiz({ kind: 'sing', mode: 'min', task: 'seq', seqs: [[1, 2, 3], [3, 2, 1], [5, 6, 5], [7, 8], [1, 3, 5]], key: 'random', title: 'Chanter en mineur (la tonalité change)', count: 8, stat: 'sing-minr' })}
 ${W.quiz({ kind: 'echo', mode: 'min', degrees: [1, 2, 3, 4, 5, 6, 7, 8], length: 4, maxStep: 2, title: 'Rejouer 4 notes en mineur', count: 8, stat: 'echo-min4' })}
 
 <h2>Dans ta pièce</h2>

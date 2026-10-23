@@ -122,8 +122,7 @@ export async function proposals(L, now = Date.now()) {
   const warm = ws.done >= ws.total ? 'échauffement déjà fait aujourd’hui ; ' : 'l’échauffement de 3 minutes (le rythme, puis deux exercices parmi notes, intervalles et accords), puis ';
   out.lecture = { title: 'Échauffement et extraits', html: `${link('#/outils/lecture', 'Lecture à vue')} : ${warm}des extraits nouveaux, ${esc(LVN[lv] || 'à ton niveau')}, sans t’arrêter.`, href: '#/outils/lecture' };
   // oreille : l'étape en cours du parcours
-  const tid = store.get('ui.earTrack') === 'ecoute' ? 'ecoute' : 'chant';
-  const pr = ear.trackProgress(tid);
+  const pr = ear.trackProgress();
   out.oreille = { title: pr.cur ? pr.cur.title : 'Révision', html: `${link('#/outils/oreille', 'Oreille')} : ${pr.cur ? `étape ${pr.index} sur ${pr.total}, ${esc(pr.cur.title)}` : 'révision libre'}.`, href: '#/outils/oreille' };
   // autres pièces
   const others = otherPieces(L);

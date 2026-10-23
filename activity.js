@@ -93,7 +93,7 @@ export function recentStats(n = 7, now = Date.now()) {
 /* Reprise des données d'avant la V7 : les journaux des outils          */
 /* ------------------------------------------------------------------ */
 // séries d'oreille (identifiants des séries de l'onglet Oreille et des leçons d'oreille)
-const EAR_ID = /^(hl|contour\d?|voice-finder|sing-|deg-|echo-|iv-(a|b|c|n1|n1-down|harm|all)$|ch-|ch7-|func2?$|cad|sc$|sc-mm$)/;
+const EAR_ID = /^(hl|contour\d?|voice-finder|sing-|deg-|echo-|iv-(a|b|c|n1|n1-down|harm|all)$|ch-|ch7-|func2?$|cad|sc$|sc-mm$|find-note$|play-tonic$|play-mm$|read-|pair:)/;
 const toMs = v => (typeof v === 'number' ? v : v ? Date.parse(v) : NaN);
 
 /** Une fois : reconstitue « la dernière fois » et les jours pratiqués d'après les journaux existants. */

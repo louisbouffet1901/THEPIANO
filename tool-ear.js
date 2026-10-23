@@ -15,19 +15,27 @@ const PLAY = '<svg viewBox="0 0 24 24" width="16" height="16"><path d="M7 4.5v15
 /* ================================================================== */
 /* Audio                                                               */
 /* ================================================================== */
-/** Joue une liste de notes {m, t, d, v} (secondes). Renvoie la durée totale en ms. */
-async function playNotes(list) {
+/** Modèle à imiter dans les exercices de chant (V7.2) : le piano, ou un son tenu (plus facile à imiter pour beaucoup). */
+const singModel = () => (store.get('settings.singTarget') === 'tone' ? 'tone' : 'piano');
+/** Joue une liste de notes {m, t, d, v} (secondes). Renvoie la durée totale en ms. En chant (opts.sing), les notes à
+ *  imiter (v ≥ 76 ; les accords de la cadence sont plus doux) prennent le modèle choisi. */
+async function playNotes(list, opts = {}) {
   audio.claim('quiz', () => audio.stopAll('quiz'));
   await audio.ensure();
   const t0 = audio.now() + 0.06;
+  const tone = opts.sing && singModel() === 'tone';
   let end = 0;
   for (const n of list) {
-    const v = audio.noteOn(n.m, n.v || 72, t0 + n.t, { owner: 'quiz' });
-    if (v) audio.noteOff(v, t0 + n.t + n.d);
+    if (tone && (n.v || 72) >= 76) audio.tone(n.m, t0 + n.t, { dur: n.d, owner: 'quiz', gain: 0.2 });
+    else {
+      const v = audio.noteOn(n.m, n.v || 72, t0 + n.t, { owner: 'quiz' });
+      if (v) audio.noteOff(v, t0 + n.t + n.d);
+    }
     end = Math.max(end, n.t + n.d);
   }
   return (0.06 + end) * 1000;
 }
+const playSing = list => playNotes(list, { sing: true });
 const stopAudio = () => audio.stopAll('quiz');
 
 /* ================================================================== */
@@ -123,6 +131,19 @@ export function spelledScale(key) {
   });
 }
 const keyNameFor = (tonicPc, mode) => (mode === 'min' ? MIN_NAME : MAJ_NAME)[((tonicPc % 12) + 12) % 12];
+/** Une mélodie en degrés (majeur), écrite avec l'armure : noires, la dernière en blanche ; tonique à l'octave 4. */
+function degreesAbc(keyName, degs, { tonicAbcOct = 4 } = {}) {
+  const li = LET.indexOf(keyName[0]);
+  const oct = tonicAbcOct;
+  const note = d => {
+    const step = li + d - 1;
+    const o = oct + Math.floor(step / 7);
+    const L = LET[step % 7];
+    return o >= 5 ? L.toLowerCase() + "'".repeat(o - 5) : L + ','.repeat(4 - o);
+  };
+  const body = degs.map((d, i) => note(d) + (i === degs.length - 1 ? '2' : '')).join(' ');
+  return `X:1\nM:none\nL:1/4\nK:${keyName}\n${body} |]`;
+}
 const keyFr = (tonicPc, mode) => KEYS[keyNameFor(tonicPc, mode)].fr;
 
 /* ================================================================== */
@@ -191,6 +212,8 @@ const TIPS = {
   notes: ['Apprends trois notes-repères par clé, puis lis les autres par voisinage (ligne → interligne → ligne).', 'Clé de sol : sol sur la 2e ligne ; clé de fa : fa sur la 4e ligne.'],
   keysig: ['Dièses : la tonique majeure est un demi-ton au-dessus du dernier dièse. Bémols : c’est l’avant-dernier bémol.', 'La relative mineure est une tierce mineure plus bas que la tonique majeure.'],
   intervalsight: ['Compte d’abord les noms de notes, les deux extrémités comprises (do-mi : do, ré, mi = tierce).', 'Puis compte les demi-tons pour la qualité, ou compare à la gamme majeure de la note du bas.', 'Ligne-ligne ou interligne-interligne : tierce, quinte ou septième ; ligne-interligne : seconde, quarte, sixte ou octave.'],
+  earnote: ['Chante la note avant de chercher : ta voix la garde pendant que tes doigts cherchent.', 'Joue une touche et compare : plus haut ou plus bas ? Puis rapproche-toi, touche par touche.', 'Le bouton « Do, pour repère » joue un do avant la note : écoute l’écart entre les deux.'],
+  read: ['Chante d’abord la tonique, puis suis la portée du doigt : une marche, c’est la note voisine ; un saut, une note sautée.', 'Repère les notes de l’accord (1, 3, 5) : ce sont tes points d’appui, les autres notes sont leurs voisines.', 'Entends la mélodie lentement dans ta tête avant de chanter : si tu ne l’entends pas encore, relis-la note par note.'],
   measurefill: ['Compte en croches : une noire = 2, une blanche = 4, une ronde = 8.', 'Le point ajoute la moitié de la valeur : blanche pointée = 3 temps.'],
   keydegree: ['Écris (ou chante) toute la gamme depuis la tonique, puis compte jusqu’au degré demandé.', 'N’oublie pas les altérations de l’armure : en ré majeur, fa et do sont dièses.'],
   playchord: ['Construis l’accord en empilant des tierces depuis la fondamentale.', 'Vérifie la tierce : c’est elle qui fait majeur ou mineur.'],
@@ -320,16 +343,16 @@ const GEN = {
       return {
         type: 'sing', tipKind: 'sing',
         prompt: 'Écoute la note, puis chante-la (bouche fermée « mmm », ou sur « la »).',
-        play: () => playNotes([{ m, t: 0, d: len, v: 80 }]),
+        play: () => playSing([{ m, t: 0, d: len, v: 80 }]),
         targets: [m], labels: [noteNameFr(m, { octave: false })],
         explain: `La note était un <b>${noteNameFr(m, { octave: false })}</b> (${noteNameFr(m)}).`,
-        reveal: () => playNotes([{ m, t: 0, d: 1.3, v: 80 }]),
+        reveal: () => playSing([{ m, t: 0, d: 1.3, v: 80 }]),
         onAnswer: ok => { st.span = ok ? Math.min(base, st.span + 1) : Math.max(3, st.span - 2); },
         status: span < base ? 'Notes resserrées au milieu de ta voix, et plus longues, le temps de trouver tes repères.' : '',
       };
     }
-    // tonalité : do majeur (ou la mineur) par défaut, ou au hasard
-    const tr = cfg.key === 'random' ? randInt(-5, 6) : 0;
+    // tonalité : do majeur (ou la mineur) par défaut, au hasard, ou parmi une liste (transpositions en demi-tons)
+    const tr = cfg.keys ? pick(cfg.keys) : cfg.key === 'random' ? randInt(-5, 6) : 0;
     const tonicPc = ((mode === 'maj' ? 0 : 9) + tr + 12) % 12;
     let T = vlo; while (pc(T) !== tonicPc) T++;          // tonique dans la tessiture du chanteur
     if (T + 7 > vhi + 2) T -= 12;
@@ -340,12 +363,12 @@ const GEN = {
       const deg = pick(cfg.degrees || [1, 3, 5]);
       const target = T + degOffset(deg, mode);
       return {
-        type: 'sing', tipKind: 'degree',
+        type: 'sing', tipKind: 'degree', tonic: T,
         prompt: `Écoute la cadence en ${keyFr(tonicPc, mode)}, puis chante le degré <b>${deg}</b>${deg === 1 ? ' (la tonique)' : ''}.`,
-        play: () => playNotes(cad.notes), targets: [target], labels: [String(deg)],
+        play: () => playSing(cad.notes), targets: [target], labels: [String(deg)],
         explain: `Le degré ${deg} de ${keyFr(tonicPc, mode)} est <b>${nm(deg)}</b> : ${DEG_FEEL[mode][deg]}`,
-        reveal: () => playNotes(resolution(target, deg, mode, 0)),
-        hint: { label: 'Indice : la tonique', play: () => playNotes([{ m: T, t: 0, d: 1.4, v: 80 }]), note: deg === 1 ? 'Chante exactement cette note.' : `Chante la tonique (1), puis monte la gamme en comptant (1, 2, 3…) jusqu’à ${deg}.` },
+        reveal: () => playSing(resolution(target, deg, mode, 0)),
+        hint: { label: 'Indice : la tonique', play: () => playSing([{ m: T, t: 0, d: 1.4, v: 80 }]), note: deg === 1 ? 'Chante exactement cette note.' : `Chante la tonique (1), puis monte la gamme en comptant (1, 2, 3…) jusqu’à ${deg}.` },
       };
     }
     if (task === 'hold') {
@@ -359,11 +382,11 @@ const GEN = {
       return {
         type: 'sing', tipKind: 'sing', holdMs,
         prompt: `Écoute la note, puis chante-la et <b>tiens-la ${holdMs / 1000} secondes</b>, bien droite : la ligne reste dans la bande verte, l’aiguille au milieu.`,
-        play: () => playNotes([{ m, t: 0, d: 2.2, v: 80 }]),
+        play: () => playSing([{ m, t: 0, d: 2.2, v: 80 }]),
         targets: [m], labels: [noteNameFr(m, { octave: false })],
         explain: `La note : <b>${noteNameFr(m, { octave: false })}</b> (${noteNameFr(m)}).`,
-        reveal: () => playNotes([{ m, t: 0, d: 2, v: 80 }]),
-        hint: { label: 'Indice : la note, longue', play: () => playNotes([{ m, t: 0, d: 4, v: 78 }]), note: 'Fredonne avec le piano pendant qu’il joue, puis continue seul, sur la même note, sans pousser : le souffle régulier tient la note.' },
+        reveal: () => playSing([{ m, t: 0, d: 2, v: 80 }]),
+        hint: { label: 'Indice : la note, longue', play: () => playSing([{ m, t: 0, d: 4, v: 78 }]), note: 'Fredonne avec le piano pendant qu’il joue, puis continue seul, sur la même note, sans pousser : le souffle régulier tient la note.' },
       };
     }
     if (task === 'glide') {
@@ -379,11 +402,11 @@ const GEN = {
       return {
         type: 'sing', tipKind: 'sing', holdMs: 400,
         prompt: `Deux notes. Chante la première, puis <b>glisse lentement</b> jusqu’à la seconde, comme une sirène : la ligne ${dist > 0 ? 'monte' : 'descend'} vers la nouvelle bande verte, et tu t’y arrêtes.`,
-        play: () => playNotes([{ m: a, t: 0, d: 1.2, v: 80 }, { m: b, t: 1.35, d: 1.4, v: 80 }]),
+        play: () => playSing([{ m: a, t: 0, d: 1.2, v: 80 }, { m: b, t: 1.35, d: 1.4, v: 80 }]),
         targets: [a, b], labels: ['départ', 'arrivée'],
         explain: `De <b>${nm(a)}</b> à <b>${nm(b)}</b> : ${Math.abs(dist)} demi-tons ${dist > 0 ? 'plus haut' : 'plus bas'}.`,
-        reveal: () => playNotes([{ m: a, t: 0, d: 0.9, v: 80 }, { m: b, t: 1.0, d: 1.2, v: 80 }]),
-        hint: { label: 'Indice : le chemin', play: () => playNotes(steps.map((x, i) => ({ m: x, t: i * 0.3, d: i === steps.length - 1 ? 1.2 : 0.28, v: 76 }))), note: 'Le piano joue toutes les notes entre les deux : ta voix passe par le même chemin, mais sans s’arrêter.' },
+        reveal: () => playSing([{ m: a, t: 0, d: 0.9, v: 80 }, { m: b, t: 1.0, d: 1.2, v: 80 }]),
+        hint: { label: 'Indice : le chemin', play: () => playSing(steps.map((x, i) => ({ m: x, t: i * 0.3, d: i === steps.length - 1 ? 1.2 : 0.28, v: 76 }))), note: 'Le piano joue toutes les notes entre les deux : ta voix passe par le même chemin, mais sans s’arrêter.' },
       };
     }
     if (task === 'seq') {
@@ -391,12 +414,12 @@ const GEN = {
       const targets = seq.map(d => T + degOffset(d, mode));
       const pre = cfg.giveFirst ? [{ m: targets[0], t: cad.end + 0.3, d: 1, v: 78 }] : [];
       return {
-        type: 'sing', tipKind: 'degree',
+        type: 'sing', tipKind: 'degree', tonic: T,
         prompt: `Après la cadence${cfg.giveFirst ? ' et la première note' : ''}, chante : <b>${seq.join(' – ')}</b>${cfg.syllables ? ` (${seq.map(nm).join(' – ')})` : ''}.`,
-        play: () => playNotes([...cad.notes, ...pre]), targets, labels: seq.map(String),
+        play: () => playSing([...cad.notes, ...pre]), targets, labels: seq.map(String),
         explain: `En ${keyFr(tonicPc, mode)} : ${seq.map(d => `${d} = ${nm(d)}`).join(', ')}.`,
-        reveal: () => playNotes(targets.map((m, i) => ({ m, t: i * 0.55, d: 0.55, v: 78 }))),
-        hint: { label: 'Indice : la première note', play: () => playNotes([{ m: targets[0], t: 0, d: 1.4, v: 80 }]), note: 'Pars de cette note, puis avance degré par degré, lentement : chaque note doit entrer dans la bande verte.' },
+        reveal: () => playSing(targets.map((m, i) => ({ m, t: i * 0.55, d: 0.55, v: 78 }))),
+        hint: { label: 'Indice : la première note', play: () => playSing([{ m: targets[0], t: 0, d: 1.4, v: 80 }]), note: 'Pars de cette note, puis avance degré par degré, lentement : chaque note doit entrer dans la bande verte.' },
       };
     }
     if (task === 'echo' && cfg.motifs) {
@@ -407,11 +430,11 @@ const GEN = {
       return {
         type: 'sing', tipKind: 'echo',
         prompt: `Écoute la cadence et le motif, puis rechante-le (sur « la », ou avec les noms des notes).`,
-        play: () => playNotes([...cad.notes, ...timed(M.notes, cad.end + 0.4)]),
+        play: () => playSing([...cad.notes, ...timed(M.notes, cad.end + 0.4)]),
         targets, labels: M.names.split(' – '),
         explain: `${M.src}, en ${key} : <b>${M.names}</b>.`,
-        reveal: () => playNotes(timed(M.notes, 0)),
-        hint: { label: 'Indice : le motif, lentement', play: () => playNotes(timed(M.notes, 0, 1.8)), note: 'Chante-le d’abord dans ta tête en suivant les notes, puis à voix haute, une note à la fois : chaque note doit entrer dans la bande verte.' },
+        reveal: () => playSing(timed(M.notes, 0)),
+        hint: { label: 'Indice : le motif, lentement', play: () => playSing(timed(M.notes, 0, 1.8)), note: 'Chante-le d’abord dans ta tête en suivant les notes, puis à voix haute, une note à la fois : chaque note doit entrer dans la bande verte.' },
       };
     }
     if (task === 'echo') {
@@ -419,13 +442,46 @@ const GEN = {
       const targets = mel.map(d => T + degOffset(d, mode));
       const playMs = targets.map(m => m + 12 * Math.round((60 - T) / 12));
       return {
-        type: 'sing', tipKind: 'echo',
+        type: 'sing', tipKind: 'echo', tonic: T,
         prompt: 'Écoute la cadence et la mélodie, puis rechante-la.',
-        play: () => playNotes([...cad.notes, ...playMs.map((m, i) => ({ m, t: cad.end + 0.35 + i * 0.6, d: 0.58, v: 80 }))]),
+        play: () => playSing([...cad.notes, ...playMs.map((m, i) => ({ m, t: cad.end + 0.35 + i * 0.6, d: 0.58, v: 80 }))]),
         targets, labels: mel.map(() => '•'),
         explain: `La mélodie : <b>${mel.join(' – ')}</b> (${mel.map(nm).join(' – ')}).`,
-        reveal: () => playNotes(playMs.map((m, i) => ({ m, t: i * 0.6, d: 0.58, v: 80 }))),
-        hint: { label: 'Indice : la mélodie, lentement', play: () => playNotes(playMs.map((m, i) => ({ m, t: i * 1.0, d: 0.95, v: 80 }))), note: 'Chante-la en même temps dans ta tête, puis à voix haute, note par note.' },
+        reveal: () => playSing(playMs.map((m, i) => ({ m, t: i * 0.6, d: 0.58, v: 80 }))),
+        hint: { label: 'Indice : la mélodie, lentement', play: () => playSing(playMs.map((m, i) => ({ m, t: i * 1.0, d: 0.95, v: 80 }))), note: 'Chante-la en même temps dans ta tête, puis à voix haute, note par note.' },
+      };
+    }
+    if (task === 'bass') {
+      // la basse d'un enchaînement d'accords, chantée : on écoute en bas, pas la mélodie
+      const prog = pick(cfg.progs || [['I', 'IV', 'V', 'I'], ['I', 'V', 'vi', 'IV'], ['I', 'vi', 'IV', 'V'], ['I', 'IV', 'I', 'V']]);
+      const BASS = { I: 1, ii: 2, IV: 4, V: 5, vi: 6 };
+      const degs = prog.map(c => BASS[c]);
+      const targets = degs.map(d => T + degOffset(d, 'maj') - (d >= 5 && T + degOffset(d, 'maj') > vhi ? 12 : 0));
+      const chords = [];
+      prog.forEach((c, i) => VOICE_MAJ[c].forEach(m => chords.push({ m: m + tr, t: cad.end + 0.4 + i * 1.0, d: 0.95, v: 64 })));
+      return {
+        type: 'sing', tipKind: 'chordfunc', tonic: T,
+        prompt: `Après la cadence, quatre accords en ${keyFr(tonicPc, mode)}. Chante leur <b>basse</b>, la note la plus grave de chacun (${degs.length} notes).`,
+        play: () => playSing([...cad.notes, ...chords]), targets, labels: prog,
+        explain: `La basse : <b>${degs.join(' – ')}</b> (${degs.map(nm).join(' – ')}), sous ${prog.join(' – ')}.`,
+        reveal: () => playSing(targets.map((m, i) => ({ m, t: i * 0.6, d: 0.58, v: 80 }))),
+        hint: { label: 'Indice : la basse seule', play: () => playSing(targets.map((m, i) => ({ m, t: i * 0.9, d: 0.85, v: 80 }))), note: 'Chante la tonique, puis suis la basse : 4 monte d’une quarte, 5 d’une quinte, 6 d’une sixte (ou descend d’une tierce).' },
+      };
+    }
+    if (task === 'read') {
+      // lecture intérieure (Kodály) : la mélodie est écrite ; tu l'entends dans ta tête, tu la chantes, puis elle sonne
+      const keyName = keyNameFor(tonicPc, 'maj');
+      const mel = randomMelody(cfg.degrees || [1, 2, 3, 4, 5], cfg.length || 5, cfg.maxStep || 1, true, true);
+      const targets = mel.map(d => T + degOffset(d, 'maj'));
+      const written = degreesAbc(keyName, mel, { tonicAbcOct: 4 });
+      return {
+        type: 'sing', tipKind: 'read', tonic: T,
+        prompt: `Lis la mélodie (${keyFr(tonicPc, 'maj')}). Après la cadence et la tonique, <b>entends-la dans ta tête</b>, puis chante-la. Elle ne sonne qu’après.`,
+        staff: written,
+        play: () => playSing([...cad.notes, { m: T, t: cad.end + 0.35, d: 1.2, v: 80 }]), targets, labels: mel.map(String),
+        explain: `La mélodie : <b>${mel.join(' – ')}</b> (${mel.map(nm).join(' – ')}).`,
+        reveal: () => playSing(targets.map((m, i) => ({ m, t: i * 0.6, d: i === targets.length - 1 ? 1 : 0.58, v: 80 }))),
+        hint: { label: 'Indice : la première note', play: () => playSing([{ m: targets[0], t: 0, d: 1.4, v: 80 }]), note: 'Chante la tonique, puis avance pas à pas en suivant la portée du doigt : une marche = la note voisine.' },
       };
     }
     if (task === 'interval') {
@@ -435,10 +491,10 @@ const GEN = {
       return {
         type: 'sing', tipKind: 'intervals',
         prompt: `Écoute la note, puis chante une <b>${INTERVALS.find(x => x.st === stp).name}</b> au-dessus.`,
-        play: () => playNotes([{ m: a, t: 0, d: 1.4, v: 80 }]), targets: [a + stp], labels: [IV_LABEL[stp]],
+        play: () => playSing([{ m: a, t: 0, d: 1.4, v: 80 }]), targets: [a + stp], labels: [IV_LABEL[stp]],
         explain: `${noteNameFr(a, { octave: false })} → <b>${noteNameFr(a + stp, { octave: false })}</b>. Repère : ${IV_REF[stp]}.`,
-        reveal: () => playNotes([{ m: a, t: 0, d: 0.8 }, { m: a + stp, t: 0.85, d: 1.2 }]),
-        hint: { label: 'Indice : les marches', play: () => { const steps = [0, 2, 4, 5, 7, 9, 11, 12].filter(x => x <= stp); if (steps[steps.length - 1] !== stp) steps.push(stp); return playNotes(steps.map((x, i) => ({ m: a + x, t: i * 0.45, d: i === steps.length - 1 ? 1.2 : 0.42, v: 78 }))); }, note: `Chante la note de départ, puis monte la gamme jusqu’à l’arrivée (${IV_REF[stp]}).` },
+        reveal: () => playSing([{ m: a, t: 0, d: 0.8 }, { m: a + stp, t: 0.85, d: 1.2 }]),
+        hint: { label: 'Indice : les marches', play: () => { const steps = [0, 2, 4, 5, 7, 9, 11, 12].filter(x => x <= stp); if (steps[steps.length - 1] !== stp) steps.push(stp); return playSing(steps.map((x, i) => ({ m: a + x, t: i * 0.45, d: i === steps.length - 1 ? 1.2 : 0.42, v: 78 }))); }, note: `Chante la note de départ, puis monte la gamme jusqu’à l’arrivée (${IV_REF[stp]}).` },
       };
     }
   },
@@ -471,8 +527,9 @@ const GEN = {
       play: () => playNotes([...cad.notes, { m: target, t: cad.end + 0.35, d: 1.4, v: 82 }]),
       extra: { label: 'Note seule', fn: () => playNotes([{ m: target, t: 0, d: 1.3, v: 82 }]) },
       answers, correct: cfg.binary ? (d === 1 ? 'yes' : 'no') : d,
-      explain: `C’était le degré <b>${d}</b>${d < 8 ? ` (${DEG_NAMES[d]})` : ''}, ${d === 8 ? names[0] : names[d - 1]} en ${keyFr(tonicPc, mode)} : ${DEG_FEEL[mode][d]}`,
+      explain: `C’était le degré <b>${d}</b>${d < 8 ? ` (${DEG_NAMES[d]})` : ''}, ${d === 8 ? names[0] : names[d - 1]} en ${keyFr(tonicPc, mode)} : ${DEG_FEEL[mode][d]} <span class="small">Chante la résolution avec le piano : <b>${resolutionPath(d).join(' – ')}</b>.</span>`,
       after: () => playNotes(resolution(target, d, mode, 0.1)),
+      conf: cfg.binary ? null : { kind: mode === 'maj' ? 'deg-maj' : 'deg-min', item: String(d) },
       status: cfg.key === 'random' ? `Tonalité : ${keyFr(tonicPc, mode)}` : '',
     };
   },
@@ -502,7 +559,7 @@ const GEN = {
     const names = spelledScale(keyNameFor(tonicPc, mode));
     const nm = d => (d === 8 ? names[0] : names[d - 1]);
     const base = (mode === 'maj' ? 60 : 57) + tr;
-    const mel = randomMelody(cfg.degrees || [1, 2, 3], cfg.length || 3, cfg.maxStep || 1, cfg.startTonic !== false, cfg.endTonic);
+    const mel = randomMelody(cfg.degrees || [1, 2, 3], cfg.length || 3, cfg.maxStep || 1, cfg.startTonic !== false, cfg.endTonic, cfg.minStep || 0);
     const ms = mel.map(d => base + degOffset(d, mode));
     const cad = cfg.cadence === false ? { notes: [], end: 0 } : cadenceNotes(tr, mode);
     const t0 = cad.end + (cfg.cadence === false ? 0 : 0.4);
@@ -517,6 +574,96 @@ const GEN = {
       diff: played => played.map((m, i) => (pc(m) === pc(ms[i]) ? '✓' : '✗')).join(' '),
       explain: `La mélodie : <b>${mel.join(' – ')}</b> (${mel.map(nm).join(' – ')}).`,
       kbRange: [lo, hi],
+    };
+  },
+
+  /** Une note entendue, retrouvée au piano (n'importe quelle octave). */
+  earnote(cfg, st) {
+    let m, g = 0;
+    do { m = randInt(cfg.lo || 55, cfg.hi || 72); g++; } while (g < 30 && (m === st.lastNote || (cfg.white && isBlack(m))));
+    st.lastNote = m;
+    return {
+      type: 'play', tipKind: 'earnote',
+      playTask: 'Écoute la note, chante-la, puis retrouve-la au piano (à n’importe quelle octave).',
+      play: () => playNotes([{ m, t: 0, d: 1.4, v: 80 }]),
+      extra: { label: 'Do, pour repère', fn: () => playNotes([{ m: 60, t: 0, d: 0.8, v: 70 }, { m, t: 1.1, d: 1.2, v: 80 }]) },
+      expect: 1,
+      check: played => played.length >= 1 && pc(played[played.length - 1]) === pc(m),
+      explain: `C’était <b>${noteNameFr(m, { octave: false })}</b> (${noteNameFr(m)}).`,
+      kbRange: [m - 9, m + 9],
+    };
+  },
+
+  /** Après la cadence (tonalité tirée au hasard, jamais nommée avant la réponse), jouer la tonique. */
+  playtonic(cfg, st) {
+    const mode = cfg.mode || 'maj';
+    let tr, g = 0;
+    do { tr = randInt(-5, 6); g++; } while (g < 20 && tr === st.lastTr);
+    st.lastTr = tr;
+    const tonicPc = ((mode === 'maj' ? 0 : 9) + tr + 12) % 12;
+    const cad = cadenceNotes(tr, mode);
+    const base = (mode === 'maj' ? 60 : 57) + tr;
+    return {
+      type: 'play', tipKind: 'degree',
+      playTask: 'Écoute la cadence, chante sa note de repos, puis joue-la au piano (n’importe quelle octave).',
+      play: () => playNotes(cad.notes),
+      expect: 1,
+      check: played => played.length >= 1 && pc(played[played.length - 1]) === tonicPc,
+      explain: `La tonique était <b>${spelledScale(keyNameFor(tonicPc, mode))[0]}</b> : la cadence était en ${keyFr(tonicPc, mode)}.`,
+      after: () => playNotes([{ m: base, t: 0, d: 1.2, v: 80 }]),
+      kbRange: [53, 74],
+    };
+  },
+
+  /** Un accord majeur ou mineur entendu, rejoué au piano (sa basse est donnée). */
+  chordecho(cfg) {
+    const set = cfg.set || ['M', 'm'];
+    const q = pick(set);
+    const root = randInt(53, 62);
+    const ms = CHORDS[q].iv.map(x => root + x);
+    const sp = spellChord(root, CHORDS[q].iv);
+    const notes = [];
+    ms.forEach((m, i) => notes.push({ m, t: i * 0.3, d: 0.5, v: 74 }));
+    ms.forEach(m => notes.push({ m, t: ms.length * 0.3 + 0.15, d: 1.5, v: 70 }));
+    return {
+      type: 'play', tipKind: 'chords',
+      playTask: `Écoute l’accord, chante son arpège, puis joue-le. Sa note la plus grave est <b>${sp[0].fr}</b>.`,
+      play: () => playNotes(notes),
+      expect: ms.length,
+      check: played => samePcs(played, ms),
+      diff: played => (samePcs(played, ms) ? '' : played.some(m => pc(m) === pc(ms[1])) ? '' : '(la tierce n’y est pas)'),
+      explain: `Accord <b>${CHORDS[q].fr}</b> sur ${sp[0].fr} : ${sp.map(x => x.fr).join(' – ')}. C’est la tierce (${sp[1].fr}) qui décide.`,
+      kbRange: [root - 3, root + 12],
+    };
+  },
+
+  /** Lecture intérieure : la mélodie écrite est-elle celle qu'on entend ? (une note peut changer d'un degré) */
+  readmatch(cfg, st) {
+    const tr = pick(cfg.keys || [0, -5, 2, -3, 5, -2, 3]);
+    const tonicPc = (tr + 12) % 12;
+    const keyName = keyNameFor(tonicPc, 'maj');
+    const mel = randomMelody(cfg.degrees || [1, 2, 3, 4, 5], cfg.length || 5, cfg.maxStep || 1, true, true);
+    const same = Math.random() < 0.5;
+    const heard = mel.slice();
+    let k = -1;
+    if (!same) {
+      k = randInt(1, mel.length - 2);
+      const opts = [heard[k] - 1, heard[k] + 1].filter(d => d >= 1 && d <= 8 && d !== heard[k - 1] && d !== heard[k + 1]);
+      heard[k] = opts.length ? pick(opts) : heard[k] + (heard[k] < 5 ? 1 : -1);
+    }
+    const base = 60 + tonicPc; // à la hauteur écrite (tonique à l'octave du do central)
+    const cad = cadenceNotes(tr, 'maj');
+    const names = spelledScale(keyName);
+    const nm = d => (d === 8 ? names[0] : names[d - 1]);
+    const ms = heard.map(d => base + degOffset(d, 'maj'));
+    return {
+      tipKind: 'read',
+      prompt: 'Lis la mélodie et entends-la dans ta tête. Puis écoute : est-ce bien elle ?',
+      staff: degreesAbc(keyName, mel, { tonicAbcOct: 4 }),
+      play: () => playNotes([...cad.notes, ...ms.map((m, i) => ({ m, t: cad.end + 0.4 + i * 0.62, d: i === ms.length - 1 ? 1 : 0.6, v: 80 }))]),
+      answers: [{ id: 'same', label: 'Pareil' }, { id: 'diff', label: 'Une note change' }],
+      correct: same ? 'same' : 'diff',
+      explain: same ? 'C’était bien la mélodie écrite.' : `La note ${k + 1} était différente : on a joué <b>${nm(heard[k])}</b> (degré ${heard[k]}) au lieu de <b>${nm(mel[k])}</b> (degré ${mel[k]}).`,
     };
   },
 
@@ -542,6 +689,7 @@ const GEN = {
       answers: set.map(s => ({ id: s, label: IV_LABEL[s] })),
       correct: stp,
       explain: `C’était une <b>${ivObj.name}</b> (${stp} demi-ton${stp > 1 ? 's' : ''}) : ${noteNameFr(a)} → ${noteNameFr(b)}.${cfg.refs !== false && dir === 'up' ? ` Repère : ${IV_REF[stp]}.` : ''}`,
+      conf: { kind: dir === 'harm' ? 'iv-h' : dir === 'down' ? 'iv-d' : 'iv', item: String(stp) },
       playTask: `Joue la note ${noteNameFr(a)} puis une <b>${ivObj.name}</b> ${dir === 'down' ? 'en dessous' : 'au-dessus'}.`,
       check: played => played.length >= 2 && played[0] === a && played[1] === b,
       expect: 2,
@@ -567,6 +715,7 @@ const GEN = {
       answers: set.map(s => ({ id: s, label: CH_LABEL[s] })),
       correct: q,
       explain: `Accord <b>${CHORDS[q].fr}</b> sur ${sp[0].fr} : ${sp.map(x => x.fr).join(' – ')}.`,
+      conf: { kind: 'ch', item: q },
       playTask: `Joue un accord <b>${CHORDS[q].fr}</b> sur <b>${sp[0].fr}</b> (n’importe quelle position).`,
       check: played => samePcs(played, ms),
       kbRange: [root - 2, root + 20],
@@ -588,6 +737,7 @@ const GEN = {
       play: () => playNotes(notes),
       answers: set.map(s => ({ id: s, label: labels[s] })),
       correct: kind,
+      conf: { kind: 'cad', item: kind },
       explain: `Enchaînement : <b>${tpl.join(' – ')}</b> → cadence <b>${CAD_LABEL[kind].toLowerCase()}</b>${kind === 'parfaite' ? ' (V → I : conclusion)' : kind === 'demi' ? ' (arrêt sur V : suspension)' : kind === 'plagale' ? ' (IV → I : « amen »)' : ' (V → vi : surprise)'}.`,
     };
   },
@@ -606,6 +756,7 @@ const GEN = {
       play: () => playNotes(notes),
       answers: set.map(s => ({ id: s, label: s })), correct: x,
       explain: `C’était <b>${x}</b> : ${desc[x]}.`,
+      conf: { kind: 'func', item: x },
     };
   },
 
@@ -1015,31 +1166,37 @@ const GEN = {
 };
 
 /** Mélodie aléatoire sur des degrés (marche aléatoire, pas de maxStep positions au plus). */
-function randomMelody(pool, len, maxStep, startTonic, endTonic) {
+function randomMelody(pool, len, maxStep, startTonic, endTonic, minStep = 0) {
   const sorted = [...new Set(pool)].sort((a, b) => a - b);
   for (let tries = 0; tries < 100; tries++) {
     let i = startTonic && sorted.includes(1) ? sorted.indexOf(1) : randInt(0, sorted.length - 1);
     const seq = [sorted[i]];
+    let bad = false;
     while (seq.length < len) {
-      let step;
-      do { step = randInt(-maxStep, maxStep); } while (step === 0 && Math.random() < 0.85);
-      i = Math.max(0, Math.min(sorted.length - 1, i + step));
+      let step, g = 0;
+      do { step = randInt(-maxStep, maxStep); g++; } while (g < 50 && ((step === 0 && Math.random() < 0.85) || Math.abs(step) < minStep || i + step < 0 || i + step >= sorted.length));
+      if (Math.abs(step) < minStep || i + step < 0 || i + step >= sorted.length) { bad = true; break; }
+      i += step;
       seq.push(sorted[i]);
     }
+    if (bad) continue;
     if (endTonic && sorted.includes(1)) seq[seq.length - 1] = 1;
     if (new Set(seq).size >= Math.min(2, sorted.length)) return seq;
   }
   return sorted.slice(0, len);
 }
 
-/** Résolution d'un degré vers la tonique la plus proche (2-3-4 descendent vers 1, 5-6-7 montent vers 8). */
-function resolution(target, d, mode, t0 = 0) {
-  const tonic = target - degOffset(d, mode);
+/** Chemin de résolution d'un degré vers la tonique la plus proche (2-3-4 descendent vers 1, 5-6-7 montent vers 8). */
+function resolutionPath(d) {
   const path = [];
   if (d === 1 || d === 8) path.push(d);
   else if (d <= 4) for (let k = d; k >= 1; k--) path.push(k);
   else for (let k = d; k <= 8; k++) path.push(k);
-  return path.map((k, i) => ({ m: tonic + degOffset(k, mode), t: t0 + i * 0.42, d: i === path.length - 1 ? 1.1 : 0.42, v: 78 }));
+  return path;
+}
+function resolution(target, d, mode, t0 = 0) {
+  const tonic = target - degOffset(d, mode);
+  return resolutionPath(d).map((k, i, path) => ({ m: tonic + degOffset(k, mode), t: t0 + i * 0.42, d: i === path.length - 1 ? 1.1 : 0.42, v: 78 }));
 }
 
 function samePcs(played, target) {
@@ -1048,6 +1205,59 @@ function samePcs(played, target) {
   if (a.size !== b.size) return false;
   for (const x of a) if (!b.has(x)) return false;
   return true;
+}
+
+/* ================================================================== */
+/* Confusions (V7.2) : ce que tu confonds, et une série ciblée sur la paire                                        */
+/* ================================================================== */
+const CONF_KINDS = {
+  'deg-maj': { label: 'degrés en majeur', item: x => x, cfg: (a, b) => ({ kind: 'degree', degrees: [+a, +b].sort((x, y) => x - y), key: 'random' }) },
+  'deg-min': { label: 'degrés en mineur', item: x => x, cfg: (a, b) => ({ kind: 'degree', mode: 'min', degrees: [+a, +b].sort((x, y) => x - y), key: 'random' }) },
+  iv: { label: 'intervalles', item: x => IV_LABEL[x], cfg: (a, b) => ({ kind: 'intervals', set: [ivShort(+a), ivShort(+b)], directions: ['up'] }) },
+  'iv-d': { label: 'intervalles descendants', item: x => IV_LABEL[x], cfg: (a, b) => ({ kind: 'intervals', set: [ivShort(+a), ivShort(+b)], directions: ['down'] }) },
+  'iv-h': { label: 'intervalles harmoniques', item: x => IV_LABEL[x], cfg: (a, b) => ({ kind: 'intervals', set: [ivShort(+a), ivShort(+b)], directions: ['harm'] }) },
+  ch: { label: 'accords', item: x => CH_LABEL[x] || x, cfg: (a, b) => ({ kind: 'chords', set: [a, b] }) },
+  func: { label: 'accords après le I', item: x => x, cfg: (a, b) => ({ kind: 'chordfunc', set: [a, b] }) },
+  cad: { label: 'cadences', item: x => CAD_LABEL[x] || x, cfg: (a, b) => ({ kind: 'cadences', set: [a, b] }) },
+};
+const ivShort = st => Object.keys(IV_SHORT_TO_ST).find(k => IV_SHORT_TO_ST[k] === st);
+/** Une réponse (premier essai) : given = null si juste, sinon la réponse donnée. Les comptes récents pèsent plus. */
+export function recordConfusion(kind, item, given) {
+  if (!CONF_KINDS[kind]) return;
+  const all = store.get('stats.earConf') || {};
+  const K = { items: { ...((all[kind] || {}).items || {}) }, pairs: { ...((all[kind] || {}).pairs || {}) } };
+  const it = { n: 0, ok: 0, ...(K.items[item] || {}) };
+  it.n++; if (given == null) it.ok++;
+  if (it.n > 30) { it.n /= 2; it.ok /= 2; }
+  K.items[item] = it;
+  if (given != null) {
+    K.pairs[`${item}>${given}`] = (K.pairs[`${item}>${given}`] || 0) + 1;
+    if (Object.values(K.pairs).reduce((a, b) => a + b, 0) > 60) for (const k of Object.keys(K.pairs)) K.pairs[k] = K.pairs[k] / 2;
+  }
+  store.set('stats.earConf', { ...all, [kind]: K });
+}
+/** Les paires confondues le plus souvent (dans les deux sens), avec la série ciblée qui leur correspond. */
+export function topConfusions({ kinds = null, min = 3, n = 3 } = {}) {
+  const all = store.get('stats.earConf') || {};
+  const out = [];
+  for (const [kind, K] of Object.entries(all)) {
+    if (!CONF_KINDS[kind] || (kinds && !kinds.includes(kind))) continue;
+    const sym = new Map();
+    for (const [k, c] of Object.entries(K.pairs || {})) {
+      const [a, b] = k.split('>');
+      const key = [a, b].sort().join('|');
+      sym.set(key, (sym.get(key) || 0) + c);
+    }
+    for (const [key, c] of sym) {
+      if (c < min) continue;
+      const [a, b] = key.split('|');
+      const C = CONF_KINDS[kind];
+      const seen = ((K.items[a] || {}).n || 0) + ((K.items[b] || {}).n || 0);
+      out.push({ kind, a, b, count: Math.round(c), seen: Math.round(seen), label: `${C.item(a)} et ${C.item(b)}`, kindLabel: C.label,
+        series: { ...C.cfg(a, b), id: `pair:${kind}:${a}-${b}`, title: `Série ciblée : ${C.item(a)} ou ${C.item(b)} ?`, count: 10, goal: 0.8 } });
+    }
+  }
+  return out.sort((x, y) => y.count - x.count).slice(0, n);
 }
 
 /* ================================================================== */
@@ -1064,8 +1274,9 @@ export function mountQuiz(el, cfg) {
   el.append(frame);
   const isSing = cfg.kind === 'sing';
   const isRhythm = cfg.kind === 'rhythm';
-  const playMode = cfg.mode === 'play' || ['playchord', 'echo'].includes(cfg.kind);
+  const playMode = cfg.mode === 'play' || ['playchord', 'echo', 'earnote', 'playtonic', 'chordecho'].includes(cfg.kind);
   const persist = {}; // état conservé d'une question à l'autre (difficulté adaptée, tonalité…)
+  const persistMix = {}; // idem pour les questions de révision
   let state;
   const cleanups = new Set();
   const addCleanup = fn => { cleanups.add(fn); return () => { cleanups.delete(fn); fn(); }; };
@@ -1112,13 +1323,22 @@ export function mountQuiz(el, cfg) {
     clearQuestion();
     body.innerHTML = '';
     if (state.i >= total) return finish();
-    const q = gen(cfg, persist);
+    // 20 % de révision : une question d'une étape passée (même façon de répondre), mêlée à la série (V7.2)
+    let q, review = null;
+    if (cfg.mix && cfg.mix.length && state.i > 0 && Math.random() < (cfg.mixRate ?? 0.2)) {
+      review = pick(cfg.mix);
+      try { q = GEN[review.kind]({ ...review }, persistMix[review.id] || (persistMix[review.id] = {})); } catch (e) { q = null; }
+      if (!q) review = null;
+    }
+    if (!q) q = gen(cfg, persist);
     state.q = q;
     frame.__q = q; // lecture par les tests automatiques
     state.tries = 0;
-    const type = q.type || (playMode && q.check ? 'play' : 'buttons');
+    const qPlay = review ? (review.mode === 'play' || ['playchord', 'echo', 'earnote', 'playtonic', 'chordecho'].includes(review.kind)) : playMode;
+    const type = q.type || (qPlay && q.check ? 'play' : 'buttons');
     const prog = h('div', { class: 'quiz-progress' }, h('span', {}, `${state.i + 1} / ${total}`), h('div', { class: 'progress' }, h('i', { style: { width: `${state.i / total * 100}%` } })), h('span', {}, `${state.ok} du premier coup`));
     body.append(prog);
+    if (review) body.append(h('div', { class: 'quiz-review small' }, `Révision : ${review.title}`));
     if (q.status) body.append(h('div', { class: 'quiz-status' }, q.status));
     const ctx = {
       q, type,
@@ -1172,6 +1392,7 @@ export function mountQuiz(el, cfg) {
       b.addEventListener('click', () => {
         if (!nextBtn.hidden) return;
         state.tries++;
+        if (q.conf && state.tries === 1) recordConfusion(q.conf.kind, q.conf.item, a.id === q.correct ? null : String(a.id));
         if (a.id === q.correct) {
           b.classList.add('right');
           fb.className = 'quiz-feedback ok'; fb.innerHTML = (state.tries === 1 ? 'Exact. ' : 'Oui. ') + q.explain;
@@ -1216,12 +1437,14 @@ export function mountQuiz(el, cfg) {
       if (q.check(played)) {
         fb.className = 'quiz-feedback ok'; fb.innerHTML = (state.tries === 1 ? 'Exact. ' : 'Oui. ') + q.explain;
         ctx.done(true, state.tries === 1);
+        q.after?.();
       } else {
         fb.className = 'quiz-feedback bad';
         const detail = q.diff ? ` ${q.diff(played)}` : '';
         if (state.tries >= 3) {
           fb.innerHTML = `Tu as joué : ${played.map(m => noteNameFr(m, { octave: false })).join(', ')}.${detail} ${q.explain}`;
           ctx.done(false, false);
+          q.after?.();
           return;
         }
         fb.innerHTML = `Pas tout à fait (tu as joué : ${played.map(m => noteNameFr(m, { octave: false })).join(', ')}).${detail} Réécoute et réessaie.`;
@@ -1240,6 +1463,11 @@ export function mountQuiz(el, cfg) {
     const { q, fb, nextBtn, row, tipBox } = ctx;
     const singMode = state.singMode;
     body.append(h('div', { class: 'quiz-q', html: q.prompt }));
+    if (q.staff) {
+      const stf = h('div', { class: 'quiz-staff' });
+      body.append(stf);
+      try { window.ABCJS.renderAbc(stf, q.staff, { responsive: 'resize', staffwidth: 300, scale: 1.4, paddingtop: 0, paddingbottom: 0 }); } catch (e) { stf.textContent = q.labels?.join(' – ') || ''; }
+    }
     if (singMode === 'mic' && state.i < 2) body.append(h('p', { class: 'small sing-how', html: '<b>1.</b> Écoute. <b>2.</b> Entends la note dans ta tête, une seconde. <b>3.</b> Chante doucement sur « mmm » ou « la » et regarde la ligne : amène-la dans la <b>bande verte</b>, puis tiens-la.' }));
     const chips = h('div', { class: 'sing-chips' });
     const chipEls = q.targets.map((_, i) => h('span', { class: 'chip' }, q.labels?.[i] ?? '•'));
@@ -1293,7 +1521,13 @@ export function mountQuiz(el, cfg) {
       h('div', { class: 'tn-lbl' }, h('span', {}, '← trop bas'), h('span', {}, 'juste'), h('span', {}, 'trop haut →')));
     const holdBar = h('div', { class: 'progress hold-bar', hidden: !(q.holdMs > 1000), title: 'Tenue' }, h('i'));
     const meter = h('div', { class: 'pm' }, trace.el, tuner, read, holdBar, coach, level);
-    const stopListening = () => { listening = false; clearTimeout(timer); offPitch?.(); offPitch = null; trace.stop(); };
+    const stopListening = () => { listening = false; clearTimeout(timer); offPitch?.(); offPitch = null; trace.stop(); audio.stopAll('drone'); };
+    // bourdon de tonique (facultatif) : la tonique et sa quinte en dessous, très doux, pendant que tu chantes
+    const startDrone = () => {
+      if (q.tonic == null || !store.get('settings.singDrone')) return;
+      audio.tone(q.tonic - 12, 0, { gain: 0.07, owner: 'drone' });
+      audio.tone(q.tonic - 17, 0, { gain: 0.05, owner: 'drone' });
+    };
     const diagnose = () => {
       const voiced = all.length;
       if (!voiced) return { kind: 'silence', msg: 'Je ne t’ai pas entendu.' };
@@ -1312,6 +1546,7 @@ export function mountQuiz(el, cfg) {
     const need = q.holdMs || (q.targets.length > 1 ? 260 : 380);
     const startListening = () => {
       listening = true; hist = []; holdStart = null; recent = []; listenStart = performance.now(); lastVoiced = 0; lastCoach = 0; lastIn = 0; holdD = [];
+      startDrone();
       holdBar.firstChild.style.width = '0%';
       trace.setTarget(q.targets[idx]); trace.start();
       read.innerHTML = q.targets.length > 1 ? `À toi : chante la note ${idx + 1}.` : 'À toi : chante.';
@@ -1609,6 +1844,17 @@ export function mountQuiz(el, cfg) {
     });
     intro.append(h('div', { class: 'row mb-0', style: { marginBottom: '10px' } }, h('span', { class: 'small' }, 'Ta voix :'), vseg));
     intro.append(h('div', { class: 'row mb-0', style: { marginBottom: '10px' } }, h('span', { class: 'small' }, 'Réponse :'), mseg));
+    // modèle à imiter : le piano, ou un son tenu (V7.2) ; bourdon de tonique pendant le chant
+    const tseg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Modèle à imiter' });
+    [['piano', 'Piano'], ['tone', 'Son tenu']].forEach(([v, l]) => {
+      const b = h('button', { type: 'button', class: singModel() === v ? 'on' : '' }, l);
+      b.addEventListener('click', () => { store.set('settings.singTarget', v); tseg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); });
+      tseg.append(b);
+    });
+    const droneCb = h('input', { type: 'checkbox', checked: !!store.get('settings.singDrone') });
+    droneCb.addEventListener('change', () => store.set('settings.singDrone', droneCb.checked));
+    intro.append(h('div', { class: 'row mb-0', style: { marginBottom: '10px' } }, h('span', { class: 'small' }, 'Modèle :'), tseg,
+      h('label', { class: 'check small', title: 'La tonique tenue pendant que tu chantes : un repère constant. Avec des écouteurs, il ne gêne pas le micro.' }, droneCb, 'Bourdon de tonique')));
     intro.append(h('p', { class: 'small', html: `Au micro, place la tablette à 30–50 cm, dans une pièce calme. Une <b>ligne</b> montre ta voix en direct ; la <b>bande verte</b> est la note à chanter.${measured ? '' : ' Pour des notes à ta mesure, mesure d’abord ta tessiture avec « Trouver ma voix » (outil Oreille).'} Sans micro : chante, puis rejoue la note au piano, ou écoute la réponse et juge toi-même.` }));
   }
   const msg = h('p', { class: 'small', style: { color: 'var(--err)' } });
@@ -1645,12 +1891,12 @@ export const EAR_PRESETS = [
   { group: '1 · Hauteur et voix', id: 'sing-match-a', title: 'Chanter une note, au milieu de ta voix', kind: 'sing', task: 'match', span: 4, count: 8 },
   { group: '1 · Hauteur et voix', id: 'sing-match', title: 'Chanter une note entendue', kind: 'sing', task: 'match', count: 8 },
   { group: '2 · Degrés', id: 'deg-1', title: 'La tonique ou pas ?', kind: 'degree', binary: true, degrees: [1, 2, 3, 4, 5, 6, 7] },
-  { group: '2 · Degrés', id: 'deg-123', title: 'Degrés 1, 2, 3 (do majeur)', kind: 'degree', degrees: [1, 2, 3], names: true },
-  { group: '2 · Degrés', id: 'deg-15', title: 'Degrés 1 à 5 (do majeur)', kind: 'degree', degrees: [1, 2, 3, 4, 5], names: true },
-  { group: '2 · Degrés', id: 'deg-18', title: 'Toute la gamme (do majeur)', kind: 'degree', degrees: [1, 2, 3, 4, 5, 6, 7, 8], names: true },
+  { group: '2 · Degrés', id: 'deg-123', title: 'Degrés 1, 2, 3 (do majeur)', kind: 'degree', degrees: [1, 2, 3] },
+  { group: '2 · Degrés', id: 'deg-15', title: 'Degrés 1 à 5 (do majeur)', kind: 'degree', degrees: [1, 2, 3, 4, 5] },
+  { group: '2 · Degrés', id: 'deg-18', title: 'Toute la gamme (do majeur)', kind: 'degree', degrees: [1, 2, 3, 4, 5, 6, 7, 8] },
   { group: '2 · Degrés', id: 'deg-18r', title: 'Toute la gamme, toutes tonalités', kind: 'degree', degrees: [1, 2, 3, 4, 5, 6, 7, 8], key: 'random' },
   { group: '2 · Degrés', id: 'deg-min', title: 'Degrés en mineur', kind: 'degree', mode: 'min', degrees: [1, 2, 3, 4, 5, 6, 7], key: 'random' },
-  { group: '2 · Degrés', id: 'deg-min15', title: 'Degrés 1 à 5 en mineur (la mineur)', kind: 'degree', mode: 'min', degrees: [1, 2, 3, 4, 5], names: true },
+  { group: '2 · Degrés', id: 'deg-min15', title: 'Degrés 1 à 5 en mineur (la mineur)', kind: 'degree', mode: 'min', degrees: [1, 2, 3, 4, 5] },
   { group: '2 · Degrés', id: 'sing-min', title: 'Chanter en mineur', kind: 'sing', mode: 'min', task: 'seq', seqs: [[1, 2, 3], [3, 2, 1], [5, 6, 5], [7, 8], [1, 3, 5]], count: 8 },
   { group: '2 · Degrés', id: 'sing-deg', title: 'Chanter les degrés 1, 3, 5', kind: 'sing', task: 'degree', degrees: [1, 3, 5], count: 8 },
   { group: '2 · Degrés', id: 'sing-seq', title: 'Chanter 1-2-3, 1-3-5, 5-4-3-2-1', kind: 'sing', task: 'seq', seqs: [[1, 2, 3], [3, 2, 1], [1, 3, 5], [5, 4, 3, 2, 1]], count: 8 },

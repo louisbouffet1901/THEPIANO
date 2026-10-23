@@ -491,7 +491,7 @@ function pageHome() {
     <div class="grid cols-3 tools-grid">
       ${toolCard('#/outils/lecture', 'Lecture à vue', 'De vrais extraits à ton niveau, jamais deux fois le même.')}
       ${toolCard('#/outils/rythme', 'Rythme', 'Lire et taper des rythmes : dix niveaux, et ceux de tes pièces.')}
-      ${toolCard('#/outils/oreille', 'Oreille', 'Chanter juste, et reconnaître à l’oreille, pas à pas.')}
+      ${toolCard('#/outils/oreille', 'Oreille', 'Entendre, chanter, jouer : un seul parcours, dans toutes les tonalités.')}
       ${toolCard('#/outils/impro', 'Improvisation', 'L’exercice où tu en es, et l’accompagnateur pour jouer librement.')}
       ${toolCard('#/outils/exercices', 'Exercices', 'Indépendance des mains, polyrythmes, lié contre détaché.')}
       ${toolCard('#/outils/theorie', 'Théorie', 'Tous les cours, et des exercices pour réviser.')}
@@ -530,6 +530,7 @@ function pageHome() {
   }).catch(() => {});
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '7.2': '<ul><li><b>Oreille, un seul parcours</b> « entendre, chanter, jouer » : seize étapes, chacune sous trois formes (la reconnaître, la chanter, la retrouver au piano). Une étape est réussie avec deux formes sur trois. Tes progrès sont repris.</li><li><b>La tonalité change dès le début</b>, et tu réponds par des chiffres, sans noms de notes : réussir en do et échouer ailleurs vient de là (l’oreille apprend des hauteurs fixes au lieu de la relation à la tonique). Les étapes réussies en do seulement sont à confirmer dans toutes les tonalités.</li><li><b>Ce qui te trompe</b> : l’appli relève tes confusions (par exemple 4 et 6) et propose une série ciblée sur la paire. Sous 60 % trois fois de suite, elle te la propose d’elle-même.</li><li>Après chaque degré, <b>chante la résolution</b> ; une question sur cinq révise une étape passée ; au chant, modèle « son tenu » et <b>bourdon de tonique</b> au choix ; nouvelle étape <b>« Entendre dans sa tête »</b> (lire une mélodie et l’entendre avant qu’elle sonne).</li></ul>',
     '7.1': '<ul><li><b>Échauffement de lecture</b> (Lecture à vue) : trois minutes avant les extraits. D’abord une minute de rythme à taper au clic, au niveau choisi dans l’onglet Rythme. Puis deux exercices d’une minute, qui tournent d’un jour à l’autre entre les notes, les <b>intervalles</b> et les <b>accords</b> : tu lis la forme et tu la joues d’un geste, sans la nommer. Ce qui te ralentit revient plus souvent.</li><li><b>Entends le début</b> : pendant les 30 secondes de préparation, chante la première mesure, puis vérifie en l’écoutant.</li><li>La lecture de notes chronométrée quitte la page Exercices : elle fait partie de l’échauffement.</li></ul>',
     '7.0': '<ul><li><b>Nouvelle séance</b> : coche ce que tu veux travailler (pièce, technique, improvisation, lecture, oreille, autres pièces) et choisis une durée. L’appli propose l’étape suivante de chaque case et coche d’avance ce que tu laisses de côté depuis trop longtemps. Le plan en 8 semaines disparaît.</li><li><b>La carte de ta pièce</b> : section par section, ce qui s’y passe, ce que ça change à ton jeu, les leçons et les exercices qu’elle demande (rubato, triolets, octaves…) et comment la travailler. Indique où tu en es dans chaque section : la section du jour et un objectif de date en dépendent.</li><li><b>Le plan de la pièce</b>, simplifié : à quoi il sert, et trois exercices (repartir d’un point de départ, situer un extrait, entendre ce qui change au retour). Et un <b>filage enregistré</b> environ une fois par semaine.</li><li><b>Tes 7 derniers jours</b> : les jours de pratique de chaque case, face à l’objectif.</li></ul>',
     '6.2': '<ul><li><b>Improvisation, notes en or</b> : toutes les notes en or sont écrites dans la grille, sous chaque accord, avant même le départ. Pendant une mesure, la suivante est annoncée (« puis … ») et marquée en or pâle sur le clavier, avec son nom : tu as le temps de la préparer.</li><li>Leçon « Entre les notes de l’accord » : le squelette complet des exercices en partition, et un tableau qui explique pourquoi chaque note en or a été choisie.</li></ul>',
@@ -865,7 +866,7 @@ async function pagePresets(kind) {
 function pageEar() {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Oreille' }]) +
-    `<div class="page-head"><h1>Oreille</h1><p class="lead">Deux parcours, une étape après l’autre : <b>chanter juste</b>, et <b>reconnaître à l’oreille</b>. Dix minutes par jour : l’étape en cours de l’un, puis de l’autre.</p></div>`;
+    `<div class="page-head"><h1>Oreille</h1><p class="lead">Un parcours, une étape après l’autre : chaque étape se <b>reconnaît</b>, se <b>chante</b> et se <b>joue</b> au piano. Huit à dix minutes, quatre ou cinq jours par semaine.</p></div>`;
   const host = h('div');
   page.append(host);
   page.insertAdjacentHTML('beforeend', `<p class="small muted mt-3">Les leçons d’oreille, dans l’ordre du parcours : <a href="#/niveau/n1/oreille">niveau 1</a> · <a href="#/niveau/n2/oreille">niveau 2</a>.</p>`);

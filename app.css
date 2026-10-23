@@ -1333,3 +1333,19 @@ details.passage > summary .pm-state { align-self: center; margin-left: auto; }
   .wu-step { flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px; }
   .wu-step b { font-size: 13.5px; }
 }
+
+/* V7.2 — Oreille : un parcours, trois formes par étape, confusions */
+.es-form { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px 4px; margin: 8px 0; background: var(--surface); }
+.es-form.ok { border-color: #bfdcc9; background: #f6fbf8; }
+.es-fhead { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; font-size: 14px; margin-bottom: 2px; }
+.es-fmark { color: var(--ok); font-weight: 700; min-width: 1em; }
+.es-pre { margin-bottom: 4px; }
+.es-advice { margin: 10px 0 4px; padding: 8px 10px; border-left: 3px solid var(--accent-tint-2); background: var(--accent-tint); border-radius: 0 8px 8px 0; color: var(--text-2); display: flex; flex-direction: column; gap: 3px; }
+.es-advice b { color: var(--accent-strong); }
+.es-stuck { margin: 8px 0; padding: 8px 10px; border-radius: 8px; background: var(--warn-tint); }
+.es-stuck .btn { margin-top: 6px; }
+.ear-confcard { margin-top: 12px; }
+.ear-conf { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ear-conf li { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 14.5px; padding: 6px 0; border-top: 1px solid var(--line); }
+.ear-conf li:first-child { border-top: 0; }
+.quiz-review { display: inline-block; margin: 0 0 8px; padding: 2px 10px; border-radius: 999px; background: var(--gold-tint); color: var(--gold); font-weight: 600; }
