@@ -38,6 +38,8 @@ export function makeW() {
     improv: cfg => ph('improv', cfg),
     /** Les paliers d'une leçon d'improvisation (V5) : { lesson, steps }. */
     paliers: cfg => ph('paliers', cfg),
+    /** Jouer d'oreille (V7.4) : l'atelier d'une mélodie du répertoire, dans une leçon. { id } */
+    earsong: cfg => ph('earsong', cfg),
     metronome: cfg => ph('metronome', cfg || {}),
     checklist: cfg => ph('checklist', cfg),
     links: (items, title) => ph('links', { items, title }),
@@ -360,6 +362,7 @@ defineWidget('analyzer', (el, cfg) => mountLazy(el, () => import('./tool-analyze
 defineWidget('sight', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-sight.js')).then(m => e => m.mountSight(e, cfg))));
 defineWidget('improv', (el, cfg) => mountLazy(el, () => import('./tool-improv.js').then(m => e => m.mountImprov(e, cfg))));
 defineWidget('paliers', (el, cfg) => mountLazy(el, () => import('./tool-paliers.js').then(m => e => m.mountPaliers(e, cfg))));
+defineWidget('earsong', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-earplay.js')).then(m => e => m.mountEarSong(e, cfg))));
 defineWidget('voice', (el, cfg) => mountLazy(el, () => import('./voice.js').then(m => e => m.mountVoiceFinder(e, cfg))));
 defineWidget('plan', (el, cfg) => mountLazy(el, () => import('./piecemap.js').then(m => e => m.mountPlan(e, cfg))));
 defineWidget('section', (el, cfg) => mountLazy(el, () => import('./piecemap.js').then(m => e => m.mountSection(e, cfg))));

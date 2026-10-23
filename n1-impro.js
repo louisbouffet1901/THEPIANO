@@ -1,6 +1,8 @@
-// Niveau 1 — Improvisation (V5.1) : une idée nouvelle par leçon, travaillée en exercices progressifs (W.paliers).
-// 1. le motif  2. question et réponse  3. les notes de l'accord  4. passages et broderies  5. l'appoggiature (le soupir)
-// 6. style : la romance en arpèges mineurs (Liszt)  7. style : le nocturne, sur les harmonies de l'op. 55  8. la période.
+// Niveau 1 — Improvisation (V5.1, V7.4) : une idée nouvelle par leçon, travaillée en exercices progressifs (W.paliers).
+// 1. le motif  2. question et réponse  3. les notes de l'accord  4. ta main gauche (V7.4)  5. passages et broderies
+// 6. l'appoggiature (le soupir)  7. une mélodie connue : l'harmoniser, la varier (V7.4)  8. style : la romance en arpèges
+// mineurs (Liszt)  9. style : le nocturne, sur les harmonies de l'op. 55  10. la période.
+// V7.4 : à deux mains (l'accompagnateur s'efface par étapes : hands), notes en or de mémoire (gold: 'memo').
 // Chaque leçon : l'essentiel en tête, la boîte à outils, « pourquoi ça marche » (avec une écoute comparée), un modèle
 // phrasé, puis les exercices (W.paliers : une seule nouveauté par exercice, vérifiée au piano), les erreurs fréquentes.
 // Les exemples sont écrits par tools/impro_examples.py : chaque note des temps forts y est vérifiée contre l'accord.
@@ -115,6 +117,44 @@ V:LH clef=bass
 [V:RH] "^question (antécédent)"c4 f2 e2 | d3 c B4 | A2 c2 f2 e2 | "^demi-cadence"c6 z2 | "^réponse (conséquent)"c4 f2 e2 | d3 c B2 f2 | "^sommet"g3 f =e4 | "^cadence parfaite"f6 z2 |]
 [V:LH] "_i"F,,2 [F,A,C]2 C,,2 [F,A,C]2 | "_iv"B,,2 [F,B,D]2 F,,2 [F,B,D]2 | "_i"F,,2 [F,A,C]2 C,,2 [F,A,C]2 | "_V"C,,2 [G,C=E]2 C,,2 [G,CE]2 | "_i"F,,2 [F,A,C]2 C,,2 [F,A,C]2 | "_iv"B,,2 [F,B,D]2 F,,2 [F,B,D]2 | "_V7"C,,2 [G,B,C=E]2 C,,2 [G,B,CE]2 | "_i"F,,2 [F,A,C]2 C,,2 [F,A,C]2 |]`;
 
+// V7.4 : ta main gauche (accords au plus près, quatre formules) ; une mélodie connue variée trois fois
+const EX_MG_PRES = `X:1
+M:4/4
+L:1/4
+K:C
+%%score {RH | LH}
+V:RH clef=treble
+V:LH clef=bass
+[V:RH] "^à l’état fondamental : la main saute"z4 | z4 | z4 | z4 | "^au plus près : la main reste en place"z4 | z4 | z4 | z4 |]
+[V:LH] "_I"[C,E,G,]4 | "_IV"[F,A,C]4 | "_V7"[G,B,DF]4 | "_I"[C,E,G,]4 | "_I"[C,E,G,]4 | "_IV"[C,F,A,]4 | "_V7"[B,,F,G,]4 | "_I"[C,E,G,]4 |]`;
+const EX_MG_FORMULES = `X:1
+M:4/4
+L:1/8
+K:C
+%%score {RH | LH}
+V:RH clef=treble
+V:LH clef=bass
+[V:RH] "^basse et accord"z8 | z8 | z8 | z8 | "^arpège"z8 | z8 | z8 | z8 | "^Alberti"z8 | z8 | z8 | z8 |]
+[V:LH] "_I"C,,2 [C,E,G,]2 C,,2 [C,E,G,]2 | "_IV"F,,2 [C,F,A,]2 F,,2 [C,F,A,]2 | "_V7"G,,2 [B,,F,G,]2 G,,2 [B,,F,G,]2 | "_I"C,,2 [C,E,G,]2 C,,2 [C,E,G,]2 | "_I"C,, C, E, G, C,, C, E, G, | "_IV"F,, C, F, A, F,, C, F, A, | "_V7"G,, B,, F, G, G,, B,, F, G, | "_I"C,, C, E, G, C,, C, E, G, | "_I"C, G, E, G, C, G, E, G, | "_IV"C, A, F, A, C, A, F, A, | "_V7"B,, G, F, G, B,, G, F, G, | "_I"C, G, E, G, [C,E,G,]4 |]`;
+const EX_MG_VALSE = `X:1
+M:3/4
+L:1/4
+K:C
+%%score {RH | LH}
+V:RH clef=treble
+V:LH clef=bass
+[V:RH] "^la valse"z3 | z3 | z3 | z3 |]
+[V:LH] "_I"C,, [C,E,G,] [C,E,G,] | "_IV"F,, [C,F,A,] [C,F,A,] | "_V7"G,, [B,,F,G,] [B,,F,G,] | "_I"C,, [C,E,G,] [C,E,G,] |]`;
+const EX_AHVOUS_VAR = `X:1
+M:4/4
+L:1/8
+K:C
+%%score {RH | LH}
+V:RH clef=treble
+V:LH clef=bass
+[V:RH] "^1. le rythme"C3 C G3 G | A3 A G4 | F3 F E3 E | D3 D C4 | "^2. les ornements"C D C B, C E G A | A B A G G F E G | F G F E E F E D | D E D B, C4 | "^3. le mineur"C2 C2 G2 G2 | _A2 A2 G4 | F2 F2 _E2 E2 | D2 D2 C4 |]
+[V:LH] "_I"C,,2 [C,E,G,]2 C,,2 [C,E,G,]2 | "_IV  I"F,,2 [C,F,A,]2 C,,2 [C,E,G,]2 | "_IV  I"F,,2 [C,F,A,]2 C,,2 [C,E,G,]2 | "_V  I"G,,2 [B,,D,G,]2 C,,2 [C,E,G,]2 | "_I"C,,2 [C,E,G,]2 C,,2 [C,E,G,]2 | "_IV  I"F,,2 [C,F,A,]2 C,,2 [C,E,G,]2 | "_IV  I"F,,2 [C,F,A,]2 C,,2 [C,E,G,]2 | "_V  I"G,,2 [B,,D,G,]2 C,,2 [C,E,G,]2 | "_i"C,,2 [C,_E,G,]2 C,,2 [C,E,G,]2 | "_iv  i"F,,2 [C,F,_A,]2 C,,2 [C,_E,G,]2 | "_iv  i"F,,2 [C,F,_A,]2 C,,2 [C,_E,G,]2 | "_V  i"G,,2 [B,,D,G,]2 C,,2 [C,_E,G,]2 |]`;
+
 // Phrasé des exemples : nuances (main droite) et respiration (carte de tempo), en noires depuis le début
 const PH_ROMANCE = {
   dyn: { rh: [[0, 0.8], [6, 1.0], [9, 1.14], [11.5, 0.95], [12, 0.82], [13, 1.16], [15, 1.02], [18, 0.88], [21, 0.8], [24, 0.7]], lh: [[0, 0.72], [24, 0.62]] },
@@ -141,8 +181,8 @@ export default [
       'Un <b>motif</b> (3 ou 4 notes, un rythme reconnaissable) suffit pour faire de la musique : on le <b>répète</b>, on le <b>déplace</b>, on le <b>varie</b>.',
       'Les <b>silences</b> font partie de la phrase : ils la rendent lisible.',
     ],
-    goals: ['Tenir deux minutes sans t’arrêter.', 'Construire huit mesures avec un seul motif, et faire respirer tes phrases.'],
-    goal: 'le dernier exercice (deux minutes sans t’arrêter, ton motif reconnaissable) est validé.',
+    goals: ['Tenir deux minutes sans t’arrêter.', 'Construire huit mesures avec un seul motif, et faire respirer tes phrases.', 'Tenir l’ostinato toi-même, à la main gauche.'],
+    goal: 'le dernier exercice (ta main gauche tient l’ostinato, ta main droite improvise) est validé.',
     body: W => `
 <p>Pour commencer, on supprime le risque : la main gauche (l’appli) joue un ${W.term('ostinato', 'un court motif d’accompagnement répété en boucle, ici la quinte fa♯ – do♯ bercée')}, et ta main droite n’utilise que les <b>cinq touches noires</b> (fa♯, sol♯, la♯, do♯, ré♯). Elles forment une gamme ${W.term('pentatonique', 'gamme de cinq notes sans demi-ton : aucune note ne « frotte » avec une autre')}. Aucune note n’est fausse : toute ton attention va au rythme.</p>
 
@@ -158,7 +198,7 @@ ${W.ecoute({ title: 'La même idée, avec ou sans silence', bpm: 76, items: [
 ] })}
 
 <h2>Les exercices</h2>
-<p>Une seule nouveauté à chaque exercice : d’abord imiter, puis tenir un motif, le varier, faire respirer les phrases, et enfin jouer longtemps sans t’arrêter.</p>
+<p>Une seule nouveauté à chaque exercice : d’abord imiter, puis tenir un motif, le varier, faire respirer les phrases, jouer longtemps sans t’arrêter, et enfin tenir toi-même la main gauche.</p>
 ${W.paliers({ lesson: 'n1-im-lancer', steps: [
   { id: 'imiter', title: 'Écouter, chanter, rejouer', preset: 'n1-noires', mode: 'echo', echo: { rhythms: [[1, 1, 2], [2, 1, 1]], end: 'close', count: 4 },
     what: 'L’appli joue une phrase de deux mesures sur les touches noires. Pendant les deux mesures suivantes, <b>chante-la</b> (à voix haute ou dans ta tête) ; puis <b>rejoue-la</b> au piano. Quatre phrases.',
@@ -180,6 +220,10 @@ ${W.paliers({ lesson: 'n1-im-lancer', steps: [
     what: 'Une seule règle : ne jamais t’arrêter, pendant deux minutes. Si tu hésites, rejoue ton motif ou tiens une note. Laisse des silences si tu veux, mais pas d’arrêt.',
     why: 'La pulsation passe avant la beauté des notes : c’est ce qui distingue une improvisation d’une recherche au clavier.',
     checks: [{ k: 'nonstop', bars: 36 }, { k: 'motif', min: 3 }] },
+  { id: 'ostinato-mg', title: 'Ta main gauche tient l’ostinato', preset: 'n1-noires', mode: 'libre', loops: 4, lh: 'moi', formula: 'ostinato',
+    what: 'L’appli ne joue plus que le clic : ta main gauche joue l’ostinato (fa♯ – do♯ – fa♯ – do♯, une note par temps, les touches brunes), ta main droite improvise sur les touches noires. Écoute d’abord la main gauche (bouton « Écouter la main gauche »), joue-la seule pendant le décompte, puis ajoute une note par mesure à droite, puis ton motif.',
+    why: 'Chez Kinney, on apprend d’abord l’accompagnement par cœur, puis on improvise par-dessus : l’ostinato devient automatique, et l’attention va à la main droite. C’est le premier pas vers une improvisation à deux mains.',
+    checks: [{ k: 'bass', min: 0.75, per: 3 }, { k: 'scale', min: 0.9 }, { k: 'nonstop', bars: 14 }] },
 ] })}
 ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>S’arrêter pour chercher une « belle » note.</b> Garde la pulsation : rejoue ton motif, ou tiens la note où tu es.</li>
@@ -257,8 +301,8 @@ ${W.warn('Erreurs fréquentes', `<ul>
       'Sur les <b>temps forts</b> (1 et 3 à quatre temps), joue une note de l’accord : la mélodie tient debout.',
       'Au changement d’accord, va vers la note du nouvel accord <b>la plus proche</b> : la ligne devient chantante.',
     ],
-    goals: ['Connaître les notes de I, IV et V7 en do majeur.', 'Poser une note de l’accord sur chaque temps fort, dans trois tonalités.'],
-    goal: 'le dernier exercice (la même grille en sol et en fa majeur) est validé : 70 % des temps forts sur une note de l’accord.',
+    goals: ['Connaître les notes de I, IV et V7 en do majeur.', 'Poser une note de l’accord sur chaque temps fort, dans trois tonalités.', 'Jouer toi-même les accords à la main gauche.'],
+    goal: 'le dernier exercice (à deux mains : tu joues les accords) est validé.',
     body: W => `
 <p>Jusqu’ici, toutes les notes allaient bien. Avec une vraie harmonie, certaines notes « frottent ». On n’apprend pas à les éviter : on apprend où <b>s’appuyer</b>. Les ${W.term('temps forts', 'les temps qui portent l’accent de la mesure : le 1er (et le 3e à quatre temps)')} sont les moments où l’oreille vérifie l’harmonie ; c’est là qu’on place une note de l’accord.</p>
 
@@ -304,6 +348,11 @@ ${W.paliers({ lesson: 'n1-im-5notes', steps: [
     what: 'La même grille I – IV – V7 – I en sol majeur, puis en fa majeur : les accords changent de nom, le travail reste le même. Une note par temps, les notes de l’accord aux temps forts.',
     why: 'Transposer prouve que tu penses en fonctions (I, IV, V), pas en touches : c’est ce qui rend l’improvisation possible dans n’importe quelle pièce.',
     checks: [{ k: 'strong', min: 0.7 }, { k: 'rhythm', v: 'noires' }] },
+  { id: 'deux-mains', title: 'À deux mains : tu joues les accords', preset: 'n1-IIVVI', mode: 'libre', loops: 2, hands: true, formula: 'basse-accord', bpm: 60,
+    what: 'Trois étapes, de plus en plus seul. D’abord l’appli joue la main gauche que tu joueras : la basse au 1er et au 3e temps, l’accord au 2e et au 4e. Puis elle ne joue plus que la basse : ta main gauche joue l’accord. Enfin il ne reste que le clic. Main droite : le squelette, une note de l’accord par mesure.',
+    why: 'Un pianiste qui improvise fait lui-même l’harmonie. Les accords sont joués serrés, au plus près les uns des autres (do – mi – sol, do – fa – la, si – fa – sol) : la main bouge à peine. La leçon suivante, « Ta main gauche », en fait le tour.',
+    tip: 'Main gauche seule d’abord, au clic, jusqu’à ce qu’elle tourne sans y penser ; puis ajoute la main droite, très simple.',
+    checks: [{ k: 'strong', min: 0.7 }, { k: 'rhythm', v: 'longues' }] },
 ] })}
 ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>Sauter loin pour attraper une note de l’accord.</b> Prends la plus proche : un pas ou une tierce suffit presque toujours.</li>
@@ -311,6 +360,91 @@ ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>Presser en jouant des noires.</b> Ralentis le tempo (curseur) et écoute la basse : c’est elle qui donne le temps.</li>
 </ul>`)}
 ${W.more('La note la plus proche : pourquoi ça marche', '<p>Quand l’accord change, plusieurs notes de la mélodie peuvent convenir. Celle qui est voisine de la note précédente (un ton, un demi-ton, ou la même) donne une ligne conjointe, facile à chanter : c’est le principe de la <a href="#/lecon/n2-th-voix">conduite des voix</a>. Dans V7 → I, deux notes ont même une direction obligée : la <b>sensible</b> si monte vers do, la <b>septième</b> fa descend vers mi.</p>')}
+`,
+  },
+
+  /* ================================================================ 4 (V7.4) */
+  {
+    id: 'n1-im-mg', minutes: 20,
+    title: 'Ta main gauche : quatre formules',
+    summary: 'Un pianiste qui improvise fait lui-même l’harmonie : des accords serrés enchaînés au plus près, quatre formules pour les faire vivre, trois tonalités, puis une mélodie par-dessus.',
+    essentials: [
+      'À la main gauche, l’accord se joue <b>serré</b>, sous le do central : trois notes voisines, saisies d’un seul geste.',
+      'D’un accord au suivant, prends la position <b>la plus proche</b> (un renversement) : do – mi – sol, do – fa – la, si – fa – sol. Les notes communes restent, les autres bougent d’un pas.',
+      'Quatre formules suffisent pour presque tout : <b>basse et accord</b>, <b>valse</b>, <b>arpège</b>, <b>Alberti</b>.',
+    ],
+    goals: ['Enchaîner I, IV et V7 au plus près, dans trois tonalités.', 'Jouer les quatre formules en mesure, puis une mélodie simple par-dessus.'],
+    goal: 'le dernier exercice est validé : ta main gauche tient sa formule, ta main droite chante au-dessus, sans l’appli.',
+    body: W => `
+<p>Jusqu’ici, l’appli tenait ta main gauche. Or un pianiste qui improvise fait lui-même l’harmonie. Bradley Sowash le demande dès la première leçon de sa méthode (I, IV et V à la main gauche, une gamme lente à la main droite) ; Forrest Kinney y prépare par le duo : le professeur accompagne, puis l’élève reprend l’accompagnement. Ici, l’appli joue le rôle du partenaire, puis s’efface. Cette leçon te donne les outils : des accords serrés qui s’enchaînent sans sauter, et quatre formules pour les faire vivre.</p>
+
+<h2>Des accords au plus près</h2>
+<p>Joués à l’état fondamental, les accords obligent la main à sauter : do – mi – sol, puis fa – la – do, puis sol – si – ré – fa. Avec les ${W.term('renversements', 'le même accord avec une autre de ses notes en bas : do – mi – sol, mi – sol – do, sol – do – mi')}, on garde les notes communes et on bouge les autres d’un pas.</p>
+<table>
+<thead><tr><th>Accord</th><th>Position</th><th>Ce qui bouge</th></tr></thead>
+<tbody>
+<tr><td><b>I</b> (do majeur)</td><td>do – mi – sol</td><td>le point de départ</td></tr>
+<tr><td><b>IV</b> (fa majeur)</td><td>do – fa – la</td><td>do reste ; mi monte à fa, sol monte à la</td></tr>
+<tr><td><b>V7</b> (sol 7)</td><td>si – fa – sol</td><td>do descend à si, fa reste, la descend à sol (le ré, la quinte, est omis)</td></tr>
+<tr><td><b>I</b></td><td>do – mi – sol</td><td>si monte à do (la sensible), fa descend à mi (la septième)</td></tr>
+</tbody></table>
+${W.score({ abc: EX_MG_PRES, title: 'Les mêmes accords, sautés puis au plus près', bpm: 60, practice: false, hands: false, caption: 'Mesures 1 à 4 : chaque accord à l’état fondamental, la main saute d’une position à l’autre. Mesures 5 à 8 : la position la plus proche, la main reste en place et les voix bougent d’un pas. À l’oreille aussi, la seconde version est plus liée.' })}
+<p class="small">La théorie : <a href="#/lecon/n1-th-renv">renversements et chiffrage</a>, <a href="#/lecon/n1-th-fonctions">degrés et fonctions</a>.</p>
+
+<h2>Les quatre formules</h2>
+<p>Une ${W.term('formule', 'un dessin de main gauche répété à chaque accord : il donne le rythme et le caractère de l’accompagnement')} fait vivre les accords en rythme. Elle tourne seule une fois dans la main, et l’attention va à la mélodie. Toutes partent des mêmes positions serrées ; la basse, quand il y en a une, est la note qui donne son nom à l’accord, plus bas.</p>
+${W.score({ abc: EX_MG_FORMULES, title: 'Basse et accord, arpège, Alberti (do majeur, I – IV – V7 – I)', bpm: 72, startBpm: 60, practice: false, hands: false, caption: '<b>Basse et accord</b> (mesures 1-4) : la basse au 1er et au 3e temps, l’accord au 2e et au 4e, c’est la main gauche de ton nocturne op. 55. <b>Arpège</b> (5-8) : la basse, puis l’accord égrené, deux fois par mesure. <b>Alberti</b> (9-12) : grave, aigu, milieu, aigu, la formule de Mozart et de Haydn.' })}
+${W.score({ abc: EX_MG_VALSE, title: 'La valse (do majeur, I – IV – V7 – I)', bpm: 96, startBpm: 80, practice: false, hands: false, caption: 'La basse au premier temps, l’accord au deuxième et au troisième, plus léger : la formule de toutes les valses.' })}
+
+<h2>Pourquoi ça marche</h2>
+<p>La formule fait le travail rythmique et harmonique : une fois dans la main, elle tourne seule, et toute l’attention va à la mélodie. C’est pour cela qu’on l’apprend d’abord par cœur, sans main droite, comme un accompagnateur apprend sa partie avant la répétition. Et la position la plus proche ne sert pas qu’aux doigts : les voix qui bougent d’un pas s’entendent comme des lignes, au lieu de blocs qui sautent.</p>
+${W.ecoute({ title: 'Sautés ou au plus près', bpm: 66, items: [
+  { label: 'À l’état fondamental', seq: ['do2 mi2 sol2:2 | fa2 la2 do3:2 | sol2 si2 ré3 fa3:2 | do2 mi2 sol2:4'], note: 'Chaque accord saute : on entend des blocs séparés.' },
+  { label: 'Au plus près', seq: ['do2 mi2 sol2:2 | do2 fa2 la2:2 | si1 fa2 sol2:2 | do2 mi2 sol2:4'], note: 'Do reste, mi monte à fa, puis si et fa vont vers do et mi : on entend des voix qui chantent.' },
+] })}
+
+<h2>Les exercices</h2>
+<p>D’abord la main gauche seule, au clic : les accords plaqués, puis chaque formule. Les notes à jouer sont en brun sur le clavier, et « Écouter la main gauche » te la fait entendre avant de jouer. Ensuite, trois tonalités, puis une mélodie par-dessus.</p>
+${W.paliers({ lesson: 'n1-im-mg', steps: [
+  { id: 'plaque', title: 'Les accords plaqués, au plus près', preset: 'n1-IIVVI', mode: 'libre', loops: 2, lh: 'moi', formula: 'plaque', bpm: 60,
+    what: 'Main gauche seule : un accord par mesure, plaqué au premier temps et tenu, dans la position la plus proche (do – mi – sol, do – fa – la, si – fa – sol, do – mi – sol). Regarde la case « Suivant » et prépare l’accord pendant le dernier temps.',
+    why: 'Le chemin le plus court entre les accords : les doigts gardent les notes communes et ne bougent que d’un pas. C’est ce qui rend une main gauche sûre, et rapide plus tard.',
+    checks: [{ k: 'lhChord', min: 0.75 }, { k: 'lhLead', max: 5 }] },
+  { id: 'basse-accord', title: 'Basse et accord', preset: 'n1-IIVVI', mode: 'libre', loops: 2, lh: 'moi', formula: 'basse-accord', bpm: 60,
+    what: 'La basse au 1er et au 3e temps (do, fa, sol, do : plus bas que l’accord), l’accord au 2e et au 4e, plus léger. Main gauche seule, au clic.',
+    why: 'C’est la main gauche de ton nocturne op. 55, en simple : la basse porte l’harmonie, l’accord remplit le temps sans l’alourdir.',
+    tip: 'Le saut de la basse à l’accord se prépare : pendant que tu joues la basse, regarde déjà la place de l’accord.',
+    checks: [{ k: 'bass', min: 0.75 }, { k: 'lhChord', min: 0.75 }] },
+  { id: 'valse', title: 'La valse', preset: 'n1-IIVVI-3', mode: 'libre', loops: 2, lh: 'moi', formula: 'valse', bpm: 92,
+    what: 'À trois temps : la basse au premier, l’accord au deuxième et au troisième, plus léger. Main gauche seule, au clic.',
+    why: 'La formule de toutes les valses, de Chopin à Satie : le premier temps porte, les deux autres rebondissent. Ta valse en la mineur (B. 150) repose sur elle.',
+    checks: [{ k: 'bass', min: 0.75 }, { k: 'lhChord', min: 0.75 }] },
+  { id: 'arpege', title: 'L’arpège', preset: 'n1-IIVVI', mode: 'libre', loops: 2, lh: 'moi', formula: 'arpege', bpm: 60,
+    what: 'La basse, puis l’accord égrené en croches, deux fois par mesure (do – do – mi – sol, do – do – mi – sol). Régulier, lié, la main qui suit le dessin.',
+    why: 'L’arpège remplit l’espace et lie les harmonies entre elles : c’est la main gauche des romances et des nocturnes.',
+    checks: [{ k: 'bass', min: 0.75, per: 6 }, { k: 'lhChord', min: 0.75 }] },
+  { id: 'alberti', title: 'La basse d’Alberti', preset: 'n1-IIVVI', mode: 'libre', loops: 2, lh: 'moi', formula: 'alberti', bpm: 60,
+    what: 'Grave, aigu, milieu, aigu, en croches régulières : do – sol – mi – sol, puis do – la – fa – la, si – sol – fa – sol, do – sol – mi – sol.',
+    why: 'Quatre croches qui font entendre l’accord entier et donnent un mouvement continu : Mozart et Haydn en ont fait la main gauche du style classique. Le poignet tourne un peu, comme une bascule (<a href="#/lecon/n2-t2">la rotation</a>).',
+    checks: [{ k: 'lhChord', min: 0.75, per: 6 }] },
+  { id: 'tonalites', title: 'I – IV – V7 dans trois tonalités', preset: 'n1-IIVVI', mode: 'libre', loops: 2, lh: 'moi', formula: 'basse-accord', bpm: 60,
+    keys: [{ tr: -5, label: 'sol majeur' }, { tr: 5, label: 'fa majeur' }, { tr: 2, label: 'ré majeur' }],
+    what: 'Basse et accord, en sol, en fa, puis en ré majeur. Les accords changent de nom ; la méthode reste la même : la position la plus proche, la note commune gardée.',
+    why: 'Transposer oblige à penser en fonctions (I, IV, V7) et en mouvements de voix, pas en touches apprises : c’est ce qui te permettra d’accompagner dans la tonalité de n’importe quelle pièce.',
+    checks: [{ k: 'bass', min: 0.75 }, { k: 'lhChord', min: 0.75 }, { k: 'lhLead', max: 6 }] },
+  { id: 'melodie', title: 'Une mélodie par-dessus', preset: 'n1-IIVVI', mode: 'libre', loops: 2, hands: true, formula: 'basse-accord', bpm: 60,
+    what: 'Ta main droite chante au-dessus, en valeurs longues : une note de l’accord par temps fort, la plus proche de la précédente. Trois étapes : l’appli joue d’abord ta main gauche, puis seulement la basse, enfin seulement le clic.',
+    why: 'Deux mains indépendantes : une formule régulière en bas, une ligne libre en haut. C’est le geste de base de tout accompagnement, et de toute improvisation au piano.',
+    tip: 'Si les deux mains se gênent, ralentis (curseur du tempo) et simplifie la main droite : une ronde par mesure suffit.',
+    checks: [{ k: 'strong', min: 0.7 }, { k: 'rhythm', v: 'longues' }] },
+] })}
+${W.warn('Erreurs fréquentes', `<ul>
+<li><b>Chaque accord à l’état fondamental.</b> La main saute et le temps se perd : garde les notes communes, prends la position la plus proche.</li>
+<li><b>Une basse trop forte, un accord trop lourd.</b> La basse porte, l’accord murmure : deux nuances dans la même main.</li>
+<li><b>Regarder ses mains à chaque changement.</b> Lis la case « Suivant » et prépare l’accord pendant le temps d’avant.</li>
+<li><b>Ajouter la main droite trop tôt.</b> La formule doit tourner seule, sans y penser ; sinon, c’est elle qui s’arrête dès que la mélodie demande de l’attention.</li>
+</ul>`)}
+${W.more('Les septièmes à la main gauche', '<p>Un accord de septième a quatre notes : à la main gauche, on omet souvent la <b>quinte</b>, la moins utile (sol 7 = sol – si – fa, sans ré). Restent la fondamentale, qui dit l’accord, la tierce (la sensible, qui monte) et la septième (qui descend) : les deux notes qui font avancer l’harmonie. C’est aussi la position des « shells » des pianistes de jazz.</p>')}
 `,
   },
 
@@ -324,8 +458,8 @@ ${W.more('La note la plus proche : pourquoi ça marche', '<p>Quand l’accord ch
       '<b>Broderie</b> : on quitte une note de l’accord pour sa voisine, et on revient (mi – <i>fa</i> – mi).',
       'Elles se placent <b>entre</b> les temps forts ; le squelette, lui, reste sur les temps forts.',
     ],
-    goals: ['Remplir un squelette donné par des notes de passage et des broderies.', 'Inventer ton propre squelette et l’habiller.'],
-    goal: 'le dernier exercice (ton squelette habillé, sans notes en or) est validé.',
+    goals: ['Remplir un squelette donné par des notes de passage et des broderies, de mémoire.', 'Inventer ton propre squelette et l’habiller, à deux mains.'],
+    goal: 'le dernier exercice (ton squelette habillé, à deux mains) est validé.',
     body: W => `
 <p>Le squelette donne la direction ; la gamme sert de chemin entre ses notes. Deux outils suffisent, qui viennent de la <a href="#/lecon/n1-th-etrangeres">théorie des notes étrangères</a>. On travaille en <b>la mineur</b> : n’oublie pas le <b>sol♯</b> (la sensible) sur l’accord de V7 (mi – sol♯ – si – ré).</p>
 
@@ -356,7 +490,7 @@ ${W.score({ abc: EX_BRODERIES, title: '3. En croches : broderies et passages', b
 <tr><td><b>7 · V7</b><br><span class="small">mi sol♯ si ré</span></td><td><b>si</b></td><td>La descente finale commence : ré – do – si, puis la.</td></tr>
 <tr><td><b>8 · i</b><br><span class="small">la do mi</span></td><td><b>la</b></td><td>La tonique : la réponse conclut.</td></tr>
 </tbody></table>
-<p class="small">Dans les exercices, la grille affiche toutes les notes en or avant le départ, sous chaque accord. Pendant une mesure, la suivante est déjà marquée en or pâle sur le clavier : regarde-la avant le changement d’accord. Au dernier exercice, plus de notes en or : tu choisis ta propre ligne, avec les mêmes règles.</p>
+<p class="small">Au premier exercice, la grille affiche toutes les notes en or avant le départ, sous chaque accord ; pendant une mesure, la suivante est déjà marquée en or pâle sur le clavier. Ensuite, tu travailles <b>de mémoire</b> : « Écouter le squelette » te le fait entendre (chante-le avec l’appli), puis tu le joues sans affichage. L’or revient si tu bloques, ou après un échec. Au dernier exercice, plus de notes en or : tu choisis ta propre ligne, avec les mêmes règles.</p>
 
 <h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im-accords', steps: [
@@ -365,15 +499,15 @@ ${W.paliers({ lesson: 'n1-im-accords', steps: [
     why: 'D’abord les appuis seuls : on entend la ligne que les ornements vont habiller.',
     tip: 'Avant de commencer, écoute le squelette (partition 1) et chante-le deux fois : quand tu connais la ligne par cœur, tu n’as plus besoin de la lire.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'rhythm', v: 'longues' }] },
-  { id: 'passage', title: 'Relier par des notes de passage', preset: 'n1-am-squelette', mode: 'squelette', loops: 1,
+  { id: 'passage', title: 'Relier par des notes de passage', preset: 'n1-am-squelette', mode: 'squelette', gold: 'memo', loops: 1,
     what: 'Pose la note en or au premier temps, puis va vers la suivante <b>par la gamme</b>, en noires (mi – ré – do…).',
     why: 'La note de passage est l’ornement le plus naturel : elle remplit le trajet entre deux appuis.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'figure', f: 'passage', min: 3 }] },
-  { id: 'broderie', title: 'Une broderie par mesure', preset: 'n1-am-squelette', mode: 'squelette', loops: 1,
+  { id: 'broderie', title: 'Une broderie par mesure', preset: 'n1-am-squelette', mode: 'squelette', gold: 'memo', loops: 1,
     what: 'Autour de chaque note en or, une broderie : la note, sa voisine (au-dessus ou au-dessous), la note. Puis va vers la suivante.',
     why: 'La broderie fait vivre une note sans la quitter : le squelette reste audible.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'figure', f: 'broderie', min: 4 }] },
-  { id: 'croches', title: 'En croches', preset: 'n1-am-squelette', mode: 'squelette', loops: 2,
+  { id: 'croches', title: 'En croches', preset: 'n1-am-squelette', mode: 'squelette', gold: 'memo', loops: 2,
     what: 'Même travail en croches : broderies et passages, deux notes par temps ; les notes en or restent au premier temps.',
     why: 'Plus de notes, même architecture : c’est l’habillage de Chopin, en plus simple.',
     checks: [{ k: 'targets', min: 0.7 }, { k: 'rhythm', v: 'croches' }, { k: 'strong', min: 0.7 }] },
@@ -381,6 +515,10 @@ ${W.paliers({ lesson: 'n1-im-accords', steps: [
     what: 'Sans notes en or : invente ton propre squelette (une note de l’accord par mesure, voisine de la précédente) et habille-le de passages et de broderies.',
     why: 'Tu fais toi-même les deux étages : le chemin, puis l’ornement.',
     checks: [{ k: 'strong', min: 0.7 }, { k: 'figure', f: 'passage', min: 2 }, { k: 'figure', f: 'broderie', min: 2 }, { k: 'nonstop', bars: 14 }] },
+  { id: 'deux-mains', title: 'À deux mains', preset: 'n1-am', mode: 'libre', loops: 2, hands: true, formula: 'basse-accord', bpm: 54,
+    what: 'Ton squelette habillé, sur ta propre main gauche, en trois étapes : l’appli joue tout, puis la basse seule (tu joues l’accord), puis le clic seul (tu joues la basse et l’accord). En la mineur, l’accord de mi 7 se joue ré – mi – sol♯ : n’oublie pas le sol♯.',
+    why: 'La main droite orne, la main gauche tient l’harmonie : c’est ainsi qu’on improvise seul au piano. Ralentis autant qu’il faut (curseur du tempo) : la régularité d’abord.',
+    checks: [{ k: 'strong', min: 0.7 }, { k: 'figure', f: 'ornement', min: 3 }, { k: 'nonstop', bars: 14 }] },
 ] })}
 ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>L’ornement prend la place de l’appui.</b> Il va <i>entre</i> les notes en or, jamais à leur place.</li>
@@ -402,7 +540,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
       'Une ou deux par phrase : trop d’appoggiatures, et plus rien n’est expressif.',
     ],
     goals: ['Placer une appoggiature au premier temps et la résoudre.', 'Doser son poids : appui, puis détente.'],
-    goal: 'l’exercice « appuyer, puis alléger » et les suivants sont validés : l’appoggiature plus forte que sa résolution.',
+    goal: 'l’exercice « appuyer, puis alléger » et les suivants sont validés : l’appoggiature plus forte que sa résolution, jusqu’à deux mains.',
     body: W => `
 <p>Jusqu’ici, les temps forts étaient sur l’accord. L’${W.term('appoggiature', 'note étrangère à l’accord, placée sur le temps fort, qui se résout ensuite par degré sur une note de l’accord')} renverse la règle, exprès : une note qui n’appartient pas à l’accord tombe sur le temps, crée une tension, puis glisse sur la note voisine. Chopin, Liszt, Rachmaninov en remplissent leurs mélodies. Tu en entends une dans ton nocturne : le ré♭ qui retombe sur do.</p>
 
@@ -421,7 +559,7 @@ ${W.paliers({ lesson: 'n1-im-gammes', steps: [
     what: 'La note en or est l’appoggiature de la mesure : pose-la au premier temps, puis descends d’un degré (un ton ou un demi-ton) sur une note de l’accord.',
     why: 'Le geste d’abord, guidé : la note étrangère sur le temps, la résolution juste après.',
     checks: [{ k: 'appog', min: 0.75 }] },
-  { id: 'poids', title: 'Appuyer, puis alléger', preset: 'n1-soupirs', mode: 'squelette', loops: 1,
+  { id: 'poids', title: 'Appuyer, puis alléger', preset: 'n1-soupirs', mode: 'squelette', gold: 'memo', loops: 1,
     what: 'Même chose, mais joue l’appoggiature <b>plus fort</b> que sa résolution : un appui, puis une détente.',
     why: 'Le soupir se joue avec le poids du bras. Sans différence de nuance, l’appoggiature n’est qu’une note de plus.',
     checks: [{ k: 'appog', min: 0.75 }, { k: 'weight', min: 0.7 }] },
@@ -433,16 +571,99 @@ ${W.paliers({ lesson: 'n1-im-gammes', steps: [
     what: 'L’appli pose la question ; ta réponse contient une appoggiature, idéalement à la fin (fa♯ → mi sur l’accord final).',
     why: 'Le soupir à la fin d’une phrase : la conclusion la plus expressive du romantisme.',
     checks: [{ k: 'answers', min: 3 }] },
-  { id: 'tonalites', title: 'Dans deux autres tonalités', preset: 'n1-soupirs', mode: 'squelette', loops: 1, keys: [{ tr: -2, label: 'ré mineur' }, { tr: 5, label: 'la mineur' }],
-    what: 'Les mêmes soupirs en ré mineur, puis en la mineur : les notes en or te guident encore.',
-    why: 'Transposer fixe le geste dans la main, quelle que soit la tonalité.',
+  { id: 'tonalites', title: 'Dans deux autres tonalités', preset: 'n1-soupirs', mode: 'squelette', gold: 'memo', loops: 1, keys: [{ tr: -2, label: 'ré mineur' }, { tr: 5, label: 'la mineur' }],
+    what: 'Les mêmes soupirs en ré mineur, puis en la mineur, de mémoire : écoute le squelette dans la nouvelle tonalité, chante-le, puis joue-le.',
+    why: 'Transposer fixe le geste dans la main et dans l’oreille, quelle que soit la tonalité.',
     checks: [{ k: 'appog', min: 0.75 }] },
+  { id: 'deux-mains', title: 'À deux mains : basse et accord', preset: 'n1-soupirs', mode: 'libre', loops: 2, hands: true, formula: 'basse-accord', bpm: 52,
+    what: 'Tes soupirs sur ta propre main gauche : la basse au 1er et au 3e temps, l’accord au 2e et au 4e (en brun). Trois étapes : l’appli joue tout, puis la basse seule, puis le clic seul. Une appoggiature par mesure, ou une sur deux.',
+    why: 'Le soupir demande du poids à droite et de la légèreté à gauche : deux nuances à la fois, le cœur du jeu romantique.',
+    checks: [{ k: 'figure', f: 'appoggiature', min: 3 }, { k: 'nonstop', bars: 14 }] },
 ] })}
 ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>Résoudre en sautant.</b> La résolution se fait d’un degré, presque toujours vers le bas.</li>
 <li><b>Une appoggiature aussi douce que sa résolution.</b> Mets le poids sur la dissonance, pas sur la note qui suit.</li>
 <li><b>En mettre partout.</b> Une ou deux par phrase : le soupir doit rester un événement.</li>
 </ul>`)}
+`,
+  },
+
+  /* ================================================================ 7 (V7.4) */
+  {
+    id: 'n1-im-melodie', minutes: 25,
+    title: 'Une mélodie connue : l’harmoniser, la varier',
+    summary: 'Rejouer « Ah ! vous dirai-je, maman » d’oreille, trouver ses accords avec I, IV et V, puis en faire trois variations : le rythme, les ornements, le mineur. Comme Mozart.',
+    essentials: [
+      'Harmoniser, c’est choisir sous chaque note un accord qui la <b>contient</b> : avec I, IV et V, on harmonise la plupart des chansons.',
+      'On écoute d’abord la <b>basse</b> : do, fa ou sol ? L’oreille le sait souvent avant les yeux.',
+      'Varier, c’est garder les <b>notes d’appui</b> et changer le reste : le rythme, les ornements, le mode.',
+    ],
+    goals: ['Rejouer l’air d’oreille et trouver ses accords.', 'En jouer trois variations : un autre rythme, des ornements, le mineur.'],
+    goal: 'la troisième variation (en mineur) est validée.',
+    body: W => `
+<p>Mozart a écrit douze variations sur cet air (K. 265) : le thème reste reconnaissable d’un bout à l’autre, et tout le reste change. C’est le principe des variations que Czerny apprenait à improviser à ses élèves (op. 200) : garder la charpente, changer l’habit. Tu vas le faire en trois temps : apprendre l’air d’oreille, trouver ses accords, puis le varier.</p>
+
+<h2>1. L’air, d’oreille</h2>
+<p>Si tu ne le sais pas encore, apprends-le dans l’atelier ci-dessous, phrase par phrase, jusqu’à la preuve « sans aide ». Il a trois phrases de quatre mesures ; la troisième est la même que la première.</p>
+${W.earsong({ id: 'ah-vous-dirai-je' })}
+
+<h2>2. Trouver les accords</h2>
+<p>Sous chaque demi-mesure, un accord qui contient la note de l’air. Trois candidats en do majeur :</p>
+<table>
+<thead><tr><th>Note de l’air</th><th>Accords qui la contiennent</th></tr></thead>
+<tbody>
+<tr><td>do</td><td><b>I</b> (do – mi – sol) ou <b>IV</b> (fa – la – do)</td></tr>
+<tr><td>ré</td><td><b>V</b> (sol – si – ré)</td></tr>
+<tr><td>mi</td><td><b>I</b></td></tr>
+<tr><td>fa</td><td><b>IV</b>, ou <b>V7</b> (sol – si – ré – fa)</td></tr>
+<tr><td>sol</td><td><b>I</b> ou <b>V</b></td></tr>
+<tr><td>la</td><td><b>IV</b></td></tr>
+<tr><td>si</td><td><b>V</b></td></tr>
+</tbody></table>
+<p>Quand deux accords conviennent, l’oreille choisit : à la fin d’une phrase, V puis I (la cadence) ; ailleurs, ce qui sonne le plus naturel. L’appli accepte tout accord de I, IV ou V qui contient la note de l’air : il n’y a pas une seule bonne harmonisation.</p>
+${W.ecoute({ title: 'Sous « la – la », deux accords', bpm: 76, items: [
+  { label: 'IV (fa – la – do)', seq: ['do3 | do3 | sol3 | sol3 | la3 | la3 | sol3:2', 'do1 do2 mi2 sol2:4 | fa1 do2 fa2 la2:2 | do1 do2 mi2 sol2:2'], note: 'La note la appartient à l’accord de fa : elle s’y fond.' },
+  { label: 'V (sol – si – ré)', seq: ['do3 | do3 | sol3 | sol3 | la3 | la3 | sol3:2', 'do1 do2 mi2 sol2:4 | sol1 si1 ré2 sol2:2 | do1 do2 mi2 sol2:2'], note: 'La n’est pas dans l’accord de sol : il frotte, et rien ne le résout.' },
+] })}
+
+<h2>3. Varier</h2>
+<p>Les notes d’appui de l’air sont celles du premier temps de chaque mesure : do, la, fa, ré | sol, mi, sol, mi | do, la, fa, ré. Elles restent ; tout le reste peut changer. Mozart change d’abord le rythme et remplit l’espace de notes rapides (sa première variation file en doubles croches), plus loin il passe en mineur (la huitième).</p>
+${W.score({ abc: EX_AHVOUS_VAR, title: 'La première phrase, variée trois fois', bpm: 72, startBpm: 60, practice: false, caption: '<b>Le rythme</b> (mesures 1-4) : pointé, les notes de l’air au même endroit. <b>Les ornements</b> (5-8) : en croches, des broderies (do – ré – do) et des notes de passage autour des mêmes appuis. <b>Le mineur</b> (9-12) : mi devient mi♭, la devient la♭ ; sous la note, i, iv et V.' })}
+
+<h2>Les exercices</h2>
+<p>D’abord l’harmonisation, l’appli jouant l’air ; les accords sont cachés, à toi de les trouver d’oreille. Puis l’air et ses accords à deux mains. Enfin les trois variations, sur l’accompagnement de l’appli.</p>
+${W.paliers({ lesson: 'n1-im-melodie', steps: [
+  { id: 'basses', title: 'Trouver les basses', preset: 'ah-vous', mode: 'libre', loops: 1, lh: 'moi', formula: 'basse', guide: 'melody', hideGrid: true, bpm: 66,
+    what: 'L’appli joue l’air ; ta main gauche joue la basse au début de chaque case de la grille (deux par mesure, souvent) : do, fa ou sol, sous le do central. Écoute laquelle va sous la note de l’air. Les accords sont cachés : « Voir les accords » les montre si tu bloques.',
+    why: 'La basse décide de l’accord. Trouver d’oreille do, fa ou sol, c’est déjà harmoniser, comme les accompagnateurs qui jouent sans partition.',
+    checks: [{ k: 'harmony', need: 'bass', min: 0.75 }] },
+  { id: 'accords', title: 'Les accords sous l’air', preset: 'ah-vous', mode: 'libre', loops: 1, lh: 'moi', formula: 'plaque', guide: 'melody', hideGrid: true, bpm: 66,
+    what: 'L’appli joue l’air ; ta main gauche plaque l’accord au début de chaque case : I, IV ou V, dans la position la plus proche (do – mi – sol, do – fa – la, si – ré – sol). Les accords restent cachés.',
+    why: 'Avec la basse, tu as trouvé la fonction ; avec l’accord entier, tu entends si la note de l’air y est.',
+    checks: [{ k: 'harmony', need: 'chord', min: 0.75 }] },
+  { id: 'deux-mains', title: 'L’air et ses accords, à deux mains', preset: 'ah-vous', mode: 'libre', loops: 1, lh: 'moi', formula: 'plaque', bpm: 60,
+    what: 'Seul, au clic : l’air à la main droite, tes accords plaqués à la main gauche, tenus jusqu’au suivant. Lentement.',
+    why: 'Tu joues la chanson comme un pianiste qui accompagne un chanteur : la mélodie et l’harmonie viennent de toi.',
+    checks: [{ k: 'tune', min: 0.8 }, { k: 'harmony', need: 'chord', min: 0.75 }] },
+  { id: 'rythme', title: 'Variation 1 : un autre rythme', preset: 'ah-vous', mode: 'squelette', gold: 'memo', loops: 1, bpm: 72,
+    what: 'L’appli joue l’accompagnement. Joue l’air avec un autre rythme : pointé, en croches, des notes répétées… Les notes d’appui (le premier temps de chaque mesure) restent celles de l’air.',
+    why: 'Le rythme change tout le caractère : la même mélodie devient une marche, une danse, une berceuse. C’est la variation la plus simple, et la plus parlante.',
+    checks: [{ k: 'targets', min: 0.75 }, { k: 'varied', min: 0.6 }] },
+  { id: 'ornements', title: 'Variation 2 : orner', preset: 'ah-vous', mode: 'squelette', gold: 'memo', loops: 1, bpm: 66,
+    what: 'Garde les notes d’appui de l’air et remplis l’espace en croches : des broderies (do – ré – do), des notes de passage (sol – fa – mi), comme la première variation de Mozart, en plus lent.',
+    why: 'Tout ce que tu as appris (passages, broderies) sur une mélodie que tout le monde connaît : on entend l’air sous les ornements, c’est ce qui rend la variation lisible.',
+    checks: [{ k: 'targets', min: 0.7 }, { k: 'figure', f: 'ornement', min: 5 }, { k: 'rhythm', v: 'croches' }] },
+  { id: 'mineur', title: 'Variation 3 : en mineur', preset: 'ah-vous-min', mode: 'squelette', gold: 'memo', loops: 1, bpm: 66,
+    what: 'L’accompagnement passe en do mineur : joue l’air en mineur. Mi devient mi♭, la devient la♭ ; le reste ne change pas. Écoute d’abord le squelette.',
+    why: 'Changer de mode garde le dessin et renverse le caractère : la chanson devient plainte. C’est la huitième variation de Mozart.',
+    checks: [{ k: 'targets', min: 0.75 }, { k: 'strong', min: 0.7 }] },
+] })}
+${W.warn('Erreurs fréquentes', `<ul>
+<li><b>Chercher l’accord avec les doigts.</b> Chante la note de l’air, puis essaie do, fa ou sol à la basse : l’oreille entend tout de suite celle qui frotte.</li>
+<li><b>Changer d’accord à chaque note.</b> Souvent, un accord dure une demi-mesure, ou une mesure entière : la mélodie passe, l’accord reste.</li>
+<li><b>Perdre l’air sous les ornements.</b> Les notes d’appui restent au premier temps : c’est elles qu’on doit entendre.</li>
+</ul>`)}
+${W.listen([W.yt('Mozart 12 variations Ah vous dirai-je maman K 265', 'Mozart, douze variations K. 265', 'Le thème, puis douze manières de le varier')], 'Écouter')}
 `,
   },
 
@@ -494,7 +715,7 @@ ${W.paliers({ lesson: 'n1-im2', steps: [
     what: 'Main gauche par l’appli. Les notes en or sont celles du modèle : pose-les au premier temps, en valeurs longues (une par mesure).',
     why: 'Tu chantes d’abord la ligne nue du modèle : elle te montre où monter et où te poser.',
     checks: [{ k: 'targets', min: 0.75 }, { k: 'rhythm', v: 'longues' }] },
-  { id: 'soupir', title: 'Habiller : un passage et un soupir', preset: 'romance-mi', mode: 'squelette', loops: 1,
+  { id: 'soupir', title: 'Habiller : un passage et un soupir', preset: 'romance-mi', mode: 'squelette', gold: 'memo', loops: 1,
     what: 'Sur le même squelette, ajoute au moins une note de passage et un soupir (une appoggiature qui retombe d’un degré).',
     why: 'Les outils des leçons précédentes, dans un style : c’est ainsi qu’un vocabulaire devient une langue.',
     checks: [{ k: 'targets', min: 0.6 }, { k: 'figure', f: 'passage', min: 1 }, { k: 'figure', f: 'appoggiature', min: 1 }] },
@@ -502,9 +723,9 @@ ${W.paliers({ lesson: 'n1-im2', steps: [
     what: 'L’appli pose la question (deux mesures) ; réponds en valeurs longues, notes de l’accord sur les temps, fin sur une note stable.',
     why: 'Le dialogue, dans le style : une voix qui chante, pas une suite de notes rapides.',
     checks: [{ k: 'answers', min: 3 }] },
-  { id: 'huit', title: 'Huit mesures : une question, une réponse', preset: 'romance-mi', mode: 'libre', loops: 1,
-    what: 'Seul : une question (mesures 1 à 4, qui monte et se suspend sur ré♯ ou fa♯), une réponse (mesures 5 à 8, qui finit sur mi). Puis « Réécouter ».',
-    why: 'La forme à l’échelle de la phrase : c’est elle qui donne son sens à la romance.',
+  { id: 'huit', title: 'Huit mesures à deux mains : une question, une réponse', preset: 'romance-mi', mode: 'libre', loops: 1, hands: true, formula: 'arpege', bpm: 52,
+    what: 'Une question (mesures 1 à 4, qui monte et se suspend sur ré♯ ou fa♯), une réponse (mesures 5 à 8, qui finit sur mi), lentement, sur ta main gauche en arpège (la basse, puis l’accord égrené, en montant et en redescendant). Trois étapes : l’appli joue tout, puis la basse seule, puis le clic seul. Puis « Réécouter ».',
+    why: 'La forme à l’échelle de la phrase, et tout le style à toi seul : la main gauche crée le climat, la droite chante. Lentement d’abord : la vague doit rester régulière.',
     checks: [{ k: 'cadences', half: 4, full: 8 }, { k: 'nonstop', bars: 7 }] },
   { id: 'lamento', title: 'Une autre grille : la basse qui descend', preset: 'romance-la', mode: 'libre', loops: 2,
     what: 'En la mineur, la basse descend pas à pas (la – sol – fa – mi) : la <b>basse de lamento</b>. Même travail, autre couleur.',
@@ -531,7 +752,7 @@ ${W.listen([W.yt('Liszt Romance S.169 O pourquoi donc', 'Liszt, Romance S. 169',
       'La mélodie de Chopin y suit les règles que tu connais : notes de l’accord sur les temps 1 et 3, des <b>broderies chromatiques</b> (si♮ – do – ré♭) et des <b>rythmes pointés</b>.',
       'Improviser sur la même boucle, c’est comprendre de l’intérieur ce que fait sa mélodie.',
     ],
-    goals: ['Improviser un autre thème sur les harmonies de l’op. 55.', 'Orner son squelette avec des broderies chromatiques et des rythmes pointés.'],
+    goals: ['Préluder en fa mineur avant de jouer ta pièce.', 'Improviser un autre thème sur les harmonies de l’op. 55, puis à deux mains.', 'Orner son squelette avec des broderies chromatiques et des rythmes pointés.'],
     goal: 'l’exercice « question – réponse sur les harmonies de Chopin » est validé.',
     body: W => `
 <p>Cette fois, la grille n’est pas inventée pour l’exercice : ce sont les accords des mesures 1 à 8 de ton nocturne, avec les voicings de Chopin à la main gauche (basse au 1er et au 3e temps, accord au 2e et au 4e). Un accord <b>par demi-mesure</b> : les temps forts sont le 1 et le 3.</p>
@@ -552,6 +773,10 @@ ${W.score({ abc: EX_NOCT_HAB, title: '2. Le même, habillé', bpm: 56, startBpm:
 
 <h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im3', steps: [
+  { id: 'prelude', title: 'Préluder en fa mineur', preset: 'n1-nocturne', mode: 'libre', loops: 1, lh: 'moi', formula: 'arpege', bpm: 60,
+    what: 'Avant ton nocturne, trente secondes pour installer la tonalité : la cadence i – iv – V7 – i en fa mineur, la main gauche en arpège (la basse, puis l’accord égrené), la main droite qui pose une note longue par accord et finit sur fa. Écoute d’abord la main gauche.',
+    why: 'Les pianistes du XIXe siècle préludaient avant de jouer une pièce (Czerny en a fait une méthode, l’op. 200) : l’oreille et les mains entrent dans la tonalité, et le trac retombe. Tu le feras au début de chaque étape Pièce.',
+    checks: [{ k: 'bass', min: 0.75 }, { k: 'lhChord', min: 0.75 }, { k: 'final' }] },
   { id: 'chopin', title: 'Le squelette de Chopin', preset: 'nocturne-op55', mode: 'squelette', loops: 1,
     what: 'Les notes en or sont celles de Chopin aux temps 1 et 3 : joue-les seules, en blanches. C’est sa mélodie, sans ses ornements.',
     why: 'Sous les ornements, une ligne très simple : do, mi♭, do, do… La voir nue explique tout le reste.',
@@ -572,6 +797,10 @@ ${W.paliers({ lesson: 'n1-im3', steps: [
     what: 'L’appli joue deux mesures, tu réponds : notes de l’accord aux temps 1 et 3, même rythme au départ, fin sur une note stable.',
     why: 'Tout le vocabulaire de la leçon, dans un dialogue en temps réel.',
     checks: [{ k: 'answers', min: 3 }] },
+  { id: 'deux-mains', title: 'À deux mains, main gauche simplifiée', preset: 'nocturne-op55', mode: 'libre', loops: 1, hands: true, formula: 'basse-accord', bpm: 48,
+    what: 'Les harmonies de Chopin à ta main gauche, simplifiées : pour chaque accord (deux par mesure), la basse puis l’accord serré sous le do central (en brun). Main droite : ton squelette, en blanches. Trois étapes : l’appli joue tout, puis la basse seule, puis le clic seul.',
+    why: 'Chopin écrit sa main gauche plus large (l’accord monte au-dessus du do central), mais l’harmonie est la même. La jouer toi-même, c’est sentir sous les doigts ce que ta mélodie habille.',
+    checks: [{ k: 'strong', min: 0.7 }, { k: 'rhythm', v: 'longues' }] },
 ] })}
 ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>Perdre le temps sur les ornements.</b> La main gauche de Chopin ne ralentit pas : l’ornement doit tenir dans le temps.</li>
@@ -592,7 +821,7 @@ ${W.tip('Pourquoi c’est utile pour jouer la pièce', '<p>Une fois que tu as im
       'Le motif de la mesure 1 revient à la mesure 5 ; le <b>sommet</b> est dans la réponse, juste avant la cadence.',
       'La même forme dans tous les styles : romance, nocturne.',
     ],
-    goals: ['Construire une période de huit mesures.', 'L’improviser sans t’arrêter, avec un sommet et deux cadences claires, dans plusieurs tonalités.'],
+    goals: ['Construire une période de huit mesures, et connaître une autre forme (2 + 2 + 4).', 'L’improviser sans t’arrêter, avec un sommet et deux cadences claires, dans plusieurs tonalités, puis à deux mains.'],
     goal: 'huit mesures sans t’arrêter : une demi-cadence tenue en mesure 4, le motif de retour en mesure 5, un sommet, une cadence parfaite en mesure 8.',
     body: W => `
 <p>Les leçons précédentes t’ont donné des briques : motif, question et réponse, notes de l’accord, passages, soupirs, un style. La ${W.term('période', 'phrase de huit mesures en deux moitiés : un antécédent qui s’arrête sur la dominante, un conséquent qui commence pareil et conclut sur la tonique')} les assemble. C’est la forme de milliers de thèmes classiques et romantiques : celui de ton nocturne en est un, en deux fois quatre mesures.</p>
@@ -624,6 +853,14 @@ ${W.paliers({ lesson: 'n1-im4', steps: [
     what: 'La période en do mineur, puis en la mineur : demi-cadence, retour du motif, cadence parfaite.',
     why: 'Quand la forme tient dans trois tonalités, elle est vraiment à toi.',
     checks: [{ k: 'cadences', half: 4, full: 8 }, { k: 'repeatStart', a: 1, b: 5 }] },
+  { id: 'phrase', title: 'Une autre forme : présenter, répéter, conclure', preset: 'n1-qr', mode: 'libre', loops: 2,
+    what: 'Une idée de deux mesures (mesures 1-2), répétée sur les accords suivants (mesures 3-4, mêmes rythmes, autres notes si besoin), puis quatre mesures qui vont droit à la cadence, sans retour du début. Fin sur fa.',
+    why: 'Deux idées de forme existent à l’échelle de huit mesures : la période (question, réponse qui reprend le début) et la « phrase » : présenter, répéter, puis accélérer vers la fin (Beethoven ouvre ainsi sa sonate op. 2 n° 1). Connaître les deux, c’est choisir.',
+    checks: [{ k: 'repeatStart', a: 1, b: 3 }, { k: 'final' }, { k: 'nonstop', bars: 7 }] },
+  { id: 'deux-mains', title: 'La période à deux mains', preset: 'n1-qr', mode: 'libre', loops: 1, hands: true, formula: 'basse-accord', bpm: 54,
+    what: 'La période entière sur ta propre main gauche (basse et accord), en trois étapes : l’appli joue tout, puis la basse seule, puis le clic seul. Une demi-cadence tenue en mesure 4, une cadence parfaite en mesure 8.',
+    why: 'C’est l’épreuve d’improvisation du niveau, telle qu’un pianiste la joue : seul, les deux mains, une forme claire.',
+    checks: [{ k: 'cadences', half: 4, full: 8 }] },
 ] })}
 ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>Une demi-cadence sur la tonique.</b> La question s’arrête sur do, mi ou sol (l’accord de do), pas sur fa.</li>

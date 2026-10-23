@@ -19,7 +19,7 @@ import { midi } from './midi.js';
 import { store } from './store.js';
 import { keyboard, COLORS } from './diagrams.js';
 import { scheduleCountIn, countInPosition } from './countin.js';
-import { analyzeTake, evaluate, judgeAnswer, judgeEcho, FIG_LABEL } from './impro-check.js';
+import { analyzeTake, evaluate, judgeAnswer, judgeEcho, FIG_LABEL, lhMove } from './impro-check.js';
 
 const PC_NAMES_FLAT = ['do', 'ré♭', 'ré', 'mi♭', 'mi', 'fa', 'sol♭', 'sol', 'la♭', 'la', 'si♭', 'si'];
 const PC_NAMES_SHARP = ['do', 'do♯', 'ré', 'ré♯', 'mi', 'fa', 'fa♯', 'sol', 'sol♯', 'la', 'la♯', 'si'];
@@ -69,6 +69,31 @@ const OP55_GRID = [
   C('i6/4', 5, 'm', 48, { name: 'fa mineur / do', notes: [56, 60, 65], beats: 2, section: 'cadence' }), C('V7', 0, '7', 36, { name: 'do 7', notes: [48, 58, 64], beats: 2 }),
   C('i', 5, 'm', 41, { name: 'fa mineur', notes: [56, 60, 65], beats: 4 }),
 ];
+
+/** Une mélodie écrite en notes MIDI : « 60 62 64:2 | … » (durée en temps après « : », une noire par défaut ; « | » ignoré). */
+function MEL(str) {
+  const out = [];
+  let t = 0;
+  for (const tok of str.split(/\s+/)) {
+    if (!tok || tok === '|') continue;
+    const [m, d] = tok.split(':');
+    const dur = d ? +d : 1;
+    if (m !== 'r') out.push({ m: +m, t, d: dur });
+    t += dur;
+  }
+  return out;
+}
+/** L'harmonisation de « Ah ! vous dirai-je, maman » : I | IV I | IV I | V I | I V7 | I V | I V7 | I V | I | IV I | IV I | V I. */
+function AH_VOUS(mode) {
+  const min = mode === 'min';
+  const I = (beats = 2, sec) => C(min ? 'i' : 'I', 0, min ? 'm' : 'M', 48, { name: min ? 'do mineur' : 'do majeur', beats, ...(sec ? { section: sec } : {}) });
+  const IV = () => C(min ? 'iv' : 'IV', 5, min ? 'm' : 'M', 41, { name: min ? 'fa mineur' : 'fa majeur', beats: 2 });
+  const V = () => C('V', 7, 'M', 43, { name: 'sol majeur', beats: 2 });
+  const V7 = () => C('V7', 7, '7', 43, { name: 'sol 7', beats: 2 });
+  return [I(4, 'phrase 1'), IV(), I(), IV(), I(), V(), I(),
+    I(2, 'phrase 2'), V7(), I(), V(), I(), V7(), I(), V(),
+    I(4, 'phrase 3'), IV(), I(), IV(), I(), V(), I()];
+}
 
 export const IMPROV_PRESETS = {
   /* ---- Niveau 1 : le motif, la question et la réponse ---- */
@@ -207,6 +232,15 @@ export const IMPROV_PRESETS = {
   'n2-op15-A': { title: 'Fa majeur, cantabile (comme la section A de l’op. 15)', tonic: 5, mode: 'maj', meter: 3, bars: ['I', 'IV', 'V7', 'I', 'vi', 'ii', 'V7', 'I'], pattern: 'arpege', bpm: 66 },
   'n2-napolitaine': { title: 'Cadence avec sixte napolitaine (fa mineur)', tonic: 5, mode: 'min', meter: 4, bars: ['i', 'iv', 'N6', 'V7', 'i', 'VI', 'N6', 'V7'], pattern: 'accords', bpm: 60 },
   'choral-ut': { title: 'Choral en do mineur (à la manière du Prélude op. 28 n° 20)', style: 'choral', tonic: 0, mode: 'min', meter: 4, bars: ['i', 'iv', 'V7', 'i', 'VI', 'iv', 'V7', 'i'], pattern: 'choral', bpm: 50 },
+  /* ---- V7.4 : ta main gauche, une mélodie connue ---- */
+  'n1-IIVVI-3': { title: 'Do majeur à trois temps : I – IV – V7 – I', tonic: 0, mode: 'maj', meter: 3, bars: ['I', 'IV', 'V7', 'I'], pattern: 'mg-valse', bpm: 92 },
+  // « Ah ! vous dirai-je, maman » : l'air (do4 = do central) et son harmonisation par I, IV et V(7), un accord par demi-mesure
+  'ah-vous': { title: 'Ah ! vous dirai-je, maman (do majeur)', tonic: 0, mode: 'maj', meter: 4, custom: AH_VOUS('maj'), pattern: 'mg-basse-accord', bpm: 76,
+    melody: MEL('60 60 67 67 | 69 69 67:2 | 65 65 64 64 | 62 62 60:2 | 67 67 65 65 | 64 64 62:2 | 67 67 65 65 | 64 64 62:2 | 60 60 67 67 | 69 69 67:2 | 65 65 64 64 | 62 62 60:2'),
+    targets: [60, 69, 65, 62, 67, 64, 67, 64, 60, 69, 65, 62], targetName: 'L’air', targetHelp: 'Les notes en or sont celles de l’air au premier temps de chaque mesure : garde-les, et change ce qui se passe entre elles.' },
+  'ah-vous-min': { title: 'Ah ! vous dirai-je, maman, en do mineur', tonic: 0, mode: 'min', meter: 4, custom: AH_VOUS('min'), pattern: 'mg-basse-accord', bpm: 72,
+    melody: MEL('60 60 67 67 | 68 68 67:2 | 65 65 63 63 | 62 62 60:2 | 67 67 65 65 | 63 63 62:2 | 67 67 65 65 | 63 63 62:2 | 60 60 67 67 | 68 68 67:2 | 65 65 63 63 | 62 62 60:2'),
+    targets: [60, 68, 65, 62, 67, 63, 67, 63, 60, 68, 65, 62], targetName: 'L’air en mineur', targetHelp: 'L’air en do mineur : mi devient mi♭, la devient la♭. Les notes en or sont celles du premier temps.' },
 };
 
 // Grilles dérivées (transpositions) : la grille et le soprano viennent de la grille d'origine.
@@ -273,6 +307,68 @@ export function voicing(ch) {
   return { pcs, bass, upper, arp: ladder.slice(0, 4), ladder };
 }
 
+/* ------------------------------------------------------------------ */
+/* Ta main gauche (V7.4) : l'accord serré sous le do central, enchaîné au plus près grâce aux renversements */
+/* ------------------------------------------------------------------ */
+export const LH_LO = 47, LH_HI = 59; // de si1 à si2 (B2 à B3), sous le do central : la main droite garde le reste
+/** Les positions serrées d'un accord à la main gauche ; pour une septième, aussi sans la quinte (fondamentale, tierce, septième). */
+function lhCandidates(ch) {
+  const pcs = CHORDS[ch.q].iv.map(x => (ch.root + x) % 12);
+  const sets = [pcs];
+  if (pcs.length === 4) sets.push(pcs.filter((_, i) => i !== 2));
+  const out = [];
+  for (const set of sets) for (let r = 0; r < set.length; r++) {
+    const rot = set.slice(r).concat(set.slice(0, r));
+    for (let low = 43; low <= LH_HI; low++) {
+      if (pc(low) !== rot[0]) continue;
+      const notes = [low];
+      for (let k = 1; k < rot.length; k++) { let m = notes[k - 1] + 1; while (pc(m) !== rot[k]) m++; notes.push(m); }
+      if (notes[notes.length - 1] <= LH_HI) out.push(notes);
+    }
+  }
+  return out;
+}
+/** L'accord de la main gauche : le plus proche du précédent (ou centré sur ré2 au départ). */
+export function lhChordVoicing(ch, prev = null) {
+  if (ch.notes?.length && Math.max(...ch.notes) <= LH_HI && Math.min(...ch.notes) >= 40) return ch.notes.slice();
+  const pen = n => (n[0] < LH_LO ? (LH_LO - n[0]) * 2 : 0) + (n.length === 4 ? 1.5 : 0);
+  let best = [], bc = Infinity;
+  for (const n of lhCandidates(ch)) {
+    const c = (prev?.length ? lhMove(prev, n) : Math.abs(n.reduce((a, b) => a + b, 0) / n.length - 52)) + pen(n);
+    if (c < bc - 1e-9) { bc = c; best = n; }
+  }
+  return best;
+}
+/** La basse jouée par la main gauche : la note de basse de l'accord, au moins une tierce sous l'accord. */
+export function lhBass(ch, chord) {
+  const bp = pc(ch.bassM ?? ch.bass ?? ch.root);
+  let m = (chord?.length ? chord[0] : 48) - 3;
+  while (m > 28 && pc(m) !== bp) m--;
+  return m < 31 ? m + 12 : m;
+}
+/** Le plan de la main gauche pour toute la grille : { bass, chord } par accord, enchaîné au plus près. */
+export function lhPlan(timeline) {
+  let prev = null;
+  return timeline.map(ch => {
+    if (ch.silent) return { bass: null, chord: [] };
+    const chord = lhChordVoicing(ch, prev);
+    prev = chord;
+    return { bass: lhBass(ch, chord), chord };
+  });
+}
+/** La formule de main gauche par défaut : la valse à trois temps, basse et accord sinon. */
+export const defaultFormula = meter => (meter === 3 ? 'valse' : 'basse-accord');
+/** Les formules de main gauche à jouer soi-même : leur nom, et ce qu'elles demandent (pour l'affichage). */
+export const FORMULAS = {
+  basse: { label: 'la basse seule', bass: true },
+  ostinato: { label: 'l’ostinato', bass: true },
+  plaque: { label: 'les accords plaqués', bass: false },
+  'basse-accord': { label: 'basse et accord', bass: true },
+  valse: { label: 'la valse', bass: true },
+  arpege: { label: 'l’arpège', bass: true },
+  alberti: { label: 'la basse d’Alberti', bass: false },
+};
+
 /* Motifs de main gauche : chaque motif programme les notes d'un accord (durée `dur` secondes, `beats` temps). */
 export const PATTERNS = {
   'basse-accord': ({ v, t, beats, spb, note }) => {
@@ -337,9 +433,49 @@ export const PATTERNS = {
   },
   bourdon: ({ v, t, dur, note }) => { note(v.bass, t, dur * 0.98, 54); note(v.bass + 7, t, dur * 0.98, 44); },
   basse: ({ v, t, dur, note }) => note(v.bass, t, dur * 0.98, 58),
+  /* Les formules de ta main gauche (V7.4), sous le do central : v.lh = { bass, chord }. part 'bass' : la basse seule
+     (l'appli tient la basse, tu joues le reste). */
+  'mg-basse': ({ v, t, dur, note }) => note(v.lh.bass, t, dur * 0.98, 56),
+  'mg-ostinato': ({ v, t, beats, spb, note, part }) => {
+    const c = v.lh.chord;
+    const cyc = [v.lh.bass, c[0], c[1] ?? c[0] + 5, c[0]];
+    for (let b = 0; b < beats; b++) { if (part === 'bass' && b % 4) continue; note(cyc[b % 4], t + b * spb, spb * 0.95, b === 0 ? 58 : 46); }
+  },
+  'mg-plaque': ({ v, t, dur, note, part }) => {
+    if (part === 'bass') { note(v.lh.bass, t, dur * 0.98, 50); return; }
+    v.lh.chord.forEach(m => note(m, t, dur * 0.98, 44));
+  },
+  'mg-basse-accord': ({ v, t, beats, spb, note, part }) => {
+    for (let b = 0; b < beats; b++) {
+      const at = t + b * spb;
+      if (b % 2 === 0) note(v.lh.bass, at, spb * 0.95, 56);
+      else if (part !== 'bass') v.lh.chord.forEach(m => note(m, at, spb * 0.85, 42));
+    }
+  },
+  'mg-valse': ({ v, t, beats, spb, note, part }) => {
+    note(v.lh.bass, t, spb * 0.95, 58);
+    if (part !== 'bass') for (let b = 1; b < beats; b++) v.lh.chord.forEach(m => note(m, t + b * spb, spb * 0.7, 40));
+  },
+  'mg-arpege': ({ v, t, beats, spb, note, part, meter }) => {
+    // la basse, puis l'accord égrené en croches : en montant (deux vagues à 4 temps), en montant et en redescendant à 3 temps
+    const c = v.lh.chord.slice(0, 3);
+    const seq = (meter || beats) % 3 === 0 ? [v.lh.bass, ...c, ...c.slice(0, -1).reverse()] : [v.lh.bass, ...c];
+    for (let k = 0; k < beats * 2; k++) {
+      const m = seq[k % seq.length];
+      if (part === 'bass' && k % seq.length) continue;
+      note(m, t + k * spb / 2, part === 'bass' ? spb * 0.95 : spb * 0.5, k % seq.length ? 40 : 54);
+    }
+  },
+  'mg-alberti': ({ v, t, beats, spb, note, part }) => {
+    if (part === 'bass') { note(v.lh.bass, t, beats * spb * 0.98, 48); return; }
+    const c = v.lh.chord;
+    const cyc = c.length >= 3 ? [c[0], c[c.length - 1], c[1], c[c.length - 1]] : [c[0], c[1], c[0], c[1]];
+    for (let k = 0; k < beats * 2; k++) note(cyc[k % 4], t + k * spb / 2, spb * 0.45, k % 4 === 0 ? 48 : 38);
+  },
 };
 const PATTERN_LABELS = [['basse-accord', 'basse + accord (nocturne)'], ['arpege', 'arpège élargi'], ['romance', 'romance (croches, jusqu’à la dixième)'], ['elegie', 'élégie (vagues de triolets)'],
-  ['repeated', 'accords répétés (prélude)'], ['choral', 'choral'], ['accords', 'accords tenus'], ['valse', 'valse (3 temps)'], ['alberti', 'basse d’Alberti'], ['ostinato', 'ostinato (quinte bercée)'], ['bourdon', 'bourdon (quinte tenue)'], ['agite', 'agité (accords battus)'], ['basse', 'basse seule']];
+  ['repeated', 'accords répétés (prélude)'], ['choral', 'choral'], ['accords', 'accords tenus'], ['valse', 'valse (3 temps)'], ['alberti', 'basse d’Alberti'], ['ostinato', 'ostinato (quinte bercée)'], ['bourdon', 'bourdon (quinte tenue)'], ['agite', 'agité (accords battus)'], ['basse', 'basse seule'],
+  ['mg-basse-accord', 'ta main gauche : basse et accord'], ['mg-valse', 'ta main gauche : valse'], ['mg-arpege', 'ta main gauche : arpège'], ['mg-alberti', 'ta main gauche : Alberti'], ['mg-plaque', 'ta main gauche : accords plaqués']];
 
 /* ------------------------------------------------------------------ */
 /* Questions et réponses : mélodies générées sur la grille              */
@@ -434,7 +570,11 @@ export function mountImprov(el, cfg = {}) {
   el.append(frame);
 
   let P, timeline, kb, playing = false, timer = null, nextTime, idx, chordLog = [], played = [], offNote = null, offOff = null, bpm;
-  let mode = step?.mode || 'libre', lhMode = step?.lh || 'app', clickOn = lhMode === 'moi', rec = [], recStart = null, lastRec = null, replaying = false;
+  let mode = step?.mode || 'libre', lhMode = step?.lh || 'app', clickOn = lhMode !== 'app', rec = [], recStart = null, lastRec = null, replaying = false;
+  let plan = [];          // ta main gauche : { bass, chord } pour chaque accord de la grille (V7.4)
+  let demo = null;        // écoute d'un modèle : { kind: 'mg' | 'skeleton' }, sans enregistrement ni vérification
+  let goldOn = step?.gold !== 'memo';   // notes en or affichées (de mémoire : cachées, sauf après un échec ou à la demande)
+  let gridOn = !step?.hideGrid;         // harmoniser : les accords cachés, à trouver d'oreille
   let segs = null; // question – réponse ou imitation
   let patOverride = false; // le motif choisi à la main remplace celui des sections
   let tgState = new Map(), lastTarget = null; // squelette : une entrée par mesure (ou par accord) jouée
@@ -450,6 +590,11 @@ export function mountImprov(el, cfg = {}) {
   const clickBtn = h('button', { class: 'btn sm' + (clickOn ? ' on' : ''), type: 'button', title: 'Clic sur chaque temps' }, 'Clic');
   const replayBtn = h('button', { class: 'btn sm', type: 'button', hidden: true, title: 'Réécouter ta dernière improvisation avec l’accompagnement' }, 'Réécouter');
   const modelBtn = h('button', { class: 'btn sm ghost', type: 'button', hidden: true }, 'Écouter une réponse possible');
+  // V7.4 : écouter la main gauche à jouer, écouter le squelette (pour le chanter), montrer l'or ou les accords cachés
+  const mgBtn = h('button', { class: 'btn sm ghost', type: 'button', hidden: true, title: 'L’appli joue la main gauche que tu vas jouer, une fois' }, 'Écouter la main gauche');
+  const skelBtn = h('button', { class: 'btn sm ghost', type: 'button', hidden: true, title: 'L’appli joue les notes d’appui sur l’accompagnement : chante-les avec elle' }, 'Écouter le squelette');
+  const goldBtn = h('button', { class: 'btn sm ghost', type: 'button', hidden: true, 'aria-pressed': 'false' }, 'Voir l’or');
+  const gridBtn = h('button', { class: 'btn sm ghost', type: 'button', hidden: true, 'aria-pressed': 'false' }, 'Voir les accords');
   // l'essentiel d'abord ; le motif de main gauche, la répétition et le clic dans « Options »
   const loopsField = h('label', { class: 'field inline' }, 'Répétition', loops);
   const optRow = h('div', { class: 'score-ctrl score-ctrl-opt' }, h('label', { class: 'field inline' }, 'Main gauche', patSel), loopsField, clickBtn);
@@ -460,7 +605,7 @@ export function mountImprov(el, cfg = {}) {
   const lhLbl = h('span', { class: 'small' }, 'Main gauche jouée par');
   foot.append(
     h('div', { class: 'score-ctrl' }, playBtn, h('label', { class: 'range' }, 'Tempo', rng, out), replayBtn),
-    h('div', { class: 'score-ctrl score-ctrl-2' }, modeLbl, modeSeg, lhLbl, lhSeg, modelBtn, optBtn),
+    h('div', { class: 'score-ctrl score-ctrl-2' }, modeLbl, modeSeg, lhLbl, lhSeg, modelBtn, mgBtn, skelBtn, goldBtn, gridBtn, optBtn),
     optRow,
     h('div', { style: { width: '100%' } }, status));
   if (step) {
@@ -479,8 +624,10 @@ export function mountImprov(el, cfg = {}) {
     segBtn(modeSeg, 'echo', 'Imitation', mode, v => { stop(); mode = v; updateModeUI(); });
     if (hasTargets()) segBtn(modeSeg, 'squelette', P.targetName || (P.targetLabel === 'appoggiature' ? 'Appoggiatures' : 'Squelette'), mode, v => { stop(); mode = v; updateModeUI(); });
   };
-  segBtn(lhSeg, 'app', 'l’appli', lhMode, v => { lhMode = v; showChord(idx || 0, playing); });
-  segBtn(lhSeg, 'moi', 'moi', lhMode, v => { lhMode = v; if (!clickOn) clickBtn.click(); showChord(idx || 0, playing); });
+  const setLh = v => { lhMode = v; if (v !== 'app' && !clickOn) clickBtn.click(); renderGrid(); showChord(idx || 0, playing); updateHelpers(); };
+  segBtn(lhSeg, 'app', 'l’appli', lhMode, setLh);
+  segBtn(lhSeg, 'basse', 'l’appli, la basse seule', lhMode, setLh);
+  segBtn(lhSeg, 'moi', 'moi', lhMode, setLh);
   const segIntro = {
     qr: 'L’appli joue une question (deux mesures), puis c’est à toi : réponds en reprenant son rythme et finis sur une note stable — la tonique à la fin de la grille. Chaque réponse est commentée ici.',
     echo: 'L’appli joue une phrase de deux mesures ; chante-la pendant les deux mesures suivantes, puis rejoue-la au piano. Chaque imitation est commentée ici.',
@@ -492,23 +639,42 @@ export function mountImprov(el, cfg = {}) {
     gridBox.classList.toggle('show-tg', showsTargets());
     qrBox.innerHTML = segIntro[mode] && !step ? `<p class="small mb-0">${segIntro[mode]}</p>` : '';
     status.textContent = statusIdle();
+    updateHelpers();
     showChord(0, false);
   };
+  /** La formule de main gauche à jouer soi-même (null : l'ancien affichage, basse et accord de l'appli). */
+  const fm = () => (step?.formula || ((step?.hands || !step) && lhMode !== 'app' ? defaultFormula(P.meter) : null));
+  /** Les boutons d'aide : écouter la main gauche, le squelette ; montrer l'or ou les accords. */
+  const updateHelpers = () => {
+    if (!P) return;
+    mgBtn.hidden = !(fm() && lhMode !== 'app');
+    skelBtn.hidden = !(step?.gold === 'memo' && hasTargets() && mode === 'squelette');
+    goldBtn.hidden = skelBtn.hidden;
+    goldBtn.textContent = goldOn ? 'Cacher l’or' : 'Voir l’or';
+    goldBtn.setAttribute('aria-pressed', String(goldOn));
+    gridBtn.hidden = !step?.hideGrid;
+    gridBtn.textContent = gridOn ? 'Cacher les accords' : 'Voir les accords';
+    gridBtn.setAttribute('aria-pressed', String(gridOn));
+  };
+  const handsText = () => (lhMode === 'basse' ? ' Ta main gauche joue l’accord (en brun), l’appli la basse.' : lhMode === 'moi' && fm() ? ` Ta main gauche : ${FORMULAS[fm()].label} (en brun).` : '');
   const statusIdle = () => !timeline ? '' : mode === 'qr' ? `${timeline.length} accords · question – réponse : écoute, puis réponds à la main droite (au-dessus du do3).`
     : mode === 'echo' ? 'Imitation : écoute la phrase, chante-la, puis rejoue-la à la main droite.'
       : mode === 'squelette' ? squeletteHelp()
-        : `${Math.round(timeline.totalBeats / P.meter)} mesures · ${P.meter} temps par mesure. Improvise à la main droite (au-dessus du do3).`;
+        : `${Math.round(timeline.totalBeats / P.meter)} mesures · ${P.meter} temps par mesure.${handsText() || ' Improvise à la main droite (au-dessus du do3).'}`;
   const squeletteHelp = () => (P.targetHelp || (P.targetLabel === 'appoggiature' ? 'Pose la note en or (l’appoggiature) au premier temps de chaque mesure, appuie-la, puis descends d’un degré sur une note de l’accord.'
     : P.chordTargets ? 'Pose la note en or au début de chaque accord, puis relie-la à la suivante.' : 'Pose la note en or au premier temps de chaque mesure, puis relie-la à la suivante.'))
-    + ` Toutes les notes en or sont écrites dans la grille ; pendant ${P.chordTargets ? 'un accord' : 'une mesure'}, la suivante est en or pâle sur le clavier : prépare-la.`;
-  const runningText = () => mode === 'squelette' ? squeletteHelp() : restsCheck ? 'Joue quand le bandeau dit « Joue », écoute quand il dit « Écoute ».' : 'À toi : improvise à la main droite, sans t’arrêter.';
+    + (goldOn ? ` Toutes les notes en or sont écrites dans la grille ; pendant ${P.chordTargets ? 'un accord' : 'une mesure'}, la suivante est en or pâle sur le clavier : prépare-la.`
+      : ' De mémoire : l’or est caché. Écoute le squelette et chante-le, puis joue-le ; « Voir l’or » le montre si tu bloques.');
+  const runningText = () => mode === 'squelette' ? squeletteHelp() : restsCheck ? 'Joue quand le bandeau dit « Joue », écoute quand il dit « Écoute ».' : (handsText().trim() || 'À toi : improvise à la main droite, sans t’arrêter.');
   const setCue = (txt, kind = '') => { cue.hidden = !txt; cue.textContent = txt; cue.className = 'improv-cue' + (kind ? ' ' + kind : ''); };
 
   const load = () => {
     stop();
     P = IMPROV_PRESETS[presetId];
     if (step?.tr) P = { ...P, tr: (P.tr || 0) + step.tr };
+    if (P.melody && P.tr) P = { ...P, melody: P.melody.map(n => ({ ...n, m: n.m + P.tr })) };
     timeline = buildTimeline(P);
+    plan = lhPlan(timeline);
     bpm = step?.bpm || P.bpm; rng.value = bpm; out.textContent = `♩ = ${bpm}`;
     patSel.value = P.pattern;
     if (step && (mode === 'libre' || mode === 'squelette')) loops.value = String(step.loops ?? 2);
@@ -534,7 +700,7 @@ export function mountImprov(el, cfg = {}) {
     if (P.targets) return P.targets[timeline[k].bar % P.targets.length] + tr;
     return null;
   };
-  const showsTargets = () => mode === 'squelette' && hasTargets();
+  const showsTargets = () => mode === 'squelette' && hasTargets() && goldOn;
   /** L'accord n° i porte-t-il une note en or ? (chaque accord, ou le premier accord de chaque mesure) */
   const ownsTarget = i => {
     const ch = timeline[((i % timeline.length) + timeline.length) % timeline.length];
@@ -548,16 +714,25 @@ export function mountImprov(el, cfg = {}) {
 
   /** La grille entière : chaque accord, ses notes ; l'accord en cours surligné. */
   const renderGrid = () => {
+    if (!timeline) return;
     gridBox.innerHTML = '';
     const what = P.targetLabel === 'appoggiature' ? 'appoggiature à poser' : 'note en or à poser';
+    const showLh = !!fm() && lhMode !== 'app' && gridOn;
     timeline.forEach((ch, i) => {
       const notesTxt = CHORDS[ch.q].iv.map(x => pcName((ch.root + x) % 12, ch)).join(' ');
       // la note en or de l'accord (mode squelette) : toute la ligne est lisible avant le départ
       const tg = hasTargets() && ownsTarget(i) ? targetAt(i) : null;
-      const cell = h('div', { class: 'ig-cell' + (ch.beats < P.meter ? ' half' : ''), role: 'listitem', 'data-i': i, title: `${ch.name} : ${notesTxt}` },
+      const lh = showLh && !ch.silent ? plan[i] : null;
+      const cell = gridOn ? h('div', { class: 'ig-cell' + (ch.beats < P.meter ? ' half' : ''), role: 'listitem', 'data-i': i, title: `${ch.name} : ${notesTxt}` },
         ch.section ? h('span', { class: 'ig-sec' }, ch.section) : null,
         h('b', {}, ch.label || '·'), h('span', { class: 'ig-name' }, ch.name), h('span', { class: 'ig-notes' }, notesTxt),
-        tg != null ? h('span', { class: 'ig-tg', title: `${what} : ${tgName(tg, ch)}` }, tgName(tg, ch)) : null);
+        lh ? h('span', { class: 'ig-lh', title: 'Ta main gauche' }, 'MG : ' + lh.chord.map(m => pcName(pc(m), ch)).join(' ')) : null,
+        tg != null ? h('span', { class: 'ig-tg', title: `${what} : ${tgName(tg, ch)}` }, tgName(tg, ch)) : null)
+        // harmoniser : l'accord est à trouver d'oreille (seules les mesures sont affichées)
+        : h('div', { class: 'ig-cell hidden-ch' + (ch.beats < P.meter ? ' half' : ''), role: 'listitem', 'data-i': i, title: 'Accord à trouver' },
+          ch.section ? h('span', { class: 'ig-sec' }, ch.section) : null,
+          h('b', {}, '?'), h('span', { class: 'ig-name' }, `mesure ${ch.bar + 1}${ch.at % P.meter ? ', 2e moitié' : ''}`),
+          tg != null ? h('span', { class: 'ig-tg' }, tgName(tg, ch)) : null);
       gridBox.append(cell);
     });
   };
@@ -574,9 +749,17 @@ export function mountImprov(el, cfg = {}) {
     const tg = showsTargets() ? targetAt(i) : null;
     const lastIdx = live && playing && !segs && +loops.value > 0 ? timeline.length * +loops.value - 1 : Infinity;
     const nt = showsTargets() ? nextTarget(i, lastIdx) : null;
+    const f = fm(), lhv = plan[i % timeline.length];
+    const nmL = list => list.map(m => tgName(m, ch)).join(' – ');
+    const c0 = lhv?.chord || [];
+    const lhLine = !gridOn || ch.silent ? null : f && lhMode === 'basse' && c0.length ? h('div', {}, 'Ta main gauche : ', h('b', {}, nmL(c0)), ` (l’appli joue la basse ${tgName(lhv.bass, ch)})`)
+      : f && lhMode === 'moi' && c0.length ? h('div', {}, 'Ta main gauche : ', h('b', {}, f === 'plaque' ? nmL(c0) : f === 'basse' ? tgName(lhv.bass, ch)
+        : f === 'alberti' ? nmL([c0[0], c0[c0.length - 1], c0[1], c0[c0.length - 1]]) : f === 'ostinato' ? nmL([lhv.bass, c0[0], c0[1] ?? c0[0] + 5, c0[0]])
+          : f === 'arpege' ? `${tgName(lhv.bass, ch)}, puis ${nmL(c0.slice(0, 3))} égrené` : `${tgName(lhv.bass, ch)}, puis ${nmL(c0)}`))
+        : lhMode === 'moi' ? h('div', {}, 'Ta main gauche : ', h('b', {}, `${noteNameFr(v.bass)} + ${v.upper.map(m => noteNameFr(m)).join(' ')}`)) : null;
     chordBox.append(
-      h('div', {}, h('div', { class: 'small' }, live ? 'Accord actuel' : 'Premier accord'), h('div', { class: 'in-label' }, ch.label || ch.name), h('div', { class: 'small' }, ch.label ? ch.name : '')),
-      h('div', { class: 'in-next' }, h('div', { class: 'small' }, 'Suivant'), h('div', { class: 'in-label sm' }, nxt.label || nxt.name)),
+      h('div', {}, h('div', { class: 'small' }, live ? 'Accord actuel' : 'Premier accord'), h('div', { class: 'in-label' }, gridOn ? ch.label || ch.name : '?'), h('div', { class: 'small' }, gridOn && ch.label ? ch.name : !gridOn ? 'à trouver d’oreille' : '')),
+      h('div', { class: 'in-next' }, h('div', { class: 'small' }, 'Suivant'), h('div', { class: 'in-label sm' }, gridOn ? nxt.label || nxt.name : '?')),
       showsTargets() ? h('div', { class: 'in-gold' },
         h('div', { class: 'small' }, live ? 'Note en or' : 'Première note en or'),
         h('div', { class: 'in-gold-row' },
@@ -585,16 +768,21 @@ export function mountImprov(el, cfg = {}) {
           nt ? h('span', { class: 'tg-chip next' }, tgName(nt.m, nt.ch)) : null)) : null,
       h('div', { class: 'small in-notes' },
         P.showScale ? h('div', {}, 'Notes à jouer : ', h('b', {}, scalePcs(ch).map(x => pcName(x, ch)).join(' '))) : null,
-        h('div', {}, P.showScale ? 'Notes d’appui : ' : 'Notes de l’accord : ', h('b', {}, ct.join(' – '))),
-        lhMode === 'moi' ? h('div', {}, 'Ta main gauche : ', h('b', {}, `${noteNameFr(v.bass)} + ${v.upper.map(m => noteNameFr(m)).join(' ')}`)) : null));
+        gridOn ? h('div', {}, P.showScale ? 'Notes d’appui : ' : 'Notes de l’accord : ', h('b', {}, ct.join(' – '))) : h('div', {}, 'Accords permis : ', h('b', {}, P.mode === 'min' ? 'i, iv, V' : 'I, IV, V')),
+        lhLine));
     const pcs = CHORDS[ch.q].iv.map(x => (ch.root + x) % 12);
     const sc = P.showScale ? scalePcs(ch) : [];
     const marks = [];
     for (let m = 36; m <= 89; m++) {
       if (m < 60) {
-        if (lhMode === 'moi' && (m === v.bass || v.upper.includes(m))) marks.push({ m, color: isBlackKey(m) ? '#8c5a26' : '#efdcc4' });
+        if (!gridOn || ch.silent) continue;
+        if (f && lhMode !== 'app') {
+          if (f !== 'basse' && lhv?.chord.includes(m)) marks.push({ m, color: isBlackKey(m) ? '#8c5a26' : '#efdcc4' });
+          else if (lhMode === 'moi' && FORMULAS[f]?.bass && m === lhv?.bass) marks.push({ m, color: isBlackKey(m) ? '#5e3b17' : '#d9b48f' });
+        } else if (lhMode === 'moi' && (m === v.bass || v.upper.includes(m))) marks.push({ m, color: isBlackKey(m) ? '#8c5a26' : '#efdcc4' });
         continue;
       }
+      if (!gridOn) { if (sc.includes(pc(m))) marks.push({ m, color: isBlackKey(m) ? '#476aa3' : '#d2def0' }); continue; }
       if (pcs.includes(pc(m))) marks.push({ m, color: isBlackKey(m) ? '#3f8a5c' : '#b9dcc5' });
       else if (sc.includes(pc(m))) marks.push({ m, color: isBlackKey(m) ? '#476aa3' : '#d2def0' });
     }
@@ -625,21 +813,39 @@ export function mountImprov(el, cfg = {}) {
   const schedule = () => {
     if (!playing) return;
     const spb = 60 / bpm;
-    const maxLoops = segs ? 0 : +loops.value;
+    const maxLoops = segs ? 0 : demo ? 1 : +loops.value;
     while (nextTime < audio.now() + 0.3) {
       if (maxLoops && idx >= timeline.length * maxLoops) { const end = nextTime; setTimeout(() => stop(true), Math.max(0, (end - audio.now()) * 1000) + 300); playing = false; return; }
       if (segs && segs.done) { const end = nextTime; setTimeout(() => stop(true), Math.max(0, (end - audio.now()) * 1000) + 300); playing = false; return; }
       const ch = timeline[idx % timeline.length];
       const v = voicing(ch);
+      v.lh = plan[idx % timeline.length];
       const t = nextTime;
       const dur = ch.beats * spb;
       const note = (m, at, d, vel = 52) => { const vo = audio.noteOn(m, vel, at, { owner: 'improv' }); if (vo) audio.noteOff(vo, at + d); };
-      if (lhMode === 'app' && !ch.silent) {
-        if (ch.hold) { (ch.notes ? v.upper : [v.bass, ...v.upper]).forEach(m => note(m, t, dur * 0.98, 46)); }
-        else (PATTERNS[(!patOverride && ch.pattern) || patSel.value] || PATTERNS['basse-accord'])({ v, t, dur, beats: ch.beats, spb, note, meter: P.meter });
+      // la main gauche : l'appli joue tout (sa formule, ou la tienne dans les exercices à deux mains), la basse seule, ou rien
+      const lhNow = demo ? 'app' : lhMode;
+      const f = fm();
+      if (lhNow === 'app' && !ch.silent) {
+        const pat = f && (step?.formula || step?.hands || demo?.kind === 'mg') ? 'mg-' + f : (!patOverride && ch.pattern) || patSel.value;
+        if (ch.hold && !pat.startsWith('mg-')) { (ch.notes ? v.upper : [v.bass, ...v.upper]).forEach(m => note(m, t, dur * 0.98, 46)); }
+        else (PATTERNS[pat] || PATTERNS['basse-accord'])({ v, t, dur, beats: ch.beats, spb, note, meter: P.meter });
+      } else if (lhNow === 'basse' && !ch.silent) {
+        (PATTERNS['mg-' + (f || defaultFormula(P.meter))] || PATTERNS['mg-basse-accord'])({ v, t, dur, beats: ch.beats, spb, note, meter: P.meter, part: 'bass' });
+      }
+      // la mélodie jouée par l'appli (harmoniser : tu joues les accords dessous), ou le squelette à chanter
+      const at0 = ch.at;
+      if (P.melody && (step?.guide === 'melody' && !demo || demo?.kind === 'melody')) {
+        for (const n of P.melody) if (n.t >= at0 - 1e-6 && n.t < at0 + ch.beats - 1e-6) note(n.m, t + (n.t - at0) * spb, n.d * spb * 0.92, 72);
+      }
+      if (demo?.kind === 'skeleton' && !ch.silent && ownsTarget(idx)) {
+        const m = targetAt(idx);
+        let span = ch.beats;
+        for (let j = idx + 1; j < idx + timeline.length && !ownsTarget(j); j++) span += timeline[j % timeline.length].beats;
+        if (m != null) note(m, t, Math.min(span, P.meter) * spb * 0.95, 74);
       }
       const barStart = ch.at % P.meter === 0;
-      if (clickOn || lhMode === 'moi') for (let b = 0; b < ch.beats; b++) audio.click(t + b * spb, barStart && b === 0 ? 'accent' : 'beat');
+      if ((clickOn || lhNow !== 'app') && !demo) for (let b = 0; b < ch.beats; b++) audio.click(t + b * spb, barStart && b === 0 ? 'accent' : 'beat');
       chordLog.push({ start: audio.ctxToPerf(t), end: audio.ctxToPerf(t + dur), ch, beatMs: spb * 1000, meter: P.meter, i: idx, at0: ch.at });
       segs?.onChord(idx, t, dur);
       const delay = Math.max(0, audio.ctxToPerf(t) - performance.now());
@@ -734,33 +940,40 @@ export function mountImprov(el, cfg = {}) {
     const spb = 60 / bpm;
     beatMs = spb * 1000;
     let t0;
-    if (opts.replay) t0 = audio.now() + 0.5;
+    demo = opts.demo || null;
+    if (opts.replay || demo) t0 = audio.now() + 0.5;
     else {
       // décompte commun : au moins quatre temps entendus avant le premier accord
-      const plan = scheduleCountIn({ beatsPerBar: P.meter, beatSec: spb });
-      countNodes = plan.nodes;
-      t0 = plan.end;
+      const cin = scheduleCountIn({ beatsPerBar: P.meter, beatSec: spb });
+      countNodes = cin.nodes;
+      t0 = cin.end;
       countTimer = setInterval(() => {
-        const p = countInPosition(plan);
+        const p = countInPosition(cin);
         if (!playing) { clearInterval(countTimer); countTimer = null; return; }
         if (p.done) {
           clearInterval(countTimer); countTimer = null;
           if (!segs) { status.textContent = runningText(); if (!restsCheck) setCue(''); }
           return;
         }
-        status.textContent = p.waiting ? 'Décompte…' : `Décompte : ${p.inBar}${plan.bars > 1 ? ` (mesure ${p.bar} sur ${plan.bars})` : ''} — tu commences au premier accord.`;
+        status.textContent = p.waiting ? 'Décompte…' : `Décompte : ${p.inBar}${cin.bars > 1 ? ` (mesure ${p.bar} sur ${cin.bars})` : ''} — tu commences au premier accord.`;
         setCue(p.waiting ? '…' : String(p.inBar), 'count');
       }, 40);
     }
     nextTime = t0;
     perf0 = audio.ctxToPerf(t0);
     rng.disabled = true;
-    if (opts.replay) segs = null;
+    if (opts.replay || demo) segs = null;
     else if (mode === 'qr' || mode === 'echo') { qrBox.querySelectorAll('.qr-res').forEach(x => x.remove()); segs = buildSegs(mode); } else segs = null;
     playBtn.textContent = 'Arrêter';
     playBtn.classList.add('on');
     timer = setInterval(schedule, 30);
     schedule();
+    if (demo) {
+      status.textContent = demo.kind === 'mg' ? `Écoute la main gauche que tu vas jouer (${FORMULAS[fm()]?.label || 'basse et accord'}) : un tour de la grille.`
+        : demo.kind === 'skeleton' ? 'Écoute le squelette : chante-le avec l’appli, à voix haute ou dans ta tête. Puis joue-le, de mémoire.'
+          : 'Écoute…';
+      return;
+    }
     if (opts.replay) {
       // réécoute : la main droite enregistrée, recalée sur le début de l'accompagnement ; arrêt après la dernière note
       let end = 0;
@@ -830,12 +1043,26 @@ export function mountImprov(el, cfg = {}) {
     const span = A.all.length ? (A.all[A.all.length - 1].b - A.all[0].b) / P.meter : 0;
     const enough = segs ? segResults.length >= 2 : A.all.length >= 3 && span >= Math.min(3, barsGrid - 1);
     if (!enough) { status.textContent = 'Prise trop courte : rien n’est enregistré. Relance quand tu es prêt.'; return; }
-    const res = evaluate(A, step.checks || [], { segResults, targetAt: hasTargets() ? targetAt : null, chordTargets: !!P.chordTargets });
+    const res = evaluate(A, step.checks || [], { segResults, targetAt: hasTargets() ? targetAt : null, chordTargets: !!P.chordTargets, melody: P.melody || null });
     resBox.hidden = false;
     resBox.innerHTML = '';
     resBox.append(
       h('div', { class: 'ir-head ' + (res.ok ? 'ok' : 'todo') }, res.ok ? '✓ Réussi pour aujourd’hui' : 'Pas encore : voici ce qui manque'),
       h('ul', { class: 'cp-checks' }, ...res.lines.map(l => h('li', { class: l.ok ? 'ok' : 'todo' }, (l.ok ? '✓ ' : '→ ') + l.text))));
+    // harmoniser : la grille de l'appli, pour comparer (une harmonisation parmi d'autres)
+    if (step.hideGrid) {
+      const bars = [];
+      timeline.forEach(c => { (bars[c.bar] = bars[c.bar] || []).push(c.label); });
+      resBox.append(h('p', { class: 'small ir-ref' }, h('b', {}, 'Les accords de l’appli : '), bars.map(b => b.join(' ')).join(' | '), '. D’autres choix sont justes s’ils contiennent la note de la mélodie.'));
+    }
+    // de mémoire : après un échec, l'or revient pour la prise suivante
+    if (!res.ok && step.gold === 'memo' && !goldOn && hasTargets()) {
+      goldOn = true;
+      gridBox.classList.toggle('show-tg', showsTargets());
+      legend.querySelectorAll('.lg-target').forEach(x => { x.hidden = !showsTargets(); });
+      updateHelpers();
+      resBox.append(h('p', { class: 'small ir-gold' }, 'L’or revient pour la prise suivante : regarde-le, puis cache-le dès que tu peux.'));
+    }
     status.textContent = res.ok ? 'Réussi. Réécoute-toi, ou passe à l’exercice suivant.' : 'Relance quand tu veux : un essai de plus, un peu plus lentement si besoin (curseur du tempo).';
     cfg.onResult?.(res);
   };
@@ -857,6 +1084,7 @@ export function mountImprov(el, cfg = {}) {
     gridBox.querySelectorAll('.ig-cell.on').forEach(c => c.classList.remove('on'));
     clearTimeout(replayTimer); replayTimer = null;
     if (replaying) { replaying = false; status.textContent = statusIdle(); return; }
+    if (demo) { demo = null; status.textContent = statusIdle(); return; }
     if (rec.length >= 3) { lastRec = { notes: rec.slice(), presetId, bpm, pattern: patSel.value }; replayBtn.disabled = false; replayBtn.hidden = false; }
     const elapsed = (performance.now() - perf0) / beatMs;
     if (wasPlaying && step) {
@@ -935,10 +1163,15 @@ export function mountImprov(el, cfg = {}) {
     }, t0);
     status.textContent = 'Une question (deux mesures), puis une réponse possible : même rythme au départ, fin sur la tonique.';
   });
+  mgBtn.addEventListener('click', () => { if (playing) stop(); start({ demo: { kind: 'mg' } }); });
+  skelBtn.addEventListener('click', () => { if (playing) stop(); start({ demo: { kind: 'skeleton' } }); });
+  goldBtn.addEventListener('click', () => { goldOn = !goldOn; updateModeUI(); renderGrid(); });
+  gridBtn.addEventListener('click', () => { gridOn = !gridOn; renderGrid(); updateHelpers(); showChord(idx || 0, playing); });
   sel.addEventListener('change', () => { presetId = sel.value; load(); });
   patSel.addEventListener('change', () => { patOverride = true; });
   load();
   // accès de test (automatisation) : début de la grille et durée d'un temps
-  frame.__improv = { get perf0() { return perf0; }, get beatMs() { return beatMs; }, get playing() { return playing; }, get timeline() { return timeline; }, get segs() { return segs; } };
+  frame.__improv = { get perf0() { return perf0; }, get beatMs() { return beatMs; }, get playing() { return playing; }, get timeline() { return timeline; }, get segs() { return segs; },
+    get plan() { return plan; }, get lhMode() { return lhMode; }, get goldOn() { return goldOn; }, get gridOn() { return gridOn; }, get demo() { return demo; }, get melody() { return P?.melody || null; } };
   return () => stop();
 }

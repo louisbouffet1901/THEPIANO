@@ -361,6 +361,14 @@ export function mountEarPlay(el, opts = {}) {
   return () => { try { cleanup?.(); } catch (e) { /* */ } stopSound(); };
 }
 
+/** Une seule mélodie, dans une leçon (V7.4, « Une mélodie connue ») : l'atelier complet de cette mélodie. */
+export function mountEarSong(el, { id } = {}) {
+  const def = MELODIES.find(d => d.id === id);
+  if (!def) { el.append(h('p', { class: 'small' }, 'Mélodie introuvable.')); return () => {}; }
+  const cleanup = mountTrainer(el, def, null);
+  return () => { try { cleanup?.(); } catch (e) { /* */ } stopSound(); };
+}
+
 /** L'atelier d'une mélodie : écouter, phrase par phrase, questions, preuves. */
 function mountTrainer(host, def, onChange) {
   const frame = h('div', { class: 'w-frame ep-frame' });

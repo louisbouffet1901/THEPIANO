@@ -883,7 +883,7 @@ function pageImproTool() {
   const L = currentLevel();
   const nx = improNext(L);
   const l = nx ? nx.l : null;
-  const sm = l ? (store.get('improv.lessons') || {})[l.id] : null;
+  const sm = l ? nx.sum || null : null;
   const cur = h('div', { class: 'card impro-top' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Où tu en es'), h('span', { class: 'small' }, l ? `Niveau ${l.level.slice(1)}` : '')));
   if (l) {
     cur.append(h('h3', {}, l.title),

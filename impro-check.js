@@ -176,6 +176,64 @@ function cycles(A) {
   return out;
 }
 
+/** Les accords joués (tours compris) jusqu'à la dernière note de la prise, avec les notes de main gauche de chacun. */
+function lhUnits(A) {
+  if (!A.all.length) return [];
+  const endB = A.all[A.all.length - 1].b;
+  const out = [];
+  for (let i = 0; i < 4000; i++) {
+    const ch = A.timeline[i % A.len];
+    const at = Math.floor(i / A.len) * A.total + ch.at;
+    if (at > endB + 0.01) break;
+    if (ch.silent) continue;
+    const notes = A.lh.filter(n => n.i === i);
+    out.push({ i, at, ch, bar: Math.floor(at / A.meter + 1e-6), notes, pcs: [...new Set(notes.map(n => pc(n.m)))], chPcs: chordPcs(ch) });
+  }
+  return out;
+}
+/** Mouvement total entre deux accords (voix appariées dans l'ordre ; tailles différentes : chaque note vers la plus proche). */
+export function lhMove(a, b) {
+  if (!a?.length || !b?.length) return 0;
+  if (a.length === b.length) return a.reduce((s, x, i) => s + Math.abs(x - b[i]), 0);
+  const [S, L] = a.length < b.length ? [a, b] : [b, a];
+  return L.reduce((s, x) => s + Math.min(...S.map(y => Math.abs(x - y))), 0);
+}
+/** Plus longue sous-suite commune. */
+function lcs(a, b) {
+  const L = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) L[i][j] = a[i - 1] === b[j - 1] ? L[i - 1][j - 1] + 1 : Math.max(L[i - 1][j], L[i][j - 1]);
+  return L[a.length][b.length];
+}
+/** La fonction d'un chiffrage (I, IV, V, avec ou sans septième, majuscules ou minuscules). */
+const fnOf = label => String(label || '').replace(/7$/, '').toUpperCase();
+/** Les accords permis pour harmoniser (I, IV, V, V7 de la tonalité), avec le nom de leurs notes. */
+function harmonyFns(ch) {
+  const t = ch.tonic % 12;
+  const FUN = ch.mode === 'min' ? [['i', 0, 'm'], ['iv', 5, 'm'], ['V', 7, 'M'], ['V7', 7, '7']] : [['I', 0, 'M'], ['IV', 5, 'M'], ['V', 7, 'M'], ['V7', 7, '7']];
+  return FUN.map(([label, off, q]) => {
+    const pcs = CHORDS[q].iv.map(x => (t + off + x) % 12);
+    return { label, fn: fnOf(label), root: (t + off) % 12, pcs, names: pcs.map(p => nm(p, ch)).join(' – ') };
+  });
+}
+/** Pour chaque accord joué : l'accord reconnu (I, IV ou V), la note de la mélodie à son début, et s'il lui convient. */
+export function harmonyUnits(A, mel, need = 'chord') {
+  return lhUnits(A).map(u => {
+    const fns = harmonyFns(u.ch);
+    const g = u.at % A.total;
+    const key = mel.find(n => n.t >= g - 0.01 && n.t < g + u.ch.beats - 0.01) || null;
+    let chosen = null;
+    if (need === 'bass') {
+      const low = u.notes.reduce((a, b) => (!a || b.m < a.m ? b : a), null);
+      if (low) chosen = fns.find(f => f.root === pc(low.m) && !/7$/.test(f.label)) || null;
+    } else if (u.pcs.length >= 2) {
+      chosen = fns.filter(f => u.pcs.every(p => f.pcs.includes(p))).sort((a, b) => a.pcs.length - b.pcs.length)[0] || null;
+    }
+    const fits = !!chosen && (!key || chosen.pcs.includes(pc(key.m)));
+    const sugg = key ? (fns.find(f => f.fn === fnOf(u.ch.label) && f.pcs.includes(pc(key.m))) || fns.find(f => f.pcs.includes(pc(key.m)))) : null;
+    return { u, key, chosen, fits, sugg };
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Les vérifications                                                   */
 /* ------------------------------------------------------------------ */
@@ -465,6 +523,104 @@ export const CHECKS = {
     }
     return { ok: true, line: `Ta main gauche pose la basse de chaque accord (${k}/${units.length}).` };
   },
+  /** Main gauche (V7.4) : à chaque accord, au moins deux de ses notes (plaquées ou égrenées), et peu de notes étrangères. */
+  lhChord(A, { min = 0.75, per = 0 }) {
+    const lh = A.lh;
+    if (lh.length < 3) return { ok: false, line: 'Joue l’accord à la main gauche, sous le do central : ses notes sont en brun sur le clavier.' };
+    const units = lhUnits(A);
+    const isOk = u => u.pcs.filter(p => u.chPcs.includes(p)).length >= Math.min(2, u.chPcs.length);
+    const good = units.filter(isOk);
+    const r = units.length ? good.length / units.length : 0;
+    if (r < min) {
+      const miss = units.find(u => !isOk(u));
+      return { ok: false, line: `Main gauche : l’accord joué sur ${good.length}/${units.length} changements. À chaque accord, au moins deux de ses notes (en brun)${miss ? ` ; manqué : mesure ${miss.bar + 1}${miss.ch.name ? `, ${miss.ch.name}` : ''}` : ''}.` };
+    }
+    const foreign = lh.filter(n => !chordPcs(n.ch).includes(pc(n.m))).length;
+    if (foreign / lh.length > 0.2) return { ok: false, line: `Main gauche : ${foreign} notes hors de l’accord sur ${lh.length}. Reste sur les notes de l’accord : elles sont en brun sur le clavier.` };
+    if (per) {
+      const bars = Math.floor((lh[lh.length - 1].b - lh[0].b) / A.meter) + 1;
+      const d = lh.length / bars;
+      if (d < per) return { ok: false, line: `Fais tourner la formule : au moins ${per} notes par mesure à la main gauche (${d.toFixed(1).replace('.', ',')} cette fois).` };
+    }
+    return { ok: true, line: `Ta main gauche joue l’accord à chaque changement (${good.length}/${units.length}).` };
+  },
+  /** Au plus près : d'un accord au suivant, la main gauche bouge peu (renversements, notes communes gardées). */
+  lhLead(A, { max = 5 }) {
+    const units = lhUnits(A).filter(u => u.notes.length >= 2);
+    // l'accord de chaque unité : la dernière attaque de plusieurs notes (la basse jouée seule n'en fait pas partie)
+    const chordOf = u => {
+      const groups = [];
+      for (const n of [...u.notes].sort((a, b) => a.b - b.b)) { const g = groups[groups.length - 1]; if (g && n.b - g.b0 < 0.12) g.ms.push(n.m); else groups.push({ b0: n.b, ms: [n.m] }); }
+      const multi = groups.filter(g => g.ms.length >= 2);
+      return [...new Set(multi.length ? multi[multi.length - 1].ms : u.notes.map(n => n.m))].sort((a, b) => a - b);
+    };
+    let n = 0, tot = 0;
+    for (let k = 1; k < units.length; k++) {
+      if (units[k].i !== units[k - 1].i + 1) continue;
+      tot += lhMove(chordOf(units[k - 1]), chordOf(units[k]));
+      n++;
+    }
+    if (n < 2) return { ok: false, line: 'Joue au moins trois accords de suite à la main gauche.' };
+    const avg = tot / n;
+    return avg <= max ? { ok: true, line: `Tes accords s’enchaînent au plus près : ${avg.toFixed(1).replace('.', ',')} demi-tons de mouvement par changement, en moyenne.` }
+      : { ok: false, line: `Ta main gauche saute (${avg.toFixed(1).replace('.', ',')} demi-tons par changement) : garde les notes communes, et prends la position la plus proche (un renversement).` };
+  },
+  /** Harmoniser une mélodie avec I, IV et V(7) : à chaque accord, celui que tu joues (ou sa basse, avec need 'bass')
+   *  contient la note de la mélodie qui tombe au début de l'accord. Un autre accord que celui de la grille est accepté
+   *  s'il convient à la mélodie. */
+  harmony(A, { min = 0.75, need = 'chord' }, ctx) {
+    const mel = ctx.melody;
+    if (!mel?.length) return { ok: true, line: '' };
+    if (A.lh.length < 2) return { ok: false, line: need === 'bass' ? 'Joue une basse à la main gauche, au début de chaque accord.' : 'Joue les accords à la main gauche, sous le do central.' };
+    const res = harmonyUnits(A, mel, need);
+    const k = res.filter(r => r.fits).length;
+    const alt = res.filter(r => r.fits && r.chosen && r.chosen.fn !== fnOf(r.u.ch.label)).length;
+    const bad = res.filter(r => !r.fits).slice(0, 2).map(r => {
+      const where = `mesure ${r.u.bar + 1}${r.u.at % A.meter ? `, temps ${Math.round(r.u.at % A.meter) + 1}` : ''}`;
+      if (!r.chosen) return `${where} : ${need === 'bass' ? 'aucune basse de I, IV ou V' : 'aucun accord de I, IV ou V reconnu'}`;
+      const sug = r.sugg ? ` ; essaie ${r.sugg.label} (${r.sugg.names})` : '';
+      return `${where} : sous ${nm(r.key.m, r.u.ch)}, ${r.chosen.label} (${r.chosen.names}) ne contient pas ${nm(r.key.m, r.u.ch)}${sug}`;
+    });
+    const r = res.length ? k / res.length : 0;
+    const altTxt = alt ? ` ${plural(alt, 'accord diffère', 'accords diffèrent')} de la grille de l’appli tout en allant avec la mélodie : c’est permis.` : '';
+    return r >= min ? { ok: true, line: `${need === 'bass' ? 'Tes basses vont' : 'Tes accords vont'} avec la mélodie : ${k}/${res.length}.${altTxt}` }
+      : { ok: false, line: `${need === 'bass' ? 'Basses' : 'Accords'} qui vont avec la mélodie : ${k}/${res.length} (objectif ${pct(min)}). ${bad.join(' ; ')}.` };
+  },
+  /** La mélodie donnée (ctx.melody), jouée à la main droite : la même suite de notes, à l'octave près (le meilleur tour). */
+  tune(A, { min = 0.8 }, ctx) {
+    const ref = ctx.melody;
+    if (!ref?.length) return { ok: true, line: '' };
+    if (A.mel.length < 3) return { ok: false, line: 'Joue la mélodie à la main droite, au-dessus du do central.' };
+    const loops = Math.floor(A.end / A.total + 1e-6) + 1;
+    let best = 0;
+    for (let L = 0; L < loops; L++) {
+      const ns = A.mel.filter(n => n.b >= L * A.total - 0.5 && n.b < (L + 1) * A.total - 0.5);
+      if (ns.length < 3) continue;
+      best = Math.max(best, lcs(ref.map(n => pc(n.m)), ns.map(n => pc(n.m))) / Math.max(ref.length, ns.length));
+    }
+    return best >= min ? { ok: true, line: `La mélodie y est (${pct(best)} des notes, dans l’ordre).` }
+      : { ok: false, line: `La mélodie : ${pct(best)} des notes seulement, dans l’ordre. Chante-la, puis rejoue-la phrase par phrase.` };
+  },
+  /** Variation rythmique : le rythme de la mélodie change dans la plupart des mesures. */
+  varied(A, { min = 0.6 }, ctx) {
+    const ref = ctx.melody;
+    if (!ref?.length) return { ok: true, line: '' };
+    const nb = A.barsGrid;
+    let n = 0, k = 0;
+    const bars = [...new Set(A.mel.map(x => x.bar))];
+    for (const bar of bars) {
+      const g = bar % nb;
+      const R = new Set(ref.filter(x => Math.floor(x.t / A.meter + 1e-6) === g).map(x => Math.round((x.t - g * A.meter) * 2) / 2));
+      const P = barOnsets(A.mel, bar, A.meter);
+      if (P.size < 1) continue;
+      n++;
+      if (jacc(R, P) < 0.75) k++;
+    }
+    if (n < 3) return { ok: false, line: 'Joue la mélodie entière, avec ton nouveau rythme.' };
+    const r = k / n;
+    return r >= min ? { ok: true, line: `Le rythme change dans ${k} mesures sur ${n} : c’est une vraie variation.` }
+      : { ok: false, line: `Le rythme ne change que dans ${k} mesures sur ${n} : invente un autre rythme (pointé, croches, notes répétées), en gardant les notes d’appui.` };
+  },
   /** Chant lié : chaque note gardée jusqu'à la suivante. */
   legato(A, { min = 0.7 }) {
     const mel = A.mel;
@@ -604,6 +760,11 @@ export function describeCheck(c) {
     case 'contrast': return 'B change au moins deux choses par rapport à A';
     case 'ret': return c.lead ? 'la sensible qui monte, puis le retour du début' : 'le retour qui rappelle le début';
     case 'bass': return c.per ? `la basse de chaque accord, et ${c.per} notes par mesure à la main gauche` : 'la basse de chaque accord à la main gauche';
+    case 'lhChord': return `l’accord à la main gauche à ${pct(c.min ?? 0.75)} des changements${c.per ? `, ${c.per} notes par mesure au moins` : ''}`;
+    case 'lhLead': return `des accords enchaînés au plus près (${c.max ?? 5} demi-tons de mouvement au plus, en moyenne)`;
+    case 'harmony': return c.need === 'bass' ? `une basse (I, IV ou V) qui va avec la mélodie, à ${pct(c.min ?? 0.75)} des accords` : `un accord (I, IV ou V) qui va avec la mélodie, à ${pct(c.min ?? 0.75)} des accords`;
+    case 'tune': return 'la mélodie jouée en entier, dans l’ordre';
+    case 'varied': return 'un autre rythme que celui de la mélodie, dans la plupart des mesures';
     case 'legato': return 'un chant lié (chaque note tenue jusqu’à la suivante)';
     case 'weight': return 'l’appoggiature plus appuyée que sa résolution';
     case 'reprise': return 'la mélodie simple, puis ornée à la reprise';

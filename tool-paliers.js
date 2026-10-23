@@ -16,19 +16,41 @@ const dayOf = t => new Date(t).toDateString();
 const keyOf = (lesson, id) => `${lesson}:${id}`;
 const recOf = (lesson, id) => (store.get('improv.p') || {})[keyOf(lesson, id)] || null;
 
-/** Statut d'un exercice : validé (réussi deux jours, la dernière fois comprise, et dans chaque tonalité demandée), commencé… */
+/* Deux mains (V7.4) : l'accompagnateur s'efface par paliers. D'abord l'appli joue tout (ta future main gauche) ; puis elle ne
+   joue que la basse, et ta main gauche joue l'accord ; enfin il ne reste que le clic, et tu joues tout. Vérification main
+   par main. Les trois étapes se valident comme des tonalités (chacune réussie au moins une fois). */
+const HANDS = [
+  { label: '1. L’appli joue tout', lh: 'app', what: 'L’appli joue la main gauche que tu joueras ensuite : écoute-la, et joue la main droite.' },
+  { label: '2. La basse seule', lh: 'basse', what: 'L’appli ne joue plus que la basse : ta main gauche joue l’accord (les touches brunes), ta main droite la mélodie.' },
+  { label: '3. Le clic seul', lh: 'moi', what: 'Il ne reste que le clic : ta main gauche joue la basse et l’accord, ta main droite la mélodie. Ralentis si besoin.' },
+];
+/** Les variantes d'un exercice : ses tonalités (keys), ou les trois étapes à deux mains (hands). */
+export function variantsOf(s) {
+  if (s.keys) return { kind: 'keys', list: s.keys };
+  if (!s.hands) return null;
+  const withBass = (s.formula || 'basse-accord') !== 'plaque' && s.formula !== 'alberti';
+  return {
+    kind: 'hands',
+    list: HANDS.map(st => ({ ...st, tr: 0,
+      checks: [...(s.checks || []), ...(st.lh === 'basse' ? [{ k: 'lhChord', min: 0.75 }] : st.lh === 'moi' ? [...(withBass ? [{ k: 'bass', min: 0.75 }] : []), { k: 'lhChord', min: 0.75 }] : [])] })),
+  };
+}
+
+/** Statut d'un exercice : validé (réussi deux jours, la dernière fois comprise, et dans chaque tonalité ou étape demandée), commencé… */
 export function palierStatus(lesson, s) {
   const rec = recOf(lesson, s.id);
   const okDays = rec?.okDays || [];
-  const need = s.keys ? s.keys.length : 0;
+  const vr = variantsOf(s);
+  const need = vr ? vr.list.length : 0;
   const keysDone = rec?.keys || [];
-  const keysOk = !need || s.keys.every(k => keysDone.includes(k.label));
+  const keysOk = !need || vr.list.every(k => keysDone.includes(k.label));
   const mastered = !!rec && !!rec.last?.ok && okDays.length >= 2 && keysOk;
   let label = 'pas encore fait';
   if (mastered) label = 'validé';
   else if (rec) {
     const today = okDays.includes(dayOf(Date.now()));
-    if (!keysOk && okDays.length) label = `encore ${need - s.keys.filter(k => keysDone.includes(k.label)).length} tonalité${need > 1 ? 's' : ''}`;
+    const left = need - vr?.list.filter(k => keysDone.includes(k.label)).length;
+    if (!keysOk && okDays.length) label = vr.kind === 'hands' ? `encore ${left} étape${left > 1 ? 's' : ''}` : `encore ${left} tonalité${left > 1 ? 's' : ''}`;
     else if (rec.last?.ok && okDays.length === 1) label = today ? 'réussi aujourd’hui · à refaire un autre jour' : 'réussi une fois · à refaire pour le valider';
     else if (okDays.length >= 2 && !rec.last?.ok) label = 'à réussir une fois de plus';
     else label = 'commencé';
@@ -47,7 +69,8 @@ function record(lesson, s, res, keyLabel) {
     if (!(rec.okDays || []).includes(d)) rec.okDays = [...(rec.okDays || []), d].slice(-8);
     if (keyLabel && !(rec.keys || []).includes(keyLabel)) rec.keys = [...(rec.keys || []), keyLabel];
   }
-  if (s.keys) rec.needKeys = s.keys.length;
+  const vr = variantsOf(s);
+  if (vr) rec.needKeys = vr.list.length;
   all[k] = rec;
   store.set('improv.p', all);
 }
@@ -113,21 +136,28 @@ export function mountPaliers(el, cfg) {
     body.append(h('p', { class: 'pal-what', html: s.what }));
     if (s.why) body.append(h('p', { class: 'es-why small', html: `<b>Pourquoi.</b> ${s.why}` }));
     if (s.tip) body.append(h('p', { class: 'small pal-tip', html: `<b>Astuce.</b> ${s.tip}` }));
+    if (s.gold === 'memo') body.append(h('p', { class: 'small pal-tip pal-memo', html: '<b>De mémoire.</b> L’or est caché : « Écouter le squelette » te le fait entendre, chante-le, puis joue-le. « Voir l’or » le montre si tu bloques ; après un échec, il revient pour la prise suivante.' }));
     const crit = (s.checks || []).map(describeCheck).filter(Boolean);
+    if (s.hands) crit.push(`à l’étape 2, l’accord à la main gauche${(s.formula || 'basse-accord') !== 'plaque' && s.formula !== 'alberti' ? ' ; à l’étape 3, la basse et l’accord' : ' ; à l’étape 3, de même, sans l’appli'}`);
     if (crit.length) body.append(h('div', { class: 'pal-crit small' }, h('b', {}, 'Réussi si : '), crit.join(' ; ') + '.'));
-    // transposition : une tonalité à choisir ; l'exercice est validé quand chacune a été réussie
-    let key = s.keys ? s.keys[0] : null;
-    const keySeg = s.keys ? h('div', { class: 'seg pal-keys', role: 'group', 'aria-label': 'Tonalité' }) : null;
+    // transposition : une tonalité à choisir ; deux mains : une étape à choisir. Validé quand chacune a été réussie.
+    const vr = variantsOf(s);
+    const done0 = palierStatus(lesson, s).keysDone;
+    // deux mains : on reprend à la première étape pas encore réussie
+    let key = vr ? (vr.kind === 'hands' ? vr.list.find(k => !done0.includes(k.label)) || vr.list[vr.list.length - 1] : vr.list[0]) : null;
+    const keySeg = vr ? h('div', { class: 'seg pal-keys', role: 'group', 'aria-label': vr.kind === 'hands' ? 'Étape' : 'Tonalité' }) : null;
+    const stageWhat = vr?.kind === 'hands' ? h('p', { class: 'small pal-stage' }) : null;
     const host = h('div', { class: 'es-quiz pal-host' });
     const nextBox = h('div', { class: 'es-next', hidden: true });
     const mount = () => {
       stopRun();
       hostEl = host;
       host.innerHTML = '';
-      const stepCfg = { ...s, tr: (s.tr || 0) + (key ? key.tr : 0) };
+      const stepCfg = { ...s, tr: (s.tr || 0) + (key?.tr || 0), ...(key?.lh ? { lh: key.lh } : {}), ...(key?.checks ? { checks: key.checks } : {}) };
+      if (stageWhat) stageWhat.innerHTML = `<b>${key.label.replace(/^\d\. /, '')}.</b> ${key.what}`;
       cleanup = mountImprov(host, {
         step: stepCfg,
-        title: key ? `Accompagnateur · ${key.label}` : 'Accompagnateur',
+        title: key ? `Accompagnateur · ${key.label.replace(/^\d\. /, '').toLowerCase()}` : 'Accompagnateur',
         onResult: res => { record(lesson, s, res, key ? key.label : null); refresh(); },
       });
     };
@@ -135,13 +165,14 @@ export function mountPaliers(el, cfg) {
       if (!keySeg) return;
       keySeg.innerHTML = '';
       const done = palierStatus(lesson, s).keysDone;
-      for (const k of s.keys) {
+      for (const k of vr.list) {
         const b = h('button', { type: 'button', class: k === key ? 'on' : '' }, k.label + (done.includes(k.label) ? ' ✓' : ''));
         b.addEventListener('click', () => { if (k === key) return; key = k; renderKeys(); mount(); });
         keySeg.append(b);
       }
     };
-    if (keySeg) body.append(h('div', { class: 'pal-keyrow' }, h('span', { class: 'small' }, 'Tonalité : '), keySeg));
+    if (keySeg) body.append(h('div', { class: 'pal-keyrow' }, h('span', { class: 'small' }, vr.kind === 'hands' ? 'Accompagnement : ' : 'Tonalité : '), keySeg));
+    if (stageWhat) body.append(stageWhat);
     body.append(host, nextBox);
     const setOpen = o => {
       const was = !body.hidden;

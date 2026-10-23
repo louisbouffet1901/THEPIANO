@@ -61,15 +61,23 @@ export function allocate(cats, total) {
 /* ------------------------------------------------------------------ */
 const link = (href, text) => `<a href="${href}">${esc(text)}</a>`;
 const lowerFirst = t => (t && /^[A-ZÀÂÉÈÊÎÔÛÇ][a-zà-ÿ’' ]/.test(t) ? t.charAt(0).toLowerCase() + t.slice(1) : t);
+/** Résumé d'une leçon d'improvisation, à jour même si la leçon a reçu de nouveaux exercices depuis (V7.4 : deux mains). */
+export function improSummary(l) {
+  const s = (store.get('improv.lessons') || {})[l.id];
+  if (!s) return null;
+  const total = Math.max(s.total || 0, l.steps || 0);
+  if (total <= s.total) return s;
+  // de nouveaux exercices à la fin de la leçon : le premier d'entre eux est en cours si les anciens sont validés
+  return { ...s, total, cur: s.cur ?? s.total, curTitle: s.cur != null ? s.curTitle : 'un nouvel exercice', added: total - s.total };
+}
 /** Leçon d'improvisation en cours : dans l'ordre du module, niveau par niveau jusqu'au niveau en cours. */
 export function improNext(L) {
-  const sums = store.get('improv.lessons') || {};
   for (const lv of LEVELS) {
     if (lv.locked) continue;
     for (const l of lessonsOf(lv.id, 'impro')) {
-      const s = sums[l.id];
+      const s = improSummary(l);
       if (!s) return { l, text: 'le premier exercice' };
-      if (s.mastered < s.total) return { l, text: s.cur != null ? `exercice ${s.cur + 1} sur ${s.total} (${s.curTitle})` : 'à reprendre' };
+      if (s.mastered < s.total) return { l, sum: s, text: s.cur != null ? `exercice ${s.cur + 1} sur ${s.total} (${s.curTitle})` : 'à reprendre' };
     }
     if (lv.id === L.id) break;
   }
