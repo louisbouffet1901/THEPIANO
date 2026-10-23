@@ -11,7 +11,7 @@ import { ensureAbcjs, mountLazy } from './lazy.js';
 import { initUpdates, checkForUpdate, applyUpdate, hasUpdate, version } from './updates.js';
 import { exportProgress, importProgress, resetAll, needsBackupReminder, postponeReminder, lastBackupLabel, requestPersistence } from './backup.js';
 import { LEVELS, MODULES, PIECES, lessonById, levelById, allLessons, lessonsOf, loadLesson, loadPiece } from './content-index.js';
-import { mountSessionBox, weekCard, updateSessionBar, improNext } from './session.js';
+import { mountSessionBox, weekCard, updateSessionBar, improNext, improSummary } from './session.js';
 import { backfillActivity } from './activity.js';
 
 const main = $('#main');
@@ -464,7 +464,8 @@ export function frenchSpacing(root) {
   }
 }
 function lessonListHTML(lessons) {
-  return `<ul class="lesson-list">${lessons.map((l, i) => `<li class="${store.isDone(l.id) ? 'done' : ''}${l.prio === 2 ? ' opt' : ''}"><a href="#/lecon/${l.id}"><span class="num">${store.isDone(l.id) ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b>${l.prio === 2 ? '<em class="tag opt-tag">complément</em>' : ''}<span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a></li>`).join('')}</ul>`;
+  // V7.4 : une case par leçon, pour cocher celles déjà faites (elles ne sont plus proposées dans la séance)
+  return `<ul class="lesson-list">${lessons.map((l, i) => { const d = store.isDone(l.id); return `<li class="${d ? 'done' : ''}${l.prio === 2 ? ' opt' : ''}"><a href="#/lecon/${l.id}"><span class="num" data-n="${i + 1}">${d ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b>${l.prio === 2 ? '<em class="tag opt-tag">complément</em>' : ''}<span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a><button type="button" class="ll-done" data-done="${l.id}" aria-pressed="${d}" aria-label="Leçon déjà faite : ${esc(l.title)}" title="${d ? 'Décocher' : 'Cocher : déjà faite (elle ne sera plus proposée dans la séance)'}"><span class="ll-box"></span></button></li>`; }).join('')}</ul>`;
 }
 /* ================================================================== */
 /* Pages                                                               */
@@ -530,6 +531,7 @@ function pageHome() {
   }).catch(() => {});
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '7.4.1': '<ul><li><b>Cocher ce que tu as déjà fait</b> : dans la séance, un bouton « Déjà faite » sous la leçon d’improvisation, l’étape d’oreille ou l’exercice de technique proposés. La case propose aussitôt la suite (avec « Annuler »).</li><li>Dans les listes de leçons, une case à droite de chaque leçon pour la cocher sans l’ouvrir. Une leçon cochée n’est plus proposée dans la séance ; les nouveaux exercices à deux mains des leçons cochées restent listés dans l’outil Improvisation.</li><li>Parcours d’oreille : « Je la maîtrise déjà » sur chaque étape ; exercices de technique : « Déjà acquis ».</li></ul>',
     '7.4': '<ul><li><b>À deux mains</b> : dans les leçons d’improvisation du niveau 1, un exercice où l’accompagnateur s’efface en trois étapes. L’appli joue tout, puis seulement la basse (ta main gauche joue l’accord), puis seulement le clic (tu joues tout). Chaque main est vérifiée.</li><li>Deux leçons nouvelles. <b>Ta main gauche</b> : des accords serrés enchaînés au plus près, quatre formules (basse et accord, valse, arpège, Alberti), trois tonalités. <b>Une mélodie connue</b> : « Ah ! vous dirai-je, maman » apprise d’oreille, ses accords trouvés sans les voir, puis trois variations comme Mozart.</li><li><b>Les notes en or de mémoire</b> : affichées au premier exercice d’une grille, puis cachées. « Écouter le squelette » te le fait chanter ; l’or revient après un échec.</li><li>Aussi : un prélude en fa mineur avant ton nocturne, et une autre forme de huit mesures (présenter, répéter, conclure).</li></ul>',
     '7.3': '<ul><li><b>Jouer d’oreille</b> (onglet Oreille) : quinze mélodies apprises sans partition, des comptines au Menuet en sol et aux thèmes de tes nocturnes. L’appli joue une phrase avec son accompagnement ; tu la chantes, tu la rejoues avec elle, puis seul sur l’accompagnement. Les phrases s’allongent : une mesure, deux, la phrase, la mélodie entière.</li><li>Entre deux phrases, une <b>question d’analyse</b> : sur quel degré finit-elle, où tombe le sommet, qu’est-ce qui revient, quel accord ?</li><li><b>La preuve</b> que tu la sais : sans aide, dans une autre tonalité, puis chantée. La séance te rappelle une mélodie par semaine.</li></ul>',
     '7.2': '<ul><li><b>Oreille, un seul parcours</b> « entendre, chanter, jouer » : seize étapes, chacune sous trois formes (la reconnaître, la chanter, la retrouver au piano). Une étape est réussie avec deux formes sur trois. Tes progrès sont repris.</li><li><b>La tonalité change dès le début</b>, et tu réponds par des chiffres, sans noms de notes : réussir en do et échouer ailleurs vient de là (l’oreille apprend des hauteurs fixes au lieu de la relation à la tonique). Les étapes réussies en do seulement sont à confirmer dans toutes les tonalités.</li><li><b>Ce qui te trompe</b> : l’appli relève tes confusions (par exemple 4 et 6) et propose une série ciblée sur la paire. Sous 60 % trois fois de suite, elle te la propose d’elle-même.</li><li>Après chaque degré, <b>chante la résolution</b> ; une question sur cinq révise une étape passée ; au chant, modèle « son tenu » et <b>bourdon de tonique</b> au choix ; nouvelle étape <b>« Entendre dans sa tête »</b> (lire une mélodie et l’entendre avant qu’elle sonne).</li></ul>',
@@ -545,7 +547,7 @@ function pageHome() {
     '4.1': '<ul><li><b>Ta séance d’aujourd’hui</b> : environ 1 h 15 tirée de la semaine, étape par étape. Sur chaque page, la barre du bas mène à l’étape suivante.</li><li><b>Pièce</b> : un passage ouvert à la fois ; l’analyse harmonique sous les extraits s’ouvre d’un toucher.</li><li><b>Partitions</b> : Boucle, Montée de tempo et Clavier sont rangés dans « Options ».</li><li><b>Oreille et Théorie</b> : la prochaine série est proposée en haut ; les séries sont rangées par groupe.</li><li><b>Plan</b> : seule la semaine en cours est dépliée. <b>Niveau</b> : les six modules en cartes.</li></ul>',
   };
   // nouveautés de toutes les versions publiées depuis la dernière lue (trois au plus), la plus récente d'abord
-  const vnum = v => String(v || '0').split('.').map(Number).reduce((a, x, i) => a + x * (i ? 1 / 100 : 1), 0);
+  const vnum = v => String(v || '0').split('.').map(Number).reduce((a, x, i) => a + x / 100 ** i, 0); // 7.4.1 < 7.5
   const seen = store.get('seenVersion');
   const unseen = Object.keys(NEWS).filter(v => vnum(v) <= vnum(version.app) && (seen ? vnum(v) > vnum(seen) : v === version.app)).sort((a, b) => vnum(b) - vnum(a)).slice(0, 3);
   if (unseen.length) {
@@ -662,7 +664,7 @@ async function pageLesson(id) {
     doneBtn.textContent = v ? '✓ Leçon terminée' : 'Marquer comme terminée';
     renderNav(location.hash);
     updateSessionBar(location.hash);
-    if (v) toast('Leçon terminée', 'ok');
+    if (v) toast('Leçon terminée : elle ne sera plus proposée dans la séance', 'ok');
   });
   foot.append(doneBtn, h('a', { class: 'small', href: `#/niveau/${L.id}/${M.id}` }, `Retour au module ${M.label}`));
   page.append(foot);
@@ -891,6 +893,14 @@ function pageImproTool() {
       h('p', { class: 'small' }, sm ? (sm.cur != null ? `Exercice ${sm.cur + 1} sur ${sm.total} : ${sm.curTitle}. ${sm.mastered} validé${sm.mastered > 1 ? 's' : ''} sur ${sm.total}.` : `Les ${sm.total} exercices sont validés.`) : 'Pas encore commencée : le premier exercice t’attend.'),
       h('a', { class: 'btn primary sm', href: `#/lecon/${l.id}` }, !sm ? 'Commencer' : sm.cur == null ? 'Revoir la leçon' : 'Continuer'));
   } else cur.append(h('p', { class: 'small' }, 'Toutes les leçons sont validées : joue librement ci-dessous, ou reprends une leçon pour la transposer.'));
+  // leçons cochées « terminées » qui ont reçu de nouveaux exercices (V7.4 : à deux mains) : la séance ne les propose plus
+  const extra = LEVELS.filter(lv => !lv.locked).flatMap(lv => lessonsOf(lv.id, 'impro')).filter(x => store.isDone(x.id) && improSummary(x)?.added);
+  if (extra.length) {
+    const p2 = h('p', { class: 'small muted mb-0' }, 'Nouveaux exercices dans des leçons que tu as cochées terminées : ');
+    extra.forEach((x, i) => p2.append(i ? ', ' : '', h('a', { href: `#/lecon/${x.id}` }, x.title), ` (${improSummary(x).added})`));
+    p2.append('.');
+    cur.append(p2);
+  }
   const host = h('div', { class: 'w' });
   page.append(cur, h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Jouer librement')), h('p', { class: 'small' }, 'L’accompagnateur joue la main gauche (ou la basse seule) ; improvise à la main droite. Les notes jouées s’allument selon leur rôle dans l’harmonie. Modes : libre, question – réponse, imitation, squelette.'), host);
   page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3"><h2>La méthode, leçon par leçon</h2></div>` + moduleIndexHTML('impro'));
@@ -1101,6 +1111,22 @@ function boot() {
   else router();
 }
 store.subscribe((path) => { if (path === 'done' || path === '*') renderNav(location.hash || '#/'); });
+// Listes de leçons : cocher (ou décocher) une leçon déjà faite, sans l'ouvrir (V7.4)
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('.ll-done');
+  if (!b) return;
+  e.preventDefault();
+  const id = b.dataset.done;
+  const v = !store.isDone(id);
+  store.setDone(id, v);
+  const li = b.closest('li');
+  li.classList.toggle('done', v);
+  b.setAttribute('aria-pressed', String(v));
+  b.title = v ? 'Décocher' : 'Cocher : déjà faite (elle ne sera plus proposée dans la séance)';
+  const num = li.querySelector('.num');
+  if (num) num.textContent = v ? '✓' : num.dataset.n;
+  toast(v ? 'Cochée : cette leçon ne sera plus proposée dans la séance.' : 'Décochée : elle peut de nouveau être proposée.', 'ok', 2600);
+});
 boot();
 
 initUpdates();

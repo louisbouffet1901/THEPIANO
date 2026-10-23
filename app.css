@@ -295,6 +295,19 @@ a.card:hover { border-color: var(--line-strong); transform: translateY(-1px); }
 .lesson-list .t b { display: block; font-weight: 600; font-size: 15.5px; }
 .lesson-list .t span { display: block; font-size: 13.5px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lesson-list .dur { font-size: 13px; color: var(--text-3); flex: none; font-variant-numeric: tabular-nums; }
+/* V7.4 : cocher une leçon déjà faite */
+.lesson-list li { display: flex; align-items: stretch; }
+.lesson-list li > a { flex: 1; min-width: 0; }
+.lesson-list .ll-done { flex: none; width: 46px; border: 0; border-left: 1px solid var(--line); background: transparent; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.lesson-list .ll-done:hover { background: var(--surface-2); }
+.lesson-list .ll-box { width: 18px; height: 18px; border: 2px solid var(--text-3); border-radius: 5px; display: grid; place-items: center; }
+.lesson-list .ll-done[aria-pressed="true"] .ll-box { background: var(--ok); border-color: var(--ok); }
+.lesson-list .ll-done[aria-pressed="true"] .ll-box::after { content: ''; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+.sx-skip { align-self: flex-start; margin-top: 4px; border: 1px solid var(--line); background: var(--surface); color: var(--text-2); border-radius: 999px; padding: 2px 10px; font-size: 12.5px; cursor: pointer; }
+.sx-skip:hover { background: var(--surface-2); }
+.sx-skip.undo { border-color: var(--ok); color: var(--ok); }
+.link-btn { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; font: inherit; }
+.es-skiprow { margin: 6px 0 2px; }
 
 /* ---------- Boutons et contrôles ---------- */
 .btn {

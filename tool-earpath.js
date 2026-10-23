@@ -145,11 +145,22 @@ export function seriesStatus(id) {
 const formIds = s => Object.keys(FORMS).filter(f => s.forms[f]);
 export const formDone = (s, f) => s.forms[f].every(id => seriesStatus(id).mastered);
 /** Une étape : formes réussies, et nombre requis (deux sur trois ; toutes s'il y en a moins de deux). */
+/** Étapes cochées « déjà acquise » (V7.4) : faites ailleurs, elles ne sont plus proposées (`skips.ear`). */
+const skippedStep = id => !!(store.get('skips') || {}).ear?.[id];
+export function setStepSkipped(id, on = true) {
+  const all = { ...(store.get('skips') || {}) };
+  const m = { ...(all.ear || {}) };
+  if (on) m[id] = Date.now(); else delete m[id];
+  all.ear = m;
+  store.set('skips', all);
+}
 export function stepStatus(s) {
   const forms = formIds(s);
   const done = forms.filter(f => formDone(s, f));
   const need = Math.min(2, forms.length);
-  return { forms, done, need, ok: done.length >= need, started: forms.some(f => s.forms[f].some(id => seriesStatus(id).done)) };
+  const real = done.length >= need;
+  const skipped = !real && skippedStep(s.id);
+  return { forms, done, need, ok: real || skipped, skipped, started: forms.some(f => s.forms[f].some(id => seriesStatus(id).done)) };
 }
 const currentStep = () => PATH.find(s => !stepStatus(s).ok) || null;
 /** Avancement du parcours (l'argument est gardé pour la compatibilité avec les deux parcours de la V4.3). */
@@ -307,6 +318,16 @@ export function mountEarPath(root, opts = {}) {
       body.append(h('div', { class: 'es-advice small' },
         h('div', {}, h('b', {}, 'Écoute. '), s.advice[0]), h('div', {}, h('b', {}, 'Entraîne-toi. '), s.advice[1]), h('div', {}, h('b', {}, 'Si tu bloques. '), s.advice[2])));
       if (s.lesson) { const l = lessonById(s.lesson); if (l) body.append(h('p', { class: 'small es-lesson' }, 'Le cours qui explique cette étape : ', h('a', { href: `#/lecon/${l.id}` }, l.title), '.')); }
+      // déjà acquise ailleurs : la cocher pour qu'elle ne soit plus proposée (ni ici, ni dans la séance)
+      const skipBtn = h('button', { class: 'btn ghost sm es-skip', type: 'button' });
+      skipBtn.addEventListener('click', () => { const st = stepStatus(s); setStepSkipped(s.id, !st.skipped); refresh(); });
+      body.append(h('div', { class: 'es-skiprow' }, skipBtn));
+      refreshers.push(() => {
+        const st = stepStatus(s);
+        const real = st.ok && !st.skipped;
+        skipBtn.hidden = real;
+        skipBtn.textContent = st.skipped ? 'Cochée comme acquise · la remettre dans le parcours' : 'Je la maîtrise déjà : la cocher';
+      });
       const nextBox = h('div', { class: 'es-next', hidden: true });
       body.append(nextBox, quizHost);
       const setOpen = o => { body.hidden = !o; li.classList.toggle('open', o); btn.setAttribute('aria-expanded', String(o)); if (o) store.set('ui.earOpen.path', s.id); };
@@ -315,7 +336,7 @@ export function mountEarPath(root, opts = {}) {
         const st = stepStatus(s), cur = currentStep() === s;
         li.classList.toggle('done', st.ok); li.classList.toggle('current', cur);
         num.textContent = st.ok ? '✓' : String(i + 1);
-        stat.textContent = st.ok ? 'réussie' : `${st.done.length}/${st.need} forme${st.need > 1 ? 's' : ''}${cur ? ' · en cours' : ''}`;
+        stat.textContent = st.skipped ? 'cochée' : st.ok ? 'réussie' : `${st.done.length}/${st.need} forme${st.need > 1 ? 's' : ''}${cur ? ' · en cours' : ''}`;
         // bloqué sur une série de reconnaissance : la série ciblée d'abord
         const stuck = (s.forms.R || []).find(stuckOn);
         stuckBox.hidden = true; stuckBox.innerHTML = '';
@@ -334,7 +355,7 @@ export function mountEarPath(root, opts = {}) {
         if (st.ok && next && !nextBox.firstChild) {
           const b2 = h('button', { class: 'btn primary sm', type: 'button' }, `Étape suivante : ${next.title}`);
           b2.addEventListener('click', () => { stopQuiz(); const nli = list.children[i + 1]; setOpen(false); nli.querySelector('.es-head').click(); nli.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
-          nextBox.append(h('span', { class: 'small ok-txt' }, 'Étape réussie. '), b2);
+          nextBox.append(h('span', { class: 'small ok-txt' }, st.skipped ? 'Étape cochée. ' : 'Étape réussie. '), b2);
         }
       });
       li.append(btn, body);

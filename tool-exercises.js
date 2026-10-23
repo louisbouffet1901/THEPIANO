@@ -176,22 +176,26 @@ export function evaluate(ex, res, ctx) {
 /* ------------------------------------------------------------------ */
 const stateOf = id => ({ tries: 0, best: 0, mastered: false, lastAt: 0, lastBpm: null, hist: [], ...(store.get(`exercises.${id}`) || {}) });
 const saveState = (id, s) => store.set(`exercises.${id}`, s);
+/** Coché « déjà acquis » dans la séance (V7.4) : l'exercice n'y est plus proposé. */
+const skippedEx = id => !!(store.get('skips') || {}).exercises?.[id];
 export function statusLabel(ex) {
   const s = stateOf(ex.id);
   if (s.mastered) return `Réussi ✓ · ♩ = ${s.best}`;
+  if (skippedEx(ex.id)) return 'Coché comme acquis ✓';
   if (s.best) return `Réussi à ♩ = ${s.best} · objectif ${ex.target}`;
   if (s.tries) return `${s.tries} essai${s.tries > 1 ? 's' : ''} · pas encore réussi`;
   return 'Pas encore fait';
 }
 /** L'exercice du jour : celui en cours, sinon le suivant dans l'ordre conseillé, sinon la révision la plus ancienne. */
 export function recommendExercise() {
-  const st = ORDER.map(id => [id, stateOf(id)]);
+  // un exercice coché « déjà acquis » compte comme réussi
+  const st = ORDER.map(id => [id, skippedEx(id) ? { ...stateOf(id), mastered: true } : stateOf(id)]);
   const doing = st.filter(([, s]) => s.tries && !s.mastered).sort((a, b) => b[1].lastAt - a[1].lastAt);
   if (doing.length) return { ex: byId(doing[0][0]), why: `En cours : ${statusLabel(byId(doing[0][0])).toLowerCase()}.` };
-  const fresh = st.find(([, s]) => !s.tries);
+  const fresh = st.find(([, s]) => !s.tries && !s.mastered);
   if (fresh) return { ex: byId(fresh[0]), why: 'Nouvel exercice, dans l’ordre conseillé.' };
   const old = st.sort((a, b) => a[1].lastAt - b[1].lastAt)[0];
-  return { ex: byId(old[0]), why: 'Révision : tous les exercices sont réussis ; celui-ci attend depuis le plus longtemps.' };
+  return { ex: byId(old[0]), why: 'Révision : tous les exercices sont réussis ; celui-ci attend depuis le plus longtemps.', review: true };
 }
 
 /* ------------------------------------------------------------------ */
@@ -278,12 +282,35 @@ export function mountExercisesPage(el, opts = {}) {
     trainerCleanup = mountTrainer(trainer, ex, renderList);
     trainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
+  // « Déjà acquis » (V7.4) : un exercice fait ailleurs n'est plus proposé (ni ici, ni dans la séance)
+  const setSkipEx = (id, on) => {
+    const all = { ...(store.get('skips') || {}) };
+    const m = { ...(all.exercises || {}) };
+    if (on) m[id] = Date.now(); else delete m[id];
+    all.exercises = m;
+    store.set('skips', all);
+    renderList();
+  };
   const renderReco = () => {
     recoBox.innerHTML = '';
     const r = recommendExercise();
     const go = h('button', { class: 'btn primary', type: 'button' }, 'Commencer');
     go.addEventListener('click', () => open(r.ex));
-    recoBox.append(h('div', { class: 'card reco' }, h('div', { class: 'eyebrow' }, 'L’exercice du jour'), h('h3', {}, r.ex.title), h('p', { class: 'small' }, `${r.why} ${r.ex.goal}`), go));
+    const skip = r.review ? null : h('button', { class: 'btn ghost sm', type: 'button', title: 'Tu le maîtrises déjà : ne plus le proposer' }, 'Déjà acquis');
+    skip?.addEventListener('click', () => setSkipEx(r.ex.id, true));
+    const card = h('div', { class: 'card reco' }, h('div', { class: 'eyebrow' }, 'L’exercice du jour'), h('h3', {}, r.ex.title), h('p', { class: 'small' }, `${r.why} ${r.ex.goal}`), h('div', { class: 'btn-row' }, go, skip));
+    const sk = EXERCISES.filter(e => skippedEx(e.id));
+    if (sk.length) {
+      const p2 = h('p', { class: 'small muted mb-0 ex-skipped' }, 'Cochés comme acquis : ');
+      sk.forEach((e, i) => {
+        const b = h('button', { class: 'link-btn', type: 'button', title: 'Le remettre dans les exercices proposés' }, `${e.title} (décocher)`);
+        b.addEventListener('click', () => setSkipEx(e.id, false));
+        p2.append(i ? ', ' : '', b);
+      });
+      p2.append('.');
+      card.append(p2);
+    }
+    recoBox.append(card);
   };
   const openGroups = new Set();
   function renderList() {
@@ -292,13 +319,13 @@ export function mountExercisesPage(el, opts = {}) {
     const reco = recommendExercise().ex;
     for (const [fid, F] of Object.entries(FAMILIES)) {
       const exs = EXERCISES.filter(e => e.fam === fid);
-      const ok = exs.filter(e => stateOf(e.id).mastered).length;
+      const ok = exs.filter(e => stateOf(e.id).mastered || skippedEx(e.id)).length;
       const det = h('details', { class: 'preset-group' }, h('summary', {}, h('span', {}, F.label), h('span', { class: 'small' }, `réussis : ${ok}/${exs.length}`)));
       det.open = openGroups.has(fid) || (!openGroups.size && reco.fam === fid);
       det.addEventListener('toggle', () => { if (det.open) openGroups.add(fid); else openGroups.delete(fid); });
       const grid = h('div', { class: 'grid cols-3' });
       for (const e of exs) {
-        const c = h('button', { class: 'card preset' + (stateOf(e.id).mastered ? ' ok' : ''), type: 'button' }, h('h3', {}, e.title), h('p', {}, statusLabel(e)));
+        const c = h('button', { class: 'card preset' + (stateOf(e.id).mastered || skippedEx(e.id) ? ' ok' : ''), type: 'button' }, h('h3', {}, e.title), h('p', {}, statusLabel(e)));
         c.addEventListener('click', () => open(e));
         grid.append(c);
       }

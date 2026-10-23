@@ -70,11 +70,13 @@ export function improSummary(l) {
   // de nouveaux exercices à la fin de la leçon : le premier d'entre eux est en cours si les anciens sont validés
   return { ...s, total, cur: s.cur ?? s.total, curTitle: s.cur != null ? s.curTitle : 'un nouvel exercice', added: total - s.total };
 }
-/** Leçon d'improvisation en cours : dans l'ordre du module, niveau par niveau jusqu'au niveau en cours. */
+/** Leçon d'improvisation en cours : dans l'ordre du module, niveau par niveau jusqu'au niveau en cours. Une leçon
+ *  cochée « terminée » (à la main, ou parce que tous ses exercices sont validés) ne revient plus. */
 export function improNext(L) {
   for (const lv of LEVELS) {
     if (lv.locked) continue;
     for (const l of lessonsOf(lv.id, 'impro')) {
+      if (store.isDone(l.id)) continue;
       const s = improSummary(l);
       if (!s) return { l, text: 'le premier exercice' };
       if (s.mastered < s.total) return { l, sum: s, text: s.cur != null ? `exercice ${s.cur + 1} sur ${s.total} (${s.curTitle})` : 'à reprendre' };
@@ -83,6 +85,22 @@ export function improNext(L) {
   }
   return null;
 }
+/* « Déjà fait » (V7.4) : ce qui a été fait en dehors de la séance ne doit plus y être proposé. Une leçon se coche
+   « terminée » (comme sur sa page) ; un exercice de technique ou une étape d'oreille se range dans `skips`, à part des
+   résultats des outils (qui comptent comme du travail fait aujourd'hui). */
+export const skipped = (kind, id) => !!(store.get('skips') || {})[kind]?.[id];
+/** Coche (ou décoche) l'élément proposé par une case : { kind: 'lesson' | 'exercises' | 'ear', id }. */
+export function setSkip(skip, on = true) {
+  if (!skip) return;
+  if (skip.kind === 'lesson') { store.setDone(skip.id, on); return; }
+  const all = { ...(store.get('skips') || {}) };
+  const m = { ...(all[skip.kind] || {}) };
+  if (on) m[skip.id] = Date.now(); else delete m[skip.id];
+  all[skip.kind] = m;
+  store.set('skips', all);
+}
+const SKIP_LABEL = { lesson: 'Déjà faite', exercises: 'Déjà acquis', ear: 'Déjà acquise' };
+
 /** Pièces « autres » : les compléments du niveau et les pièces phares déjà travaillées, la moins récente d'abord. */
 function otherPieces(L) {
   const ids = [...L.complements];
@@ -110,18 +128,18 @@ export async function proposals(L, now = Date.now()) {
   let tech = null;
   if (nx) {
     for (const n of nx.section.needs || []) {
-      if (n.l) { const l = lessonById(n.l); if (l && l.module === 'technique' && !store.isDone(l.id)) { tech = { title: l.title, html: `${link(`#/lecon/${l.id}`, l.title)} <span class="sx-sub">Ce que demande ta section du jour (${esc(nx.section.name)}).</span>`, href: `#/lecon/${l.id}` }; break; } }
-      if (n.x) { const e = ex.EXERCISES.find(x => x.id === n.x); const s = (store.get(`exercises.${n.x}`) || {}); if (e && !s.mastered) { tech = { title: e.title, html: `${link(`#/outils/exercices/${e.id}`, e.title)} <span class="sx-sub">Exercice des deux mains lié à ta section du jour (${esc(nx.section.name)}).</span>`, href: `#/outils/exercices/${e.id}` }; break; } }
+      if (n.l) { const l = lessonById(n.l); if (l && l.module === 'technique' && !store.isDone(l.id)) { tech = { title: l.title, html: `${link(`#/lecon/${l.id}`, l.title)} <span class="sx-sub">Ce que demande ta section du jour (${esc(nx.section.name)}).</span>`, href: `#/lecon/${l.id}`, skip: { kind: 'lesson', id: l.id, label: l.title } }; break; } }
+      if (n.x) { const e = ex.EXERCISES.find(x => x.id === n.x); const s = (store.get(`exercises.${n.x}`) || {}); if (e && !s.mastered && !skipped('exercises', e.id)) { tech = { title: e.title, html: `${link(`#/outils/exercices/${e.id}`, e.title)} <span class="sx-sub">Exercice des deux mains lié à ta section du jour (${esc(nx.section.name)}).</span>`, href: `#/outils/exercices/${e.id}`, skip: { kind: 'exercises', id: e.id, label: e.title } }; break; } }
     }
   }
   if (!tech) {
     const r = ex.recommendExercise();
-    tech = { title: r.ex.title, html: `${link(`#/outils/exercices/${r.ex.id}`, r.ex.title)} <span class="sx-sub">${esc(r.why)}</span>`, href: `#/outils/exercices/${r.ex.id}` };
+    tech = { title: r.ex.title, html: `${link(`#/outils/exercices/${r.ex.id}`, r.ex.title)} <span class="sx-sub">${esc(r.why)}</span>`, href: `#/outils/exercices/${r.ex.id}`, skip: r.review ? null : { kind: 'exercises', id: r.ex.id, label: r.ex.title } };
   }
   out.technique = tech;
   // improvisation
   const im = improNext(L);
-  out.impro = im ? { title: im.l.title, html: `${link(`#/lecon/${im.l.id}`, im.l.title)} : ${esc(im.text)}, puis une minute de jeu libre.`, href: `#/lecon/${im.l.id}` }
+  out.impro = im ? { title: im.l.title, html: `${link(`#/lecon/${im.l.id}`, im.l.title)} : ${esc(im.text)}, puis une minute de jeu libre.`, href: `#/lecon/${im.l.id}`, skip: { kind: 'lesson', id: im.l.id, label: im.l.title } }
     : { title: 'Jeu libre', html: `${link('#/outils/impro', 'Improvisation')} : jeu libre sur une grille de ton choix, sans t’arrêter.`, href: '#/outils/impro' };
   // lecture à vue
   const lv = store.get('sight.level') || (L.id === 'n2' ? '2' : '1rh');
@@ -133,7 +151,8 @@ export async function proposals(L, now = Date.now()) {
   const pr = ear.trackProgress();
   const nm = ep.nextMelody();
   const weekly = !ep.earplayRecent(now) && nm ? ` <span class="sx-sub">Cette semaine aussi, une mélodie d’oreille : ${link('#/outils/oreille/jouer', nm.title)}.</span>` : '';
-  out.oreille = { title: pr.cur ? pr.cur.title : 'Révision', html: `${link('#/outils/oreille/parcours', 'Oreille')} : ${pr.cur ? `étape ${pr.index} sur ${pr.total}, ${esc(pr.cur.title)}` : 'révision libre'}.${weekly}`, href: '#/outils/oreille/parcours' };
+  out.oreille = { title: pr.cur ? pr.cur.title : 'Révision', html: `${link('#/outils/oreille/parcours', 'Oreille')} : ${pr.cur ? `étape ${pr.index} sur ${pr.total}, ${esc(pr.cur.title)}` : 'révision libre'}.${weekly}`, href: '#/outils/oreille/parcours',
+    skip: pr.cur ? { kind: 'ear', id: pr.cur.id, label: `l’étape « ${pr.cur.title} »` } : null };
   // autres pièces
   const others = otherPieces(L);
   const op = others[0];
@@ -196,18 +215,23 @@ const fmtMin = m => (m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ' ' + String(m
 /** Carte « Nouvelle séance » / « Ta séance » de l'accueil. */
 export function mountSessionBox(host, L, { onChange } = {}) {
   let alive = true;
-  const render = async (forceBuilder = false) => {
+  let keep = null; // l'état du choix (durée, cases) gardé quand on coche « Déjà faite »
+  const render = async (forceBuilder = false, state = null) => {
     if (!alive) return;
     const sess = currentSession();
-    host.innerHTML = '';
-    if (sess && !forceBuilder) host.append(activeCard(sess, () => render(true)));
+    if (sess && !forceBuilder) { host.innerHTML = ''; host.append(activeCard(sess, () => render(true))); }
     else {
-      host.append(h('div', { class: 'card session', role: 'status' }, h('p', { class: 'small muted mb-0' }, 'Préparation de ta séance…')));
+      if (!state) { host.innerHTML = ''; host.append(h('div', { class: 'card session', role: 'status' }, h('p', { class: 'small muted mb-0' }, 'Préparation de ta séance…'))); }
       let props;
       try { props = await proposals(L); } catch (e) { console.error(e); props = {}; }
       if (!alive) return;
       host.innerHTML = '';
-      host.append(builderCard(L, props, () => render(false)));
+      host.append(builderCard(L, props, () => render(false), {
+        state,
+        // « Déjà faite » : on coche, et la case propose aussitôt la suite (avec « Annuler »)
+        skip: (cat, sk, st) => { setSkip(sk, true); keep = { ...st, undo: { cat, skip: sk } }; render(true, keep); },
+        undo: (u, st) => { setSkip(u.skip, false); render(true, { ...st, undo: null }); },
+      }));
     }
     onChange?.();
   };
@@ -215,11 +239,12 @@ export function mountSessionBox(host, L, { onChange } = {}) {
   return () => { alive = false; };
 }
 
-function builderCard(L, props, started) {
-  let minutes = store.get('ui.sessMin') || 60;
+function builderCard(L, props, started, { state = null, skip = null, undo = null } = {}) {
+  let minutes = state?.minutes || store.get('ui.sessMin') || 60;
   if (!DURATIONS.includes(minutes)) minutes = 60;
-  let chosen = new Set(advisedCats(minutes));
-  let touched = false;
+  let chosen = state?.chosen ? new Set(state.chosen) : new Set(advisedCats(minutes));
+  let touched = !!state?.touched;
+  const snap = () => ({ minutes, chosen: [...chosen], touched });
   const card = h('div', { class: 'card session sx-builder' });
   const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Durée de la séance' });
   DURATIONS.forEach(m => {
@@ -259,12 +284,23 @@ function builderCard(L, props, started) {
     cb.addEventListener('change', () => { touched = true; if (cb.checked) chosen.add(c.id); else chosen.delete(c.id); refresh(); });
     const minEl = h('span', { class: 'sx-min' });
     const badge = a.overdue || a.d === Infinity ? h('span', { class: 'tag gold sx-badge' }, 'conseillé') : null;
+    // « Déjà faite » : ce qui a été fait en dehors de la séance n'y revient plus ; « Annuler » juste après
+    let skipBtn = null;
+    const u = state?.undo && state.undo.cat === c.id ? state.undo : null;
+    if (u && undo) {
+      skipBtn = h('button', { type: 'button', class: 'sx-skip undo', title: 'Remettre dans la séance' }, `↩ Annuler (${u.skip.label})`);
+      skipBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); undo(u, snap()); });
+    } else if (p?.skip && skip) {
+      skipBtn = h('button', { type: 'button', class: 'sx-skip', title: `Tu l’as déjà fait${p.skip.kind === 'lesson' ? 'e' : ''} : ne plus le proposer` }, SKIP_LABEL[p.skip.kind]);
+      skipBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); skip(c.id, p.skip, snap()); });
+    }
     const row = h('label', { class: 'sx-row' + (p ? '' : ' off') },
       cb,
       h('span', { class: 'sx-main' },
         h('span', { class: 'sx-head' }, h('b', {}, c.label), badge, h('span', { class: 'sx-last small muted' }, `dernière fois : ${sinceLabel(c.id)}`)),
         h('span', { class: 'sx-act small', html: p ? p.html : 'Rien à proposer ici pour l’instant.' }),
-        a.reason ? h('span', { class: 'sx-why small' }, a.reason) : null),
+        a.reason ? h('span', { class: 'sx-why small' }, a.reason) : null,
+        skipBtn),
       minEl);
     rowEls[c.id] = { row, cb, minEl };
     rows.append(row);
