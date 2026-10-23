@@ -647,7 +647,7 @@ export function mountImprov(el, cfg = {}) {
   /** Les boutons d'aide : écouter la main gauche, le squelette ; montrer l'or ou les accords. */
   const updateHelpers = () => {
     if (!P) return;
-    mgBtn.hidden = !(fm() && lhMode !== 'app');
+    mgBtn.hidden = !(fm() && lhMode !== 'app' && gridOn); // harmoniser : l'écouter donnerait la réponse
     skelBtn.hidden = !(step?.gold === 'memo' && hasTargets() && mode === 'squelette');
     goldBtn.hidden = skelBtn.hidden;
     goldBtn.textContent = goldOn ? 'Cacher l’or' : 'Voir l’or';
@@ -656,7 +656,8 @@ export function mountImprov(el, cfg = {}) {
     gridBtn.textContent = gridOn ? 'Cacher les accords' : 'Voir les accords';
     gridBtn.setAttribute('aria-pressed', String(gridOn));
   };
-  const handsText = () => (lhMode === 'basse' ? ' Ta main gauche joue l’accord (en brun), l’appli la basse.' : lhMode === 'moi' && fm() ? ` Ta main gauche : ${FORMULAS[fm()].label} (en brun).` : '');
+  const handsText = () => (!gridOn ? (step?.guide === 'melody' ? ' L’appli joue l’air ; ta main gauche cherche les accords, d’oreille.' : ' Les accords sont à trouver d’oreille.')
+    : lhMode === 'basse' ? ' Ta main gauche joue l’accord (en brun), l’appli la basse.' : lhMode === 'moi' && fm() ? ` Ta main gauche : ${FORMULAS[fm()].label} (en brun).` : '');
   const statusIdle = () => !timeline ? '' : mode === 'qr' ? `${timeline.length} accords · question – réponse : écoute, puis réponds à la main droite (au-dessus du do3).`
     : mode === 'echo' ? 'Imitation : écoute la phrase, chante-la, puis rejoue-la à la main droite.'
       : mode === 'squelette' ? squeletteHelp()
@@ -731,7 +732,7 @@ export function mountImprov(el, cfg = {}) {
         // harmoniser : l'accord est à trouver d'oreille (seules les mesures sont affichées)
         : h('div', { class: 'ig-cell hidden-ch' + (ch.beats < P.meter ? ' half' : ''), role: 'listitem', 'data-i': i, title: 'Accord à trouver' },
           ch.section ? h('span', { class: 'ig-sec' }, ch.section) : null,
-          h('b', {}, '?'), h('span', { class: 'ig-name' }, `mesure ${ch.bar + 1}${ch.at % P.meter ? ', 2e moitié' : ''}`),
+          h('b', {}, '?'), h('span', { class: 'ig-name' }, ch.at % P.meter ? 'suite' : `mesure ${ch.bar + 1}`),
           tg != null ? h('span', { class: 'ig-tg' }, tgName(tg, ch)) : null);
       gridBox.append(cell);
     });
@@ -757,7 +758,7 @@ export function mountImprov(el, cfg = {}) {
         : f === 'alberti' ? nmL([c0[0], c0[c0.length - 1], c0[1], c0[c0.length - 1]]) : f === 'ostinato' ? nmL([lhv.bass, c0[0], c0[1] ?? c0[0] + 5, c0[0]])
           : f === 'arpege' ? `${tgName(lhv.bass, ch)}, puis ${nmL(c0.slice(0, 3))} égrené` : `${tgName(lhv.bass, ch)}, puis ${nmL(c0)}`))
         : lhMode === 'moi' ? h('div', {}, 'Ta main gauche : ', h('b', {}, `${noteNameFr(v.bass)} + ${v.upper.map(m => noteNameFr(m)).join(' ')}`)) : null;
-    chordBox.append(
+    chordBox.append(...[
       h('div', {}, h('div', { class: 'small' }, live ? 'Accord actuel' : 'Premier accord'), h('div', { class: 'in-label' }, gridOn ? ch.label || ch.name : '?'), h('div', { class: 'small' }, gridOn && ch.label ? ch.name : !gridOn ? 'à trouver d’oreille' : '')),
       h('div', { class: 'in-next' }, h('div', { class: 'small' }, 'Suivant'), h('div', { class: 'in-label sm' }, gridOn ? nxt.label || nxt.name : '?')),
       showsTargets() ? h('div', { class: 'in-gold' },
@@ -769,7 +770,7 @@ export function mountImprov(el, cfg = {}) {
       h('div', { class: 'small in-notes' },
         P.showScale ? h('div', {}, 'Notes à jouer : ', h('b', {}, scalePcs(ch).map(x => pcName(x, ch)).join(' '))) : null,
         gridOn ? h('div', {}, P.showScale ? 'Notes d’appui : ' : 'Notes de l’accord : ', h('b', {}, ct.join(' – '))) : h('div', {}, 'Accords permis : ', h('b', {}, P.mode === 'min' ? 'i, iv, V' : 'I, IV, V')),
-        lhLine));
+        lhLine)].filter(Boolean)); // (V7.4) sans « null » affiché hors du mode squelette
     const pcs = CHORDS[ch.q].iv.map(x => (ch.root + x) % 12);
     const sc = P.showScale ? scalePcs(ch) : [];
     const marks = [];
@@ -1166,7 +1167,7 @@ export function mountImprov(el, cfg = {}) {
   mgBtn.addEventListener('click', () => { if (playing) stop(); start({ demo: { kind: 'mg' } }); });
   skelBtn.addEventListener('click', () => { if (playing) stop(); start({ demo: { kind: 'skeleton' } }); });
   goldBtn.addEventListener('click', () => { goldOn = !goldOn; updateModeUI(); renderGrid(); });
-  gridBtn.addEventListener('click', () => { gridOn = !gridOn; renderGrid(); updateHelpers(); showChord(idx || 0, playing); });
+  gridBtn.addEventListener('click', () => { gridOn = !gridOn; renderGrid(); updateHelpers(); showChord(idx || 0, playing); if (!playing) status.textContent = statusIdle(); });
   sel.addEventListener('change', () => { presetId = sel.value; load(); });
   patSel.addEventListener('change', () => { patOverride = true; });
   load();

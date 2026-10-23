@@ -15,6 +15,8 @@ export function pcNameIn(p, ch) {
 }
 const nm = (m, ch) => pcNameIn(m, ch);
 const pct = x => `${Math.round(x * 100)}\u202F%`;
+const dec = x => x.toFixed(1).replace('.', ',');
+const cap = t => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
 const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
 
 export const chordPcs = ch => CHORDS[ch.q].iv.map(x => (ch.root + x) % 12);
@@ -223,8 +225,10 @@ export function harmonyUnits(A, mel, need = 'chord') {
     const key = mel.find(n => n.t >= g - 0.01 && n.t < g + u.ch.beats - 0.01) || null;
     let chosen = null;
     if (need === 'bass') {
+      // une basse seule ne distingue pas V de V7 : on garde l'accord de cette basse qui contient la note de l'air
       const low = u.notes.reduce((a, b) => (!a || b.m < a.m ? b : a), null);
-      if (low) chosen = fns.find(f => f.root === pc(low.m) && !/7$/.test(f.label)) || null;
+      const cands = low ? fns.filter(f => f.root === pc(low.m)) : [];
+      chosen = (key && cands.find(f => f.pcs.includes(pc(key.m)))) || cands.find(f => !/7$/.test(f.label)) || null;
     } else if (u.pcs.length >= 2) {
       chosen = fns.filter(f => u.pcs.every(p => f.pcs.includes(p))).sort((a, b) => a.pcs.length - b.pcs.length)[0] || null;
     }
@@ -277,21 +281,21 @@ export const CHECKS = {
     const m = A.meter;
     if (v === 'longues') {
       const max = m === 2 ? 1.3 : 2.3;
-      if (per > max) return { ok: false, line: `Trop de notes (${per.toFixed(1)} par mesure) : une ou deux par mesure, en valeurs longues, posées sur les temps forts.` };
+      if (per > max) return { ok: false, line: `Trop de notes (${dec(per)} par mesure) : une ou deux par mesure, en valeurs longues, posées sur les temps forts.` };
       if (onBeat < 0.8) return { ok: false, line: 'Pose chaque note sur un temps (le premier surtout), pas entre les temps.' };
-      return { ok: true, line: `Valeurs longues sur les temps (${per.toFixed(1)} note par mesure) : le squelette s’entend.` };
+      return { ok: true, line: `Valeurs longues sur les temps (${dec(per)} note par mesure) : le squelette s’entend.` };
     }
     if (v === 'noires') {
-      if (per < 0.6 * m) return { ok: false, line: `Une note par temps : il en manque (${per.toFixed(1)} par mesure de ${m} temps).` };
-      if (per > 1.35 * m) return { ok: false, line: `Une note par temps, pas plus (${per.toFixed(1)} par mesure) : les croches viendront dans un exercice suivant.` };
+      if (per < 0.6 * m) return { ok: false, line: `Une note par temps : il en manque (${dec(per)} par mesure de ${m} temps).` };
+      if (per > 1.35 * m) return { ok: false, line: `Une note par temps, pas plus (${dec(per)} par mesure) : les croches viendront dans un exercice suivant.` };
       if (onBeat < 0.8) return { ok: false, line: `Joue sur les temps : ${pct(onBeat)} de tes notes y sont.` };
       return { ok: true, line: `Une note par temps, bien en place (${pct(onBeat)} sur les temps).` };
     }
     if (v === 'croches') {
       const off = mel.filter(x => x.half).length / mel.length;
-      if (per < 1.4 * m) return { ok: false, line: `En croches : deux notes par temps (${per.toFixed(1)} par mesure cette fois).` };
+      if (per < 1.4 * m) return { ok: false, line: `En croches : deux notes par temps (${dec(per)} par mesure cette fois).` };
       if (off < 0.25) return { ok: false, line: 'Joue aussi entre les temps (sur le « et ») : c’est là que vont les notes de passage.' };
-      return { ok: true, line: `En croches, régulières (${per.toFixed(1)} notes par mesure).` };
+      return { ok: true, line: `En croches, régulières (${dec(per)} notes par mesure).` };
     }
     if (v === 'pointe') {
       const k = findFigures(mel).pointe.length;
@@ -381,9 +385,9 @@ export const CHECKS = {
     const sp = span(A);
     if (!sp.n) return { ok: false, line: 'Joue au moins quelques mesures.' };
     const per = A.mel.length / sp.n;
-    if (per > max) return { ok: false, line: `${per.toFixed(1)} notes par mesure : moins, et plus longues (au plus ${max} en moyenne).` };
-    if (per < min) return { ok: false, line: `${per.toFixed(1)} note par mesure : il en faut davantage (au moins ${min}).` };
-    return { ok: true, line: `${per.toFixed(1)} note${per >= 2 ? 's' : ''} par mesure en moyenne : ${max < Infinity ? 'la mélodie respire' : 'le mouvement est là'}.` };
+    if (per > max) return { ok: false, line: `${dec(per)} notes par mesure : moins, et plus longues (au plus ${max} en moyenne).` };
+    if (per < min) return { ok: false, line: `${dec(per)} note par mesure : il en faut davantage (au moins ${min}).` };
+    return { ok: true, line: `${dec(per)} note${per >= 2 ? 's' : ''} par mesure en moyenne : ${max < Infinity ? 'la mélodie respire' : 'le mouvement est là'}.` };
   },
   /** Le sommet (la note la plus aiguë) dans les mesures `from` à `to` de la grille. */
   peak(A, { from = 5, to = 7 }) {
@@ -519,7 +523,7 @@ export const CHECKS = {
     if (per) {
       const sp = { n: Math.floor((endB - lh[0].b) / A.meter) + 1 };
       const d = lh.length / sp.n;
-      if (d < per) return { ok: false, line: `Déroule l’accord : au moins ${per} notes par mesure à la main gauche (${d.toFixed(1)} cette fois).` };
+      if (d < per) return { ok: false, line: `Déroule l’accord : au moins ${per} notes par mesure à la main gauche (${dec(d)} cette fois).` };
     }
     return { ok: true, line: `Ta main gauche pose la basse de chaque accord (${k}/${units.length}).` };
   },
@@ -540,7 +544,7 @@ export const CHECKS = {
     if (per) {
       const bars = Math.floor((lh[lh.length - 1].b - lh[0].b) / A.meter) + 1;
       const d = lh.length / bars;
-      if (d < per) return { ok: false, line: `Fais tourner la formule : au moins ${per} notes par mesure à la main gauche (${d.toFixed(1).replace('.', ',')} cette fois).` };
+      if (d < per) return { ok: false, line: `Fais tourner la formule : au moins ${per} notes par mesure à la main gauche (${dec(d)} cette fois).` };
     }
     return { ok: true, line: `Ta main gauche joue l’accord à chaque changement (${good.length}/${units.length}).` };
   },
@@ -562,8 +566,8 @@ export const CHECKS = {
     }
     if (n < 2) return { ok: false, line: 'Joue au moins trois accords de suite à la main gauche.' };
     const avg = tot / n;
-    return avg <= max ? { ok: true, line: `Tes accords s’enchaînent au plus près : ${avg.toFixed(1).replace('.', ',')} demi-tons de mouvement par changement, en moyenne.` }
-      : { ok: false, line: `Ta main gauche saute (${avg.toFixed(1).replace('.', ',')} demi-tons par changement) : garde les notes communes, et prends la position la plus proche (un renversement).` };
+    return avg <= max ? { ok: true, line: `Tes accords s’enchaînent au plus près : ${dec(avg)} demi-tons de mouvement par changement, en moyenne.` }
+      : { ok: false, line: `Ta main gauche saute (${dec(avg)} demi-tons par changement) : garde les notes communes, et prends la position la plus proche (un renversement).` };
   },
   /** Harmoniser une mélodie avec I, IV et V(7) : à chaque accord, celui que tu joues (ou sa basse, avec need 'bass')
    *  contient la note de la mélodie qui tombe au début de l'accord. Un autre accord que celui de la grille est accepté
@@ -584,7 +588,7 @@ export const CHECKS = {
     const r = res.length ? k / res.length : 0;
     const altTxt = alt ? ` ${plural(alt, 'accord diffère', 'accords diffèrent')} de la grille de l’appli tout en allant avec la mélodie : c’est permis.` : '';
     return r >= min ? { ok: true, line: `${need === 'bass' ? 'Tes basses vont' : 'Tes accords vont'} avec la mélodie : ${k}/${res.length}.${altTxt}` }
-      : { ok: false, line: `${need === 'bass' ? 'Basses' : 'Accords'} qui vont avec la mélodie : ${k}/${res.length} (objectif ${pct(min)}). ${bad.join(' ; ')}.` };
+      : { ok: false, line: `${need === 'bass' ? 'Basses' : 'Accords'} qui vont avec la mélodie : ${k}/${res.length} (objectif ${pct(min)}). ${cap(bad.join(' ; '))}.` };
   },
   /** La mélodie donnée (ctx.melody), jouée à la main droite : la même suite de notes, à l'octave près (le meilleur tour). */
   tune(A, { min = 0.8 }, ctx) {
