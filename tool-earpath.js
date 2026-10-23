@@ -123,7 +123,7 @@ export const RULES = [
   '<b>Écoute où la note veut aller</b>, ne compte pas : la réponse vient de l’effet, pas du calcul.',
   '<b>Après une erreur</b>, réécoute, puis chante la bonne réponse avec le piano.',
   '<b>Mélange l’ancien et le nouveau</b> : une question sur cinq révise une étape passée.',
-  '<b>Une mélodie entière d’oreille par semaine</b> : une chanson que tu connais, retrouvée au piano.',
+  '<b>Une mélodie entière d’oreille par semaine</b> : dans « <a href="#/outils/oreille/jouer">Jouer d’oreille</a> », phrase par phrase.',
 ];
 const SING_METHOD = ['Écoute, puis <b>entends la note dans ta tête</b> une seconde avant de chanter.', 'Chante <b>doucement</b>, sur « mmm » ou « la », sans forcer : une voix légère se règle mieux.', 'Regarde l’<b>aiguille</b> : à gauche, monte ; à droite, descends ; au milieu, tiens.', 'Respire avant la note et garde un <b>souffle régulier</b> pendant qu’elle dure.', 'Une note trop haute ou trop basse pour toi ? Chante-la <b>une octave plus bas ou plus haut</b> : elle compte aussi.'];
 
@@ -179,7 +179,27 @@ function singTendency() {
 /* ------------------------------------------------------------------ */
 /* Affichage                                                           */
 /* ------------------------------------------------------------------ */
-export function mountEarPath(el) {
+export function mountEarPath(root, opts = {}) {
+  // deux vues : le parcours, et « Jouer d'oreille » (V7.3, des mélodies apprises phrase par phrase)
+  let view = opts.view || (store.get('ui.earView') === 'play' ? 'play' : 'path');
+  const tabs = h('div', { class: 'seg ear-tabs', role: 'tablist', 'aria-label': 'Oreille' });
+  const el = h('div');
+  const playHost = h('div', { hidden: true });
+  root.append(tabs, el, playHost);
+  let playCleanup = null;
+  const showView = v => {
+    view = v; store.set('ui.earView', v);
+    tabs.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
+    el.hidden = v !== 'path'; playHost.hidden = v !== 'play';
+    if (v === 'play' && !playCleanup) import('./tool-earplay.js').then(m => { if (!playCleanup) playCleanup = m.mountEarPlay(playHost); });
+    if (v === 'path') { try { playCleanup?.(); } catch (e) { /* */ } playCleanup = null; playHost.innerHTML = ''; }
+    else stopQuiz?.();
+  };
+  for (const [v, label] of [['path', 'Le parcours'], ['play', 'Jouer d’oreille']]) {
+    const b = h('button', { type: 'button', role: 'tab', 'data-v': v }, label);
+    b.addEventListener('click', () => showView(v));
+    tabs.append(b);
+  }
   const head = h('div');
   const confBox = h('div');
   const list = h('ol', { class: 'ear-steps' });
@@ -351,5 +371,6 @@ export function mountEarPath(el) {
     if (path === 'stats.ear') { const keep = confHost.firstChild; if (!keep) renderConf(); }
   });
   render();
-  return () => { stopQuiz(); unsub(); };
+  showView(view);
+  return () => { stopQuiz(); unsub(); try { playCleanup?.(); } catch (e) { /* */ } };
 }

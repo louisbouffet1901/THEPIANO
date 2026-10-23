@@ -84,7 +84,7 @@ function otherPieces(L) {
 
 /** Pour chaque catégorie : { title, html, href, meta }. Asynchrone : quelques outils se chargent à la demande. */
 export async function proposals(L, now = Date.now()) {
-  const [pm, ex, ear, wu] = await Promise.all([import('./piecemap.js'), import('./tool-exercises.js'), import('./tool-earpath.js'), import('./tool-warmup.js')]);
+  const [pm, ex, ear, wu, ep] = await Promise.all([import('./piecemap.js'), import('./tool-exercises.js'), import('./tool-earpath.js'), import('./tool-warmup.js'), import('./tool-earplay.js')]);
   const out = {};
   // pièce phare : la section du jour
   const nx = pm.nextSection(L.piece, now);
@@ -123,7 +123,9 @@ export async function proposals(L, now = Date.now()) {
   out.lecture = { title: 'Échauffement et extraits', html: `${link('#/outils/lecture', 'Lecture à vue')} : ${warm}des extraits nouveaux, ${esc(LVN[lv] || 'à ton niveau')}, sans t’arrêter.`, href: '#/outils/lecture' };
   // oreille : l'étape en cours du parcours
   const pr = ear.trackProgress();
-  out.oreille = { title: pr.cur ? pr.cur.title : 'Révision', html: `${link('#/outils/oreille', 'Oreille')} : ${pr.cur ? `étape ${pr.index} sur ${pr.total}, ${esc(pr.cur.title)}` : 'révision libre'}.`, href: '#/outils/oreille' };
+  const nm = ep.nextMelody();
+  const weekly = !ep.earplayRecent(now) && nm ? ` <span class="sx-sub">Cette semaine aussi, une mélodie d’oreille : ${link('#/outils/oreille/jouer', nm.title)}.</span>` : '';
+  out.oreille = { title: pr.cur ? pr.cur.title : 'Révision', html: `${link('#/outils/oreille/parcours', 'Oreille')} : ${pr.cur ? `étape ${pr.index} sur ${pr.total}, ${esc(pr.cur.title)}` : 'révision libre'}.${weekly}`, href: '#/outils/oreille/parcours' };
   // autres pièces
   const others = otherPieces(L);
   const op = others[0];
