@@ -11,7 +11,7 @@ import { ensureAbcjs, mountLazy } from './lazy.js';
 import { initUpdates, checkForUpdate, applyUpdate, hasUpdate, version } from './updates.js';
 import { exportProgress, importProgress, resetAll, needsBackupReminder, postponeReminder, lastBackupLabel, requestPersistence } from './backup.js';
 import { LEVELS, MODULES, PIECES, lessonById, levelById, allLessons, lessonsOf, loadLesson, loadPiece } from './content-index.js';
-import { mountSessionBox, weekCard, updateSessionBar, improNext, improSummary } from './session.js';
+import { mountSessionBox, weekCard, updateSessionBar, improNext, improSummary, nextTechLesson, scalesOfWeek } from './session.js';
 import { backfillActivity } from './activity.js';
 
 const main = $('#main');
@@ -77,6 +77,7 @@ const routes = [
   [/^#\/outils\/theorie$/, () => pagePresets('theorie')],
   [/^#\/outils\/analyseur$/, () => toolPage('Analyse technique', 'Pour les gammes, arpèges et exercices joués sans partition : régularité, legato, pédale, équilibre des mains. Pour un passage de tes pièces, utilise plutôt « Analyser » sous l’extrait : l’analyse compare alors ton jeu à la partition.', () => import('./tool-analyzer.js').then(m => el => m.mountAnalyzer(el, { modes: ['evenness', 'legato', 'pedal', 'balance', 'voicing', 'dynamics'] })))],
   [/^#\/outils\/impro$/, pageImproTool],
+  [/^#\/outils\/technique$/, pageTechnique],
   [/^#\/outils\/composition$/, pageCompose],
   [/^#\/outils\/exercices(?:\/([\w-]+))?$/, pageExercises],
   [/^#\/outils\/clavier$/, pageKeyboardTest],
@@ -146,6 +147,7 @@ function renderNav(hash) {
     html += `</div>`;
   }
   html += `</div><div class="nav-section"><div class="nav-title">Outils</div>`;
+  html += link('#/outils/technique', 'Technique', 'technique');
   html += link('#/outils/rythme', 'Rythme', 'rythme');
   html += link('#/outils/lecture', 'Lecture à vue', 'lecture');
   html += link('#/outils/exercices', 'Exercices', 'hands');
@@ -463,9 +465,9 @@ export function frenchSpacing(root) {
     if (r !== t) n.nodeValue = r;
   }
 }
-function lessonListHTML(lessons) {
+function lessonListHTML(lessons, { levelTag = false } = {}) {
   // V7.4 : une case par leçon, pour cocher celles déjà faites (elles ne sont plus proposées dans la séance)
-  return `<ul class="lesson-list">${lessons.map((l, i) => { const d = store.isDone(l.id); return `<li class="${d ? 'done' : ''}${l.prio === 2 ? ' opt' : ''}"><a href="#/lecon/${l.id}"><span class="num" data-n="${i + 1}">${d ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b>${l.prio === 2 ? '<em class="tag opt-tag">complément</em>' : ''}<span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a><button type="button" class="ll-done" data-done="${l.id}" aria-pressed="${d}" aria-label="Leçon déjà faite : ${esc(l.title)}" title="${d ? 'Décocher' : 'Cocher : déjà faite (elle ne sera plus proposée dans la séance)'}"><span class="ll-box"></span></button></li>`; }).join('')}</ul>`;
+  return `<ul class="lesson-list">${lessons.map((l, i) => { const d = store.isDone(l.id); return `<li class="${d ? 'done' : ''}${l.prio === 2 ? ' opt' : ''}"><a href="#/lecon/${l.id}"><span class="num" data-n="${i + 1}">${d ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b>${l.prio === 2 ? '<em class="tag opt-tag">complément</em>' : ''}${levelTag ? `<em class="tag opt-tag">niveau ${l.level.slice(1)}</em>` : ''}<span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a><button type="button" class="ll-done" data-done="${l.id}" aria-pressed="${d}" aria-label="Leçon déjà faite : ${esc(l.title)}" title="${d ? 'Décocher' : 'Cocher : déjà faite (elle ne sera plus proposée dans la séance)'}"><span class="ll-box"></span></button></li>`; }).join('')}</ul>`;
 }
 /* ================================================================== */
 /* Pages                                                               */
@@ -531,7 +533,7 @@ function pageHome() {
   }).catch(() => {});
   // nouveautés de la version, montrées une fois
   const NEWS = {
-    '7.4.2': '<ul><li><b>Oreille, rejouer une mélodie</b> : à l’étape « Le dessin d’une mélodie », tout se passe en do majeur. Ensuite, la tonalité ne change plus à chaque question : elle reste la même quatre questions de suite, d’abord parmi do, sol et fa, et chaque changement est annoncé.</li><li>Après une erreur, l’appli dit ce qui ne va pas : « 2e note : il fallait la note voisine au-dessus (ré) ; tu as joué un grand saut au-dessus ».</li></ul>',
+    '7.4.3': '<ul><li><b>Nouvel onglet Technique</b> (menu Outils) : la leçon où tu en es, les gammes et arpèges de la semaine (deux tonalités qui changent chaque lundi), toutes les leçons rangées par thème (méthode et posture, le son, la pédale, gammes et arpèges, agilité, plusieurs voix), les exercices des deux mains et l’analyse de ton jeu.</li><li><b>Séance, case Technique</b> : d’abord ce que demande la section du jour de ta pièce ; sinon la prochaine leçon de technique pas encore cochée (« Déjà faite » pour la passer) ; une fois toutes cochées, un jour les gammes de la semaine, un jour un exercice des deux mains.</li></ul>',
     '7.4.2': '<ul><li><b>Oreille, rejouer une mélodie</b> : à l’étape « Le dessin d’une mélodie », tout se passe en do majeur. Ensuite, la tonalité reste la même quatre questions de suite, d’abord parmi do, sol et fa, et chaque changement est annoncé.</li><li><b>La gamme numérotée</b> sur le clavier à l’écran dans les premières étapes (1 = la tonique, en or) : tu entends « 3 », tu vois où est 3.</li><li><b>Chercher librement</b> : tes essais ne comptent plus ; la réponse est reconnue dès que tes dernières notes sont justes. « Valider ma réponse » dit ce qui ne va pas, par exemple « 2e note : il fallait la note voisine au-dessus ; tu as joué un grand saut ».</li></ul>',
     '7.4.1': '<ul><li><b>Cocher ce que tu as déjà fait</b> : dans la séance, un bouton « Déjà faite » sous la leçon d’improvisation, l’étape d’oreille ou l’exercice de technique proposés. La case propose aussitôt la suite (avec « Annuler »).</li><li>Dans les listes de leçons, une case à droite de chaque leçon pour la cocher sans l’ouvrir. Une leçon cochée n’est plus proposée dans la séance ; les nouveaux exercices à deux mains des leçons cochées restent listés dans l’outil Improvisation.</li><li>Parcours d’oreille : « Je la maîtrise déjà » sur chaque étape ; exercices de technique : « Déjà acquis ».</li></ul>',
     '7.4': '<ul><li><b>À deux mains</b> : dans les leçons d’improvisation du niveau 1, un exercice où l’accompagnateur s’efface en trois étapes. L’appli joue tout, puis seulement la basse (ta main gauche joue l’accord), puis seulement le clic (tu joues tout). Chaque main est vérifiée.</li><li>Deux leçons nouvelles. <b>Ta main gauche</b> : des accords serrés enchaînés au plus près, quatre formules (basse et accord, valse, arpège, Alberti), trois tonalités. <b>Une mélodie connue</b> : « Ah ! vous dirai-je, maman » apprise d’oreille, ses accords trouvés sans les voir, puis trois variations comme Mozart.</li><li><b>Les notes en or de mémoire</b> : affichées au premier exercice d’une grille, puis cachées. « Écouter le squelette » te le fait chanter ; l’or revient après un échec.</li><li>Aussi : un prélude en fa mineur avant ton nocturne, et une autre forme de huit mesures (présenter, répéter, conclure).</li></ul>',
@@ -878,6 +880,32 @@ function pageEar(view = null) {
   page.insertAdjacentHTML('beforeend', `<p class="small muted mt-3">Les leçons d’oreille, dans l’ordre du parcours : <a href="#/niveau/n1/oreille">niveau 1</a> · <a href="#/niveau/n2/oreille">niveau 2</a>.</p>`);
   main.append(page);
   return mountLazy(host, () => Promise.all([import('./tool-earpath.js'), ensureAbcjs()]).then(([m]) => el => m.mountEarPath(el, { view: view === 'jouer' ? 'play' : view === 'parcours' ? 'path' : null })));
+}
+
+/* L'onglet Technique (V7.4.3) : les leçons rangées par thème, la leçon en cours, les gammes de la semaine, les outils. */
+const TECH_GROUPS = [
+  { title: 'Méthode et posture', ids: ['n1-t1', 'n1-t2'] },
+  { title: 'Le son : legato, plans sonores, nuances', ids: ['n1-t3', 'n1-t4', 'n2-t4'] },
+  { title: 'La pédale', ids: ['n1-t5'] },
+  { title: 'Gammes et arpèges', ids: ['n1-t6', 'n2-t6'] },
+  { title: 'Agilité : traits, rotation, octaves, poignet', ids: ['n2-t1', 'n2-t2', 'n2-t5', 'n2-t7'] },
+  { title: 'Plusieurs voix dans une main', ids: ['n2-t3'] },
+];
+function pageTechnique() {
+  const page = h('div', { class: 'page' });
+  const L = currentLevel();
+  const nl = nextTechLesson(L);
+  const sc = scalesOfWeek(L);
+  const all = allLessons().filter(l => l.module === 'technique');
+  const grouped = new Set(TECH_GROUPS.flatMap(g => g.ids));
+  const groups = [...TECH_GROUPS, { title: 'Autres', ids: all.map(l => l.id).filter(id => !grouped.has(id)) }].filter(g => g.ids.length);
+  page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Outils' }, { label: 'Technique' }]) +
+    `<div class="page-head"><h1>Technique</h1><p class="lead">Le geste au service du son : la leçon où tu en es, les gammes de la semaine, toutes les leçons rangées par thème, et les outils pour mesurer ton jeu. Coche à droite les leçons déjà faites : la séance ne les proposera plus.</p></div>` +
+    `<div class="grid cols-2"><div class="card"><div class="card-top"><span class="eyebrow">Où tu en es</span></div>${nl ? `<h3>${esc(nl.title)}</h3><p class="small">${esc(nl.summary || '')}</p><a class="btn primary sm" href="#/lecon/${nl.id}">Continuer</a>` : '<p class="small">Toutes les leçons de technique de ton niveau sont cochées : place aux gammes de la semaine et aux exercices des deux mains.</p>'}</div>` +
+    `<div class="card"><div class="card-top"><span class="eyebrow">Gammes et arpèges de la semaine</span></div><h3>${esc(sc.pair[0])} et ${esc(sc.pair[1])}</h3><p class="small">${esc(sc.text.replace(/^[^:]*: /, ''))}. Trois à cinq minutes, lentement d’abord, chaque note écoutée ; puis mesure ta régularité.</p><div class="btn-row"><a class="btn sm" href="#/lecon/${L.id === 'n2' ? 'n2-t6' : 'n1-t6'}">Doigtés</a><a class="btn sm ghost" href="#/outils/analyseur">Mesurer la régularité</a></div></div></div>` +
+    groups.map(g => `<div class="section-title mt-3"><h2>${esc(g.title)}</h2></div>${lessonListHTML(g.ids.map(id => all.find(l => l.id === id)).filter(Boolean), { levelTag: true })}`).join('') +
+    `<div class="section-title mt-3"><h2>Les outils</h2></div><div class="grid cols-2">${toolCard('#/outils/exercices', 'Exercices des deux mains', 'Deux rythmes à la fois, polyrythmes, lié contre détaché, une main qui chante, notes tenues : l’appli mesure chaque main.')}${toolCard('#/outils/analyseur', 'Analyse technique', 'Gammes, arpèges et exercices joués sans partition : régularité, legato, pédale, équilibre des mains.')}</div>`;
+  main.append(page);
 }
 
 function pageImproTool() {

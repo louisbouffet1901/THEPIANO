@@ -101,6 +101,28 @@ export function setSkip(skip, on = true) {
 }
 const SKIP_LABEL = { lesson: 'Déjà faite', exercises: 'Déjà acquis', ear: 'Déjà acquise' };
 
+/** Technique (V7.4.3) : la prochaine leçon de technique pas encore cochée, dans l'ordre du module, niveau par niveau. */
+export function nextTechLesson(L) {
+  for (const lv of LEVELS) {
+    if (lv.locked) continue;
+    const l = lessonsOf(lv.id, 'technique').find(x => !store.isDone(x.id));
+    if (l) return l;
+    if (lv.id === L.id) break;
+  }
+  return null;
+}
+/* Gammes et arpèges de la semaine : deux tonalités voisines, qui changent chaque lundi (programme de chaque niveau). */
+const SCALES_WEEK = {
+  n1: [['do majeur', 'la mineur'], ['sol majeur', 'mi mineur'], ['fa majeur', 'ré mineur'], ['ré majeur', 'do mineur'], ['fa mineur', 'la♭ majeur']],
+  n2: [['si♭ majeur', 'sol mineur'], ['mi♭ majeur', 'do mineur'], ['la majeur', 'fa♯ mineur'], ['mi majeur', 'do♯ mineur'], ['la♭ majeur', 'fa mineur']],
+};
+export function scalesOfWeek(L, now = Date.now()) {
+  const list = SCALES_WEEK[L.id] || SCALES_WEEK.n1;
+  const week = Math.floor((now / 864e5 + 3) / 7); // les semaines commencent le lundi
+  const pair = list[week % list.length];
+  return { pair, text: `${pair[0]} et ${pair[1]} (harmonique) : deux octaves mains ensemble, puis les arpèges${L.id === 'n2' ? ', la gamme chromatique et un arpège de septième' : ''}` };
+}
+
 /** Pièces « autres » : les compléments du niveau et les pièces phares déjà travaillées, la moins récente d'abord. */
 function otherPieces(L) {
   const ids = [...L.complements];
@@ -131,6 +153,16 @@ export async function proposals(L, now = Date.now()) {
       if (n.l) { const l = lessonById(n.l); if (l && l.module === 'technique' && !store.isDone(l.id)) { tech = { title: l.title, html: `${link(`#/lecon/${l.id}`, l.title)} <span class="sx-sub">Ce que demande ta section du jour (${esc(nx.section.name)}).</span>`, href: `#/lecon/${l.id}`, skip: { kind: 'lesson', id: l.id, label: l.title } }; break; } }
       if (n.x) { const e = ex.EXERCISES.find(x => x.id === n.x); const s = (store.get(`exercises.${n.x}`) || {}); if (e && !s.mastered && !skipped('exercises', e.id)) { tech = { title: e.title, html: `${link(`#/outils/exercices/${e.id}`, e.title)} <span class="sx-sub">Exercice des deux mains lié à ta section du jour (${esc(nx.section.name)}).</span>`, href: `#/outils/exercices/${e.id}`, skip: { kind: 'exercises', id: e.id, label: e.title } }; break; } }
     }
+  }
+  // sinon la prochaine leçon de technique pas encore cochée (pédale, posture, gammes…), dans l'ordre du module
+  if (!tech) {
+    const nl = nextTechLesson(L);
+    if (nl) tech = { title: nl.title, html: `${link(`#/lecon/${nl.id}`, nl.title)} <span class="sx-sub">La prochaine leçon de technique de ton parcours. Déjà faite ? Coche-la.</span>`, href: `#/lecon/${nl.id}`, skip: { kind: 'lesson', id: nl.id, label: nl.title } };
+  }
+  // toutes faites : un jour les gammes et arpèges de la semaine, un jour l'exercice des deux mains
+  if (!tech && Math.floor(now / 864e5) % 2 === 0) {
+    const sc = scalesOfWeek(L, now);
+    tech = { title: 'Gammes et arpèges', html: `${link('#/outils/technique', 'Gammes et arpèges de la semaine')} : ${esc(sc.text)}.`, href: '#/outils/technique' };
   }
   if (!tech) {
     const r = ex.recommendExercise();
