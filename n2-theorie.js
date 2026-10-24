@@ -108,7 +108,7 @@ V:LH clef=bass
 /* ---------- Chapitres (première partie) ---------- */
 const PART1 = [
   {
-    id: 'n2-th1', minutes: 25,
+    id: 'n2-th1', minutes: 25, steps: true,
     title: 'Les accords de septième',
     summary: 'Cinq accords de quatre sons : les construire, savoir où ils se trouvent dans une tonalité, les résoudre. L’Andante de l’op. 15 n° 1 en emploie presque à chaque temps.',
     goals: ['Construire les cinq accords de septième.', 'Connaître les septièmes d’une tonalité majeure et mineure.', 'Résoudre une septième : la septième descend, la sensible monte.', 'Nommer les septièmes des mesures 1 à 8 de l’op. 15 n° 1.'],
@@ -156,11 +156,12 @@ ${W.score({ abc: V7_RES, title: 'V7 → i en fa mineur', bpm: 50, caption: 'Mi�
 <p>Dans la formule <b>ii7 – V7 – I</b>, la plus courante des cadences, chaque septième descend sur la tierce de l’accord suivant :</p>
 ${W.score({ abc: CHAIN_ii_V_I, title: 'ii7 – V7 – I en fa majeur', bpm: 50, caption: 'Fa, septième de sol m7, descend sur mi, tierce de do 7 ; si♭, septième de do 7, descend sur la, tierce de fa. Les notes communes restent en place : si♭ (de sol m7 à do 7), do (de do 7 à fa).' })}
 
-<h2>La septième diminuée</h2>
+<h2>Les septièmes diminuée et demi-diminuée</h2>
+<h3>La septième diminuée</h3>
 <p>Trois tierces mineures superposées : elle partage l’octave en quatre parts égales. Conséquences : il n’en existe que <b>trois</b> différentes au clavier, et chacune peut se résoudre vers plusieurs tonalités selon la façon dont on l’écrit. On la trouve sur le 7e degré du mineur harmonique (vii°7), où elle joue le rôle d’une dominante sans fondamentale.</p>
 ${W.score({ abc: DIM7_RES, title: 'vii°7 → i en fa mineur', bpm: 50, caption: 'Toutes les voix bougent d’un degré : mi♮ monte vers fa ; sol, si♭ et ré♭ descendent.' })}
 
-<h2>La septième demi-diminuée</h2>
+<h3>La septième demi-diminuée</h3>
 <p>Accord diminué + septième mineure. En majeur, c’est le viiø7 (si – ré – fa – la en do) ; en mineur, c’est le <b>iiø7</b>, qui prépare la dominante (sol – si♭ – ré♭ – fa → do 7 en fa mineur). Chopin l’emprunte volontiers au mode mineur en plein majeur : c’est l’ombre de la mesure 5 de l’op. 15.</p>
 
 ${W.key('À retenir', '<ul><li>Septième = accord de trois sons + une tierce. Cinq types : de dominante, majeure, mineure, demi-diminuée, diminuée.</li><li>Une seule septième de dominante par tonalité : V7 (en mineur, avec la sensible).</li><li>La septième descend ; la sensible monte.</li><li>ii7 – V7 – I (en mineur iiø7 – V7 – i) : la cadence la plus courante.</li><li>La septième diminuée divise l’octave en tierces mineures : trois accords seulement.</li></ul>')}
@@ -176,7 +177,12 @@ ${W.warn('Erreurs fréquentes', '<ul><li>Confondre 7e de dominante et 7e majeure
 ${W.score({ abc: OP15.e1, title: 'Op. 15 n° 1, mesures 1 à 8', bpm: 66, startBpm: 56 })}
 <p>Aux mesures 3 et 4, tu entends exactement la formule ii7 – V7 – I : sol m7, do 7, fa. Dans les triolets de la main gauche, le si♭ (septième de do 7) descend sur la (tierce de fa) au début de la mesure 4, pendant que la mélodie monte vers son sommet.</p>
 
-<h2>Exercices</h2>
+<h2>Au clavier, puis sur le papier</h2>
+${W.clavier({ id: 'n2-th1', keys: ['F', 'C', 'Bb'], tasks: [
+  { kind: 'chords', text: '<b>ii7 – V7 – I</b> : la basse à la main gauche, les trois autres notes au plus près à la main droite. Chaque septième descend sur la tierce de l’accord suivant.', chords: ['ii7', 'V7', 'I'], lead: 'upper', rules: ['septieme', 'sensible'] },
+  { kind: 'chords', text: 'La septième de dominante renversée : <b>V6/5 – I</b>, puis <b>V4/2 – I6</b> (la septième, à la basse, descend).', chords: ['V6/5', 'I', 'V4/2', 'I6'], lead: 'upper', rules: ['septieme', 'sensible'] },
+  { kind: 'chords', text: 'En mineur, à une main : <b>i – vii°7 – i</b>. Dans la septième diminuée, toutes les voix bougent d’un degré.', chords: ['i', 'vii°7', 'i'], lead: true, minor: true, anyPos: true },
+], impro: { href: '#/lecon/n2-im-cadences', label: 'La cadence : la formule qui conclut', why: 'ii – V – I à la main droite, sur la basse de l’appli' } })}
 ${W.exo('Exercice 1 — Construire', '<p>Écris : sol 7 ; ré m7 ; si♭ maj7 ; fa♯ ø7 (demi-diminué) ; do♯ °7 (diminué).</p><details><summary>Corrigé</summary><div><p>Sol – si – ré – fa ; ré – fa – la – do ; si♭ – ré – fa – la ; fa♯ – la – do – mi ; do♯ – mi – sol – si♭.</p></div></details>')}
 ${W.exo('Exercice 2 — Reconnaître', '<p>Nomme : (a) mi – sol♯ – si – ré ; (b) la – do – mi – sol ; (c) si – ré – fa – la♭ ; (d) mi♭ – sol – si♭ – ré ; (e) ré – fa – la♭ – do.</p><details><summary>Corrigé</summary><div><p>(a) mi 7, septième de dominante ; (b) la m7 ; (c) si °7, septième diminuée ; (d) mi♭ maj7 ; (e) ré ø7, demi-diminuée.</p></div></details>')}
 ${W.exo('Exercice 3 — Situer et résoudre', '<p>(a) De quelle(s) tonalité(s) do 7 est-il la dominante ? (b) Joue sol 7 → do majeur : quelle note monte, quelle note descend ?</p><details><summary>Corrigé</summary><div><p>(a) Fa majeur et fa mineur : V7 est le même dans les deux modes. (b) Si (la sensible) monte vers do ; fa (la septième) descend vers mi ; ré va vers do (ou mi), sol reste ou va à do.</p></div></details>')}
@@ -187,7 +193,7 @@ ${W.links([W.informance('/content/pages/20-a-crash-course-in-music-theory', 'A C
   },
 
   {
-    id: 'n2-th-voix', minutes: 20,
+    id: 'n2-th-voix', minutes: 20, steps: true,
     title: 'La conduite des voix',
     summary: 'Un enchaînement d’accords, ce sont plusieurs mélodies qui avancent ensemble. Cinq règles pour les conduire, et la main gauche à trois voix de l’op. 15 n° 1.',
     goals: ['Enchaîner des accords en bougeant le moins possible.', 'Respecter les notes à tendance (sensible, septième).', 'Éviter les quintes et octaves parallèles.', 'Entendre les voix de la main gauche de l’Andante.'],
@@ -234,7 +240,12 @@ ${W.score({ abc: OP15_VOICES, title: 'Mesures 1 à 8 : mélodie, voix en noires 
 </ul>
 ${W.tip('Au piano', '<p>Joue la basse et la voix en noires seules, en les liant au doigt ; puis ajoute la mélodie. Quand tu remets les triolets, garde ces deux lignes au premier plan : la main gauche devient une petite polyphonie, pas une masse d’accords.</p>')}
 
-<h2>Exercices</h2>
+<h2>Au clavier, puis sur le papier</h2>
+${W.clavier({ id: 'n2-th-voix', keys: ['C', 'G', 'D'], tasks: [
+  { kind: 'chords', text: '<b>I – IV – V7 – I</b> à quatre voix : la basse à la main gauche, trois voix à la main droite. Note commune gardée, sensible qui monte, septième qui descend.', chords: ['I', 'IV', 'V7', 'I'], lead: 'upper', rules: ['sensible', 'septieme'] },
+  { kind: 'chords', text: '<b>I – vi – ii6 – V – I</b> : la basse bouge, les voix du dessus bougent à peine.', chords: ['I', 'vi', 'ii6', 'V', 'I'], lead: 'upper', rules: ['sensible'] },
+  { kind: 'chords', text: 'Sans aide, en mineur : <b>i – iv6 – V – i</b>.', chords: ['i', 'iv6', 'V', 'i'], lead: 'upper', rules: ['sensible'], minor: true },
+], impro: { href: '#/lecon/n2-im-octave', label: 'La règle de l’octave', why: 'un accord pour chaque note de la basse, enchaîné au plus près' } })}
 ${W.exo('Exercice 1 — Enchaîner', '<p>Joue I – IV – V7 – I en sol majeur, puis en fa majeur, en appliquant les cinq règles (basse à la main gauche, trois voix à la main droite, comme dans l’exemple en do).</p><details><summary>Corrigé</summary><div><p>Sol majeur : main droite si – ré – sol → do – mi – sol → do – ré – fa♯ → si – ré – sol ; basse sol – do – ré – sol.<br>Fa majeur : main droite la – do – fa → si♭ – ré – fa → si♭ – do – mi → la – do – fa ; basse fa – si♭ – do – fa.</p></div></details>')}
 ${W.exo('Exercice 2 — Trouver la faute', '<p>Basse do → ré ; main droite do – mi – sol → ré – fa – la (do grave à la basse, accords au-dessus). Qu’est-ce qui ne va pas, et comment corriger ?</p><details><summary>Corrigé</summary><div><p>Toutes les voix montent avec la basse : octaves parallèles (do – do → ré – ré) et quintes parallèles (do – sol → ré – la). Correction : garder la basse do → ré et faire descendre la main droite, par exemple sol – do – mi → fa – la – ré (mouvement contraire).</p></div></details>')}
 ${W.exo('Exercice 3 — Dans la partition', '<p>Op. 15 n° 1, mesure 4 : quelle note de la voix en noires monte vers ré, et pourquoi ?</p><details><summary>Corrigé</summary><div><p>Do♯ : c’est la sensible de ré mineur. L’accord du 2e temps (la 7, dominante de ré mineur) se résout sur ré mineur au 3e temps.</p></div></details>')}
@@ -242,7 +253,7 @@ ${W.exo('Exercice 3 — Dans la partition', '<p>Op. 15 n° 1, mesure 4 : quelle 
   },
 
   {
-    id: 'n2-th2', minutes: 20,
+    id: 'n2-th2', minutes: 20, steps: true,
     title: 'Les dominantes secondaires',
     summary: 'Chaque accord majeur ou mineur peut avoir sa propre dominante : une tonicisation passagère, qui colore sans changer de tonalité. L’Andante de l’op. 15 en est rempli.',
     goals: ['Construire la dominante d’un degré quelconque.', 'Repérer une dominante secondaire grâce à son altération.', 'Analyser les mesures 4 à 8 et 17 à 21 de l’op. 15 n° 1.'],
@@ -294,7 +305,12 @@ ${W.score({ abc: OP15.e1, title: 'Op. 15 n° 1, mesures 1 à 8', bpm: 66, startB
 ${W.score({ abc: OP15.e2, title: 'Op. 15 n° 1, mesures 17 à 24', bpm: 66, startBpm: 50 })}
 ${W.tip('À l’oreille', '<p>Une dominante secondaire sonne comme une petite surprise lumineuse (une note qui monte d’un demi-ton), aussitôt expliquée par l’accord suivant. Joue la chaîne de dominantes ci-dessus, puis la même suite sans altérations (fa – la m – ré m – sol m – do 7 – fa) : la différence est frappante.</p>')}
 
-<h2>Exercices</h2>
+<h2>Au clavier, puis sur le papier</h2>
+${W.clavier({ id: 'n2-th2', keys: ['C', 'F', 'G'], tasks: [
+  { kind: 'chords', text: '<b>V7/IV – IV</b> : l’accord de I avec une septième mineure devient la dominante de IV, et s’y résout.', chords: ['I', 'V7/IV', 'IV', 'V7', 'I'], lead: 'upper', rules: ['septieme'] },
+  { kind: 'chords', text: '<b>V7/V – V</b> : le 4<sup>e</sup> degré haussé (fa♯ en do) monte sur la dominante.', chords: ['I', 'V7/V', 'V', 'I'], lead: 'upper', rules: ['septieme', 'sensible'] },
+  { kind: 'chords', text: '<b>V7/ii – ii</b>, puis la cadence.', chords: ['I', 'V7/ii', 'ii', 'V7', 'I'], lead: 'upper', rules: ['septieme', 'sensible'] },
+], impro: { href: '#/lecon/n2-im1', label: 'Orner comme Chopin', why: 'la grille de l’op. 15, pleine de dominantes secondaires' } })}
 ${W.exo('Exercice 1 — Construire', '<p>En do majeur, écris V7/ii, V7/IV, V7/V et V7/vi.</p><details><summary>Corrigé</summary><div><p>V7/ii = la – do♯ – mi – sol ; V7/IV = do – mi – sol – si♭ ; V7/V = ré – fa♯ – la – do ; V7/vi = mi – sol♯ – si – ré.</p></div></details>')}
 ${W.exo('Exercice 2 — Lire une altération', '<p>En sol majeur, quel accord annoncent : (a) un do♯ ; (b) un sol♯ ; (c) un fa♮ ?</p><details><summary>Corrigé</summary><div><p>(a) Do♯ est la sensible de ré : la 7 = V7/V. (b) Sol♯ est la sensible de la : mi 7 = V7/ii. (c) Fa♮ est la septième de sol 7 = V7/IV, qui mène à do.</p></div></details>')}
 ${W.exo('Exercice 3 — Analyser', '<p>Op. 15, mesure 18 : ré 7 devrait aller vers sol mineur. Où va-t-il, et quel nom donner à l’enchaînement ?</p><details><summary>Corrigé</summary><div><p>Vers sol 7 (avec ré à la basse), puis vers do à la mesure 19 : ré 7 – sol 7 – do est une chaîne de dominantes en quintes descendantes (V7/ii – V7/V – V).</p></div></details>')}
@@ -302,7 +318,7 @@ ${W.exo('Exercice 3 — Analyser', '<p>Op. 15, mesure 18 : ré 7 devrait aller v
   },
 
   {
-    id: 'n2-th3', minutes: 20,
+    id: 'n2-th3', minutes: 20, steps: true,
     title: 'Moduler',
     summary: 'Changer de tonalité : par un accord pivot, par une altération, par un changement de mode. Le Con fuoco en offre trois exemples en huit mesures.',
     goals: ['Distinguer tonicisation et modulation.', 'Connaître les tons voisins.', 'Reconnaître les principales façons de moduler.', 'Suivre les tonalités des mesures 24 à 32 de l’op. 15.'],
@@ -320,7 +336,8 @@ ${W.exo('Exercice 3 — Analyser', '<p>Op. 15, mesure 18 : ré 7 devrait aller v
 </tbody></table>
 ${W.cof({ start: 11, minor: false })}
 
-<h2>1. Par un accord pivot</h2>
+<h2>Quatre façons de moduler</h2>
+<h3>1. Par un accord pivot</h3>
 <p>Un accord appartient aux deux tonalités : on l’entend dans l’ancienne, on le comprend après coup dans la nouvelle. Ici, la mineur est vi en do majeur et ii en sol majeur ; la dominante de sol (ré 7) confirme ensuite le changement.</p>
 ${W.score({ abc: MODUL, title: 'De do majeur à sol majeur par un accord pivot', bpm: 60, caption: 'Le la mineur de la mesure 3 est le pivot : vi en do majeur, ii en sol majeur. Le fa♯ de ré 7 fait basculer.' })}
 
@@ -329,13 +346,13 @@ ${W.ecoute({ title: 'Moduler par un accord pivot', bpm: 72, items: [
   { label: 'Do → mi majeur, sans préparation', seq: 'do2 mi3 sol3 do4 | fa2 fa3 la3 do4 | mi2 sol#3 si3 mi4:3', note: 'Un saut : ce n’est pas une modulation préparée, c’est un effet, une couleur brusque.' },
 ] })}
 
-<h2>2. Par une altération</h2>
+<h3>2. Par une altération</h3>
 <p>Une note est altérée pour appartenir à la nouvelle tonalité : depuis do majeur, fa devient fa♯ (la sensible de sol) pour aller vers sol ; si devient si♭ (le 4e degré de fa, qui efface la sensible de do) pour aller vers fa. La dominante de la nouvelle tonalité vient ensuite confirmer.</p>
 
-<h2>3. Par changement de mode</h2>
+<h3>3. Par changement de mode</h3>
 <p>On garde la même tonique et on change de mode : c’est la <b>tonalité homonyme</b> (fa majeur ↔ fa mineur). Les deux modes ont la même dominante : do 7 peut mener à l’un comme à l’autre.</p>
 
-<h2>4. Les autres moyens</h2>
+<h3>4. Les autres moyens</h3>
 <ul>
 <li><b>La modulation directe</b> : une nouvelle tonalité attaquée sans transition, souvent après une cadence ou un silence.</li>
 <li><b>La modulation enharmonique</b> : un accord réécrit autrement change de sens, en particulier la septième diminuée (voir <a href="#/lecon/n2-th1">les accords de septième</a>) et la sixte augmentée (voir <a href="#/lecon/n2-th5">la sixte augmentée</a>). C’est le moyen favori des romantiques pour atteindre des tonalités lointaines.</li>
@@ -357,7 +374,11 @@ ${W.score({ abc: OP15.e3, title: 'Mesures 25 à 28 : fa mineur', bpm: 84, startB
 ${W.score({ abc: OP15.e4, title: 'Mesures 29 à 32 : vers ré♭ majeur', bpm: 84, startBpm: 56 })}
 <p>Plus loin, la♭ 7 puis si♭ 7 (mesures 41 à 44) évoquent ré♭ et mi♭ mineur sans s’y installer, et si♭ mineur ramène vers fa majeur (mesures 47-49).</p>
 
-<h2>Exercices</h2>
+<h2>Au clavier, puis sur le papier</h2>
+${W.clavier({ id: 'n2-th3', keys: ['C', 'G', 'F'], tasks: [
+  { kind: 'chords', text: 'Vers la <b>dominante</b> par un accord pivot : vi est aussi le ii du nouveau ton ; V7/V le confirme ; V devient la tonique.', chords: ['I', 'vi', 'V7/V', 'V'], lead: 'upper', rules: ['septieme'] },
+  { kind: 'chords', text: 'Vers le <b>relatif mineur</b> : la dominante de vi (le 5<sup>e</sup> degré haussé apparaît), puis vi devient la tonique.', chords: ['I', 'V7/vi', 'vi'], lead: 'upper', rules: ['septieme'] },
+], impro: { href: '#/lecon/n2-im3', label: 'La forme ABA', why: 'B part dans un ton voisin, puis revient' } })}
 ${W.exo('Exercice 1 — Tons voisins', '<p>Quels sont les cinq tons voisins de ré♭ majeur ?</p><details><summary>Corrigé</summary><div><p>Si♭ mineur (relatif) ; la♭ majeur et fa mineur (dominante et son relatif) ; sol♭ majeur et mi♭ mineur (sous-dominante et son relatif).</p></div></details>')}
 ${W.exo('Exercice 2 — Pivots', '<p>Trouve tous les accords parfaits communs à do majeur et sol majeur. Lequel préfère-t-on comme pivot, et pourquoi ?</p><details><summary>Corrigé</summary><div><p>Do majeur (I / IV), mi mineur (iii / vi), sol majeur (V / I), la mineur (vi / ii). On préfère un accord qui a une fonction de sous-dominante dans la nouvelle tonalité (la mineur = ii, ou do = IV), car il peut directement précéder sa dominante (ré 7).</p></div></details>')}
 ${W.exo('Exercice 3 — Tonicisation ou modulation ?', '<p>Dans le Più mosso de l’op. 55 n° 1 (niveau 1), on passe de fa mineur à do mineur (mesures 51 à 54), puis à sol mineur (mesures 55-56). Modulations ?</p><details><summary>Corrigé</summary><div><p>Des tonicisations enchaînées en marche modulante : chaque tonalité est brièvement affirmée (V – i), mais aucune ne s’installe ni n’est confirmée par une vraie cadence.</p></div></details>')}
@@ -525,7 +546,7 @@ const AN_CL37 = {
 /* ---------- Chapitres (seconde partie) ---------- */
 const PART2 = [
   {
-    id: 'n2-th4', minutes: 20,
+    id: 'n2-th4', minutes: 20, steps: true,
     title: 'Les marches harmoniques',
     summary: 'Un modèle répété à des hauteurs successives : le moteur de nombreux développements. Le Con fuoco en contient deux, l’une qui monte, l’autre qui descend.',
     goals: ['Reconnaître une marche, son modèle et ses reprises.', 'Jouer la marche par quintes descendantes.', 'Analyser les mesures 41 à 48 de l’op. 15 n° 1.'],
@@ -565,7 +586,11 @@ ${W.score({ abc: OP15_RED_45, title: 'Mesures 45 à 48 (réduction : mélodie et
 <p>Au niveau 1, tu as joué une marche modulante : le Più mosso de l’op. 55 n° 1, où la même formule passe de fa mineur à do mineur, puis à sol mineur.</p>
 ${W.score({ abc: OP55.e6, title: 'Op. 55 n° 1, mesures 48 à 52 : la marche modulante', bpm: 66, startBpm: 56 })}
 
-<h2>Exercices</h2>
+<h2>Au clavier, puis sur le papier</h2>
+${W.clavier({ id: 'n2-th4', keys: ['C', 'F', 'G'], tasks: [
+  { kind: 'chords', text: 'La <b>marche par quintes descendantes</b> : chaque basse descend d’une quinte (ou monte d’une quarte) ; au-dessus, les voix descendent doucement.', chords: ['I', 'IV', 'vii°', 'iii', 'vi', 'ii', 'V', 'I'], lead: 'upper' },
+  { kind: 'chords', text: 'La <b>Fonte</b> en abrégé : V7/ii – ii, puis V7 – I.', chords: ['I', 'V7/ii', 'ii', 'V7', 'I'], lead: 'upper', rules: ['septieme'] },
+], impro: { href: '#/lecon/n2-im2', label: 'L’élégie et la marche par quintes', why: 'la même marche, sous une mélodie' } })}
 ${W.exo('Exercice 1 — Transposer', '<p>Joue la marche du cours en mi mineur. Quels sont les accords ?</p><details><summary>Corrigé</summary><div><p>Mi m – la m – ré – sol – do – fa♯ ° – si 7 – mi m.</p></div></details>')}
 ${W.exo('Exercice 2 — Mesurer', '<p>Mesures 41 à 44 : de combien la reprise est-elle plus haute que le modèle ? Pourquoi la mélodie commence-t-elle par fa – sol♭ (demi-ton) alors que le modèle commençait par mi♭ – fa (ton) ?</p><details><summary>Corrigé</summary><div><p>D’un ton (la♭ 7 → si♭ 7). La marche n’est pas une copie exacte : Chopin garde le dessin mais prend les notes de la nouvelle tonalité. Le modèle est en ré♭ majeur, où la note au-dessus de mi♭ est fa (un ton) ; la reprise vise mi♭ mineur, où la note au-dessus de fa est sol♭ (un demi-ton).</p></div></details>')}
 ${W.exo('Exercice 3 — Composer', '<p>En do majeur, écris un modèle de deux accords (I – IV) et fais-le descendre d’un degré à chaque reprise, jusqu’à une cadence.</p><details><summary>Corrigé</summary><div><p>Do – fa | si ° – mi m | la m – ré m | sol – do : la marche par quintes en majeur (I – IV – vii° – iii – vi – ii – V – I).</p></div></details>')}
@@ -574,7 +599,7 @@ ${W.exo('Exercice 3 — Composer', '<p>En do majeur, écris un modèle de deux a
   },
 
   {
-    id: 'n2-th5', minutes: 25,
+    id: 'n2-th5', minutes: 25, steps: true,
     title: 'La sixte napolitaine et la sixte augmentée',
     summary: 'Deux accords de préparation de la dominante, très chargés en couleur, chers aux romantiques. Tu les trouves dans la reprise de l’op. 15 et dans l’op. 55.',
     goals: ['Construire la sixte napolitaine et la conduire vers la dominante.', 'Construire les trois sixtes augmentées.', 'Les reconnaître dans tes pièces.'],
@@ -625,7 +650,11 @@ ${W.score({ abc: OP15_RED_15, title: 'Mesures 15 à 19 (et 63 à 67) : réductio
 ${W.score({ abc: OP55.e2, title: 'Op. 55 n° 1, mesures 5 à 8 : la sixte napolitaine', bpm: 56, startBpm: 46 })}
 ${W.score({ abc: OP55.e8, title: 'Op. 55 n° 1, mesures 69-70 : la sixte augmentée écrite comme ré♭ 7', bpm: 66, startBpm: 46 })}
 
-<h2>Exercices</h2>
+<h2>Au clavier, puis sur le papier</h2>
+${W.clavier({ id: 'n2-th5', keys: ['Am', 'Dm', 'Em'], tasks: [
+  { kind: 'chords', text: 'La <b>sixte napolitaine</b> : le II abaissé, au 1<sup>er</sup> renversement, puis V7 – i. Écoute le 2<sup>e</sup> degré abaissé descendre vers la sensible.', chords: ['i', 'N6', 'V7', 'i'], lead: 'upper', rules: ['sensible'] },
+  { kind: 'chords', text: '<b>iv – N6</b> : une seule note change, la quinte de iv monte d’un demi-ton. Puis la cadence.', chords: ['i', 'iv', 'N6', 'V', 'i'], lead: 'upper', rules: ['sensible'] },
+], impro: { href: '#/lecon/n2-im-cadences', label: 'La cadence', why: 'glisse une napolitaine avant V dans tes cadences en mineur' } })}
 ${W.exo('Exercice 1 — Sixte napolitaine', '<p>Écris la sixte napolitaine (avec sa basse) de do mineur, la mineur et ré mineur.</p><details><summary>Corrigé</summary><div><p>Do mineur : ré♭ – fa – la♭, fa à la basse. La mineur : si♭ – ré – fa, ré à la basse. Ré mineur : mi♭ – sol – si♭, sol à la basse.</p></div></details>')}
 ${W.exo('Exercice 2 — Sixtes augmentées', '<p>Écris les trois sixtes augmentées de la mineur. Vers quel accord vont-elles ?</p><details><summary>Corrigé</summary><div><p>Italienne : fa – la – ré♯ ; française : fa – la – si – ré♯ ; allemande : fa – la – do – ré♯. Elles vont vers mi (la dominante), fa descendant sur mi et ré♯ montant sur mi.</p></div></details>')}
 ${W.exo('Exercice 3 — Reconnaître', '<p>En ré mineur, que penses-tu de l’accord si♭ – ré – fa – sol♯ ? Et s’il était écrit si♭ – ré – fa – la♭ ?</p><details><summary>Corrigé</summary><div><p>Si♭ – ré – fa – sol♯ : sixte augmentée allemande de ré mineur (si♭ et sol♯ s’ouvrent sur la – la). Écrit si♭ – ré – fa – la♭, c’est si♭ 7, la dominante de mi♭ : même son, autre fonction.</p></div></details>')}
@@ -635,7 +664,7 @@ ${W.improv({ preset: 'n2-napolitaine', presets: ['n2-napolitaine'] })}
   },
 
   {
-    id: 'n2-th-chopin', minutes: 25,
+    id: 'n2-th-chopin', minutes: 25, steps: true,
     title: 'Le langage de Chopin : chromatisme, neuvièmes, voix intérieures',
     summary: 'Ce qui fait qu’une page sonne « Chopin » : des voix qui glissent par demi-tons, des dominantes enrichies d’une neuvième, des modulations rapides, et des voix intérieures qui chantent en sourdine. Chaque procédé, entendu chez lui.',
     goals: ['Reconnaître quatre procédés typiques du langage de Chopin.', 'Les entendre dans ses œuvres, puis les utiliser en improvisant.'],
@@ -684,11 +713,17 @@ ${W.tip('Faire entendre une voix intérieure', '<p>Joue d’abord la voix intér
 <li>Au piano : dans chaque page, repère la voix qui glisse, la neuvième qui chante, la voix intérieure ; ce sont les notes à écouter, donc à doser.</li>
 </ul>
 ${W.exo('Exercice — Dans tes deux nocturnes', '<p>Trouve : (1) dans l’op. 55, un passage où la basse descend par demi-tons ; (2) dans l’op. 15, une voix intérieure ; (3) dans l’op. 15, mesures 1 à 8, une dominante secondaire.</p><details><summary>Corrigé</summary><div><p>(1) Op. 55, mesures 1 à 4 : la basse fa – sol – la♭ – mi♮ – fa reste diatonique, mais la phrase b (mesures 17 à 24) et le Più mosso descendent par demi-tons ; la coda (mesures 85 à 96) fait glisser les voix au-dessus de la pédale de fa. (2) Op. 15, mesures 1 à 8 : la voix en noires de la main gauche (fa – fa – mi, puis do – do♯ – ré). (3) Mesure 4 : la 7 (avec do♯), dominante de ré mineur (V7/vi).</p></div></details>')}
+
+<h2>Au clavier</h2>
+${W.clavier({ id: 'n2-th-chopin', keys: ['F', 'C', 'Bb'], tasks: [
+  { kind: 'chords', text: 'Une voix qui <b>glisse</b> par demi-tons : IV puis iv, emprunté au mineur (la tierce descend d’un demi-ton), puis I.', chords: ['I', 'V7/IV', 'IV', 'iv', 'I'], lead: 'upper' },
+  { kind: 'chords', text: 'La <b>septième diminuée de la dominante</b> (4<sup>e</sup> degré haussé) : trois voix glissent d’un demi-ton vers V.', chords: ['I', 'vii°7/V', 'V', 'I'], lead: 'upper', rules: ['sensible'] },
+], impro: { href: '#/lecon/n2-im1', label: 'Orner comme Chopin', why: 'ces glissements, dans tes ornements' } })}
 `,
   },
 
   {
-    id: 'n2-th-debussy', minutes: 25, prio: 2,
+    id: 'n2-th-debussy', minutes: 25, steps: true, prio: 2,
     title: 'L’harmonie de Debussy',
     summary: 'Les mêmes accords que Chopin, mais choisis pour leur couleur plus que pour leur tension : septièmes et neuvièmes libres, accords parallèles, pédales, mode mineur emprunté. Tout, dans Clair de lune.',
     goals: ['Reconnaître accords enrichis, accords parallèles et pédales.', 'Repérer les couleurs empruntées au mode mineur.', 'Comprendre le passage de ré♭ majeur à do♯ mineur et le retour.'],
@@ -696,18 +731,20 @@ ${W.exo('Exercice — Dans tes deux nocturnes', '<p>Trouve : (1) dans l’op. 55
     body: W => `
 <p>Clair de lune est encore une pièce <b>tonale</b> : ré♭ majeur, des dominantes, des cadences. Mais là où Chopin construit des tensions qui se résolvent, Debussy choisit souvent un accord pour sa <b>couleur</b>, et l’enchaîne librement au suivant. Cinq procédés suffisent à décrire presque toute la pièce.</p>
 
-<h2>1. Des accords enrichis, qui ne se résolvent pas</h2>
+<h2>Des accords enrichis, des accords qui glissent</h2>
+<h3>1. Des accords enrichis, qui ne se résolvent pas</h3>
 <p>Septièmes, neuvièmes, onzièmes sont traitées comme des couleurs : elles ne descendent pas forcément. Dès le début : à la mesure 2, une septième diminuée (do – mi♭ – sol♭ – si𝄫) glisse vers si♭ m7 (mesure 3) au lieu de se résoudre sur la tonique ; à la mesure 4, la♭ 7, la dominante, ne conclut pas davantage. Au Calmato (mesure 43), la basse tient la♭ (la dominante) et la main droite joue mi♭ – sol♭ – si♭ – ré♭ : l’accord de mi♭ mineur posé sur la dominante. Cette <b>dominante de onzième</b> prolonge l’attente sans brutalité ; la sensible do n’apparaît qu’à la fin de la mesure, dans la mélodie.</p>
 ${W.score({ abc: CLAIR.e1, title: 'Mesures 1 à 4', bpm: 40, startBpm: 36 })}
 
-<h2>2. Les accords parallèles</h2>
+<h3>2. Les accords parallèles</h3>
 <p>Ce que la conduite des voix classique évite (le bloc qui se déplace en entier), Debussy le recherche : aux mesures 15 à 18, les accords glissent ensemble, comme un seul timbre. On parle d’accords parallèles. Même idée aux mesures 45-46 : sol♭, fa mineur et mi♭ mineur se succèdent au-dessus de la pédale de la♭.</p>
 ${W.score({ abc: CLAIR.e2, title: 'Mesures 15 à 18 : accords parallèles sur une pédale', bpm: 40, startBpm: 34 })}
 
-<h2>3. Les pédales</h2>
+<h2>Pédales et mineur emprunté</h2>
+<h3>3. Les pédales</h3>
 <p>Une note tenue (ou répétée) à la basse pendant que les accords changent au-dessus : mi♭ aux mesures 15 à 18, la♭ aux mesures 43 à 46. La pédale fixe un socle stable ; les accords peuvent alors flotter sans que l’on perde la tonalité.</p>
 
-<h2>4. Le mode mineur emprunté</h2>
+<h3>4. Le mode mineur emprunté</h3>
 <p>Debussy emprunte régulièrement des notes à ré♭ <b>mineur</b> : si𝄫 (le 6e degré abaissé), fa♭ (la tierce mineure), do♭.</p>
 <ul>
 <li>Mesure 2 : sol♭ – si𝄫 à la main gauche, sous do – mi♭ : une septième diminuée qui contient le si𝄫 du mineur, une ombre très douce.</li>
@@ -733,7 +770,11 @@ ${W.warn('Erreurs fréquentes', '<ul><li>Croire que Debussy « ne respecte pas l
 <li><b>Calmato (43-50)</b> : la pédale de la♭, la mélodie au milieu du clavier, les accords qui glissent (45-46), sol♭ majeur puis sol♭ mineur (49-50) avant le retour du thème.</li>
 </ul>
 
-<h2>Exercices</h2>
+<h2>Au clavier, puis sur le papier</h2>
+${W.clavier({ id: 'n2-th-debussy', keys: ['C', 'F', 'D'], tasks: [
+  { kind: 'chords', text: 'Des accords <b>parallèles</b> : la même forme glisse d’un degré à l’autre, à la main droite, sans résolution.', chords: ['I', 'ii', 'iii', 'ii', 'I'], lead: true },
+  { kind: 'chords', text: 'Des <b>septièmes majeures</b> qui ne se résolvent pas : I7 – IV7 – I7, laissées sonner (pédale).', chords: ['I7', 'IV7', 'I7'], lead: true, anyPos: true },
+] })}
 ${W.exo('Exercice 1 — Les notes empruntées', '<p>Dans les mesures 27 à 36, quelles notes ne font pas partie de ré♭ majeur ? D’où viennent-elles ?</p><details><summary>Corrigé</summary><div><p>Fa♭ et do♭ (mesures 27-28 et 35-36) viennent de ré♭ mineur (tierce et septième mineures). Sol♮ (mesure 30) est la tierce de mi♭ 9, la dominante de la dominante. Ré♮ (mesures 33-34) brode mi♭, puis devient, avec mi♮ (mesure 34), la quinte haussée d’un accord augmenté.</p></div></details>')}
 ${W.exo('Exercice 2 — L’orthographe', '<p>Pourquoi l’En animant est-il écrit en do♯ mineur plutôt qu’en ré♭ mineur ?</p><details><summary>Corrigé</summary><div><p>Ré♭ mineur demanderait huit bémols à l’armure (dont un double bémol, si𝄫) ; do♯ mineur ne demande que quatre dièses. Même son, lecture bien plus simple : c’est une écriture enharmonique.</p></div></details>')}
 ${W.exo('Exercice 3 — À l’oreille et au clavier', '<p>Joue les accords des mesures 15 à 18 sans la mélodie, puis enchaîne do majeur → ré mineur en accords parallèles (do – mi – sol → ré – fa – la, mains ensemble). Quelle différence avec l’enchaînement correct du chapitre sur la conduite des voix ?</p><details><summary>Corrigé</summary><div><p>Les accords parallèles sonnent comme un seul timbre qui glisse : c’est l’effet recherché par Debussy. Dans un choral, les quintes et octaves parallèles affaiblissent l’indépendance des voix ; ici, il n’y a pas de voix indépendantes à protéger.</p></div></details>')}
@@ -741,7 +782,7 @@ ${W.exo('Exercice 3 — À l’oreille et au clavier', '<p>Joue les accords des 
   },
 
   {
-    id: 'n2-th6', minutes: 20,
+    id: 'n2-th6', minutes: 20, steps: true,
     title: 'Les formes',
     summary: 'Du plan d’une phrase à celui d’une sonate : savoir où l’on est pour savoir où l’on va. Application : le plan complet de l’op. 15 n° 1 et de Clair de lune.',
     goals: ['Reconnaître les formes binaire, ternaire, rondo, sonate.', 'Distinguer période et phrase en trois temps.', 'Faire le plan de ses pièces et en tirer une stratégie d’interprétation.'],
@@ -814,11 +855,17 @@ ${W.warn('Erreurs fréquentes', '<ul><li>Découper d’après la mise en page de
 </ul>
 ${W.exo('Exercice — Repérer les frontières', '<p>Dans l’op. 15 n° 1, qu’est-ce qui signale le début de B (mesure 25) et le début de A′ (mesure 49) ? Donne au moins deux indices pour chacun.</p><details><summary>Corrigé</summary><div><p>Mesure 25 : silence et point d’orgue juste avant, changement de mode (fa mineur), de tempo (<i>con fuoco</i>), de nuance (forte) et de texture (doubles notes et gammes). Mesure 49 : retour de fa majeur et du thème, retour de la texture de l’Andante (main gauche à trois voix), après une mesure de transition (48) qui ralentit et prépare.</p></div></details>')}
 ${W.checklist({ id: 'n2-th6-check', title: 'À faire', items: ['J’ai noté le plan de l’op. 15 n° 1 sur ma partition (A, B, A′ et les phrases).', 'J’ai noté le plan de Clair de lune, avec les indications de tempo de chaque section.', 'Pour chaque section, j’ai choisi où se trouve le sommet.'] })}
+
+<h2>Au clavier</h2>
+${W.clavier({ id: 'n2-th6', keys: ['C', 'G', 'F'], tasks: [
+  { kind: 'chords', text: 'L’<b>antécédent</b> d’une période s’arrête sur V : I – IV – V.', chords: ['I', 'IV', 'V'], lead: 'upper' },
+  { kind: 'chords', text: 'Le <b>conséquent</b> finit sur I : I – IV – V7 – I.', chords: ['I', 'IV', 'V7', 'I'], lead: 'upper', rules: ['sensible', 'septieme'] },
+], impro: { href: '#/lecon/n2-im3', label: 'La forme ABA, comme ton nocturne', why: 'une forme, en improvisant' } })}
 `,
   },
 
   {
-    id: 'n2-th-prelude4', minutes: 25,
+    id: 'n2-th-prelude4', minutes: 25, steps: true,
     title: 'Analyse : le Prélude op. 28 n° 4',
     summary: 'Vingt-cinq mesures qui contiennent presque tout le langage de Chopin : des voix qui glissent, une demi-cadence, un sommet, un silence, et la cadence la plus simple pour finir.',
     goals: ['Connaître le plan du prélude et ses points de repère.', 'Comprendre la conduite des voix de la main gauche.', 'En tirer des décisions de jeu.'],
@@ -868,11 +915,17 @@ ${W.ecoute({ title: 'Une note, plusieurs couleurs', bpm: 54, items: [
 ] })}
 ${W.links([W.yt('Chopin Prelude op 28 no 4', 'Prélude op. 28 n° 4', 'Écoute avec la partition : les voix de la main gauche, le sommet, le silence')], 'Écouter')}
 ${W.exo('Exercice', '<p>Joue la main gauche des mesures 1 à 4 en blanches (un accord par changement), en chantant la voix qui bouge. Puis improvise au-dessus avec l’accompagnateur « Les accords du Prélude op. 28 n° 4 » (leçon <a href="#/lecon/n2-im4">le prélude de Chopin</a>).</p>')}
+
+<h2>Au clavier</h2>
+${W.clavier({ id: 'n2-th-prelude4', keys: ['Em', 'Am', 'Dm'], tasks: [
+  { kind: 'chords', text: 'La <b>basse qui descend</b> d’un demi-ton : i – iv6 – V – i, comme les basses du prélude.', chords: ['i', 'iv6', 'V', 'i'], lead: 'upper', rules: ['sensible'] },
+  { kind: 'chords', text: 'La cadence finale : <b>iiø7 – V7 – i</b>. La septième de iiø7 descend sur la sensible.', chords: ['i', 'iiø7', 'V7', 'i'], lead: 'upper', rules: ['septieme', 'sensible'] },
+], impro: { href: '#/lecon/n2-im4', label: 'Le prélude de Chopin', why: 'une note tenue sur des accords qui glissent' } })}
 `,
   },
 
   {
-    id: 'n2-th-synthese', minutes: 25,
+    id: 'n2-th-synthese', minutes: 25, steps: true,
     title: 'Synthèse : analyser une pièce seul',
     summary: 'Une méthode en six étapes, appliquée à toute l’op. 15 n° 1 : ce que tu sais maintenant lire dans une partition, et ce que cela change à ton jeu.',
     goals: ['Appliquer une méthode d’analyse complète.', 'Comparer la reprise et le début de l’op. 15.', 'Relier chaque observation à une décision d’interprétation.'],
@@ -912,6 +965,12 @@ ${W.score({ abc: OP15.e5, title: 'La reprise, mesures 53 à 55 (= 5 à 7)', bpm:
 <li><b>Reprise</b> : plus intime que le début, puisque tout a déjà été dit.</li>
 </ul>
 ${W.checklist({ id: 'n2-th-synthese-check', title: 'Je sais…', items: ['dire de mémoire le plan de l’op. 15 n° 1 et ses tonalités ;', 'nommer les accords des mesures 1 à 8 en les jouant en blocs ;', 'montrer une dominante secondaire, une marche et une sixte augmentée dans la partition ;', 'expliquer en une phrase comment Clair de lune passe de ré♭ majeur à do♯ mineur, et revient.'] })}
+
+<h2>Au clavier</h2>
+${W.clavier({ id: 'n2-th-synthese', keys: ['C', 'G', 'F'], tasks: [
+  { kind: 'chords', text: 'Une phrase type, à analyser en la jouant : <b>I – vi – ii6 – V7 – I</b>.', chords: ['I', 'vi', 'ii6', 'V7', 'I'], lead: 'upper', rules: ['sensible', 'septieme'] },
+  { kind: 'chords', text: 'Avec une dominante secondaire : <b>I – V7/V – V – I</b>.', chords: ['I', 'V7/V', 'V', 'I'], lead: 'upper', rules: ['septieme', 'sensible'] },
+], impro: { href: '#/lecon/n2-im-preluder', label: 'Préluder', why: 'tes enchaînements, avant de jouer une pièce' } })}
 `,
   },
 ];

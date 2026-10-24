@@ -64,6 +64,9 @@ export function makeW() {
     check: cfg => ph('check', cfg),
     /** « Construis au clavier » : gamme, accord, intervalle, note par note. { title, guide, tasks: [...] } */
     build: cfg => ph('build', cfg),
+    /** « Au clavier » (V7.6) : accords, enchaînements et figures à jouer, dans plusieurs tonalités, vérifiés en MIDI.
+     *  { id, keys, tasks, impro } — voir tool-auclavier.js. */
+    clavier: cfg => ph('clavier', cfg),
     /** « Sur la partition » : toucher la note demandée. { abc, title, tasks: [{ q, targets: [{ bar, beat, note }], why }] } */
     spot: cfg => ph('spot', cfg),
     /** Une portée seule (sans lecture ni options) : { abc, title, caption, width }. */
@@ -382,6 +385,7 @@ defineWidget('staff', (el, cfg) => mountLazy(el, () => ensureAbcjs().then(() => 
 })));
 defineWidget('check', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-lesson.js')).then(m => e => m.mountCheck(e, cfg))));
 defineWidget('build', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-lesson.js')).then(m => e => m.mountBuild(e, cfg))));
+defineWidget('clavier', (el, cfg) => mountLazy(el, () => import('./tool-auclavier.js').then(m => e => m.mountAuClavier(e, cfg))));
 defineWidget('spot', (el, cfg) => mountLazy(el, () => withAbc(Promise.all([import('./tool-lesson.js'), import('./score.js')])).then(([m, sc]) => e => m.mountSpot(e, cfg, sc.Score)), 'Chargement de la partition…'));
 defineWidget('rhythm', (el, cfg) => mountLazy(el, () => withAbc(import('./tool-rhythm.js')).then(m => e => (cfg.mode === 'dictation' ? m.mountDictation(e, cfg) : m.mountRhythm(e, cfg)))));
 

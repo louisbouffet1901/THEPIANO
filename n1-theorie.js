@@ -626,7 +626,8 @@ ${W.check({ questions: [
   { q: 'Une armure de <b>quatre dièses</b> contient…', options: ['fa♯, do♯, sol♯, ré♯', 'fa♯, do♯, ré♯, la♯', 'do♯, sol♯, ré♯, la♯', 'fa♯, sol♯, la♯, si♯'], why: 'Toujours les quatre premiers de l’ordre : fa, do, sol, ré.' },
 ] })}
 
-<h2>Lire une armure : quelle tonalité majeure ?</h2>
+<h2>Lire et écrire une armure</h2>
+<h3>Lire une armure : quelle tonalité majeure ?</h3>
 ${idea('Deux règles. <b>Avec des dièses</b> : le dernier dièse est la sensible ; la tonique est juste au-dessus, un demi-ton plus haut. <b>Avec des bémols</b> : l’avant-dernier bémol est la tonique.')}
 ${worked('Exemple résolu : trois dièses', method(['Les dièses, dans l’ordre : fa♯, do♯, <b>sol♯</b>. Le dernier est sol♯.', 'Un demi-ton au-dessus de sol♯ (sur le clavier, la touche juste à droite) : <b>la</b>.']), 'Trois dièses : la majeur. Vérifie : la gamme de la majeur a bien fa♯, do♯ et sol♯.')}
 ${worked('Exemple résolu : quatre bémols', method(['Les bémols, dans l’ordre : si♭, mi♭, <b>la♭</b>, ré♭.', 'L’avant-dernier est la♭.']), 'Quatre bémols : la♭ majeur — l’armure de ton nocturne (on verra plus bas pourquoi c’est aussi fa mineur).')}
@@ -647,7 +648,7 @@ ${W.check({ questions: [
 ] })}
 ${W.quiz({ kind: 'keysig', keys: ['C', 'G', 'D', 'A', 'E', 'F', 'Bb', 'Eb', 'Ab', 'Db'], title: 'Entraînement : armures des tonalités majeures', count: 10, stat: 'ks-maj' })}
 
-<h2>L’inverse : écrire l’armure d’une tonalité</h2>
+<h3>L’inverse : écrire l’armure d’une tonalité</h3>
 ${idea('D’abord, dièses ou bémols ? Les tonalités dont le nom porte un bémol (si♭, mi♭, la♭, ré♭) ont des bémols, et fa majeur aussi. Les autres ont des dièses (sauf do). Ensuite, on avance dans l’ordre jusqu’au bon endroit.')}
 ${worked('Exemple résolu : ré majeur (dièses)', method(['La sensible de ré est <b>do♯</b> (un demi-ton sous ré).', 'Avance dans l’ordre des dièses jusqu’à elle : fa♯, <b>do♯</b>.']), 'Ré majeur : deux dièses, fa♯ et do♯.')}
 ${worked('Exemple résolu : mi♭ majeur (bémols)', method(['Avance dans l’ordre des bémols jusqu’au nom de la tonique : si♭, <b>mi♭</b>.', 'Ajoute <b>un bémol de plus</b> : la♭ (la tonique doit être l’avant-dernier).']), 'Mi♭ majeur : trois bémols, si♭, mi♭ et la♭.')}
@@ -1164,6 +1165,14 @@ ${W.check({ questions: [
   { q: 'Mesure 2, 3<sup>e</sup> et 4<sup>e</sup> temps : mi♮ à la basse, si♭ – do – sol au-dessus. Rangé en tierces ?', options: ['do – mi – sol – si♭ : do 7, tierce à la basse', 'mi – sol – si♭ – do : mi diminué', 'sol – si♭ – do – mi : sol mineur'], why: 'Do – mi – sol – si♭ : la septième de dominante de fa mineur, avec sa tierce (mi♮) à la basse : V6/5.' },
 ] })}
 ${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4, à écouter', bpm: 56, startBpm: 46 })}
+
+<h2>Au clavier</h2>
+<p>Savoir un accord, c’est le jouer dans plusieurs tonalités, aux deux mains. Ici, l’appli écoute ton piano (ou touche les notes à l’écran, puis « Valider l’accord »).</p>
+${W.clavier({ id: 'n1-th-renv', keys: ['C', 'G', 'F'], tasks: [
+  { kind: 'chords', text: 'L’accord de I dans ses trois positions, à la main droite : état fondamental, 1<sup>er</sup> renversement (I6), 2<sup>e</sup> renversement (I6/4).', chords: ['I', 'I6', 'I6/4'] },
+  { kind: 'chords', text: 'I – IV – I – V – I <b>au plus près</b>, à la main droite : garde la note commune, les autres notes bougent d’un ton au plus. Les renversements viennent tout seuls : IV6/4, V6.', chords: ['I', 'IV6/4', 'I', 'V6', 'I'], lead: true },
+  { kind: 'chords', text: 'Le même enchaînement à la <b>main gauche</b>, une octave plus bas : c’est la base de tes accompagnements.', chords: ['I', 'IV6/4', 'I', 'V6', 'I'], lead: true, hand: 'mg' },
+], impro: { href: '#/lecon/n1-im-mg', label: 'Ta main gauche : quatre formules', why: 'ces accords au plus près, en formules d’accompagnement' } })}
 `,
   },
 
@@ -1345,6 +1354,14 @@ ${W.check({ questions: [
 ${W.score({ abc: OP55.e10, title: 'Mesures 97 à 101, à écouter', bpm: 56, startBpm: 46 })}
 <h3>Pour t’entraîner</h3>
 ${W.quiz({ kind: 'cadences', title: 'À l’oreille : les quatre cadences', count: 10, stat: 'cad' })}
+
+<h2>Au clavier</h2>
+<p>La basse à la main gauche, les accords à la main droite, au plus près. Joue-les ensemble, accord par accord.</p>
+${W.clavier({ id: 'n1-th-cadences', keys: ['C', 'G', 'F'], tasks: [
+  { kind: 'chords', text: 'La <b>cadence parfaite</b> I6 – IV – V7 – I. Écoute la sensible monter sur la tonique, et la septième descendre.', chords: ['I6', 'IV', 'V7', 'I'], lead: 'upper', rules: ['sensible', 'septieme'] },
+  { kind: 'chords', text: 'L’<b>arrêt sur V</b> (demi-cadence) : I – IV – V. La phrase reste en l’air : c’est une question.', chords: ['I', 'IV', 'V'], lead: 'upper' },
+  { kind: 'chords', text: 'En <b>mineur</b>, dans la tonalité relative : i – iv – V7 – i. La sensible est altérée (un dièse ou un bécarre de plus).', chords: ['i', 'iv', 'V7', 'i'], lead: 'upper', rules: ['sensible'], minor: true },
+], impro: { href: '#/lecon/n1-im4', label: 'Huit mesures : la période', why: 'une question qui s’arrête sur V, une réponse qui finit sur I' } })}
 `,
   },
 
@@ -1404,7 +1421,8 @@ ${W.notion({ id: 'pedale', title: 'La pédale', short: 'une basse tenue sous des
   ['Une pédale de dominante crée…', ['une attente : on attend le retour de la tonique', 'un repos', 'une modulation', 'un ralentissement'], 'Comme aux mesures 21 à 24 de ta pièce, avant le retour du thème.'],
 ] })}
 
-<h2>Ce que ça change au jeu</h2>
+<h2>Au jeu, et dans ta pièce</h2>
+<h3>Ce que ça change au jeu</h3>
 ${idea('Chaque note étrangère dit comment la jouer : <b>alléger</b> ce qui passe (passages, broderies), <b>appuyer</b> ce qui frotte sur le temps (appoggiatures, retards), et <b>soutenir</b> la pédale.')}
 ${W.check({ questions: [
   { q: 'Une note de passage, au piano :', options: ['plus légère que les notes qu’elle relie', 'accentuée', 'tenue plus longtemps'], why: 'Elle relie deux notes d’appui ; elle ne doit pas les concurrencer.' },
@@ -1412,7 +1430,7 @@ ${W.check({ questions: [
   { q: 'Une basse en pédale, sous des accords qui changent :', options: ['tenue jusqu’au bout, sans la laisser s’éteindre trop tôt', 'rejouée à chaque accord, fort', 'jouée très doucement puis lâchée'], why: 'C’est le socle de tout le passage.' },
 ] })}
 
-<h2>Dans ta pièce : mesures 1 à 8</h2>
+<h3>Dans ta pièce : mesures 1 à 8</h3>
 ${idea('Les premières mesures de ton nocturne contiennent presque toutes les sortes de notes étrangères. Compare chaque note de la mélodie à l’accord de la main gauche.')}
 ${W.spot({ abc: OP55.e1, title: 'Sur la partition : mesures 1 et 2', tasks: [
   { q: 'Mesure 1 : sur l’accord de mi♭ majeur (3<sup>e</sup> et 4<sup>e</sup> temps), touche la <b>note de passage</b> de la mélodie.', targets: [{ bar: 1, beat: 4, note: 'ré♭4', hand: 'rh' }], why: 'Ré♭ n’appartient pas à mi♭ majeur (mi♭ – sol – si♭) ; il relie mi♭ à do, par degrés, sur un temps faible : une note de passage, à alléger.' },
@@ -1429,6 +1447,15 @@ ${W.spot({ abc: OP55.e2, title: 'Sur la partition : mesure 7', tasks: [
 </ul>
 ${W.score({ abc: OP55.e2, title: 'Mesures 5 à 8, à écouter', bpm: 56, startBpm: 46 })}
 ${W.exo('Au piano', '<p>Joue la main droite des mesures 1 à 8 en allégeant les notes de passage et les broderies, et en appuyant l’appoggiature de la mesure 7. Enregistre-toi : la mélodie doit sembler respirer sur les notes d’appui.</p>')}
+
+<h2>Au clavier</h2>
+<p>Sur un accord tenu (le bouton le fait sonner, ou ta main gauche le tient), joue la figure à la main droite.</p>
+${W.clavier({ id: 'n1-th-etrangeres', keys: ['C', 'G', 'F'], tasks: [
+  { kind: 'line', text: 'Une <b>broderie</b> : sur l’accord de I, quitte la tierce d’un degré vers le haut, puis reviens.', over: 'I', fig: 'broderie', deg: 3 },
+  { kind: 'line', text: 'Une <b>note de passage</b> : de la tonique à la tierce, en passant par le 2<sup>e</sup> degré.', over: 'I', fig: 'passage', deg: 1 },
+  { kind: 'line', text: 'Une <b>appoggiature</b> : sur l’accord de V, appuie la tonique (elle frotte), puis descends d’un degré sur la sensible, plus doucement.', over: 'V', fig: 'appoggiature', deg: 1 },
+  { kind: 'line', text: 'Un <b>retard</b> : l’appli joue I puis V. Joue la tonique sur I, <b>tiens-la</b> quand l’accord change (elle frotte), puis descends sur la sensible.', over: ['I', 'V'], fig: 'retard', deg: 1 },
+], impro: { href: '#/lecon/n1-im-accords', label: 'Entre les notes de l’accord : passages et broderies', why: 'les mêmes figures, en improvisant' } })}
 `,
   },
 

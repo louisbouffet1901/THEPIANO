@@ -281,7 +281,7 @@ function renderSteps(container, l) {
   const save = patch => store.set(key, { ...(store.get(key) || {}), ...patch });
   const cleanups = [];
   // exercices qui cochent l'étape : « À toi », construction, partition ; les séries d'entraînement restent facultatives
-  const counts = x => /\bw-(check|build|spot)\b/.test(x.className) || (/\bw-quiz\b/.test(x.className) && /^À toi/.test(((cfgs.get(x.dataset.wid || x.dataset.widLazy) || {}).cfg || {}).title || ''));
+  const counts = x => /\bw-(check|build|spot|clavier)\b/.test(x.className) || (/\bw-quiz\b/.test(x.className) && /^À toi/.test(((cfgs.get(x.dataset.wid || x.dataset.widLazy) || {}).cfg || {}).title || ''));
   const steps = heads.map((hd, i) => {
     const nodes = [];
     let n = hd.nextElementSibling;
@@ -293,7 +293,11 @@ function renderSteps(container, l) {
     hd.replaceWith(det);
     det.append(sum, body);
     nodes.forEach(x => body.append(x));
-    const exos = [...body.querySelectorAll('[data-wid]')].filter(counts).length;
+    // V7.6 (pages allégées) : au plus deux exercices visibles, les suivants repliés à leur place ; tableaux repliés
+    const ex = [...body.querySelectorAll('[data-wid]')].filter(counts);
+    ex.slice(2).forEach(x => { const d = h('details', { class: 'encore' }, h('summary', {}, 'Encore un exercice')); x.replaceWith(d); d.append(x); });
+    body.querySelectorAll(':scope > table').forEach(t => { const d = h('details', { class: 'tbl-fold' }, h('summary', {}, 'Le tableau récapitulatif')); t.replaceWith(d); d.append(t); });
+    const exos = Math.min(2, ex.length);
     body.querySelectorAll('[data-wid]').forEach(x => { x.dataset.widLazy = x.dataset.wid; delete x.dataset.wid; });
     return { det, body, tick, title: hd.textContent.trim(), exos, got: new Set(), mounted: false };
   });
@@ -322,6 +326,7 @@ function renderSteps(container, l) {
     st.body.addEventListener('exo-done', e => {
       const w = e.target.closest('[data-wid]');
       if (w && !counts(w)) return;
+      if (w && w.closest('details.encore')) return; // les exercices « Encore » sont en plus
       st.got.add(w ? w.dataset.wid : String(st.got.size));
       if (st.got.size >= st.exos) markDone(i);
     });
@@ -465,9 +470,9 @@ export function frenchSpacing(root) {
     if (r !== t) n.nodeValue = r;
   }
 }
-function lessonListHTML(lessons, { levelTag = false } = {}) {
+function lessonListHTML(lessons, { levelTag = false, state = false } = {}) {
   // V7.4 : une case par leçon, pour cocher celles déjà faites (elles ne sont plus proposées dans la séance)
-  return `<ul class="lesson-list">${lessons.map((l, i) => { const d = store.isDone(l.id); return `<li class="${d ? 'done' : ''}${l.prio === 2 ? ' opt' : ''}"><a href="#/lecon/${l.id}"><span class="num" data-n="${i + 1}">${d ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b>${l.prio === 2 ? '<em class="tag opt-tag">complément</em>' : ''}${levelTag ? `<em class="tag opt-tag">niveau ${l.level.slice(1)}</em>` : ''}<span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a><button type="button" class="ll-done" data-done="${l.id}" aria-pressed="${d}" aria-label="Leçon déjà faite : ${esc(l.title)}" title="${d ? 'Décocher' : 'Cocher : déjà faite (elle ne sera plus proposée dans la séance)'}"><span class="ll-box"></span></button></li>`; }).join('')}</ul>`;
+  return `<ul class="lesson-list">${lessons.map((l, i) => { const d = store.isDone(l.id); return `<li class="${d ? 'done' : ''}${l.prio === 2 ? ' opt' : ''}"><a href="#/lecon/${l.id}"><span class="num" data-n="${i + 1}">${d ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b>${l.prio === 2 ? '<em class="tag opt-tag">complément</em>' : ''}${levelTag ? `<em class="tag opt-tag">niveau ${l.level.slice(1)}</em>` : ''}${state && !d && lessonState(l) === 'en cours' ? '<em class="tag accent st-tag">en cours</em>' : ''}<span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a><button type="button" class="ll-done" data-done="${l.id}" aria-pressed="${d}" aria-label="Leçon déjà faite : ${esc(l.title)}" title="${d ? 'Décocher' : 'Cocher : déjà faite (elle ne sera plus proposée dans la séance)'}"><span class="ll-box"></span></button></li>`; }).join('')}</ul>`;
 }
 /* ================================================================== */
 /* Pages                                                               */
@@ -533,6 +538,7 @@ function pageHome() {
   }).catch(() => {});
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '7.6': '<ul><li><b>La théorie au clavier</b> : chaque chapitre (renversements, cadences, notes étrangères, puis tout le niveau 2) finit par « Au clavier » — accords, enchaînements au plus près, figures à jouer dans trois tonalités, vérifiés au piano ou à l’écran. Le premier exercice montre les touches, le deuxième les noms, le troisième rien. Un lien « Pour improviser » mène à l’exercice qui s’en sert.</li><li><b>Niveau 2 en étapes</b> : les onze chapitres se lisent en quatre à six étapes.</li><li><b>Pages allégées</b> : au plus deux exercices visibles par étape (les autres sous « Encore »), tableaux repliés.</li><li><b>Onglet Théorie</b> : où tu en es, « Réviser », les chapitres et leur état ; les séries sont rangées dans « Entraînement libre ».</li></ul>',
     '7.5': '<ul><li><b>Nouvelle leçon « Préluder »</b> (niveau 2) : trente secondes avant ta pièce — une cadence, des accords en figuration, une cadence — en majeur, en mineur, dans les tonalités de tes pièces. La séance y renvoie.</li><li><b>Dialogues au niveau 2</b> : question – réponse sur un schéma (la réponse garde les notes d’appui), en marche (la réponse monte ou descend d’un degré), et imitations ornées ou en figuration.</li><li><b>L’op. 15 n° 1 de Chopin</b> : sa vraie grille (8 mesures, en triolets), le squelette de mémoire et une forme ABA.</li><li><b>Ton carnet de formules</b> : « Garder une formule » sous l’accompagnateur range 1 à 4 mesures de ta prise ; tu la réécoutes, puis tu la retrouves de mémoire.</li><li><b>Improvisation libre enregistrée</b> : deux minutes, tous les dix jours environ, réécoutées le lendemain avec trois questions (une idée ? une forme ? un sommet ?).</li></ul>',
     '7.4.3': '<ul><li><b>Nouvel onglet Technique</b> (menu Outils) : la leçon où tu en es, les gammes et arpèges de la semaine (deux tonalités qui changent chaque lundi), toutes les leçons rangées par thème (méthode et posture, le son, la pédale, gammes et arpèges, agilité, plusieurs voix), les exercices des deux mains et l’analyse de ton jeu.</li><li><b>Séance, case Technique</b> : d’abord ce que demande la section du jour de ta pièce ; sinon la prochaine leçon de technique pas encore cochée (« Déjà faite » pour la passer) ; une fois toutes cochées, un jour les gammes de la semaine, un jour un exercice des deux mains.</li></ul>',
     '7.4.2': '<ul><li><b>Oreille, rejouer une mélodie</b> : à l’étape « Le dessin d’une mélodie », tout se passe en do majeur. Ensuite, la tonalité reste la même quatre questions de suite, d’abord parmi do, sol et fa, et chaque changement est annoncé.</li><li><b>La gamme numérotée</b> sur le clavier à l’écran dans les premières étapes (1 = la tonique, en or) : tu entends « 3 », tu vois où est 3.</li><li><b>Chercher librement</b> : tes essais ne comptent plus ; la réponse est reconnue dès que tes dernières notes sont justes. « Valider ma réponse » dit ce qui ne va pas, par exemple « 2e note : il fallait la note voisine au-dessus ; tu as joué un grand saut ».</li></ul>',
@@ -767,6 +773,31 @@ function toolPage(title, lead, load) {
 }
 
 /** Index des leçons d'un module, niveau par niveau (pour retrouver les cours en dehors du plan). */
+/** État d'un chapitre (V7.6) : « su » (coché fait), « en cours » (une étape faite), sinon « à faire ». */
+const lessonState = l => (store.isDone(l.id) ? 'su' : (store.get(`lessonSteps.${l.id}`)?.done || []).length ? 'en cours' : 'à faire');
+/** Onglet Théorie : où tu en es, « Réviser », puis les chapitres de chaque niveau avec leur état. */
+function theoryChapters() {
+  const box = h('div');
+  const all = LEVELS.filter(L => !L.locked).flatMap(L => lessonsOf(L.id, 'theorie'));
+  const cur = all.find(l => lessonState(l) === 'en cours') || all.find(l => lessonState(l) === 'à faire' && l.prio !== 2) || null;
+  const top = h('div', { class: 'card th-top' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Où tu en es'), h('span', { class: 'small' }, `${all.filter(l => store.isDone(l.id)).length} chapitres sus sur ${all.length}`)));
+  const rev = h('a', { class: 'btn sm', href: '#/maitrise' }, 'Réviser');
+  const revNote = h('span', { class: 'small muted' });
+  if (cur) {
+    const sd = (store.get(`lessonSteps.${cur.id}`)?.done || []).length;
+    top.append(h('h3', {}, cur.title), h('p', { class: 'small' }, sd ? `En cours : ${sd} étape${sd > 1 ? 's' : ''} faite${sd > 1 ? 's' : ''}${cur.steps ? ` sur ${cur.steps}` : ''}.` : `À faire : ${cur.summary || ''}`),
+      h('div', { class: 'btn-row' }, h('a', { class: 'btn primary sm', href: `#/lecon/${cur.id}` }, sd ? 'Continuer' : 'Commencer'), rev, revNote));
+  } else top.append(h('p', { class: 'small' }, 'Tous les chapitres sont sus. Révise ce qui doit l’être, ou reprends un chapitre au clavier dans une autre tonalité.'), h('div', { class: 'btn-row' }, rev, revNote));
+  import('./tool-mastery.js').then(m => m.dueSummary()).then(r => { if (r) revNote.textContent = r.due ? `${r.due} fiche${r.due > 1 ? 's' : ''} à revoir` : r.n ? 'rien à revoir aujourd’hui' : ''; }).catch(() => {});
+  box.append(top);
+  for (const L of LEVELS) {
+    if (L.locked) continue;
+    const lm = lessonsOf(L.id, 'theorie');
+    if (!lm.length) continue;
+    box.insertAdjacentHTML('beforeend', `<div class="course-level"><div class="section-title"><h2>Niveau ${L.num} — ${esc(L.short)}</h2><span class="small">${lm.filter(x => store.isDone(x.id)).length}/${lm.length} sus</span></div>${lessonListHTML(lm, { state: true })}</div>`);
+  }
+  return box;
+}
 function moduleIndexHTML(mod) {
   let html = '';
   for (const L of LEVELS) {
@@ -818,7 +849,7 @@ const PRESET_PAGES = {
   },
   theorie: {
     title: 'Théorie', presets: m => m.THEORY_PRESETS, lessonsTitle: 'Les cours de théorie, chapitre par chapitre',
-    lead: 'Tous les chapitres de théorie des niveaux, dans l’ordre, et des exercices pour réviser : lecture des notes, gammes, intervalles, accords. Le rythme a son propre onglet.',
+    lead: 'Ce qui sert au clavier : chaque chapitre se lit en cinq ou six étapes et se termine au piano. Ce que tu as appris revient dans « Réviser ».',
   },
 };
 
@@ -850,7 +881,7 @@ async function pagePresets(kind) {
     go.addEventListener('click', () => open(reco.q));
     list.append(h('div', { class: 'card reco' }, h('div', { class: 'eyebrow' }, 'Ta prochaine série'), h('h3', {}, reco.q.title), h('p', { class: 'small' }, reco.why), go));
   }
-  list.append(h('div', { class: 'section-title' }, h('h2', {}, 'Toutes les séries')));
+  if (kind !== 'theorie') list.append(h('div', { class: 'section-title' }, h('h2', {}, 'Toutes les séries')));
   for (const g of groups) {
     const qs = presets.filter(x => x.group === g);
     const ok = qs.filter(q => st.get(q.id).mastered).length;
@@ -865,6 +896,13 @@ async function pagePresets(kind) {
     }
     det.append(grid);
     list.append(det);
+  }
+  if (kind === 'theorie') {
+    // V7.6 : les chapitres et leur état, « Réviser » ; les séries passent, repliées, dans « Entraînement libre »
+    const free = h('details', { class: 'train-free' }, h('summary', {}, h('span', {}, 'Entraînement libre'), h('span', { class: 'small' }, 'toutes les séries : notes, gammes, intervalles, accords')), host, list);
+    page.append(theoryChapters(), free);
+    main.append(page);
+    return () => cleanupQuiz?.();
   }
   const index = h('div', { html: `<div class="section-title mt-3"><h2>${esc(cfg.lessonsTitle)}</h2></div>` + moduleIndexHTML(kind) });
   page.append(host, list, index);
