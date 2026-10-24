@@ -533,6 +533,7 @@ function pageHome() {
   }).catch(() => {});
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '7.5': '<ul><li><b>Nouvelle leçon « Préluder »</b> (niveau 2) : trente secondes avant ta pièce — une cadence, des accords en figuration, une cadence — en majeur, en mineur, dans les tonalités de tes pièces. La séance y renvoie.</li><li><b>Dialogues au niveau 2</b> : question – réponse sur un schéma (la réponse garde les notes d’appui), en marche (la réponse monte ou descend d’un degré), et imitations ornées ou en figuration.</li><li><b>L’op. 15 n° 1 de Chopin</b> : sa vraie grille (8 mesures, en triolets), le squelette de mémoire et une forme ABA.</li><li><b>Ton carnet de formules</b> : « Garder une formule » sous l’accompagnateur range 1 à 4 mesures de ta prise ; tu la réécoutes, puis tu la retrouves de mémoire.</li><li><b>Improvisation libre enregistrée</b> : deux minutes, tous les dix jours environ, réécoutées le lendemain avec trois questions (une idée ? une forme ? un sommet ?).</li></ul>',
     '7.4.3': '<ul><li><b>Nouvel onglet Technique</b> (menu Outils) : la leçon où tu en es, les gammes et arpèges de la semaine (deux tonalités qui changent chaque lundi), toutes les leçons rangées par thème (méthode et posture, le son, la pédale, gammes et arpèges, agilité, plusieurs voix), les exercices des deux mains et l’analyse de ton jeu.</li><li><b>Séance, case Technique</b> : d’abord ce que demande la section du jour de ta pièce ; sinon la prochaine leçon de technique pas encore cochée (« Déjà faite » pour la passer) ; une fois toutes cochées, un jour les gammes de la semaine, un jour un exercice des deux mains.</li></ul>',
     '7.4.2': '<ul><li><b>Oreille, rejouer une mélodie</b> : à l’étape « Le dessin d’une mélodie », tout se passe en do majeur. Ensuite, la tonalité reste la même quatre questions de suite, d’abord parmi do, sol et fa, et chaque changement est annoncé.</li><li><b>La gamme numérotée</b> sur le clavier à l’écran dans les premières étapes (1 = la tonique, en or) : tu entends « 3 », tu vois où est 3.</li><li><b>Chercher librement</b> : tes essais ne comptent plus ; la réponse est reconnue dès que tes dernières notes sont justes. « Valider ma réponse » dit ce qui ne va pas, par exemple « 2e note : il fallait la note voisine au-dessus ; tu as joué un grand saut ».</li></ul>',
     '7.4.1': '<ul><li><b>Cocher ce que tu as déjà fait</b> : dans la séance, un bouton « Déjà faite » sous la leçon d’improvisation, l’étape d’oreille ou l’exercice de technique proposés. La case propose aussitôt la suite (avec « Annuler »).</li><li>Dans les listes de leçons, une case à droite de chaque leçon pour la cocher sans l’ouvrir. Une leçon cochée n’est plus proposée dans la séance ; les nouveaux exercices à deux mains des leçons cochées restent listés dans l’outil Improvisation.</li><li>Parcours d’oreille : « Je la maîtrise déjà » sur chaque étape ; exercices de technique : « Déjà acquis ».</li></ul>',
@@ -932,10 +933,15 @@ function pageImproTool() {
     cur.append(p2);
   }
   const host = h('div', { class: 'w' });
-  page.append(cur, h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Jouer librement')), h('p', { class: 'small' }, 'L’accompagnateur joue la main gauche (ou la basse seule) ; improvise à la main droite. Les notes jouées s’allument selon leur rôle dans l’harmonie. Modes : libre, question – réponse, imitation, squelette.'), host);
+  const nbHost = h('div'), freeHost = h('div');
+  page.append(cur, h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Jouer librement')), h('p', { class: 'small' }, 'L’accompagnateur joue la main gauche (ou la basse seule) ; improvise à la main droite. Les notes s’allument selon leur rôle dans l’harmonie. Une trouvaille ? « Garder une formule » la range dans ton carnet.'), host,
+    h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Ton vocabulaire')), h('div', { class: 'grid-2 impro-own' }, nbHost, freeHost));
   page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3"><h2>La méthode, leçon par leçon</h2></div>` + moduleIndexHTML('impro'));
   main.append(page);
-  return mountLazy(host, () => import('./tool-improv.js').then(m => el => m.mountImprov(el, {})));
+  const free = import('./tool-improfree.js');
+  const offs = [mountLazy(host, () => import('./tool-improv.js').then(m => el => m.mountImprov(el, {}))),
+    mountLazy(nbHost, () => free.then(m => el => m.mountNotebook(el))), mountLazy(freeHost, () => free.then(m => el => m.mountFreeImpro(el)))];
+  return () => offs.forEach(f => f());
 }
 
 function pageExercises(exId = null) {

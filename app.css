@@ -1400,3 +1400,20 @@ details.passage > summary .pm-state { align-self: center; margin-left: auto; }
 .ep-nav { margin-top: 8px; }
 .ep-proofs { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
 @media (max-width: 520px) { .ep-tempo { margin-left: 0; } .ep-grid { grid-template-columns: 1fr; } }
+
+/* V7.5 : carnet de formules, improvisation libre enregistrée, « Garder une formule » */
+.impro-own { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.impro-own .pm-filage { margin: 0; }
+.nb-card { margin: 0; }
+.nb-row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.nb-row:first-of-type { border-top: 0; }
+.nb-main { min-width: 0; }
+.nb-res { grid-column: 1 / -1; }
+.nb-res:empty { display: none; }
+.nb-q { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: 6px 0; }
+.nb-free textarea { width: 100%; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); font: inherit; font-size: 14.5px; }
+.keep-box { border-top: 1px dashed var(--line-strong); margin-top: 10px; padding-top: 10px; }
+.keep-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.keep-form input[type=text] { flex: 1 1 180px; min-height: 36px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); font: inherit; }
+.keep-form select { min-height: 36px; }
+@media (max-width: 560px) { .nb-row { grid-template-columns: 1fr; } .impro-own { grid-template-columns: 1fr; } }

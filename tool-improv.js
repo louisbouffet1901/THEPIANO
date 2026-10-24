@@ -70,6 +70,33 @@ const OP55_GRID = [
   C('i', 5, 'm', 41, { name: 'fa mineur', notes: [56, 60, 65], beats: 4 }),
 ];
 
+/* Les harmonies des mesures 1 à 8 du Nocturne op. 15 n° 1 (V7.5), relevées sur OP15.e1 et conformes à l'analyse
+   AN.op15_1_8 : un accord par temps quand l'harmonie change, avec les voicings de la main gauche de Chopin (sans les
+   notes de passage des triolets). Mesures 1 à 3 : pédale de fa à la basse. */
+const OP15_GRID = [
+  C('I', 5, 'M', 53, { name: 'fa majeur', notes: [57, 60, 65], beats: 3, section: 'm. 1' }),
+  C('IV', 10, 'M', 53, { name: 'si♭ majeur / fa', notes: [58, 62], beats: 1, section: 'm. 2' }),
+  C('V7', 0, '7', 53, { name: 'do 7 / fa', notes: [55, 58, 64], beats: 2 }),
+  C('ii7', 7, 'm7', 53, { name: 'sol mineur 7 / fa', notes: [55, 58, 62], beats: 1, section: 'm. 3' }),
+  C('V7', 0, '7', 53, { name: 'do 7 / fa', notes: [55, 58, 64], beats: 2 }),
+  C('I', 5, 'M', 53, { name: 'fa majeur', notes: [57, 60], beats: 1, section: 'm. 4' }),
+  C('V7/vi', 9, '7', 52, { name: 'la 7 / mi', notes: [55, 57, 61], beats: 1 }),
+  C('vi', 2, 'm', 50, { name: 'ré mineur', notes: [53, 57, 62], beats: 1 }),
+  C('V7/V', 7, '7', 50, { name: 'sol 7 / ré', notes: [53, 55, 59], beats: 1, section: 'm. 5' }),
+  C('iiø7', 7, 'hdim7', 49, { name: 'sol ø7 / ré♭', notes: [53, 55, 58], beats: 1 }),
+  C('V7', 0, '7', 48, { name: 'do 7', notes: [52, 55, 58], beats: 1 }),
+  C('I', 5, 'M', 48, { name: 'fa majeur / do', notes: [53, 57], beats: 1, section: 'm. 6' }),
+  C('iiø7/iii', 11, 'hdim7', 47, { name: 'si ø7', notes: [50, 53, 57], beats: 2 }),
+  C('V7/iii', 4, '7', 47, { name: 'mi 7 / si', notes: [50, 52, 56], beats: 1, section: 'm. 7' }),
+  C('iii', 9, 'm', 45, { name: 'la mineur', notes: [48, 52, 57], beats: 1 }),
+  C('iiø7/iii', 11, 'hdim7', 41, { name: 'si ø7 / fa', notes: [47, 50, 57], beats: 1 }),
+  C('V/iii', 4, 'M', 40, { name: 'mi majeur', notes: [47, 56, 59], beats: 2, section: 'm. 8' }),
+  C('V7', 0, '7', 55, { name: 'do 7 / sol', notes: [58, 60, 64], beats: 1 }),
+];
+// la mélodie de Chopin au début de chaque accord (rien quand la note est tenue, ou sur une appoggiature)
+const OP15_TG = [77, 74, 76, 74, 77, 81, null, null, 79, null, 79, 77, null, 76, null, null, 71, 72];
+const withPat = (list, pattern) => list.map(c => ({ ...c, pattern }));
+
 /** Une mélodie écrite en notes MIDI : « 60 62 64:2 | … » (durée en temps après « : », une noire par défaut ; « | » ignoré). */
 function MEL(str) {
   const out = [];
@@ -176,11 +203,23 @@ export const IMPROV_PRESETS = {
     { label: 'B (la♭ majeur)', tonic: 8, mode: 'maj', bars: ['I', 'IV', 'V7', 'I', 'vi', 'ii', 'V7', 'I'] },
     { label: 'retour : V7 de fa', bars: ['V7'], tonic: 5, mode: 'min' },
     { label: 'A', tonic: 5, mode: 'min', bars: ['i', 'iv', 'V7', 'i'] }], pattern: 'basse-accord', bpm: 60 },
-  'n2-aba-op15': { title: 'Forme ABA comme l’op. 15 : fa majeur (cantabile) / fa mineur (con fuoco) / fa majeur', tonic: 5, mode: 'maj', meter: 3, sections: [
-    { label: 'A : cantabile (fa majeur)', bars: ['I', 'IV', 'V7', 'I', 'vi', 'ii', 'V7', 'I'], pattern: 'arpege' },
-    { label: 'B : con fuoco (fa mineur)', tonic: 5, mode: 'min', bars: ['i', 'iv', 'V7', 'i', 'VI', 'iv', 'V7', 'i'], pattern: 'agite' },
-    { label: 'retour : do 7', tonic: 5, mode: 'maj', bars: ['V7'], pattern: 'accords' },
-    { label: 'A′ (orné)', tonic: 5, mode: 'maj', bars: ['I', 'IV', 'V7', 'I'], pattern: 'arpege' }], pattern: 'arpege', bpm: 66 },
+  // V7.5 : A sur les vraies harmonies de l'op. 15 (m. 1 à 8), B con fuoco en fa mineur, la dominante, A′ (m. 1 à 3, puis I)
+  'n2-aba-op15': { title: 'Forme ABA comme l’op. 15 : fa majeur (cantabile) / fa mineur (con fuoco) / fa majeur', tonic: 5, mode: 'maj', meter: 3, custom: [
+    ...withPat(OP15_GRID, 'triolets').map((c, i) => (i ? c : { ...c, section: 'A : cantabile (m. 1 à 8 de Chopin)' })),
+    ...withPat([C('i', 5, 'm', 41, { name: 'fa mineur', section: 'B : con fuoco (fa mineur)' }), C('iv', 10, 'm', 46, { name: 'si♭ mineur' }), C('V7', 0, '7', 36, { name: 'do 7' }), C('i', 5, 'm', 41, { name: 'fa mineur' }),
+      C('VI', 1, 'M', 37, { name: 'ré♭ majeur' }), C('iv', 10, 'm', 46, { name: 'si♭ mineur' }), C('V7', 0, '7', 36, { name: 'do 7' }), C('i', 5, 'm', 41, { name: 'fa mineur' })], 'agite').map(c => ({ ...c, mode: 'min' })),
+    { ...C('V7', 0, '7', 36, { name: 'do 7', section: 'retour : do 7' }), pattern: 'accords' },
+    ...withPat(OP15_GRID.slice(0, 5), 'triolets').map((c, i) => (i ? c : { ...c, section: 'A′ (orné)' })),
+    { ...C('I', 5, 'M', 41, { name: 'fa majeur', notes: [57, 60, 65] }), pattern: 'triolets' }], pattern: 'triolets', bpm: 60 },
+  // Romanesca, puis Prinner (V7.5, dialogue : l'appli ouvre, tu réponds)
+  'n2-roma-prinner': { title: 'Romanesca, puis Prinner (do majeur)', tonic: 0, mode: 'maj', meter: 4, custom: null, pattern: 'accords', bpm: 60 },
+  // Préluder (V7.5) : figuration sur une suite d'accords, puis un prélude complet (cadence, figuration, cadence)
+  'prelude-fa': { title: 'Préluder en fa majeur : des accords en figuration', tonic: 5, mode: 'maj', meter: 4, bars: ['I', 'vi', 'IV', 'V7', 'I', 'IV', 'V7', 'I'], pattern: 'arpege', bpm: 60 },
+  'prelude-fam': { title: 'Préluder en fa mineur : des accords en figuration', tonic: 5, mode: 'min', meter: 4, bars: ['i', 'VI', 'iv', 'V7', 'i', 'iv', 'V7', 'i'], pattern: 'arpege', bpm: 56 },
+  'prelude-fa12': { title: 'Un prélude complet en fa majeur : cadence, figuration, cadence', tonic: 5, mode: 'maj', meter: 4, sections: [
+    { label: 'cadence', bars: ['I', 'IV', 'V7', 'I'], pattern: 'accords' }, { label: 'figuration', bars: ['I', 'vi', 'IV', 'V7'], pattern: 'arpege' }, { label: 'cadence', bars: ['I', 'IV', 'V7', 'I'], pattern: 'accords' }], pattern: 'arpege', bpm: 60 },
+  'prelude-fam12': { title: 'Un prélude complet en fa mineur : cadence, figuration, cadence', tonic: 5, mode: 'min', meter: 4, sections: [
+    { label: 'cadence', bars: ['i', 'iv', 'V7', 'i'], pattern: 'accords' }, { label: 'figuration', bars: ['i', 'VI', 'iv', 'V7'], pattern: 'arpege' }, { label: 'cadence', bars: ['i', 'iv', 'V7', 'i'], pattern: 'accords' }], pattern: 'arpege', bpm: 56 },
   'n2-orner': { title: 'Fa mineur : la mélodie simple à orner (i – iv – V7 – i)', style: 'nocturne', tonic: 5, mode: 'min', meter: 4, bars: ['i', 'iv', 'V7', 'i'], pattern: 'basse-accord', bpm: 60,
     targets: [72, 77, 72, 68], targetName: 'Squelette', targetHelp: 'Les notes en or sont celles de la mélodie simple (do, fa, do, la♭) : garde-les au premier temps et orne entre elles.' },
   'n2-lamento': { title: 'Prélude sur basse chromatique descendante (fa majeur)', style: 'prelude', tonic: 5, mode: 'maj', meter: 4, custom: [
@@ -229,7 +268,8 @@ export const IMPROV_PRESETS = {
     C('V6/5 de IV', 0, '7', 52, { name: 'do 7 / mi', section: 'Monte' }), C('IV', 5, 'M', 53, { name: 'fa majeur' }), C('V6/5 de V', 2, '7', 54, { name: 'ré 7 / fa♯' }), C('V', 7, 'M', 55, { name: 'sol majeur' }),
     C('V6/5 de ii', 9, '7', 49, { name: 'la 7 / do♯', section: 'Fonte' }), C('ii', 2, 'm', 50, { name: 'ré mineur' }), C('V6/5', 7, '7', 47, { name: 'sol 7 / si' }), C('I', 0, 'M', 48, { name: 'do majeur' }),
     C('I6', 0, 'M', 52, { name: 'do majeur / mi', section: 'Cadence' }), C('ii6', 2, 'm', 53, { name: 'ré mineur / fa' }), C('V7', 7, '7', 43, { name: 'sol 7' }), C('I', 0, 'M', 36, { name: 'do majeur' })], pattern: 'accords', bpm: 60 },
-  'n2-op15-A': { title: 'Fa majeur, cantabile (comme la section A de l’op. 15)', tonic: 5, mode: 'maj', meter: 3, bars: ['I', 'IV', 'V7', 'I', 'vi', 'ii', 'V7', 'I'], pattern: 'arpege', bpm: 66 },
+  'n2-op15-A': { title: 'Les harmonies de ton op. 15 (m. 1 à 8)', style: 'nocturne', tonic: 5, mode: 'maj', meter: 3, custom: OP15_GRID, pattern: 'triolets', bpm: 60,
+    chordTargets: OP15_TG, ...CHOPIN, targetHelp: 'Les notes en or sont celles de Chopin au début de chaque accord : pose-les, puis invente ce qui se passe entre elles.' },
   'n2-napolitaine': { title: 'Cadence avec sixte napolitaine (fa mineur)', tonic: 5, mode: 'min', meter: 4, bars: ['i', 'iv', 'N6', 'V7', 'i', 'VI', 'N6', 'V7'], pattern: 'accords', bpm: 60 },
   'choral-ut': { title: 'Choral en do mineur (à la manière du Prélude op. 28 n° 20)', style: 'choral', tonic: 0, mode: 'min', meter: 4, bars: ['i', 'iv', 'V7', 'i', 'VI', 'iv', 'V7', 'i'], pattern: 'choral', bpm: 50 },
   /* ---- V7.4 : ta main gauche, une mélodie connue ---- */
@@ -242,6 +282,12 @@ export const IMPROV_PRESETS = {
     melody: MEL('60 60 67 67 | 68 68 67:2 | 65 65 63 63 | 62 62 60:2 | 67 67 65 65 | 63 63 62:2 | 67 67 65 65 | 63 63 62:2 | 60 60 67 67 | 68 68 67:2 | 65 65 63 63 | 62 62 60:2'),
     targets: [60, 68, 65, 62, 67, 63, 67, 63, 60, 68, 65, 62], targetName: 'L’air en mineur', targetHelp: 'L’air en do mineur : mi devient mi♭, la devient la♭. Les notes en or sont celles du premier temps.' },
 };
+
+// Romanesca + Prinner : les huit premières mesures de la grille des schémas (accords et soprano)
+IMPROV_PRESETS['n2-roma-prinner'].custom = IMPROV_PRESETS['n2-romanesca'].custom.slice(0, 8);
+Object.assign(IMPROV_PRESETS['n2-roma-prinner'], { targets: IMPROV_PRESETS['n2-romanesca'].targets.slice(0, 8), ...SOPRANO });
+// Le prélude op. 28 n° 4 à la main gauche : les accords de Chopin, une octave plus bas (sous le do central)
+IMPROV_PRESETS['prelude-mi'].lhShift = -12;
 
 // Grilles dérivées (transpositions) : la grille et le soprano viennent de la grille d'origine.
 for (const P of Object.values(IMPROV_PRESETS)) {
@@ -270,9 +316,9 @@ export function buildTimeline(P) {
   const list = [];
   const tr = P.tr || 0;
   if (P.custom) P.custom.forEach(c => {
-    if (!tr) { list.push({ ...c, tonic: P.tonic, mode: P.mode }); return; }
+    if (!tr) { list.push({ ...c, tonic: c.tonic ?? P.tonic, mode: c.mode ?? P.mode }); return; }
     const root = (c.root + tr + 120) % 12;
-    const key = { tonic: (P.tonic + tr + 120) % 12, mode: P.mode };
+    const key = { tonic: ((c.tonic ?? P.tonic) + tr + 120) % 12, mode: c.mode ?? P.mode };
     list.push({ ...c, root, bass: c.bass != null ? (c.bass + tr + 120) % 12 : undefined, bassM: c.bassM != null ? c.bassM + tr : undefined,
       notes: c.notes ? c.notes.map(n => n + tr) : undefined,
       name: `${pcName(root, key)} ${CHORDS[c.q].fr}${c.bassM != null && pc(c.bassM) !== pc(c.root) ? ' / ' + pcName(pc(c.bassM + tr), key) : ''}`,
@@ -347,13 +393,15 @@ export function lhBass(ch, chord) {
   return m < 31 ? m + 12 : m;
 }
 /** Le plan de la main gauche pour toute la grille : { bass, chord } par accord, enchaîné au plus près. */
-export function lhPlan(timeline) {
+export function lhPlan(timeline, { shift = 0 } = {}) {
   let prev = null;
   return timeline.map(ch => {
-    if (ch.silent) return { bass: null, chord: [] };
-    const chord = lhChordVoicing(ch, prev);
+    if (ch.silent) return { bass: null, chord: [], line: null };
+    // une grille peut demander ses propres voicings, transposés d'une octave (le prélude op. 28 n° 4)
+    const own = shift && ch.notes?.length ? ch.notes.map(m => m + shift) : null;
+    const chord = own && Math.max(...own) <= LH_HI && Math.min(...own) >= 31 ? own : lhChordVoicing(ch, prev);
     prev = chord;
-    return { bass: lhBass(ch, chord), chord };
+    return { bass: lhBass(ch, chord), chord, line: ch.bassM != null && ch.bassM <= LH_HI ? ch.bassM : null };
   });
 }
 /** La formule de main gauche par défaut : la valse à trois temps, basse et accord sinon. */
@@ -432,10 +480,21 @@ export const PATTERNS = {
     for (let k = 1; k < beats * 3; k++) v.upper.forEach(m => note(m, t + k * spb / 3, spb / 3 * 0.55, k % 3 === 0 ? 50 : 41));
   },
   bourdon: ({ v, t, dur, note }) => { note(v.bass, t, dur * 0.98, 54); note(v.bass + 7, t, dur * 0.98, 44); },
+  // Op. 15 n° 1 (V7.5) : la basse tenue, des triolets de croches (deux voix intérieures) et la voix du haut en noires
+  triolets: ({ v, t, beats, spb, note }) => {
+    note(v.bass, t, beats * spb * 0.98, 54);
+    const u = v.upper;
+    for (let b = 0; b < beats; b++) {
+      const tb = t + b * spb;
+      if (u.length >= 3) note(u[u.length - 1], tb, spb * 0.95, 44);
+      const tri = u.length >= 2 ? [u[0], u[1], u[1]] : [u[0], u[0], u[0]];
+      tri.forEach((m, k) => note(m, tb + k * spb / 3, spb / 3 * 0.9, k ? 36 : 40));
+    }
+  },
   basse: ({ v, t, dur, note }) => note(v.bass, t, dur * 0.98, 58),
   /* Les formules de ta main gauche (V7.4), sous le do central : v.lh = { bass, chord }. part 'bass' : la basse seule
      (l'appli tient la basse, tu joues le reste). */
-  'mg-basse': ({ v, t, dur, note }) => note(v.lh.bass, t, dur * 0.98, 56),
+  'mg-basse': ({ v, t, dur, note }) => note(v.lh.line ?? v.lh.bass, t, dur * 0.98, 56),
   'mg-ostinato': ({ v, t, beats, spb, note, part }) => {
     const c = v.lh.chord;
     const cyc = [v.lh.bass, c[0], c[1] ?? c[0] + 5, c[0]];
@@ -474,7 +533,7 @@ export const PATTERNS = {
   },
 };
 const PATTERN_LABELS = [['basse-accord', 'basse + accord (nocturne)'], ['arpege', 'arpège élargi'], ['romance', 'romance (croches, jusqu’à la dixième)'], ['elegie', 'élégie (vagues de triolets)'],
-  ['repeated', 'accords répétés (prélude)'], ['choral', 'choral'], ['accords', 'accords tenus'], ['valse', 'valse (3 temps)'], ['alberti', 'basse d’Alberti'], ['ostinato', 'ostinato (quinte bercée)'], ['bourdon', 'bourdon (quinte tenue)'], ['agite', 'agité (accords battus)'], ['basse', 'basse seule'],
+  ['repeated', 'accords répétés (prélude)'], ['choral', 'choral'], ['accords', 'accords tenus'], ['valse', 'valse (3 temps)'], ['alberti', 'basse d’Alberti'], ['ostinato', 'ostinato (quinte bercée)'], ['bourdon', 'bourdon (quinte tenue)'], ['triolets', 'triolets (op. 15)'], ['agite', 'agité (accords battus)'], ['basse', 'basse seule'],
   ['mg-basse-accord', 'ta main gauche : basse et accord'], ['mg-valse', 'ta main gauche : valse'], ['mg-arpege', 'ta main gauche : arpège'], ['mg-alberti', 'ta main gauche : Alberti'], ['mg-plaque', 'ta main gauche : accords plaqués']];
 
 /* ------------------------------------------------------------------ */
@@ -498,7 +557,7 @@ const chordTones = ch => CHORDS[ch.q].iv.map(x => (ch.root + x) % 12);
  * Mélodie sur une suite d'accords (un par mesure ou plus) : notes de l'accord sur les temps, notes de passage
  * entre elles, fin « ouverte » (question : une note de l'accord autre que la tonique) ou « fermée » (tonique).
  */
-function genMelody(P, chords, { meter, rhythm = null, end = 'open', start = 72, lo = 62, hi = 84 }) {
+function genMelody(P, chords, { meter, rhythm = null, end = 'open', start = 72, lo = 62, hi = 84, skeleton = null }) {
   const notes = [];
   let prev = start, t = 0;
   const rh = rhythm || pick(RHY[meter] || RHY[4]);
@@ -514,7 +573,9 @@ function genMelody(P, chords, { meter, rhythm = null, end = 'open', start = 72, 
       const onBeat = Math.abs(beat - Math.round(beat)) < 1e-6;
       const isLast = lastBar && k === r.length - 1;
       let cand;
-      if (isLast) {
+      const sk = skeleton && k === 0 && ch.at % meter === 0 ? skeleton(ch.bar) : null;
+      if (sk != null) cand = [sk];
+      else if (isLast) {
         const want = end === 'close' ? [ch.tonic % 12] : ct.filter(x => x !== ch.tonic % 12);
         cand = sc.filter(m => want.includes(pc(m)));
       } else if (onBeat) cand = sc.filter(m => ct.includes(pc(m)));
@@ -532,6 +593,40 @@ function genMelody(P, chords, { meter, rhythm = null, end = 'open', start = 72, 
   });
   return { notes, rhythm: rh };
 }
+
+/** Imitation (V7.5) : une phrase ornée sur le squelette de la grille (note d'appui, broderie chromatique, note de passage). */
+function ornateMelody(P, chords, skel) {
+  const notes = [];
+  const bars = chords.filter(c => c.at % P.meter === 0);
+  bars.forEach((ch, bi) => {
+    const t0 = ch.bar * P.meter - bars[0].bar * P.meter;
+    const m = skel(ch.bar) ?? 72;
+    const last = bi === bars.length - 1;
+    if (last) { notes.push({ m, t: t0, d: P.meter }); return; }
+    const nx = skel(bars[bi + 1].bar) ?? m;
+    const sc = scaleNotes(P, ch, 55, 90);
+    const approach = nx > m ? sc.filter(x => x < nx).pop() : nx < m ? sc.find(x => x > nx) : sc.find(x => x > m);
+    if (P.meter >= 4) notes.push({ m, t: t0, d: 1.5 }, { m: m - 1, t: t0 + 1.5, d: 0.5 }, { m, t: t0 + 2, d: 1 }, { m: approach ?? m, t: t0 + 3, d: 1 });
+    else notes.push({ m, t: t0, d: 1 }, { m: m - 1, t: t0 + 1, d: 0.5 }, { m, t: t0 + 1.5, d: 0.5 }, { m: approach ?? m, t: t0 + 2, d: 1 });
+  });
+  return { notes, rhythm: null };
+}
+/** Imitation (V7.5) : une figuration, l'accord brisé en croches qui monte puis redescend (préluder). */
+function figureMelody(P, chords) {
+  const notes = [];
+  let t = 0;
+  for (const ch of chords) {
+    const ct = chordTones(ch);
+    const tones = [];
+    for (let m = 60; m < 84 && tones.length < 4; m++) if (ct.includes(pc(m))) tones.push(m);
+    const seq = [0, 1, 2, 3, 2, 1, 2, 1];
+    for (let k = 0; k < (ch.beats || P.meter) * 2; k++) notes.push({ m: tones[seq[k % seq.length]] ?? tones[0], t: t + k / 2, d: 0.5 });
+    t += ch.beats || P.meter;
+  }
+  return { notes, rhythm: null };
+}
+
+export { ornateMelody as _ornateMelody, figureMelody as _figureMelody, OP15_GRID as _OP15_GRID, OP15_TG as _OP15_TG };
 
 /* ------------------------------------------------------------------ */
 /* Widget                                                              */
@@ -563,10 +658,11 @@ export function mountImprov(el, cfg = {}) {
     h('span', { class: 'lg-target' }, h('i', { class: 'lg-dot', style: { background: GOLD_NEXT, boxShadow: `inset 0 0 0 1.5px ${GOLD}` } }), 'note en or suivante : à préparer'));
   const qrBox = h('div', { class: 'qr-box', hidden: true });
   const resBox = h('div', { class: 'improv-res', hidden: true, 'aria-live': 'polite' });
+  const keepBox = h('div', { class: 'keep-box', hidden: true });
   const foot = h('div', { class: 'w-foot' });
   const status = h('div', { class: 'score-status' });
   frame.append(head, body, foot);
-  body.append(styleNote, cue, gridBox, chordBox, kbHost, legend, qrBox, resBox);
+  body.append(styleNote, cue, gridBox, chordBox, kbHost, legend, qrBox, resBox, keepBox);
   el.append(frame);
 
   let P, timeline, kb, playing = false, timer = null, nextTime, idx, chordLog = [], played = [], offNote = null, offOff = null, bpm;
@@ -589,6 +685,9 @@ export function mountImprov(el, cfg = {}) {
   const lhSeg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Main gauche jouée par' });
   const clickBtn = h('button', { class: 'btn sm' + (clickOn ? ' on' : ''), type: 'button', title: 'Clic sur chaque temps' }, 'Clic');
   const replayBtn = h('button', { class: 'btn sm', type: 'button', hidden: true, title: 'Réécouter ta dernière improvisation avec l’accompagnement' }, 'Réécouter');
+  // V7.5 : garder une à quatre mesures de la dernière prise dans le carnet de formules
+  const keepBtn = h('button', { class: 'btn sm ghost', type: 'button', hidden: true, title: 'Ranger une à quatre mesures de ta dernière prise dans ton carnet de formules' }, 'Garder une formule');
+  let lastKeep = null;
   const modelBtn = h('button', { class: 'btn sm ghost', type: 'button', hidden: true }, 'Écouter une réponse possible');
   // V7.4 : écouter la main gauche à jouer, écouter le squelette (pour le chanter), montrer l'or ou les accords cachés
   const mgBtn = h('button', { class: 'btn sm ghost', type: 'button', hidden: true, title: 'L’appli joue la main gauche que tu vas jouer, une fois' }, 'Écouter la main gauche');
@@ -604,7 +703,7 @@ export function mountImprov(el, cfg = {}) {
   const modeLbl = h('span', { class: 'small' }, 'Mode');
   const lhLbl = h('span', { class: 'small' }, 'Main gauche jouée par');
   foot.append(
-    h('div', { class: 'score-ctrl' }, playBtn, h('label', { class: 'range' }, 'Tempo', rng, out), replayBtn),
+    h('div', { class: 'score-ctrl' }, playBtn, h('label', { class: 'range' }, 'Tempo', rng, out), replayBtn, keepBtn),
     h('div', { class: 'score-ctrl score-ctrl-2' }, modeLbl, modeSeg, lhLbl, lhSeg, modelBtn, mgBtn, skelBtn, goldBtn, gridBtn, optBtn),
     optRow,
     h('div', { style: { width: '100%' } }, status));
@@ -675,7 +774,7 @@ export function mountImprov(el, cfg = {}) {
     if (step?.tr) P = { ...P, tr: (P.tr || 0) + step.tr };
     if (P.melody && P.tr) P = { ...P, melody: P.melody.map(n => ({ ...n, m: n.m + P.tr })) };
     timeline = buildTimeline(P);
-    plan = lhPlan(timeline);
+    plan = lhPlan(timeline, { shift: P.lhShift || 0 });
     bpm = step?.bpm || P.bpm; rng.value = bpm; out.textContent = `♩ = ${bpm}`;
     patSel.value = P.pattern;
     if (step && (mode === 'libre' || mode === 'squelette')) loops.value = String(step.loops ?? 2);
@@ -754,7 +853,7 @@ export function mountImprov(el, cfg = {}) {
     const nmL = list => list.map(m => tgName(m, ch)).join(' – ');
     const c0 = lhv?.chord || [];
     const lhLine = !gridOn || ch.silent ? null : f && lhMode === 'basse' && c0.length ? h('div', {}, 'Ta main gauche : ', h('b', {}, nmL(c0)), ` (l’appli joue la basse ${tgName(lhv.bass, ch)})`)
-      : f && lhMode === 'moi' && c0.length ? h('div', {}, 'Ta main gauche : ', h('b', {}, f === 'plaque' ? nmL(c0) : f === 'basse' ? tgName(lhv.bass, ch)
+      : f && lhMode === 'moi' && c0.length ? h('div', {}, 'Ta main gauche : ', h('b', {}, f === 'plaque' ? nmL(c0) : f === 'basse' ? tgName(lhv.line ?? lhv.bass, ch)
         : f === 'alberti' ? nmL([c0[0], c0[c0.length - 1], c0[1], c0[c0.length - 1]]) : f === 'ostinato' ? nmL([lhv.bass, c0[0], c0[1] ?? c0[0] + 5, c0[0]])
           : f === 'arpege' ? `${tgName(lhv.bass, ch)}, puis ${nmL(c0.slice(0, 3))} égrené` : `${tgName(lhv.bass, ch)}, puis ${nmL(c0)}`))
         : lhMode === 'moi' ? h('div', {}, 'Ta main gauche : ', h('b', {}, `${noteNameFr(v.bass)} + ${v.upper.map(m => noteNameFr(m)).join(' ')}`)) : null;
@@ -779,7 +878,7 @@ export function mountImprov(el, cfg = {}) {
         if (!gridOn || ch.silent) continue;
         if (f && lhMode !== 'app') {
           if (f !== 'basse' && lhv?.chord.includes(m)) marks.push({ m, color: isBlackKey(m) ? '#8c5a26' : '#efdcc4' });
-          else if (lhMode === 'moi' && FORMULAS[f]?.bass && m === lhv?.bass) marks.push({ m, color: isBlackKey(m) ? '#5e3b17' : '#d9b48f' });
+          else if (lhMode === 'moi' && FORMULAS[f]?.bass && m === (f === 'basse' ? lhv?.line ?? lhv?.bass : lhv?.bass)) marks.push({ m, color: isBlackKey(m) ? '#5e3b17' : '#d9b48f' });
         } else if (lhMode === 'moi' && (m === v.bass || v.upper.includes(m))) marks.push({ m, color: isBlackKey(m) ? '#8c5a26' : '#efdcc4' });
         continue;
       }
@@ -861,17 +960,22 @@ export function mountImprov(el, cfg = {}) {
   // segments de deux mesures : question (appli) et réponse (toi) en alternance ; imitation : phrase (appli), chant, rejeu
   const answerHint = seg => {
     const v = step?.qr?.variant || 'rythme';
+    const dir = step?.qr?.dirs?.[seg.fromBar];
     const what = v === 'contour' ? 'suis le dessin de la question' : v === 'inverse' ? 'renverse le dessin de la question' : v === 'registre' ? 'réponds dans le registre de la question'
-      : v === 'figure' ? `glisse ${FIG_LABEL[step.qr.figure]?.[3] ? 'une' : 'un'} ${FIG_LABEL[step.qr.figure]?.[0] || 'figure'}` : 'reprends son rythme';
+      : v === 'figure' ? `glisse ${FIG_LABEL[step.qr.figure]?.[3] ? 'une' : 'un'} ${FIG_LABEL[step.qr.figure]?.[0] || 'figure'}`
+        : v === 'schema' ? `joue le soprano du schéma (${seg.chords.filter(c => c.at % P.meter === 0).map(c => skelAt(c.bar)).filter(x => x != null).map(m => tgName(m, seg.chords[0], false)).join(' – ')}), une note par mesure, ornée si tu veux`
+          : v === 'sequence' && dir ? `rejoue le motif un degré plus ${dir > 0 ? 'haut' : 'bas'}, même rythme` : 'reprends son rythme';
     return `${what}, finis ${seg.isEnd ? 'sur la tonique' : 'sur une note de l’accord'}`;
   };
+  /** Le squelette (note d'appui) de la mesure `bar` de la grille, transposition comprise. */
+  const skelAt = bar => (P.targets ? P.targets[bar % P.targets.length] + (P.tr || 0) : null);
   const buildSegs = kind => {
     const barsTotal = Math.round(timeline.totalBeats / P.meter);
-    const segBars = barsTotal >= 4 ? 2 : 1;
+    const segBars = step?.qr?.bars || step?.echo?.bars || (barsTotal >= 4 ? 2 : 1);
     const sing = kind === 'echo' && step?.echo?.sing !== false;
     const pattern = kind === 'qr' ? ['q', 'a'] : sing ? ['q', 's', 'a'] : ['q', 'a'];
     // palier : toujours quatre réponses (même sur une grille de quatre mesures, qui tourne alors deux fois)
-    const count = kind === 'qr' ? (step ? 8 : Math.max(2, Math.min(8, Math.floor((barsTotal * 2) / segBars)))) : (step?.echo?.count || 4) * pattern.length;
+    const count = kind === 'qr' ? (step ? (step.qr?.count || 8) : Math.max(2, Math.min(8, Math.floor((barsTotal * 2) / segBars)))) : (step?.echo?.count || 4) * pattern.length;
     const list = [];
     for (let s = 0; s < count; s++) {
       const fromBar = (s * segBars) % barsTotal;
@@ -896,7 +1000,9 @@ export function mountImprov(el, cfg = {}) {
           let start = this.lastNote || 72, lo = 62, hi = 84;
           if (kind === 'qr' && step?.qr?.variant === 'registre') { const high = Math.random() < 0.5; start = high ? 81 : 64; lo = high ? 72 : 57; hi = high ? 90 : 74; }
           const rhythm = kind === 'echo' && step?.echo?.rhythms ? pick(step.echo.rhythms) : null;
-          const q = genMelody(P, seg.chords, { meter: P.meter, end: kind === 'echo' ? (step?.echo?.end || 'close') : 'open', start, rhythm, lo, hi });
+          const q = kind === 'echo' && step?.echo?.ornate && P.targets ? ornateMelody(P, seg.chords, skelAt)
+            : kind === 'echo' && step?.echo?.figure ? figureMelody(P, seg.chords)
+              : genMelody(P, seg.chords, { meter: P.meter, end: kind === 'echo' ? (step?.echo?.end || 'close') : 'open', start, rhythm, lo, hi, skeleton: kind === 'qr' && step?.qr?.variant === 'schema' ? skelAt : null });
           this.question = q; seg.q = q;
           const spb = 60 / bpm;
           for (const nn of q.notes) {
@@ -921,7 +1027,13 @@ export function mountImprov(el, cfg = {}) {
         if (!seg.q || seg.judged) return;
         seg.judged = true;
         const r = kind === 'echo' ? judgeEcho(seg.played, seg.q)
-          : judgeAnswer(seg.played, seg, seg.q, { isEnd: seg.isEnd, variant: step?.qr?.variant || 'rythme', figure: step?.qr?.figure || null });
+          : judgeAnswer(seg.played, seg, seg.q, (() => {
+            let variant = step?.qr?.variant || 'rythme';
+            const dir = step?.qr?.dirs?.[seg.fromBar] ?? null;
+            if (variant === 'sequence' && !dir) variant = 'rythme';
+            const skeleton = variant === 'schema' ? seg.chords.filter(c => c.at % P.meter === 0).map(c => ({ k: c.bar - seg.fromBar, m: skelAt(c.bar) })).filter(x => x.m != null) : null;
+            return { isEnd: seg.isEnd && variant !== 'schema', variant, figure: step?.qr?.figure || null, skeleton, dir };
+          })());
         this.results.push(r);
         const k = this.results.length;
         qrBox.hidden = false;
@@ -1087,6 +1199,8 @@ export function mountImprov(el, cfg = {}) {
     if (replaying) { replaying = false; status.textContent = statusIdle(); return; }
     if (demo) { demo = null; status.textContent = statusIdle(); return; }
     if (rec.length >= 3) { lastRec = { notes: rec.slice(), presetId, bpm, pattern: patSel.value }; replayBtn.disabled = false; replayBtn.hidden = false; }
+    const rh = takeNotes.filter(n => n.m >= split && n.b >= -0.25);
+    if (rh.length >= 3) { lastKeep = { notes: rh.map(({ m, b, d }) => ({ m, b: Math.max(0, b), d })), meter: P.meter, bpm, title: P.title, presetId }; keepBtn.hidden = false; keepBox.hidden = true; }
     const elapsed = (performance.now() - perf0) / beatMs;
     if (wasPlaying && step) {
       // la dernière réponse n'a pas encore été jugée (arrêt pendant le jugement) : on la juge maintenant
@@ -1134,6 +1248,29 @@ export function mountImprov(el, cfg = {}) {
   };
 
   playBtn.addEventListener('click', () => (playing ? stop() : start()));
+  keepBtn.addEventListener('click', () => {
+    if (!lastKeep) return;
+    keepBox.hidden = !keepBox.hidden;
+    if (keepBox.hidden) return;
+    keepBox.innerHTML = '';
+    const M = lastKeep.meter;
+    const bars = [...new Set(lastKeep.notes.map(n => Math.floor(n.b / M)))].sort((a, b) => a - b);
+    const from = h('select', { 'aria-label': 'À partir de la mesure' }, ...bars.map(b => h('option', { value: b }, `dès la mesure ${b + 1}`)));
+    const len = h('select', { 'aria-label': 'Longueur' }, ...[1, 2, 3, 4].map(n => h('option', { value: n, selected: n === 2 }, `${n} mesure${n > 1 ? 's' : ''}`)));
+    const name = h('input', { type: 'text', maxlength: 40, placeholder: 'Un nom : « montée en arpège », « soupir »…', 'aria-label': 'Nom de la formule' });
+    const ok = h('button', { class: 'btn sm primary', type: 'button' }, 'Garder');
+    const msg = h('span', { class: 'small', 'aria-live': 'polite' });
+    ok.addEventListener('click', async () => {
+      const b0 = +from.value * M, b1 = b0 + +len.value * M;
+      const notes = lastKeep.notes.filter(n => n.b >= b0 - 0.25 && n.b < b1 - 0.25);
+      if (notes.length < 2) { msg.textContent = 'Trop peu de notes dans ces mesures.'; return; }
+      const { saveFormula } = await import('./tool-improfree.js');
+      saveFormula({ name: name.value.trim() || `${lastKeep.title}, mesure ${+from.value + 1}`, preset: lastKeep.presetId, title: lastKeep.title, bpm: lastKeep.bpm, meter: M, notes });
+      keepBox.innerHTML = '';
+      keepBox.append(h('p', { class: 'small mb-0' }, '✓ Rangée dans ton carnet de formules (', h('a', { href: '#/outils/impro' }, 'Improvisation'), ') : réécoute-la, puis retrouve-la de mémoire.'));
+    });
+    keepBox.append(h('div', { class: 'keep-form' }, from, len, name, ok), msg);
+  });
   replayBtn.addEventListener('click', () => {
     if (!lastRec) return;
     if (playing) stop();

@@ -676,10 +676,10 @@ export const CHECKS = {
     return good >= Math.ceil(cs.length / 2) ? { ok: true, line: 'Chaque tour finit sur la tonique : la phrase est close.' } : { ok: false, line: `Finis sur la tonique (${pcNameIn(ch.tonic, ch)}), en valeur longue.` };
   },
   /** Question – réponse et imitation : résultats des segments. */
-  answers(A, { min = 3 }, ctx) {
+  answers(A, { min = 3, of = null }, ctx) {
     const rs = ctx.segResults || [];
     const k = rs.filter(r => r.ok).length;
-    if (rs.length < min) return { ok: false, line: `Va jusqu’au bout : ${min} réponses réussies sur ${Math.max(min + 1, 4)} sont demandées (${rs.length} jouées).` };
+    if (rs.length < min) return { ok: false, line: `Va jusqu’au bout : ${min} réponses réussies sur ${of || Math.max(min + 1, 4)} sont demandées (${rs.length} jouées).` };
     return k >= min ? { ok: true, line: `${k} réponses réussies sur ${rs.length}.` } : { ok: false, line: `${k} réponse${k > 1 ? 's' : ''} réussie${k > 1 ? 's' : ''} sur ${rs.length} (il en faut ${min}) : relis les remarques sous chaque réponse.` };
   },
   echo(A, { min = 3 }, ctx) {
@@ -774,7 +774,7 @@ export function describeCheck(c) {
     case 'reprise': return 'la mélodie simple, puis ornée à la reprise';
     case 'qa': return 'des paires question – réponse : la question finit ailleurs que sur la tonique, la réponse reprend son rythme et finit sur la tonique';
     case 'final': return 'la dernière note sur la tonique';
-    case 'answers': return `${c.min ?? 3} réponses réussies sur 4`;
+    case 'answers': return `${c.min ?? 3} réponses réussies sur ${c.of ?? 4}`;
     case 'echo': return `${c.min ?? 3} imitations justes sur 4`;
     default: return '';
   }
@@ -787,7 +787,7 @@ export function describeCheck(c) {
  * played : [{ m, beat (depuis le début de la réponse), kind, strong }] ; question : { notes: [{ m, t, d }] }.
  * variant : 'rythme' (par défaut), 'contour', 'inverse', 'registre', 'figure' (avec figure).
  */
-export function judgeAnswer(played, seg, question, { isEnd = false, variant = 'rythme', figure = null } = {}) {
+export function judgeAnswer(played, seg, question, { isEnd = false, variant = 'rythme', figure = null, skeleton = null, dir = null } = {}) {
   const lines = [];
   if (played.length < 2) return { ok: false, score: 0, lines: ['Je n’ai presque rien reçu : réponds avec au moins trois ou quatre notes, à la main droite.'] };
   const strong = played.filter(p => p.strong);
@@ -824,12 +824,38 @@ export function judgeAnswer(played, seg, question, { isEnd = false, variant = 'r
     lines.push(thirdOk ? `✓ Tu as suivi le registre de la question (${mq >= 74 ? 'dans l’aigu' : 'dans le médium'}).` : `→ La question était ${mq > ma ? 'plus aiguë' : 'plus grave'} : réponds dans le même registre.`);
   } else if (variant === 'figure' && figure) {
     const figs = findFigures(played.map(p => ({ m: p.m, b: p.beat, kind: p.kind, strong: p.strong, near: Math.abs(p.beat - Math.round(p.beat)) < TOL })));
-    const k = (figure === 'approche' ? [...figs.double, ...figs.schleifer] : figs[figure] || []).length;
+    const k = (figure === 'approche' ? [...figs.double, ...figs.schleifer] : figure === 'ornement' ? [...figs.broderie, ...figs.passage, ...figs.double, ...figs.appoggiature, ...figs.fioriture, ...figs.schleifer] : figs[figure] || []).length;
     thirdOk = k >= 1;
     lines.push(thirdOk ? `✓ Ta réponse contient ${un(figure)} ${FIG_LABEL[figure][0]}.` : `→ Glisse ${un(figure)} ${FIG_LABEL[figure][0]} dans ta réponse : ${FIG_LABEL[figure][2]}.`);
   }
+  else if (variant === 'schema' && skeleton?.length) {
+    // le soprano du schéma : la note d'appui au premier temps de chaque mesure (à l'octave près)
+    const meter = seg.meter || 4;
+    const hits = skeleton.filter(x => played.some(p => Math.abs(p.beat - x.k * meter) <= 0.3 && pc(p.m) === pc(x.m)));
+    third = hits.length / skeleton.length;
+    thirdOk = third >= 0.75;
+    const names = skeleton.map(x => pcNameIn(x.m, seg.chords[0])).join(' – ');
+    lines.push(thirdOk ? `✓ Le soprano du schéma y est (${names}).` : `→ Le soprano du schéma : ${names}, une note au premier temps de chaque mesure (${hits.length}/${skeleton.length}).`);
+  } else if (variant === 'sequence' && dir) {
+    // la marche : le même dessin et le même rythme, un degré plus haut (ou plus bas)
+    const q = question.notes;
+    const sg = arr => arr.slice(1).map((x, i) => sgn(x - arr[i]));
+    const qs = sg(q.map(n => n.m)), as = sg(played.map(p => p.m));
+    const n = Math.min(qs.length, as.length, 6);
+    const contour = n ? qs.slice(0, n).filter((x, i) => x === as[i]).length / n : 0;
+    const q8 = new Set(q.map(x => Math.round(x.t * 2))), a8 = new Set(played.map(p => Math.round(p.beat * 2)));
+    const inter = [...q8].filter(x => a8.has(x)).length;
+    const rj = inter / (q8.size + a8.size - inter);
+    const shift = played[0].m - q[0].m;
+    const shiftOk = sgn(shift) === sgn(dir) && Math.abs(shift) >= 1 && Math.abs(shift) <= 4;
+    thirdOk = contour >= 0.6 && rj >= 0.5 && shiftOk;
+    third = thirdOk ? 1 : 0;
+    lines.push(thirdOk ? `✓ Le motif revient un degré plus ${dir > 0 ? 'haut' : 'bas'} : c’est une marche.` : !shiftOk ? `→ Pars un degré plus ${dir > 0 ? 'haut' : 'bas'} que le modèle (sa première note était ${pcNameIn(q[0].m, seg.chords[0])}).` : contour < 0.6 ? '→ Garde le dessin du modèle : mêmes montées, mêmes descentes.' : '→ Garde le rythme du modèle.');
+  }
   const score = (pctStrong >= 0.7 ? 1 : pctStrong) * 0.4 + (stable ? 0.35 : 0) + (thirdOk ? 0.25 : 0);
-  return { ok: score >= 0.75, score, lines, pctStrong, stable };
+  // le schéma et la marche sont le but de l'exercice : ils sont exigés (V7.5)
+  const must = (variant === 'schema' && skeleton?.length) || (variant === 'sequence' && dir);
+  return { ok: score >= 0.75 && (!must || thirdOk), score, lines, pctStrong, stable };
 }
 
 /** Imitation : les notes rejouées (hauteur, à l'octave près) et leur rythme, comparés au modèle. */

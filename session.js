@@ -142,7 +142,7 @@ export async function proposals(L, now = Date.now()) {
     const fil = pm.filageDue(L.piece, now);
     out.piece = {
       title: `${s.name} (m. ${s.from}-${s.to})`,
-      html: `${link(`#/piece/${L.piece}/${s.id}`, `${s.name} (m. ${s.from}-${s.to})`)} : ${esc(lowerFirst(nx.intention))} <span class="sx-sub">Commence par 30 secondes de prélude en ${esc(M.key.name)} : la cadence, puis quelques accords arpégés.${fil ? ' Aujourd’hui aussi : le <b>filage enregistré</b> (en bas de la page de la pièce).' : ''}</span>`,
+      html: `${link(`#/piece/${L.piece}/${s.id}`, `${s.name} (m. ${s.from}-${s.to})`)} : ${esc(lowerFirst(nx.intention))} <span class="sx-sub">Commence par 30 secondes de prélude en ${esc(M.key.name)} : la cadence, quelques accords arpégés, la cadence (${link('#/lecon/n2-im-preluder', 'Préluder')}).${fil ? ' Aujourd’hui aussi : le <b>filage enregistré</b> (en bas de la page de la pièce).' : ''}</span>`,
       href: `#/piece/${L.piece}/${s.id}`, meta: { piece: L.piece, section: s.id },
     };
   } else out.piece = { title: PIECES[L.piece].title, html: link(`#/piece/${L.piece}`, PIECES[L.piece].title), href: `#/piece/${L.piece}`, meta: { piece: L.piece } };
@@ -171,8 +171,12 @@ export async function proposals(L, now = Date.now()) {
   out.technique = tech;
   // improvisation
   const im = improNext(L);
-  out.impro = im ? { title: im.l.title, html: `${link(`#/lecon/${im.l.id}`, im.l.title)} : ${esc(im.text)}, puis une minute de jeu libre.`, href: `#/lecon/${im.l.id}`, skip: { kind: 'lesson', id: im.l.id, label: im.l.title } }
-    : { title: 'Jeu libre', html: `${link('#/outils/impro', 'Improvisation')} : jeu libre sur une grille de ton choix, sans t’arrêter.`, href: '#/outils/impro' };
+  // V7.5 : l'improvisation libre enregistrée, conseillée après dix jours sans (une fois l'improvisation commencée)
+  const lastFree = store.get('improv.free.last');
+  const freeDue = lastFree ? now - lastFree >= 10 * 864e5 : Number.isFinite(daysSince('impro', now));
+  const freeTip = freeDue ? ` <span class="sx-sub">Aujourd’hui aussi : deux minutes d’${link('#/outils/impro', 'improvisation libre enregistrée')}, à réécouter demain.</span>` : '';
+  out.impro = im ? { title: im.l.title, html: `${link(`#/lecon/${im.l.id}`, im.l.title)} : ${esc(im.text)}, puis une minute de jeu libre.${freeTip}`, href: `#/lecon/${im.l.id}`, skip: { kind: 'lesson', id: im.l.id, label: im.l.title } }
+    : { title: 'Jeu libre', html: `${link('#/outils/impro', 'Improvisation')} : ${freeDue ? 'deux minutes d’improvisation libre enregistrée, à réécouter demain.' : 'jeu libre sur une grille de ton choix, sans t’arrêter.'}`, href: '#/outils/impro' };
   // lecture à vue
   const lv = store.get('sight.level') || (L.id === 'n2' ? '2' : '1rh');
   const LVN = { '1rh': 'niveau 1, main droite', '1lh': 'niveau 1, main gauche', 2: 'niveau 2', 3: 'niveau 3', 4: 'niveau 4', 5: 'niveau 5' };
