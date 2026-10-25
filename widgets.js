@@ -118,10 +118,10 @@ defineWidget('kbd', (el, cfg) => {
   const wrap = h('div', { class: 'w-frame' });
   const body = h('div', { class: 'w-body' });
   if (cfg.title) wrap.append(h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, cfg.title), cfg.sub ? h('span', { class: 'w-sub' }, cfg.sub) : null));
-  // un petit clavier ne s'étire pas sur toute la largeur : environ 38 px par touche blanche
+  // un petit clavier ne s’étire pas sur toute la largeur : environ 32 px par touche blanche
   let whites = 0;
   for (let m = cfg.from ?? 48; m <= (cfg.to ?? 72); m++) if (![1, 3, 6, 8, 10].includes(m % 12)) whites++;
-  const kb = keyboard({ maxWidth: Math.max(340, whites * 38), ...cfg, label: cfg.title || 'Clavier' });
+  const kb = keyboard({ maxWidth: Math.max(260, whites * 32), ...cfg, label: cfg.title || 'Clavier' });
   body.append(kb);
   wrap.append(body);
   if (cfg.play) {

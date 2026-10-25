@@ -309,7 +309,7 @@ function builderCard(L, props, started, { state = null, skip = null, undo = null
   });
   card.append(
     h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Nouvelle séance'), seg),
-    h('p', { class: 'small mt-0' }, 'Coche ce que tu veux travailler aujourd’hui. Les cases cochées d’avance sont la séance conseillée : ce que tu as laissé de côté depuis trop longtemps, et ta pièce.'),
+    h('p', { class: 'small mt-0 sx-intro' }, 'Cochée d’avance : la séance conseillée, ta pièce et ce que tu as laissé de côté. Coche ou décoche à ton gré.'),
     rows, hint, h('div', { class: 'btn-row mt-1' }, go, reset));
   const advices = Object.fromEntries(CATS.map(c => [c.id, adviceFor(c.id)]));
   const rowEls = {};
@@ -319,7 +319,6 @@ function builderCard(L, props, started, { state = null, skip = null, undo = null
     const cb = h('input', { type: 'checkbox', 'aria-label': c.label, disabled: !p });
     cb.addEventListener('change', () => { touched = true; if (cb.checked) chosen.add(c.id); else chosen.delete(c.id); refresh(); });
     const minEl = h('span', { class: 'sx-min' });
-    const badge = a.overdue || a.d === Infinity ? h('span', { class: 'tag gold sx-badge' }, 'conseillé') : null;
     // « Déjà faite » : ce qui a été fait en dehors de la séance n'y revient plus ; « Annuler » juste après
     let skipBtn = null;
     const u = state?.undo && state.undo.cat === c.id ? state.undo : null;
@@ -330,14 +329,14 @@ function builderCard(L, props, started, { state = null, skip = null, undo = null
       skipBtn = h('button', { type: 'button', class: 'sx-skip', title: `Tu l’as déjà fait${p.skip.kind === 'lesson' ? 'e' : ''} : ne plus le proposer` }, SKIP_LABEL[p.skip.kind]);
       skipBtn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); skip(c.id, p.skip, snap()); });
     }
+    // V7.7 : une seule ligne d'état (ce qui pousse à le faire, sinon la dernière fois), « Déjà faite » à sa suite
+    const status = a.reason ? h('span', { class: 'sx-why' }, a.reason) : h('span', { class: 'sx-last' }, `dernière fois : ${sinceLabel(c.id)}`);
     const row = h('label', { class: 'sx-row' + (p ? '' : ' off') },
       cb,
       h('span', { class: 'sx-main' },
-        h('span', { class: 'sx-head' }, h('b', {}, c.label), badge, h('span', { class: 'sx-last small muted' }, `dernière fois : ${sinceLabel(c.id)}`)),
+        h('span', { class: 'sx-head' }, h('b', {}, c.label), minEl),
         h('span', { class: 'sx-act small', html: p ? p.html : 'Rien à proposer ici pour l’instant.' }),
-        a.reason ? h('span', { class: 'sx-why small' }, a.reason) : null,
-        skipBtn),
-      minEl);
+        h('span', { class: 'sx-meta' }, status, skipBtn)));
     rowEls[c.id] = { row, cb, minEl };
     rows.append(row);
   }
@@ -407,7 +406,7 @@ export function weekCard() {
       h('span', { class: 'sx-wbar', title: `${d} jour${d > 1 ? 's' : ''} sur ${t} visés` }, h('i', { style: { width: `${Math.min(100, d / t * 100)}%` }, class: d >= t ? 'ok' : '' })),
       h('span', { class: 'sx-wv small' }, `${d}/${t} j${st[c.id].min ? ` · ${st[c.id].min} min` : ''}`)));
   }
-  card.append(grid, h('p', { class: 'small muted mb-0 mt-1' }, 'Jours de pratique sur les 7 derniers, face à l’objectif de chaque case. Les minutes sont celles des séances.'));
+  card.append(grid, h('p', { class: 'small muted mb-0 mt-1' }, 'Jours de pratique sur 7, face à l’objectif.'));
   return card;
 }
 

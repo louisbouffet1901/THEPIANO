@@ -1443,3 +1443,70 @@ details.train-free > summary::-webkit-details-marker { display: none; }
 details.train-free > summary > span:first-child::before { content: '▸'; display: inline-block; width: 1.1em; color: var(--accent); transition: transform .15s; }
 details.train-free[open] > summary > span:first-child::before { transform: rotate(90deg); }
 details.train-free > summary .small { font-family: var(--font-ui); font-weight: 500; font-size: 14px; color: var(--text-3); }
+
+/* ================================================================== */
+/* V7.7 : revue de l'interface — étiquettes sobres, encadrés plus légers, */
+/* séance allégée, accompagnateur et partitions plus compacts          */
+/* ================================================================== */
+/* étiquettes : en minuscules, sans capitales espacées */
+.nav-title, .card .eyebrow, .task .mod, .mp-level, .ess-title, .more-tag, .task-group-title, .ex-table thead th,
+.step-num, .worked > .wk-title, .nt-kind, .pm-next > .small.muted, .pm-h { text-transform: none; letter-spacing: 0; }
+.nav-title { font-size: 12.5px; font-weight: 600; }
+.card .eyebrow { font-size: 13.5px; font-weight: 650; color: var(--text-2); }
+.step-num { font-size: 13px; font-weight: 600; }
+.ess-title { font-size: 14px; }
+.more-tag { font-size: 13px; font-weight: 600; color: var(--accent); }
+.task-group-title, .pm-next > .small.muted, .pm-h, .task .mod { font-size: 13px; }
+.mp-level { font-size: 13.5px; }
+.worked > .wk-title { font-size: 14.5px; }
+.nt-kind { font-size: 12px; font-weight: 600; }
+.ex-table thead th { font-size: 13px; }
+
+/* encadrés : fond blanc et filet de couleur, au lieu de pavés colorés */
+.callout.tip, .callout.warn, .callout.key { background: var(--surface); border-color: var(--line); border-left: 3px solid var(--accent); }
+.callout.warn { border-left-color: #d29a2e; }
+.callout.key { border-left-color: var(--gold); }
+.callout.notion { border-left-width: 3px; }
+.callout details { background: var(--surface-2); }
+.pm-first { background: none; border-left: 3px solid var(--gold); border-radius: 0; padding: 2px 0 2px 12px; }
+.pm-next { background: var(--surface-2); }
+
+/* la séance : une ligne d'état, la case cochée marquée d'un filet */
+.sx-intro { color: var(--text-3); }
+.sx-row { grid-template-columns: auto 1fr; padding: 10px 14px 10px 12px; }
+.sx-row.on { background: var(--surface); box-shadow: inset 3px 0 0 var(--accent); }
+.sx-row:not(.on):not(.off) .sx-act { color: var(--text-3); }
+.sx-head { flex-wrap: nowrap; justify-content: space-between; gap: 10px; }
+.sx-head .sx-min { margin-left: auto; padding-top: 0; }
+.sx-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; margin-top: 3px; font-size: 12.5px; color: var(--text-3); }
+.sx-meta .sx-why, .sx-meta .sx-last { font-size: 12.5px; }
+.sx-meta .sx-why { font-weight: 600; }
+.sx-skip, .sx-skip:hover { margin: 0; padding: 0; border: 0; border-radius: 0; background: none; font-size: 12.5px; color: var(--text-3); text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 2px; }
+.sx-skip:hover { color: var(--accent); }
+.sx-skip.undo { color: var(--ok); }
+
+/* outils de l'accueil : plus compacts */
+.grid.cols-3.tools-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.tools-grid .card { padding: 12px 14px; }
+.tools-grid .card h3 { margin: 0 0 2px; }
+.tools-grid .card p { color: var(--text-3); font-size: 13px; line-height: 1.45; }
+details.midi-help { margin-top: 22px; }
+
+/* accompagnateur : libellé et boutons ensemble */
+.ctrl-grp { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ctrl-grp[hidden] { display: none; }
+
+/* partitions : pas de place vide sous les boutons */
+.score-status:empty { min-height: 0; }
+.w-foot { row-gap: 6px; }
+
+/* tableaux des leçons : les colonnes courtes ne se coupent pas (écrans larges) */
+@media (min-width: 700px) {
+  .prose table:not(:has(tr > :nth-child(5))) td:not(:last-child) { white-space: nowrap; }
+}
+/* la seconde rangée de commandes : pleine largeur, sans pointillés (elle se range sous la première) */
+.w-foot > .score-ctrl-2 { flex-basis: 100%; margin-top: 0; padding-top: 0; border-top: 0; }
+.w-foot > .score-ctrl-opt { flex-basis: 100%; }
+/* listes de leçons : l'étiquette (niveau, complément, en cours) sur la ligne du titre */
+.lesson-list .t b { display: inline; margin-right: 6px; }
+.lesson-list .t > em.tag { vertical-align: 1px; margin-right: 4px; }

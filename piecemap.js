@@ -290,7 +290,7 @@ export function mountPieceHead(el, cfg) {
       other.addEventListener('click', () => goalBox.replaceWith(goalEditor()));
       goalBox.append(h('div', { class: 'btn-row' }, ok, cfg.compact ? null : other));
     }
-    card.append(goalBox);
+    if (!(cfg.compact && !statesSet(piece))) card.append(goalBox); // V7.7 : l'objectif proposé n'a de sens qu'une fois les états indiqués
     // la section du jour
     const nx = nextSection(piece);
     if (nx) {

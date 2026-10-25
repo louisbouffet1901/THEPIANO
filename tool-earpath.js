@@ -250,7 +250,7 @@ export function mountEarPath(root, opts = {}) {
     const card = h('div', { class: 'card ear-head' },
       h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, p.cur ? `Étape ${p.index} sur ${p.total} : ${p.cur.title}` : 'Parcours terminé'), h('span', { class: 'small' }, `${p.done}/${p.total} réussies`)),
       h('div', { class: 'progress' }, h('i', { style: { width: `${p.done / p.total * 100}%` } })),
-      h('p', { class: 'small mb-0', html: 'Chaque étape présente la même matière sous trois formes : la <b>reconnaître</b>, la <b>chanter</b>, la <b>jouer</b> au piano. Elle est réussie quand deux formes sur trois le sont (chaque série à 80 %, deux jours différents). La tonalité change dès le début et tu réponds par des chiffres : tu entends chaque note par rapport à la tonique, pas comme une hauteur fixe.' }),
+      h('p', { class: 'small mb-0', html: 'Chaque étape se <b>reconnaît</b>, se <b>chante</b> et se <b>joue</b> au piano ; elle est réussie quand deux des trois le sont (80 %, deux jours différents). Tu réponds en degrés, par rapport à la tonique.' }),
       h('details', { class: 'ear-method' }, h('summary', {}, 'Six règles'), h('ol', {}, ...RULES.map(m => h('li', { html: m })))),
       h('details', { class: 'ear-method' }, h('summary', {}, 'Chanter juste : la méthode en cinq points'), h('ol', {}, ...SING_METHOD.map(m => h('li', { html: m })))));
     const tend = singTendency();

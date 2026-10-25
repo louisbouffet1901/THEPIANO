@@ -702,14 +702,15 @@ export function mountImprov(el, cfg = {}) {
   optBtn.addEventListener('click', () => { optRow.hidden = !optRow.hidden; optBtn.classList.toggle('on', !optRow.hidden); optBtn.setAttribute('aria-expanded', String(!optRow.hidden)); store.set('ui.improvOpts', !optRow.hidden); });
   const modeLbl = h('span', { class: 'small' }, 'Mode');
   const lhLbl = h('span', { class: 'small' }, 'Main gauche jouée par');
+  const modeGrp = h('span', { class: 'ctrl-grp' }, modeLbl, modeSeg), lhGrp = h('span', { class: 'ctrl-grp' }, lhLbl, lhSeg);
   foot.append(
     h('div', { class: 'score-ctrl' }, playBtn, h('label', { class: 'range' }, 'Tempo', rng, out), replayBtn, keepBtn),
-    h('div', { class: 'score-ctrl score-ctrl-2' }, modeLbl, modeSeg, lhLbl, lhSeg, modelBtn, mgBtn, skelBtn, goldBtn, gridBtn, optBtn),
+    h('div', { class: 'score-ctrl score-ctrl-2' }, modeGrp, lhGrp, modelBtn, mgBtn, skelBtn, goldBtn, gridBtn, optBtn),
     optRow,
     h('div', { style: { width: '100%' } }, status));
   if (step) {
-    modeLbl.hidden = true; modeSeg.hidden = true; loopsField.hidden = true;
-    if (step.lh) { lhLbl.hidden = true; lhSeg.hidden = true; }
+    modeLbl.hidden = true; modeSeg.hidden = true; modeGrp.hidden = true; loopsField.hidden = true;
+    if (step.lh) { lhLbl.hidden = true; lhSeg.hidden = true; lhGrp.hidden = true; }
   }
   rng.addEventListener('input', () => { bpm = +rng.value; out.textContent = `♩ = ${bpm}`; });
   clickBtn.addEventListener('click', () => { clickOn = !clickOn; clickBtn.classList.toggle('on', clickOn); });
@@ -825,7 +826,7 @@ export function mountImprov(el, cfg = {}) {
       const lh = showLh && !ch.silent ? plan[i] : null;
       const cell = gridOn ? h('div', { class: 'ig-cell' + (ch.beats < P.meter ? ' half' : ''), role: 'listitem', 'data-i': i, title: `${ch.name} : ${notesTxt}` },
         ch.section ? h('span', { class: 'ig-sec' }, ch.section) : null,
-        h('b', {}, ch.label || '·'), h('span', { class: 'ig-name' }, ch.name), h('span', { class: 'ig-notes' }, notesTxt),
+        h('b', {}, ch.label || '·'), ch.label ? null : h('span', { class: 'ig-name' }, ch.name), h('span', { class: 'ig-notes' }, notesTxt),
         lh ? h('span', { class: 'ig-lh', title: 'Ta main gauche' }, 'MG : ' + lh.chord.map(m => pcName(pc(m), ch)).join(' ')) : null,
         tg != null ? h('span', { class: 'ig-tg', title: `${what} : ${tgName(tg, ch)}` }, tgName(tg, ch)) : null)
         // harmoniser : l'accord est à trouver d'oreille (seules les mesures sont affichées)
