@@ -57,7 +57,9 @@ export async function awayProposals(L = currentLevel(), now = Date.now()) {
   let due = null;
   try { due = await ms.dueSummary(now); } catch (e) { due = null; }
   const th = nextTheory(L);
-  out.theorie = { due, lesson: th, sub: due && due.due ? `${due.due} fiche${due.due > 1 ? 's' : ''} à revoir${th ? `, ou le chapitre « ${th.title} »` : ''}.` : th ? `Le chapitre en cours : « ${th.title} », une étape.` : 'Tes fiches, dans En cours de maîtrise.' };
+  let cards = null;
+  try { cards = await (await import('./tool-cards.js')).deckSummary(now); } catch (e) { cards = null; }
+  out.theorie = { due, lesson: th, cards, sub: cards && (cards.due || cards.fresh) ? `Tes cartes du jour (${cards.due} à revoir, ${cards.fresh} nouvelle${cards.fresh > 1 ? 's' : ''}), façon Anki, ou un défi éclair d’une minute.` : 'Un défi éclair d’une minute (armures, intervalles, accords…), ou une étape du chapitre en cours.' };
   return out;
 }
 /** Les blocs du jour pour une durée : ceux faits il y a le plus longtemps (la pièce de tête compte davantage). */
@@ -218,12 +220,30 @@ function mountReading(el, { onFinish } = {}) {
   open('rhythm');
   return () => { gen++; try { un?.(); } catch (e) { /* */ } };
 }
-function mountTheory(el, prop) {
-  const row = h('div', { class: 'btn-row' });
-  if (prop.due && prop.due.due) row.append(h('a', { class: 'btn primary', href: '#/maitrise' }, `Revoir tes fiches (${prop.due.due})`));
-  if (prop.lesson) row.append(h('a', { class: prop.due && prop.due.due ? 'btn' : 'btn primary', href: `#/lecon/${prop.lesson.id}` }, `Continuer : ${prop.lesson.title}`));
-  if (!row.childElementCount) row.append(h('a', { class: 'btn primary', href: '#/maitrise' }, 'En cours de maîtrise'));
-  el.append(h('p', { class: 'small mt-0' }, 'Une fiche relue et ses petits exercices, ou une étape du chapitre en cours (l’idée, l’exemple, le piège, l’exercice). Reviens ici ensuite : ta séance loin du piano t’attend.'), row);
+/** Théorie loin du piano (V8.1) : les cartes du jour (façon Anki) ou un défi éclair, sur place ; le chapitre en cours
+ *  et les fiches restent à un toucher. */
+function mountTheory(el, prop, { onFinish } = {}) {
+  let un = null;
+  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Théorie' });
+  const host = h('div', { class: 'mt-1' });
+  const links = h('p', { class: 'small muted mt-1 mb-0' });
+  if (prop.lesson) links.append('Ou une étape du chapitre en cours : ', h('a', { href: `#/lecon/${prop.lesson.id}` }, prop.lesson.title), '. ');
+  if (prop.due && prop.due.due) links.append(h('a', { href: '#/maitrise' }, `${prop.due.due} fiche${prop.due.due > 1 ? 's' : ''} à revoir`), '.');
+  const pickMode = async m => {
+    try { un?.(); } catch (e) { /* */ }
+    host.innerHTML = '';
+    seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+    if (m === 'cartes') un = (await import('./tool-cards.js')).mountCards(host, { compact: true, onFinish });
+    else un = (await import('./tool-defis.js')).mountDefis(host, { compact: true, onFinish });
+  };
+  [['cartes', 'Cartes du jour'], ['defi', 'Défi éclair']].forEach(([m, label]) => {
+    const b = h('button', { type: 'button', 'data-m': m }, label);
+    b.addEventListener('click', () => pickMode(m));
+    seg.append(b);
+  });
+  el.append(seg, host, links);
+  import('./tool-cards.js').then(m => m.deckSummary()).then(r => pickMode(r && (r.due || r.fresh) ? 'cartes' : 'defi')).catch(() => pickMode('defi'));
+  return () => { try { un?.(); } catch (e) { /* */ } };
 }
 
 /* ------------------------------------------------------------------ */
@@ -367,7 +387,7 @@ export function mountAway(el, { piece = null, section = null } = {}) {
         blockUn = mountMental(host, { piece: pc, section: sec, onDone: () => markDone('tete') });
       } else if (b === 'oreille') blockUn = mountEar(host, props.oreille);
       else if (b === 'lecture') blockUn = mountReading(host, { onFinish: () => markDone('lecture') });
-      else mountTheory(host, props.theorie);
+      else blockUn = mountTheory(host, props.theorie, { onFinish: () => markDone('theorie') });
     }
     open(openId || s.blocks.find(b => !s.done[b]) || s.blocks[0]);
   }
