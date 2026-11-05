@@ -12,7 +12,7 @@ import { initUpdates, checkForUpdate, applyUpdate, hasUpdate, version } from './
 import { exportProgress, importProgress, resetAll, needsBackupReminder, postponeReminder, lastBackupLabel, requestPersistence } from './backup.js';
 import { LEVELS, MODULES, PIECES, lessonById, levelById, allLessons, lessonsOf, loadLesson, loadPiece } from './content-index.js';
 import { mountSessionBox, weekCard, updateSessionBar, improNext, improSummary, nextTechLesson, scalesOfWeek } from './session.js';
-import { backfillActivity } from './activity.js';
+import { backfillActivity, pianoDays, awayStats } from './activity.js';
 import { getPace, setPace, paceIsSet, paceLabel, awayLabel, paceTargets, pieceMinutes, freqLabel, PACE_DAYS, PACE_MINUTES, AWAY_MINUTES, currentPause, startPause, endPause, settlePauses, pauses, pauseLength, WHY as PAUSE_WHY, dayLabel, dayKey as pDayKey } from './pace.js';
 import { snapshotInfo, restoreSnapshot } from './store.js';
 
@@ -525,7 +525,7 @@ function pageHome() {
   const p = levelProgress(L);
   const page = h('div', { class: 'page' });
   page.innerHTML = `
-    <div class="page-head"><h1>Bonjour Louis</h1><p class="lead">Choisis ce que tu travailles aujourd’hui : l’appli propose la suite de chaque domaine, et les fait tourner d’une séance à l’autre selon ton temps de piano.</p></div>
+    <div class="page-head home-head"><p class="home-date">${esc((d => d.charAt(0).toUpperCase() + d.slice(1))(new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })))}</p><h1>Bonjour Louis</h1><p class="lead">${homeLead()}</p></div>
     <div id="paceBox"></div>
     <div id="sessionBox"></div>
     <div id="awayBox" class="home-away"></div>
@@ -574,6 +574,7 @@ function pageHome() {
   $('#domGrid', page).append(...domainTiles(L));
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '8.1': '<ul><li><b>Un site plus clair</b> : le menu se range en trois groupes, <b>Jouer</b> (tes pièces, technique, interprétation, lecture à vue, improvisation), <b>Entendre et comprendre</b> (oreille, théorie) et <b>Ton parcours</b>. Chaque domaine a <b>une seule page</b> : ce que tu fais maintenant, ses outils, et toutes ses leçons niveau par niveau. Le Rythme est dans Lecture à vue, les Exercices dans Technique, la Composition dans Improvisation, les fiches dans Théorie.</li><li><b>Sur téléphone</b> (et tablette tenue en hauteur), une barre en bas : Accueil, Pièces, Sans piano, Théorie, Menu.</li><li><b>L’accueil</b> montre tes sept domaines et où tu en es dans chacun.</li><li><b>Théorie, les cartes du jour</b>, façon Anki : une question, tu cherches de tête, tu découvres la réponse, tu notes (À revoir, Difficile, Bien, Facile). Les cartes sues reviennent de plus en plus tard, celles qui résistent reviennent vite. Elles viennent des leçons faites, commencées ou cochées « par cœur ». Trois minutes par jour, aussi loin du piano.</li><li><b>Le défi éclair</b> : une minute pour répondre juste au plus de questions (armures, relatives, intervalles, accords, degrés, quintes), un record par thème, des médailles, un défi du jour.</li></ul>',
     '8.0': '<ul><li><b>Ton temps de piano</b> : indique tes séances par semaine et leur durée (dès 10 minutes). La séance conseillée s’y règle : ta pièce à chaque séance, et les autres domaines <b>tournent</b> d’une séance à l’autre (l’improvisation plus souvent, puis la lecture). Rien n’est retiré : toutes les leçons, les mêmes critères « au tempo ».</li><li><b>Séances courtes</b> : à 20 minutes ou moins, le domaine qui tourne d’abord, ta pièce pour finir, rejouée une fois en entier. La barre de séance affiche le temps qui reste pour l’étape.</li><li><b>Loin du piano</b> (menu) : 5 à 15 minutes sans clavier. <b>Ta pièce de tête</b> (écouter, lire en entendant, jouer dans ta tête, de mémoire), l’oreille, le rythme et les notes, la théorie. La séance suivante au piano commence par rejouer de mémoire la section travaillée de tête.</li><li><b>Pause</b> (DS, concours blanc, vacances) : rien ne compte comme délaissé, et l’objectif de ta pièce est décalé d’autant.</li><li><b>Objectif de date</b> calculé à ton temps de piano ; <b>bilan de la semaine</b> face à ce que tu prévois. Et une <b>copie de ta progression</b> est gardée avant chaque mise à jour (Réglages).</li></ul>',
     '7.7': '<ul><li><b>Interface allégée</b> : la séance du jour tient en moins de place (une ligne d’état par case, « Déjà faite » discret), les encadrés sont plus légers (fond blanc, filet de couleur), les étiquettes ne sont plus en capitales.</li><li><b>Accompagnateur</b> : cases d’accords plus sobres (le nom complet reste affiché pendant le jeu), commandes rangées par ligne.</li><li>Petits claviers moins grands, tableaux plus lisibles, outils de l’accueil compacts, aide « Brancher le piano » repliée, et sur la carte de ta pièce, l’objectif de date n’apparaît qu’une fois tes sections situées.</li></ul>',
     '7.6': '<ul><li><b>La théorie au clavier</b> : chaque chapitre (renversements, cadences, notes étrangères, puis tout le niveau 2) finit par « Au clavier » — accords, enchaînements au plus près, figures à jouer dans trois tonalités, vérifiés au piano ou à l’écran. Le premier exercice montre les touches, le deuxième les noms, le troisième rien. Un lien « Pour improviser » mène à l’exercice qui s’en sert.</li><li><b>Niveau 2 en étapes</b> : les onze chapitres se lisent en quatre à six étapes.</li><li><b>Pages allégées</b> : au plus deux exercices visibles par étape (les autres sous « Encore »), tableaux repliés.</li><li><b>Onglet Théorie</b> : où tu en es, « Réviser », les chapitres et leur état ; les séries sont rangées dans « Entraînement libre ».</li></ul>',
@@ -613,6 +614,16 @@ function pageHome() {
       <li>Vérifie dans <a href="#/outils/clavier">Test du clavier</a> : les touches jouées s’allument.</li></ol></div></details>`;
   }
   return () => offs.forEach(f => { try { f(); } catch (e) { /* */ } });
+}
+/** La phrase d'accueil : où en est la semaine, face au temps de piano prévu. */
+function homeLead() {
+  const pace = getPace();
+  const cp = currentPause();
+  if (cp) return `En pause jusqu’au ${esc(dayLabel(cp.to))} : quelques minutes loin du piano gardent le contact.`;
+  const n = pianoDays(7).filter(d => d.piano).length;
+  const aw = awayStats(7);
+  if (!n && !aw.min) return 'Choisis ta séance : l’appli propose la suite de chaque domaine et les fait tourner d’une séance à l’autre, selon ton temps de piano.';
+  return `Ces sept derniers jours : ${n} séance${n > 1 ? 's' : ''} au piano sur les ${pace.days} prévues${aw.min ? `, et ${aw.min} min loin du piano` : ''}. ${n >= pace.days ? 'Le rythme est tenu.' : 'Choisis ta séance : la suite de chaque domaine t’attend.'}`;
 }
 /** Les tuiles des domaines de l'accueil : la page du domaine, et où tu en es (rempli au fur et à mesure). */
 function domainTiles(L) {
@@ -970,7 +981,7 @@ function theoryPlayRow() {
 /** Cartes du jour et Défi éclair (V8.1). */
 function pageTheoryPlay(kind, sub = null) {
   if (kind === 'cartes') return toolPage('Cartes du jour', 'Comme Anki : une question, tu cherches la réponse de tête, tu la découvres, tu dis si c’était facile. Les cartes sues reviennent de plus en plus tard, celles qui résistent reviennent vite. Trois minutes par jour suffisent.', () => import('./tool-cards.js').then(m => el => m.mountCards(el)), 'theorie');
-  return toolPage('Défi éclair', 'Une minute pour répondre juste au plus de questions : armures, relatives, intervalles, accords, degrés, quintes. Bats ton record.', () => import('./tool-defis.js').then(m => el => m.mountDefis(el, { theme: sub })), 'theorie');
+  return toolPage('Défi éclair', 'Une minute pour répondre juste au plus de questions : armures, relatives, intervalles, accords, degrés, quintes. Bats ton record.', () => import('./tool-defis.js').then(m => el => m.mountDefis(el, { theme: sub, title: false })), 'theorie');
 }
 /** Lecture à vue (V8.1) : l'échauffement et les extraits, l'onglet Rythme, les cours, sur une seule page. */
 function pageLecture() {
@@ -1019,15 +1030,15 @@ function theoryChapters() {
   const box = h('div');
   const all = LEVELS.filter(L => !L.locked).flatMap(L => lessonsOf(L.id, 'theorie'));
   const cur = all.find(l => lessonState(l) === 'en cours') || all.find(l => lessonState(l) === 'à faire' && l.prio !== 2) || null;
-  const top = h('div', { class: 'card th-top' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Où tu en es'), h('span', { class: 'small' }, `${all.filter(l => store.isDone(l.id)).length} chapitres sus sur ${all.length}`)));
-  const rev = h('a', { class: 'btn sm', href: '#/maitrise' }, 'Réviser');
+  const top = h('div', { class: 'card th-top' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Où tu en es'), h('span', { class: 'small' }, (n => `${n} chapitre${n > 1 ? 's' : ''} su${n > 1 ? 's' : ''} sur ${all.length}`)(all.filter(l => store.isDone(l.id)).length))));
+  const rev = h('a', { class: 'btn sm', href: '#/theorie/cartes' }, 'Cartes du jour');
   const revNote = h('span', { class: 'small muted' });
   if (cur) {
     const sd = (store.get(`lessonSteps.${cur.id}`)?.done || []).length;
     top.append(h('h3', {}, cur.title), h('p', { class: 'small' }, sd ? `En cours : ${sd} étape${sd > 1 ? 's' : ''} faite${sd > 1 ? 's' : ''}${cur.steps ? ` sur ${cur.steps}` : ''}.` : `À faire : ${cur.summary || ''}`),
       h('div', { class: 'btn-row' }, h('a', { class: 'btn primary sm', href: `#/lecon/${cur.id}` }, sd ? 'Continuer' : 'Commencer'), rev, revNote));
   } else top.append(h('p', { class: 'small' }, 'Tous les chapitres sont sus. Révise ce qui doit l’être, ou reprends un chapitre au clavier dans une autre tonalité.'), h('div', { class: 'btn-row' }, rev, revNote));
-  import('./tool-mastery.js').then(m => m.dueSummary()).then(r => { if (r) revNote.textContent = r.due ? `${r.due} fiche${r.due > 1 ? 's' : ''} à revoir` : r.n ? 'rien à revoir aujourd’hui' : ''; }).catch(() => {});
+  import('./tool-cards.js').then(m => m.deckSummary()).then(r => { if (r) revNote.textContent = r.due ? `${r.due} carte${r.due > 1 ? 's' : ''} à revoir` : r.fresh ? `${r.fresh} nouvelle${r.fresh > 1 ? 's' : ''}` : r.total ? 'rien à revoir aujourd’hui' : ''; }).catch(() => {});
   box.append(top);
   for (const L of LEVELS) {
     if (L.locked) continue;
@@ -1043,7 +1054,7 @@ function moduleIndexHTML(mod) {
     if (L.locked) continue;
     const lm = lessonsOf(L.id, mod);
     if (!lm.length) continue;
-    html += `<div class="course-level"><div class="section-title"><h2>Niveau ${L.num} — ${esc(L.short)}</h2><span class="small">${lm.filter(x => store.isDone(x.id)).length}/${lm.length}</span></div>${lessonListHTML(lm)}</div>`;
+    html += `<div class="course-level"><h3 class="lesson-group">Niveau ${L.num} — ${esc(L.short)} <span class="small muted">${lm.filter(x => store.isDone(x.id)).length}/${lm.length}</span></h3>${lessonListHTML(lm)}</div>`;
   }
   return html;
 }
@@ -1088,7 +1099,7 @@ const PRESET_PAGES = {
   },
   theorie: {
     title: 'Théorie', presets: m => m.THEORY_PRESETS, lessonsTitle: 'Les cours de théorie, chapitre par chapitre',
-    lead: 'Ce qui sert au clavier : chaque chapitre se lit en cinq ou six étapes et se termine au piano. Ce que tu as appris revient dans « Réviser ».',
+    lead: 'Ce qui sert au clavier : chaque chapitre se lit en cinq ou six étapes et se termine au piano. Ce que tu as appris revient dans tes cartes du jour ; le défi éclair, c’est pour le plaisir (et la vitesse).',
   },
 };
 

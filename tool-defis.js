@@ -176,11 +176,12 @@ const medalOf = s => (MEDALS.find(([n]) => s >= n) || [0, null])[1];
 /* ------------------------------------------------------------------ */
 /* Affichage                                                           */
 /* ------------------------------------------------------------------ */
-export function mountDefis(el, { theme = null, compact = false, onFinish = null } = {}) {
+export function mountDefis(el, { theme = null, compact = false, title = true, onFinish = null } = {}) {
   let alive = true, timer = null, raf = 0, keyOff = null;
   const frame = h('div', { class: 'w-frame df-frame' + (compact ? ' ns-bare' : '') });
   const body = h('div', { class: 'w-body' });
-  if (!compact) frame.append(h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, 'Défi éclair'), h('span', { class: 'w-sub' }, 'une minute')));
+  if (!compact && title) frame.append(h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, 'Défi éclair'), h('span', { class: 'w-sub' }, 'une minute')));
+  el.__defi = { current: null }; // pour les tests : la question affichée
   frame.append(body);
   el.append(frame);
   const stop = () => { clearTimeout(timer); cancelAnimationFrame(raf); if (keyOff) document.removeEventListener('keydown', keyOff); keyOff = null; };
@@ -227,6 +228,7 @@ export function mountDefis(el, { theme = null, compact = false, onFinish = null 
       if (!alive) return;
       const q = question(chosen);
       if (!q) { finish(); return; }
+      el.__defi.current = q;
       locked = false;
       qEl.textContent = q.q;
       opts.innerHTML = '';
