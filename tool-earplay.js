@@ -307,8 +307,9 @@ export function songStatus(def) {
   const proofs = ['solo', 'transp', 'sing'].filter(p => st.proof[p]);
   return { st, n, proofs, known: !!st.proof.solo, full: proofs.length === 3, label: st.proof.solo ? `sue${proofs.length === 3 ? ', transposée et chantée' : st.proof.transp ? ', transposée' : ''}` : n ? 'en cours' : 'à découvrir' };
 }
-/** Une mélodie travaillée ces 7 derniers jours ? (règle : une mélodie d'oreille par semaine) */
-export const earplayRecent = (now = Date.now()) => Object.values(store.get('earsongs') || {}).some(x => x && x.at && now - x.at < 7 * 864e5);
+/** Une mélodie travaillée ces 7 derniers jours ? (règle : une mélodie d'oreille par semaine ; V8 : la fenêtre s'élargit
+ *  avec moins de séances) */
+export const earplayRecent = (now = Date.now(), days = 7) => Object.values(store.get('earsongs') || {}).some(x => x && x.at && now - x.at < days * 864e5);
 /** La mélodie à apprendre maintenant : la première, dans l'ordre, qui n'est pas encore sue. */
 export function nextMelody() { return MELODIES.find(d => !songStatus(d).known) || null; }
 

@@ -1,7 +1,10 @@
 // Journal d'activité (V7) : quand chaque catégorie de la séance a été travaillée pour la dernière fois, et combien de
 // minutes. Les outils notent ce qu'on y fait (logActivity) ; la séance note le temps réel de chaque étape.
 // Sert aux conseils de « Nouvelle séance » (fréquences cibles) et au bilan de la semaine.
+// V8 : les fréquences cibles suivent ton rythme (pace.js) ; les jours de pause ne comptent pas ; le travail loin du piano
+// a son propre journal (`away`).
 import { store } from './store.js';
+import { pausedDays } from './pace.js';
 
 /** Les six cases de la séance (pratique du piano seulement : la théorie n'en fait pas partie). */
 export const CATS = [
@@ -15,9 +18,9 @@ export const CATS = [
 export const catLabel = id => (CATS.find(c => c.id === id) || {}).label || id;
 
 /**
- * Fréquences cibles (jours sur 7), seuil du conseil (jours sans pratique) et part d'une séance de 60 min.
- * « Autres pièces » prend son temps sur la pièce phare. Le point faible déclaré (la lecture du rythme) avance le conseil
- * d'un jour pour la lecture.
+ * Fréquences cibles de la V7 (jours sur 7 à six séances d'une heure), seuil du conseil et part d'une séance de 60 min.
+ * Depuis la V8, les fréquences et les seuils se calculent d'après ton rythme (pace.js : paceTargets) ; restent ici les
+ * parts et le point faible déclaré (la lecture du rythme), qui avance le conseil d'un jour.
  */
 export const TARGETS = {
   piece: { days: 6, after: 2, weight: 25 },
@@ -63,12 +66,71 @@ export function daysSince(cat, now = Date.now()) {
   const t = lastAt(cat);
   return t ? daysBetween(t, now) : Infinity;
 }
+/** Le début du journal : le plus ancien jour noté (ou null). Un domaine jamais travaillé attend depuis ce jour-là. */
+export function journalStart() {
+  const a = read();
+  let t = Infinity;
+  for (const k of Object.keys(a.days)) { const [y, m, d] = k.split('-').map(Number); t = Math.min(t, new Date(y, m - 1, d, 12).getTime()); }
+  for (const v of Object.values(a.last)) if (v) t = Math.min(t, v);
+  return Number.isFinite(t) ? t : null;
+}
+/** Jours sans pratique, sans compter les jours de pause (DS, vacances…) : ce qui compte pour les conseils. */
+export function activeDaysSince(cat, now = Date.now()) {
+  const t = lastAt(cat);
+  if (!t) return Infinity;
+  return Math.max(0, daysBetween(t, now) - pausedDays(t, now));
+}
 export function sinceLabel(cat, now = Date.now()) {
   const d = daysSince(cat, now);
   if (d === Infinity) return 'jamais';
   if (d <= 0) return 'aujourd’hui';
   if (d === 1) return 'hier';
   return `il y a ${d} jours`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Loin du piano (V8)                                                  */
+/* ------------------------------------------------------------------ */
+// Blocs : 'tete' (la pièce de tête), 'oreille', 'lecture' (rythme et notes, sans clavier), 'theorie'.
+// État : away = { last: { bloc: ms }, days: { 'AAAA-MM-JJ': { bloc: minutes } } }, 120 jours gardés.
+/** Pendant une séance loin du piano : les outils de lecture (rythme, notes) n'y comptent pas comme de la lecture à vue
+ *  au piano (les extraits restent à faire au clavier). */
+export const awayCtx = { on: false };
+export function logAway(block, min = 0, at = Date.now()) {
+  const a = { last: {}, days: {}, ...(store.get('away') || {}) };
+  const last = { ...a.last, [block]: at };
+  const days = { ...a.days };
+  const k = dayKey(at);
+  days[k] = { ...(days[k] || {}), [block]: Math.round(((days[k] || {})[block] || 0) + Math.max(0, min)) };
+  const keys = Object.keys(days).sort();
+  while (keys.length > KEEP_DAYS) delete days[keys.shift()];
+  store.set('away', { ...a, last, days });
+}
+export const awayLast = block => ((store.get('away') || {}).last || {})[block] || null;
+/** Minutes et jours loin du piano sur les n derniers jours. */
+export function awayStats(n = 7, now = Date.now()) {
+  const days = (store.get('away') || {}).days || {};
+  let min = 0, d = 0;
+  const by = {};
+  for (let i = 0; i < n; i++) {
+    const x = days[dayKey(now - i * 864e5)];
+    if (!x) continue;
+    d++;
+    for (const [b, m] of Object.entries(x)) { min += m; by[b] = (by[b] || 0) + m; }
+  }
+  return { min, days: d, by };
+}
+/** Jours de pratique au piano parmi les n derniers (l'oreille seule ne compte pas : elle se travaille aussi sans piano). */
+export function pianoDays(n = 7, now = Date.now()) {
+  const days = read().days;
+  const out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const t = now - i * 864e5;
+    const x = days[dayKey(t)] || {};
+    const away = ((store.get('away') || {}).days || {})[dayKey(t)];
+    out.push({ t, piano: Object.keys(x).some(c => c !== 'oreille'), any: Object.keys(x).length > 0 || !!away });
+  }
+  return out;
 }
 
 /** Bilan des n derniers jours : jours pratiqués et minutes (étapes de séance) par catégorie. */
@@ -147,6 +209,7 @@ store.subscribe((path, value) => {
     else if (path === 'stats.analyzer') { const x = lastOf(value); if (x && fresh(x.at)) cat = String(x.mode || '').startsWith('improv') ? 'impro' : 'technique'; }
   } catch (e) { cat = null; }
   if (!cat) return;
+  if (awayCtx.on && cat === 'lecture') return; // rythme et notes loin du piano : notés par la séance loin du piano
   guard = true;
   try { logActivity(cat); } finally { guard = false; }
 });

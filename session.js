@@ -1,60 +1,60 @@
 // Nouvelle séance (V7) : tu coches ce que tu veux travailler (pratique du piano seulement), l'appli propose pour chaque
 // case l'action suivante et sa durée, et conseille ce que tu délaisses (fréquences cibles, point faible).
 // Remplace la séance tirée du plan hebdomadaire.
+// V8 : les fréquences cibles suivent ton rythme (séances par semaine, minutes par séance) ; séances de 10 et 15 min ;
+// avec peu de cases, les domaines tournent d'une séance à l'autre (le plus en retard sur son rythme d'abord) ; les
+// pauses ne comptent pas comme du temps délaissé.
 import { h, esc } from './util.js';
 import { store } from './store.js';
-import { CATS, TARGETS, catLabel, daysSince, sinceLabel, logActivity, dayKey, recentStats } from './activity.js';
+import { CATS, TARGETS, catLabel, daysSince, activeDaysSince, sinceLabel, logActivity, dayKey, daysBetween, recentStats, awayStats, pianoDays, journalStart } from './activity.js';
 import { LEVELS, PIECES, lessonById, lessonsOf } from './content-index.js';
+import { getPace, paceTargets, casesFor, allocate as allocatePace, PACE_MINUTES, currentPause, everyDays, freqLabel, paceLabel, dayLabel, isPausedDay, pausedDays } from './pace.js';
 
-const DURATIONS = [20, 30, 45, 60, 75];
-const MAX_CATS = { 20: 2, 30: 3, 45: 4, 60: 5, 75: 6 };
+const DURATIONS = PACE_MINUTES; // 10, 15, 20, 30, 45, 60, 75
 const ORDER = ['technique', 'piece', 'impro', 'lecture', 'oreille', 'autres'];
+// séance courte (20 min ou moins) : le domaine qui tourne d'abord (il chauffe les mains, et l'improvisation prélude
+// dans la tonalité), la pièce pour finir : ce qu'on rejoue en dernier se consolide mieux (Allen, 2013).
+const ORDER_SHORT = ['technique', 'lecture', 'oreille', 'impro', 'autres', 'piece'];
+const orderFor = minutes => (minutes <= 20 ? ORDER_SHORT : ORDER);
 const KEY = 'sess7';
 
 /* ------------------------------------------------------------------ */
 /* Conseils                                                            */
 /* ------------------------------------------------------------------ */
-/** Seuil du conseil (jours sans pratique) : un jour plus tôt pour le point faible déclaré. */
-const threshold = cat => TARGETS[cat].after - (TARGETS[cat].weak ? 1 : 0);
+/** Seuil du conseil (jours sans pratique, hors pauses) selon ton rythme : un jour plus tôt pour le point faible déclaré. */
+const threshold = (cat, T) => Math.max(1, T[cat].after - (TARGETS[cat].weak ? 1 : 0));
 export function adviceFor(cat, now = Date.now()) {
-  const d = daysSince(cat, now);
-  const t = threshold(cat);
-  const overdue = d >= t;
+  const T = paceTargets();
+  const d = activeDaysSince(cat, now);
+  const t = threshold(cat, T);
+  const paused = !!currentPause(now);
+  const overdue = !paused && d >= t;
   let reason = '';
-  if (d === Infinity) reason = 'pas encore travaillé';
-  else if (overdue) reason = `${d} jour${d > 1 ? 's' : ''} sans`;
-  if (TARGETS[cat].weak && (overdue || d === Infinity)) reason += reason ? ' · ton point faible (le rythme)' : 'ton point faible (le rythme)';
-  return { d, overdue, reason, urgency: d === Infinity ? 99 : d / t };
+  if (paused) reason = '';
+  else if (d === Infinity) reason = 'pas encore travaillé';
+  else if (overdue) reason = cat === 'piece' ? `${d} jour${d > 1 ? 's' : ''} sans` : `c’est son tour (${d} jour${d > 1 ? 's' : ''} sans)`;
+  if (!paused && TARGETS[cat].weak && (overdue || d === Infinity)) reason += reason ? ' · ton point faible (le rythme)' : 'ton point faible (le rythme)';
+  // jamais travaillé : il attend depuis le début du journal (un domaine rare ne passe pas devant un domaine fréquent)
+  const st = journalStart();
+  const waited = st ? Math.max(0, daysBetween(st, now) - pausedDays(st, now)) : 0;
+  return { d, overdue, reason, urgency: d === Infinity ? waited / t : d / t };
 }
 /**
- * La séance conseillée pour une durée : la pièce phare et l'improvisation (pierre angulaire du parcours) dès 30 minutes,
- * puis les catégories les plus en retard sur leur fréquence cible.
+ * La séance conseillée pour une durée : la pièce phare toujours, l'improvisation (pierre angulaire du parcours) dès
+ * 30 minutes, puis les domaines les plus en retard sur leur fréquence, à ton rythme. « Autres pièces » demande au moins
+ * 15 minutes de séance (la jouer en entier).
  */
 export function advisedCats(minutes, now = Date.now()) {
-  const n = MAX_CATS[minutes] || Math.max(2, Math.min(6, Math.round(minutes / 13)));
+  const n = casesFor(minutes);
   const core = minutes >= 30 ? ['piece', 'impro'] : ['piece'];
-  const others = ORDER.filter(c => !core.includes(c) && (c !== 'autres' || minutes >= 60 || adviceFor('autres', now).overdue))
-    .map(c => ({ c, u: adviceFor(c, now).urgency + (c === 'impro' ? 0.15 : 0) })) // à 20 min, l'improvisation passe devant à égalité
+  const others = ORDER.filter(c => !core.includes(c) && (c !== 'autres' || minutes >= 15))
+    .map(c => ({ c, u: adviceFor(c, now).urgency + (c === 'impro' ? 0.15 : 0) })) // à égalité, l'improvisation passe devant
     .sort((a, b) => b.u - a.u);
-  return [...core, ...others.slice(0, Math.max(0, n - core.length)).map(x => x.c)].sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b));
+  const ord = orderFor(minutes);
+  return [...core, ...others.slice(0, Math.max(0, n - core.length)).map(x => x.c)].sort((a, b) => ord.indexOf(a) - ord.indexOf(b));
 }
-/** Répartition de la durée : parts du tableau (60 min), 5 min au moins par case. */
-export function allocate(cats, total) {
-  if (!cats.length) return {};
-  const ws = cats.map(c => TARGETS[c].weight);
-  const W = ws.reduce((a, b) => a + b, 0);
-  const floor = total >= cats.length * 5 ? 5 : Math.max(2, Math.floor(total / cats.length));
-  const mins = ws.map(w => Math.max(floor, Math.round(total * w / W)));
-  let diff = total - mins.reduce((a, b) => a + b, 0);
-  const order = cats.map((c, i) => i).sort((a, b) => ws[b] - ws[a]);
-  let k = 0, guard = 200;
-  while (diff !== 0 && guard-- > 0) {
-    const i = order[k % order.length];
-    if (diff > 0) { mins[i]++; diff--; } else if (mins[i] > floor) { mins[i]--; diff++; }
-    k++;
-  }
-  return Object.fromEntries(cats.map((c, i) => [c, mins[i]]));
-}
+/** Répartition de la durée (pace.js) : parts du tableau de 60 min, 5 min au moins par case (3 min dans une séance courte). */
+export const allocate = allocatePace;
 
 /* ------------------------------------------------------------------ */
 /* L'action suivante de chaque catégorie                               */
@@ -140,9 +140,16 @@ export async function proposals(L, now = Date.now()) {
   if (nx) {
     const s = nx.section;
     const fil = pm.filageDue(L.piece, now);
+    // V8 : après une longue interruption, on remet la pièce en route ; une section travaillée de tête (loin du piano)
+    // se rejoue d'abord de mémoire ; et la séance finit en rejouant la section une fois en entier
+    const gap = daysSince('piece', now);
+    const restart = Number.isFinite(gap) && gap >= 7 ? `<b>Remise en route</b> après ${gap} jours : rejoue d’abord lentement ce qui était en place (deux minutes). ` : '';
+    const mt = pm.mentalOf(L.piece, now);
+    const mental = mt ? `${mt.section.id === s.id ? '' : `Tu as travaillé de tête « ${esc(mt.section.name)} » : rejoue-la d’abord de mémoire. `}${mt.note ? `Ta note : « ${esc(mt.note)} ». ` : ''}` : '';
+    const lead = restart || mental ? `<span class="sx-sub">${restart}${mental}</span>` : '';
     out.piece = {
       title: `${s.name} (m. ${s.from}-${s.to})`,
-      html: `${link(`#/piece/${L.piece}/${s.id}`, `${s.name} (m. ${s.from}-${s.to})`)} : ${esc(lowerFirst(nx.intention))} <span class="sx-sub">Commence par 30 secondes de prélude en ${esc(M.key.name)} : la cadence, quelques accords arpégés, la cadence (${link('#/lecon/n2-im-preluder', 'Préluder')}).${fil ? ' Aujourd’hui aussi : le <b>filage enregistré</b> (en bas de la page de la pièce).' : ''}</span>`,
+      html: `${link(`#/piece/${L.piece}/${s.id}`, `${s.name} (m. ${s.from}-${s.to})`)} : ${esc(lowerFirst(nx.intention))}${lead}<span class="sx-sub">Commence par 30 secondes de prélude en ${esc(M.key.name)} : la cadence, quelques accords arpégés, la cadence (${link('#/lecon/n2-im-preluder', 'Préluder')}). Pour finir, rejoue la section une fois en entier, sans t’arrêter.${fil ? ' Aujourd’hui aussi : le <b>filage enregistré</b> (en bas de la page de la pièce).' : ''}</span>`,
       href: `#/piece/${L.piece}/${s.id}`, meta: { piece: L.piece, section: s.id },
     };
   } else out.piece = { title: PIECES[L.piece].title, html: link(`#/piece/${L.piece}`, PIECES[L.piece].title), href: `#/piece/${L.piece}`, meta: { piece: L.piece } };
@@ -171,28 +178,35 @@ export async function proposals(L, now = Date.now()) {
   out.technique = tech;
   // improvisation
   const im = improNext(L);
-  // V7.5 : l'improvisation libre enregistrée, conseillée après dix jours sans (une fois l'improvisation commencée)
+  // V7.5 : l'improvisation libre enregistrée, conseillée après dix jours sans (une fois l'improvisation commencée) ;
+  // V8 : espacée selon ton rythme (dix jours à six séances par semaine)
   const lastFree = store.get('improv.free.last');
-  const freeDue = lastFree ? now - lastFree >= 10 * 864e5 : Number.isFinite(daysSince('impro', now));
+  const freeDue = lastFree ? now - lastFree >= everyDays(10) * 864e5 : Number.isFinite(daysSince('impro', now));
   const freeTip = freeDue ? ` <span class="sx-sub">Aujourd’hui aussi : deux minutes d’${link('#/outils/impro', 'improvisation libre enregistrée')}, à réécouter demain.</span>` : '';
-  out.impro = im ? { title: im.l.title, html: `${link(`#/lecon/${im.l.id}`, im.l.title)} : ${esc(im.text)}, puis une minute de jeu libre.${freeTip}`, href: `#/lecon/${im.l.id}`, skip: { kind: 'lesson', id: im.l.id, label: im.l.title } }
+  out.impro = im ? { title: im.l.title, html: `${link(`#/lecon/${im.l.id}`, im.l.title)} : ${esc(im.text)}, puis une minute de jeu libre.${freeTip}`, href: `#/lecon/${im.l.id}`, skip: { kind: 'lesson', id: im.l.id, label: im.l.title },
+    // séance courte : l'exercice seul (la minute de jeu libre et la prise libre attendront une séance plus longue)
+    short: 6, shortHtml: `${link(`#/lecon/${im.l.id}`, im.l.title)} : ${esc(im.text)}, sans viser plus loin aujourd’hui.` }
     : { title: 'Jeu libre', html: `${link('#/outils/impro', 'Improvisation')} : ${freeDue ? 'deux minutes d’improvisation libre enregistrée, à réécouter demain.' : 'jeu libre sur une grille de ton choix, sans t’arrêter.'}`, href: '#/outils/impro' };
   // lecture à vue
   const lv = store.get('sight.level') || (L.id === 'n2' ? '2' : '1rh');
   const LVN = { '1rh': 'niveau 1, main droite', '1lh': 'niveau 1, main gauche', 2: 'niveau 2', 3: 'niveau 3', 4: 'niveau 4', 5: 'niveau 5' };
   const ws = wu.warmupStatus(now);
   const warm = ws.done >= ws.total ? 'échauffement déjà fait aujourd’hui ; ' : 'l’échauffement de 3 minutes (le rythme, puis deux exercices parmi notes, intervalles et accords), puis ';
-  out.lecture = { title: 'Échauffement et extraits', html: `${link('#/outils/lecture', 'Lecture à vue')} : ${warm}des extraits nouveaux, ${esc(LVN[lv] || 'à ton niveau')}, sans t’arrêter.`, href: '#/outils/lecture' };
+  out.lecture = { title: 'Échauffement et extraits', html: `${link('#/outils/lecture', 'Lecture à vue')} : ${warm}des extraits nouveaux, ${esc(LVN[lv] || 'à ton niveau')}, sans t’arrêter.`, href: '#/outils/lecture',
+    // séance courte : l'échauffement de trois minutes, ou un extrait s'il est déjà fait
+    short: 5, shortHtml: `${link('#/outils/lecture', 'Lecture à vue')} : ${ws.done >= ws.total ? `un ou deux extraits nouveaux, ${esc(LVN[lv] || 'à ton niveau')}, sans t’arrêter` : `l’échauffement de 3 minutes (le rythme, puis deux exercices d’une minute), puis un extrait nouveau s’il reste du temps (${esc(LVN[lv] || 'à ton niveau')})`}.` };
   // oreille : l'étape en cours du parcours
   const pr = ear.trackProgress();
   const nm = ep.nextMelody();
-  const weekly = !ep.earplayRecent(now) && nm ? ` <span class="sx-sub">Cette semaine aussi, une mélodie d’oreille : ${link('#/outils/oreille/jouer', nm.title)}.</span>` : '';
+  const melodyDays = everyDays(7);
+  const weekly = !ep.earplayRecent(now, melodyDays) && nm ? ` <span class="sx-sub">${melodyDays > 7 ? 'De temps en temps' : 'Cette semaine'} aussi, une mélodie d’oreille : ${link('#/outils/oreille/jouer', nm.title)}.</span>` : '';
   out.oreille = { title: pr.cur ? pr.cur.title : 'Révision', html: `${link('#/outils/oreille/parcours', 'Oreille')} : ${pr.cur ? `étape ${pr.index} sur ${pr.total}, ${esc(pr.cur.title)}` : 'révision libre'}.${weekly}`, href: '#/outils/oreille/parcours',
     skip: pr.cur ? { kind: 'ear', id: pr.cur.id, label: `l’étape « ${pr.cur.title} »` } : null };
   // autres pièces
   const others = otherPieces(L);
   const op = others[0];
-  out.autres = op ? { title: PIECES[op].title, html: `${link(`#/piece/${op}`, PIECES[op].title)} : joue-la en entier, puis travaille son passage le plus fragile.`, href: `#/piece/${op}`, meta: { other: op } } : null;
+  const played = op && store.get(`pieces.${op}.at`);
+  out.autres = op ? { title: PIECES[op].title, html: `${link(`#/piece/${op}`, PIECES[op].title)} : ${played ? 'joue-la en entier, puis travaille son passage le plus fragile.' : 'pas encore jouée dans l’appli : si tu la connais, joue-la en entier ; sinon, lis lentement sa première page, mains séparées s’il le faut.'}`, href: `#/piece/${op}`, meta: { other: op } } : null;
   return out;
 }
 
@@ -203,10 +217,13 @@ export function currentSession(now = Date.now()) {
   const s = store.get(KEY);
   return s && s.day === dayKey(now) ? s : null;
 }
+/** Le texte d'une case : sa version courte quand le temps alloué est petit (séance courte). */
+export const htmlFor = (p, min) => (p.shortHtml && min <= p.short ? p.shortHtml : p.html);
 export function buildSession(cats, minutes, props, now = Date.now()) {
   const alloc = allocate(cats, minutes);
-  const steps = cats.filter(c => props[c]).sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b))
-    .map(c => ({ id: c, cat: c, min: alloc[c], title: props[c].title, html: props[c].html, href: props[c].href, meta: props[c].meta || null, done: false, started: null, doneAt: null }));
+  const ord = orderFor(minutes);
+  const steps = cats.filter(c => props[c]).sort((a, b) => ord.indexOf(a) - ord.indexOf(b))
+    .map(c => ({ id: c, cat: c, min: alloc[c], title: props[c].title, html: htmlFor(props[c], alloc[c]), href: props[c].href, meta: props[c].meta || null, done: false, started: null, doneAt: null }));
   const sess = { v: 7, day: dayKey(now), minutes, cats, steps, at: now };
   store.set(KEY, sess);
   store.set('ui.sessMin', minutes);
@@ -276,28 +293,34 @@ export function mountSessionBox(host, L, { onChange } = {}) {
 }
 
 function builderCard(L, props, started, { state = null, skip = null, undo = null } = {}) {
-  let minutes = state?.minutes || store.get('ui.sessMin') || 60;
-  if (!DURATIONS.includes(minutes)) minutes = 60;
+  const pace = getPace();
+  let minutes = state?.minutes || store.get('ui.sessMin') || pace.minutes;
+  if (!DURATIONS.includes(minutes)) minutes = pace.minutes;
   let chosen = state?.chosen ? new Set(state.chosen) : new Set(advisedCats(minutes));
   let touched = !!state?.touched;
   const snap = () => ({ minutes, chosen: [...chosen], touched });
   const card = h('div', { class: 'card session sx-builder' });
-  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Durée de la séance' });
+  // V8 : sept durées, de 10 à 75 minutes, en chiffres (l'unité est dite une fois)
+  const seg = h('div', { class: 'seg sx-durs', role: 'group', 'aria-label': 'Durée de la séance, en minutes' });
   DURATIONS.forEach(m => {
-    const b = h('button', { type: 'button', class: m === minutes ? 'on' : '' }, fmtMin(m));
+    const b = h('button', { type: 'button', class: m === minutes ? 'on' : '', 'aria-label': fmtMin(m) }, String(m));
     b.addEventListener('click', () => {
       minutes = m;
       seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-      if (!touched) chosen = new Set(advisedCats(minutes));
+      if (!touched) { chosen = new Set(advisedCats(minutes)); place(); }
       refresh();
     });
     seg.append(b);
   });
   const rows = h('div', { class: 'sx-rows' });
+  // les domaines qui ne sont pas dans la séance conseillée : repliés (on les ajoute d'un toucher)
+  const moreRows = h('div', { class: 'sx-rows' });
+  const moreSum = h('summary', {});
+  const more = h('details', { class: 'sx-more' }, moreSum, moreRows);
   const hint = h('p', { class: 'small sx-hint', 'aria-live': 'polite' });
   const go = h('button', { class: 'btn primary lg', type: 'button' });
   const reset = h('button', { class: 'btn ghost sm', type: 'button', hidden: true }, 'Revenir à la séance conseillée');
-  reset.addEventListener('click', () => { touched = false; chosen = new Set(advisedCats(minutes)); refresh(); });
+  reset.addEventListener('click', () => { touched = false; chosen = new Set(advisedCats(minutes)); place(); refresh(); });
   go.addEventListener('click', () => {
     const cats = ORDER.filter(c => chosen.has(c) && props[c]);
     if (!cats.length) return;
@@ -307,10 +330,13 @@ function builderCard(L, props, started, { state = null, skip = null, undo = null
     started();
     location.hash = first.href;
   });
+  const pause = currentPause();
+  const intro = pause
+    ? h('p', { class: 'small mt-0 sx-intro' }, `En pause jusqu’au ${dayLabel(pause.to)} : rien ne compte comme délaissé. Si tu trouves un moment, voici quand même une séance.`)
+    : h('p', { class: 'small mt-0 sx-intro' }, 'Cochée d’avance : ta pièce et ce dont c’est le tour, d’après ', h('a', { href: '#/temps' }, 'ton temps de piano'), ` (${paceLabel(pace)}). Coche ou décoche à ton gré.`);
   card.append(
-    h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Nouvelle séance'), seg),
-    h('p', { class: 'small mt-0 sx-intro' }, 'Cochée d’avance : la séance conseillée, ta pièce et ce que tu as laissé de côté. Coche ou décoche à ton gré.'),
-    rows, hint, h('div', { class: 'btn-row mt-1' }, go, reset));
+    h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Nouvelle séance'), h('span', { class: 'sx-durwrap' }, h('span', { class: 'small muted' }, 'min'), seg)),
+    intro, rows, more, hint, h('div', { class: 'btn-row mt-1' }, go, reset));
   const advices = Object.fromEntries(CATS.map(c => [c.id, adviceFor(c.id)]));
   const rowEls = {};
   for (const c of CATS) {
@@ -331,30 +357,43 @@ function builderCard(L, props, started, { state = null, skip = null, undo = null
     }
     // V7.7 : une seule ligne d'état (ce qui pousse à le faire, sinon la dernière fois), « Déjà faite » à sa suite
     const status = a.reason ? h('span', { class: 'sx-why' }, a.reason) : h('span', { class: 'sx-last' }, `dernière fois : ${sinceLabel(c.id)}`);
+    const act = h('span', { class: 'sx-act small', html: p ? p.html : 'Rien à proposer ici pour l’instant.' });
     const row = h('label', { class: 'sx-row' + (p ? '' : ' off') },
       cb,
       h('span', { class: 'sx-main' },
         h('span', { class: 'sx-head' }, h('b', {}, c.label), minEl),
-        h('span', { class: 'sx-act small', html: p ? p.html : 'Rien à proposer ici pour l’instant.' }),
+        act,
         h('span', { class: 'sx-meta' }, status, skipBtn)));
-    rowEls[c.id] = { row, cb, minEl };
-    rows.append(row);
+    rowEls[c.id] = { row, cb, minEl, act };
+  }
+  /** Range les cases : celles de la séance en haut (dans leur ordre), les autres repliées. Pas à chaque toucher : une
+   *  case cochée ou décochée reste où elle est, jusqu'au prochain changement de durée. */
+  function place() {
+    const ord = orderFor(minutes);
+    const ids = CATS.map(c => c.id).sort((a, b) => ord.indexOf(a) - ord.indexOf(b));
+    for (const id of ids) (chosen.has(id) && props[id] ? rows : moreRows).append(rowEls[id].row);
+    const n = moreRows.childElementCount;
+    more.hidden = !n;
+    moreSum.textContent = `Ajouter un domaine (${n})`;
   }
   function refresh() {
     const cats = ORDER.filter(c => chosen.has(c) && props[c]);
     const alloc = allocate(cats, minutes);
     for (const c of CATS) {
       const r = rowEls[c.id];
-      r.cb.checked = chosen.has(c.id) && !!props[c.id];
+      const p = props[c.id];
+      r.cb.checked = chosen.has(c.id) && !!p;
       r.minEl.textContent = alloc[c.id] ? `${alloc[c.id]} min` : '';
       r.row.classList.toggle('on', r.cb.checked);
+      if (p) r.act.innerHTML = alloc[c.id] ? htmlFor(p, alloc[c.id]) : p.html;
     }
     go.textContent = cats.length ? `Commencer la séance · ${fmtMin(minutes)}` : 'Coche au moins une case';
     go.disabled = !cats.length;
     reset.hidden = !touched;
-    const max = MAX_CATS[minutes] || 6;
-    hint.textContent = cats.length > max ? `Pour ${fmtMin(minutes)}, garde plutôt ${max} cases au plus : mieux vaut peu de choses bien faites.` : '';
+    const max = casesFor(minutes);
+    hint.textContent = cats.length > max ? `Pour ${fmtMin(minutes)}, garde plutôt ${max} cases au plus : mieux vaut peu de choses bien faites, et les autres reviendront à leur tour.` : '';
   }
+  place();
   refresh();
   return card;
 }
@@ -394,19 +433,41 @@ function activeCard(sess, newSession) {
 /* ------------------------------------------------------------------ */
 /* Le bilan de la semaine                                              */
 /* ------------------------------------------------------------------ */
-export function weekCard() {
-  const st = recentStats(7);
+export function weekCard(now = Date.now()) {
+  // V8 : face à ton temps de piano. La pièce : combien de séances sur celles que tu prévois ; les domaines qui tournent :
+  // à jour, ou c'est leur tour ; le travail loin du piano à part.
+  const pace = getPace();
+  const T = paceTargets(pace);
+  const st = recentStats(7, now);
+  const days = pianoDays(7, now);
+  const nPiano = days.filter(d => d.piano).length;
+  const minPiano = Object.values(st).reduce((a, x) => a + x.min, 0);
+  const aw = awayStats(7, now);
+  const paused = !!currentPause(now);
   const card = h('div', { class: 'card sx-week' });
-  card.append(h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Tes 7 derniers jours'), h('span', { class: 'small muted' }, `${Object.values(st).reduce((a, x) => a + x.min, 0)} min en séance`)));
+  card.append(h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Tes 7 derniers jours'),
+    h('span', { class: 'small muted' }, `${nPiano} séance${nPiano > 1 ? 's' : ''} sur ${pace.days}${minPiano ? ` · ${fmtMin(minPiano)}` : ''}`)));
+  const INIT = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+  card.append(h('div', { class: 'sx-days', title: 'Plein : au piano · cerclé : loin du piano · gris : pause' },
+    ...days.map(d => h('span', { class: 'sx-day' + (d.piano ? ' p' : d.any ? ' a' : '') + (isPausedDay(dayKey(d.t)) ? ' z' : '') }, h('i'), h('small', {}, INIT[new Date(d.t).getDay()])))));
   const grid = h('div', { class: 'sx-wgrid' });
   for (const c of CATS) {
-    const t = TARGETS[c.id].days;
-    const d = Math.min(st[c.id].days, 7);
-    grid.append(h('div', { class: 'sx-wrow' }, h('span', { class: 'sx-wl' }, c.label),
-      h('span', { class: 'sx-wbar', title: `${d} jour${d > 1 ? 's' : ''} sur ${t} visés` }, h('i', { style: { width: `${Math.min(100, d / t * 100)}%` }, class: d >= t ? 'ok' : '' })),
-      h('span', { class: 'sx-wv small' }, `${d}/${t} j${st[c.id].min ? ` · ${st[c.id].min} min` : ''}`)));
+    if (c.id === 'piece') {
+      const t = pace.days, d = Math.min(st.piece.days, 7);
+      grid.append(h('div', { class: 'sx-wrow' }, h('span', { class: 'sx-wl' }, c.label),
+        h('span', { class: 'sx-wbar', title: `${d} jour${d > 1 ? 's' : ''} sur ${t} prévus` }, h('i', { style: { width: `${Math.min(100, d / t * 100)}%` }, class: d >= t ? 'ok' : '' })),
+        h('span', { class: 'sx-wv small' }, `${d}/${t} j`)));
+      continue;
+    }
+    const a = adviceFor(c.id, now);
+    const fresh = !paused && Number.isFinite(a.d) && !a.overdue;
+    grid.append(h('div', { class: 'sx-wrow rot' }, h('span', { class: 'sx-wl' }, c.label),
+      h('span', { class: 'sx-wst small ' + (fresh ? 'ok' : a.d === Infinity ? '' : 'due') }, fresh ? `✓ à jour · ${sinceLabel(c.id, now)}` : a.d === Infinity ? 'pas encore' : a.overdue ? `c’est son tour · ${sinceLabel(c.id, now)}` : `dernière fois : ${sinceLabel(c.id, now)}`),
+      h('span', { class: 'sx-wv small muted' }, freqLabel(T[c.id].perWeek))));
   }
-  card.append(grid, h('p', { class: 'small muted mb-0 mt-1' }, 'Jours de pratique sur 7, face à l’objectif.'));
+  card.append(grid);
+  card.append(h('p', { class: 'small muted mb-0 mt-1' }, aw.min ? `Loin du piano : ${fmtMin(aw.min)} sur ${aw.days} jour${aw.days > 1 ? 's' : ''}.` : pace.away ? 'Loin du piano : rien cette semaine.' : '',
+    ' ', h('a', { href: '#/temps' }, 'Ton temps de piano')));
   return card;
 }
 
@@ -414,8 +475,10 @@ export function weekCard() {
 /* Barre de séance sur la page d'une étape                              */
 /* ------------------------------------------------------------------ */
 let bar = null;
+let barTimer = null;
 export function updateSessionBar(hash) {
   if (!bar) { bar = h('div', { class: 'session-bar', hidden: true, role: 'region', 'aria-label': 'Séance' }); document.body.append(bar); }
+  clearInterval(barTimer);
   bar.hidden = true;
   bar.innerHTML = '';
   const sess = currentSession();
@@ -428,7 +491,17 @@ export function updateSessionBar(hash) {
   const st = sess.steps[i];
   startStep(sess, st);
   const nx = nextStep(sess, st);
-  const label = h('div', { class: 'sb-txt' }, h('b', {}, `Séance · ${i + 1}/${sess.steps.length}`), h('span', {}, ` ${catLabel(st.cat)} · ${st.min} min`));
+  // V8 : le temps qui reste pour cette étape (une séance courte se tient dans son temps)
+  const left = h('span', { class: 'sb-left' });
+  const tickLeft = () => {
+    if (st.done || !st.started) { left.textContent = ` · ${st.min} min`; left.classList.remove('over'); return; }
+    const r = Math.ceil(st.min - (Date.now() - st.started) / 60000);
+    left.textContent = r > 0 ? ` · reste ${r} min` : st.cat === 'piece' ? ' · temps écoulé : rejoue-la une fois en entier' : ' · temps écoulé';
+    left.classList.toggle('over', r <= 0);
+  };
+  const label = h('div', { class: 'sb-txt' }, h('b', {}, `Séance · ${i + 1}/${sess.steps.length}`), h('span', { class: 'sb-cat' }, ` ${catLabel(st.cat)}`), left);
+  tickLeft();
+  barTimer = setInterval(() => { if (!bar.isConnected || bar.hidden) { clearInterval(barTimer); return; } tickLeft(); }, 20000);
   const btn = h('button', { class: 'btn primary sm', type: 'button' }, st.done ? (nx ? 'Étape suivante' : 'Retour à l’accueil') : (nx ? 'Fait, étape suivante' : 'Fait, fin de la séance'));
   btn.addEventListener('click', async () => {
     if (!st.done) await setStepDone(sess, st, true);

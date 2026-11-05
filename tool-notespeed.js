@@ -45,7 +45,9 @@ const dayOf = t => new Date(t).toDateString();
 
 export function mountNoteSpeed(el, opts = {}) {
   const saved = store.get('notespeed') || {};
-  const conf = { clef: 'treble', range: 'staff', acc: false, input: midi.status === 'ready' ? 'piano' : 'names', exact: true, ...(saved.conf || {}) };
+  // V8 : `force` impose un réglage sans l'enregistrer (loin du piano : réponse par le nom)
+  const forced = opts.force || {};
+  const conf = { clef: 'treble', range: 'staff', acc: false, input: midi.status === 'ready' ? 'piano' : 'names', exact: true, ...(saved.conf || {}), ...forced };
   if (conf.range === 'acc') { conf.range = 'ledger'; conf.acc = true; } // réglage de la V4.2
   const frame = h('div', { class: 'w-frame notespeed' + (opts.bare ? ' ns-bare' : '') });
   const head = h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, 'Lecture de notes chronométrée'), h('span', { class: 'w-sub' }, 'une minute, le plus de notes justes possible'));
@@ -74,7 +76,7 @@ export function mountNoteSpeed(el, opts = {}) {
     seg('Clé', 'clef', [['treble', 'Sol'], ['bass', 'Fa'], ['both', 'Les deux']]),
     seg('Notes', 'range', [['staff', 'Portée'], ['ledger', '± 2 lignes'], ['far', '± 4 lignes']]),
     accLbl,
-    seg('Réponse', 'input', [['piano', 'Au piano'], ['names', 'Par le nom']]),
+    forced.input ? null : seg('Réponse', 'input', [['piano', 'Au piano'], ['names', 'Par le nom']]),
     exactLbl);
   const info = h('p', { class: 'small ns-info' });
   const startBtn = h('button', { class: 'btn primary', type: 'button' }, 'Commencer (1 minute)');
@@ -92,7 +94,12 @@ export function mountNoteSpeed(el, opts = {}) {
   const results = h('div', { class: 'ns-results', hidden: true });
   body.append(idle, stage, results);
 
-  const saveConf = () => store.set('notespeed', { ...(store.get('notespeed') || {}), conf: { ...conf } });
+  const saveConf = () => {
+    const prev = (store.get('notespeed') || {}).conf || {};
+    const keep = { ...conf };
+    for (const k of Object.keys(forced)) { if (prev[k] !== undefined) keep[k] = prev[k]; else delete keep[k]; }
+    store.set('notespeed', { ...(store.get('notespeed') || {}), conf: keep });
+  };
   const history = () => (store.get('notespeed') || {}).history || [];
   const best = () => history().filter(x => x.key === confKey(conf)).reduce((a, x) => Math.max(a, x.npm), 0);
 

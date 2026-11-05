@@ -1,5 +1,8 @@
 // Sauvegarde locale de la progression et des réglages (localStorage, avec repli en mémoire).
 // Les prises jouées et les résultats d'analyse, plus volumineux, sont dans IndexedDB (db.js).
+// V8 : au premier lancement d'une nouvelle version, une copie de la progression telle qu'elle était est gardée à part
+// (`parcours-piano-v1:avant-maj`) ; Réglages permet d'y revenir.
+import { APP_VERSION } from './version.js';
 
 const KEY = 'parcours-piano-v1';
 /** Version du format des données : chaque changement de format a sa migration (MIGRATIONS). */
@@ -57,20 +60,51 @@ function migrate(s) {
   return s;
 }
 
+/* Copie d'avant la mise à jour : la progression brute, telle que l'ancienne version l'a laissée. (Déclarée avant le
+   chargement des données, qui s'en sert.) */
+const SNAP = KEY + ':avant-maj';
 let mem = null;
+let snapNeeded = false;
 let state = load();
 const subs = new Set();
+
+function snapshot(raw, parsed) {
+  const meta = { from: parsed.appVersion || parsed.seenVersion || null, to: APP_VERSION, at: Date.now() };
+  try { localStorage.setItem(SNAP, JSON.stringify({ ...meta, raw })); }
+  catch (e) { // stockage plein : dans IndexedDB
+    import('./db.js').then(m => m.db.setKV('avant-maj', { ...meta, raw })).catch(() => {});
+  }
+}
+/** La copie d'avant la dernière mise à jour : { from, to, at } (sans le contenu), ou null. */
+export async function snapshotInfo() {
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(SNAP) || 'null'); } catch (e) { s = null; }
+  if (!s) { try { s = await (await import('./db.js')).db.getKV('avant-maj'); } catch (e) { s = null; } }
+  return s && s.raw ? { from: s.from, to: s.to, at: s.at, raw: s.raw } : null;
+}
+/** Revenir à la copie : la progression d'avant la mise à jour remplace l'actuelle (rechargement ensuite). */
+export async function restoreSnapshot() {
+  const s = await snapshotInfo();
+  if (!s) return false;
+  clearTimeout(saveTimer);
+  localStorage.setItem(KEY, s.raw);
+  return true;
+}
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
-      const parsed = migrate(JSON.parse(raw));
-      return merge(DEFAULTS(), parsed);
+      const parsed0 = JSON.parse(raw);
+      if (parsed0.appVersion !== APP_VERSION) { snapshot(raw, parsed0); snapNeeded = true; }
+      const parsed = migrate(parsed0);
+      const st = merge(DEFAULTS(), parsed);
+      st.appVersion = APP_VERSION;
+      return st;
     }
   } catch (e) { /* stockage indisponible */ }
   if (mem) return mem;
-  return DEFAULTS();
+  return { ...DEFAULTS(), appVersion: APP_VERSION };
 }
 
 function merge(base, extra) {
@@ -92,6 +126,9 @@ function persist() {
     catch (e) { mem = state; }
   }, 250);
 }
+
+// la version notée dans les données dès le premier lancement (la copie est faite une seule fois par version)
+if (snapNeeded) persist();
 
 export const store = {
   get state() { return state; },
@@ -128,11 +165,12 @@ export const store = {
     const parsed = typeof text === 'string' ? JSON.parse(text) : text;
     if (!parsed || typeof parsed !== 'object' || !parsed.done) throw new Error('Fichier non reconnu');
     state = merge(DEFAULTS(), migrate(parsed));
+    state.appVersion = APP_VERSION;
     persist();
     subs.forEach(fn => fn('*'));
   },
   reset() {
-    state = DEFAULTS();
+    state = { ...DEFAULTS(), appVersion: APP_VERSION };
     persist();
     subs.forEach(fn => fn('*'));
   },

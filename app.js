@@ -13,6 +13,8 @@ import { exportProgress, importProgress, resetAll, needsBackupReminder, postpone
 import { LEVELS, MODULES, PIECES, lessonById, levelById, allLessons, lessonsOf, loadLesson, loadPiece } from './content-index.js';
 import { mountSessionBox, weekCard, updateSessionBar, improNext, improSummary, nextTechLesson, scalesOfWeek } from './session.js';
 import { backfillActivity } from './activity.js';
+import { getPace, setPace, paceIsSet, paceLabel, awayLabel, paceTargets, pieceMinutes, freqLabel, PACE_DAYS, PACE_MINUTES, AWAY_MINUTES, currentPause, startPause, endPause, settlePauses, pauses, pauseLength, WHY as PAUSE_WHY, dayLabel, dayKey as pDayKey } from './pace.js';
+import { snapshotInfo, restoreSnapshot } from './store.js';
 
 const main = $('#main');
 const sidebar = $('#sidebar');
@@ -44,6 +46,8 @@ const NI = {
   keys: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v9M12 5v14M16 5v9"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
   lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  away: '<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4.5" height="6" rx="1.5"/><rect x="16.5" y="14" width="4.5" height="6" rx="1.5"/>',
+  clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
 };
 const ico = name => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${NI[name] || ''}</svg>`;
 
@@ -82,6 +86,9 @@ const routes = [
   [/^#\/outils\/exercices(?:\/([\w-]+))?$/, pageExercises],
   [/^#\/outils\/clavier$/, pageKeyboardTest],
   [/^#\/reglages$/, pageSettings],
+  // V8 : loin du piano, et ton temps de piano
+  [/^#\/loin(?:\/tete\/([\w-]+)\/([\w-]+))?$/, (piece, section) => toolPage('Loin du piano', 'Cinq à quinze minutes utiles sans clavier : ta pièce de tête, l’oreille, le rythme lu, la théorie. Ce travail prépare ta prochaine séance au piano ; il ne la remplace pas.', () => import('./tool-away.js').then(m => el => m.mountAway(el, { piece, section })))],
+  [/^#\/temps$/, pageTemps],
 ];
 
 /** Jeton de navigation : une page asynchrone vérifie qu'elle est toujours affichée avant d'écrire. */
@@ -129,7 +136,7 @@ function renderNav(hash) {
     const active = hash === href || (extra.prefix && hash.startsWith(extra.prefix));
     return `<a class="nav-link${active ? ' active' : ''}${extra.locked ? ' locked' : ''}" href="${href}">${ico(icon)}<span>${esc(label)}</span>${extra.meta ? `<span class="meta">${esc(extra.meta)}</span>` : ''}</a>`;
   };
-  let html = `<div class="nav-section">${link('#/', 'Accueil', 'home')}${link('#/parcours', 'Le parcours', 'map')}${link('#/maitrise', 'En cours de maîtrise', 'mastery')}</div>`;
+  let html = `<div class="nav-section">${link('#/', 'Accueil', 'home')}${link('#/loin', 'Loin du piano', 'away', { prefix: '#/loin/' })}${link('#/parcours', 'Le parcours', 'map')}${link('#/maitrise', 'En cours de maîtrise', 'mastery')}</div>`;
   html += `<div class="nav-section"><div class="nav-title">Niveaux</div>`;
   for (const L of LEVELS) {
     if (L.locked) continue;
@@ -156,7 +163,7 @@ function renderNav(hash) {
   html += link('#/outils/impro', 'Improvisation', 'impro');
   html += link('#/outils/composition', 'Composition', 'compose');
   html += link('#/outils/analyseur', 'Analyse technique', 'chart');
-  html += `</div><div class="nav-section">${link('#/reglages', 'Réglages', 'gear')}</div>`;
+  html += `</div><div class="nav-section">${link('#/temps', 'Ton temps de piano', 'clock')}${link('#/reglages', 'Réglages', 'gear')}</div>`;
   sidebar.innerHTML = html;
 }
 
@@ -469,6 +476,9 @@ export function frenchSpacing(root) {
     const r = t.replace(/ ([?!;:»])/g, '\u202F$1').replace(/« /g, '«\u202F').replace(/(op\.|n°|m\.) (\d)/g, '$1\u00A0$2').replace(/(\d) n°/g, '$1\u00A0n°').replace(/(♩\.?|♪) = (\d)/g, '$1\u00A0=\u00A0$2');
     if (r !== t) n.nodeValue = r;
   }
+  // V8 : dans les tableaux des leçons, seules les cellules courtes restent sur une ligne (une cellule longue en une seule
+  // ligne faisait déborder la page, V7.7)
+  for (const td of root.querySelectorAll ? root.querySelectorAll('.prose table td') : []) if (td.textContent.trim().length <= 24) td.classList.add('nw');
 }
 function lessonListHTML(lessons, { levelTag = false, state = false } = {}) {
   // V7.4 : une case par leçon, pour cocher celles déjà faites (elles ne sont plus proposées dans la séance)
@@ -482,8 +492,10 @@ function pageHome() {
   const p = levelProgress(L);
   const page = h('div', { class: 'page' });
   page.innerHTML = `
-    <div class="page-head"><h1>Bonjour Louis</h1><p class="lead">Choisis ce que tu travailles aujourd’hui. L’appli te propose la suite de chaque domaine et te signale ce que tu laisses de côté depuis trop longtemps.</p></div>
+    <div class="page-head"><h1>Bonjour Louis</h1><p class="lead">Choisis ce que tu travailles aujourd’hui : l’appli propose la suite de chaque domaine, et les fait tourner d’une séance à l’autre selon ton temps de piano.</p></div>
+    <div id="paceBox"></div>
     <div id="sessionBox"></div>
+    <div id="awayBox" class="home-away"></div>
     <div class="grid cols-2 home-row">
       <div id="pieceBox"></div>
       <div id="weekBox"></div>
@@ -518,8 +530,20 @@ function pageHome() {
     later.addEventListener('click', () => { postponeReminder(7); box.remove(); });
     $('.page-head', page).after(box);
   }
+  // V8 : ton temps de piano (demandé une fois), la pause en cours, puis la séance et « Loin du piano »
+  const paceBox = $('#paceBox', page);
+  if (!paceIsSet()) paceBox.append(paceEditor({ first: true, onSave: () => { toast('C’est noté : la séance et l’objectif de ta pièce suivent ton temps de piano.', 'ok', 3600); router(); } }));
+  const cp = currentPause();
+  if (cp) {
+    const back = h('button', { class: 'btn sm', type: 'button' }, 'Reprendre maintenant');
+    back.addEventListener('click', () => { const n = endPause(); toast(n ? `Bonne reprise : l’objectif de ta pièce est décalé de ${n} jour${n > 1 ? 's' : ''}.` : 'Bonne reprise !', 'ok', 3600); router(); });
+    paceBox.append(h('div', { class: 'callout tip pause-box' }, h('div', { class: 'c-title', html: ICONS.bulb + `En pause jusqu’au ${dayLabel(cp.to)} (${PAUSE_WHY[cp.why] || 'pause'})` }),
+      h('p', { class: 'small' }, 'Rien ne compte comme délaissé, et l’objectif de ta pièce sera décalé d’autant. Quelques minutes loin du piano gardent le contact : ta pièce de tête, l’oreille.'), h('div', { class: 'btn-row' }, back)));
+    $('#sessionBox', page).before($('#awayBox', page)); // pendant une pause, « Loin du piano » d'abord
+  }
   // la séance : nouvelle séance (cases à cocher) ou séance en cours
   offs.push(mountSessionBox($('#sessionBox', page), L));
+  import('./tool-away.js').then(m => { if (page.isConnected) offs.push(m.mountAwayCard($('#awayBox', page))); }).catch(e => console.warn(e));
   // ta pièce : avancement par section, objectif de date, section du jour
   import('./piecemap.js').then(pm => {
     if (!page.isConnected) return;
@@ -538,6 +562,7 @@ function pageHome() {
   }).catch(() => {});
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '8.0': '<ul><li><b>Ton temps de piano</b> : indique tes séances par semaine et leur durée (dès 10 minutes). La séance conseillée s’y règle : ta pièce à chaque séance, et les autres domaines <b>tournent</b> d’une séance à l’autre (l’improvisation plus souvent, puis la lecture). Rien n’est retiré : toutes les leçons, les mêmes critères « au tempo ».</li><li><b>Séances courtes</b> : à 20 minutes ou moins, le domaine qui tourne d’abord, ta pièce pour finir, rejouée une fois en entier. La barre de séance affiche le temps qui reste pour l’étape.</li><li><b>Loin du piano</b> (menu) : 5 à 15 minutes sans clavier. <b>Ta pièce de tête</b> (écouter, lire en entendant, jouer dans ta tête, de mémoire), l’oreille, le rythme et les notes, la théorie. La séance suivante au piano commence par rejouer de mémoire la section travaillée de tête.</li><li><b>Pause</b> (DS, concours blanc, vacances) : rien ne compte comme délaissé, et l’objectif de ta pièce est décalé d’autant.</li><li><b>Objectif de date</b> calculé à ton temps de piano ; <b>bilan de la semaine</b> face à ce que tu prévois. Et une <b>copie de ta progression</b> est gardée avant chaque mise à jour (Réglages).</li></ul>',
     '7.7': '<ul><li><b>Interface allégée</b> : la séance du jour tient en moins de place (une ligne d’état par case, « Déjà faite » discret), les encadrés sont plus légers (fond blanc, filet de couleur), les étiquettes ne sont plus en capitales.</li><li><b>Accompagnateur</b> : cases d’accords plus sobres (le nom complet reste affiché pendant le jeu), commandes rangées par ligne.</li><li>Petits claviers moins grands, tableaux plus lisibles, outils de l’accueil compacts, aide « Brancher le piano » repliée, et sur la carte de ta pièce, l’objectif de date n’apparaît qu’une fois tes sections situées.</li></ul>',
     '7.6': '<ul><li><b>La théorie au clavier</b> : chaque chapitre (renversements, cadences, notes étrangères, puis tout le niveau 2) finit par « Au clavier » — accords, enchaînements au plus près, figures à jouer dans trois tonalités, vérifiés au piano ou à l’écran. Le premier exercice montre les touches, le deuxième les noms, le troisième rien. Un lien « Pour improviser » mène à l’exercice qui s’en sert.</li><li><b>Niveau 2 en étapes</b> : les onze chapitres se lisent en quatre à six étapes.</li><li><b>Pages allégées</b> : au plus deux exercices visibles par étape (les autres sous « Encore »), tableaux repliés.</li><li><b>Onglet Théorie</b> : où tu en es, « Réviser », les chapitres et leur état ; les séries sont rangées dans « Entraînement libre ».</li></ul>',
     '7.5': '<ul><li><b>Nouvelle leçon « Préluder »</b> (niveau 2) : trente secondes avant ta pièce — une cadence, des accords en figuration, une cadence — en majeur, en mineur, dans les tonalités de tes pièces. La séance y renvoie.</li><li><b>Dialogues au niveau 2</b> : question – réponse sur un schéma (la réponse garde les notes d’appui), en marche (la réponse monte ou descend d’un degré), et imitations ornées ou en figuration.</li><li><b>L’op. 15 n° 1 de Chopin</b> : sa vraie grille (8 mesures, en triolets), le squelette de mémoire et une forme ABA.</li><li><b>Ton carnet de formules</b> : « Garder une formule » sous l’accompagnateur range 1 à 4 mesures de ta prise ; tu la réécoutes, puis tu la retrouves de mémoire.</li><li><b>Improvisation libre enregistrée</b> : deux minutes, tous les dix jours environ, réécoutées le lendemain avec trois questions (une idée ? une forme ? un sommet ?).</li></ul>',
@@ -579,6 +604,100 @@ function pageHome() {
 }
 function toolCard(href, title, txt) {
   return `<a class="card" href="${href}"><h3>${esc(title)}</h3><p>${esc(txt)}</p></a>`;
+}
+
+/* ================================================================== */
+/* Ton temps de piano (V8)                                             */
+/* ================================================================== */
+/** Ce que donne un temps de piano : la pièce à chaque séance, les domaines qui tournent, loin du piano. */
+function paceSummaryHTML(p) {
+  const T = paceTargets(p);
+  const lab = { impro: 'l’improvisation', lecture: 'la lecture à vue', technique: 'la technique', oreille: 'l’oreille', autres: 'tes autres pièces' };
+  const rot = ['impro', 'lecture', 'technique', 'oreille', 'autres'].map(c => `${lab[c]} ${freqLabel(T[c].perWeek)}`);
+  return `<b>Ta pièce à chaque séance</b> (environ ${pieceMinutes(p.minutes)} min). Les autres domaines tournent : ${rot.join(', ')}${p.away ? ', et l’oreille aussi loin du piano' : ''}.`;
+}
+/** Le réglage du temps de piano : séances par semaine, durée, minutes loin du piano. */
+function paceEditor({ first = false, onSave } = {}) {
+  const p0 = getPace();
+  const cur = { days: p0.days, minutes: p0.minutes, away: p0.away };
+  const preview = h('p', { class: 'small tp-prev' });
+  const goalLine = h('p', { class: 'small tp-prev mb-0' });
+  const L = currentLevel();
+  const upd = () => {
+    preview.innerHTML = paceSummaryHTML(cur);
+    import('./piecemap.js').then(pm => {
+      if (!pm.hasMap(L.piece) || !pm.statesSet(L.piece)) { goalLine.textContent = ''; return; }
+      const d = pm.suggestGoal(L.piece, Date.now(), cur);
+      goalLine.innerHTML = `À ce rythme, toute ta pièce au tempo vers le <b>${esc(pm.dateLabel(d))}</b>.`;
+    }).catch(() => {});
+  };
+  const field = (label, key, values, fmt) => {
+    const seg = h('div', { class: 'seg tp-seg', role: 'group', 'aria-label': label });
+    seg.style.setProperty('--n', values.length);
+    values.forEach(v => {
+      const b = h('button', { type: 'button', class: v === cur[key] ? 'on' : '' }, fmt(v));
+      b.addEventListener('click', () => { cur[key] = v; seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); upd(); });
+      seg.append(b);
+    });
+    return h('div', { class: 'tp-field' }, h('span', { class: 'tp-label small' }, label), seg);
+  };
+  const save = h('button', { class: 'btn primary', type: 'button' }, first ? 'C’est mon temps de piano' : 'Enregistrer');
+  save.addEventListener('click', () => { setPace(cur); onSave?.(); });
+  const card = h('div', { class: 'card tp-card' + (first ? ' first' : '') },
+    h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, first ? 'Ton temps de piano en ce moment' : 'Ton temps de piano'), first ? null : h('span', { class: 'small muted' }, paceLabel(p0))),
+    first ? h('p', { class: 'small mt-0' }, 'Avec la prépa, dis combien de temps tu as vraiment : la séance conseillée, le bilan de la semaine et l’objectif de ta pièce s’y règlent. Rien n’est retiré du parcours ; les domaines tournent d’une séance à l’autre, et ce qui n’a pas besoin du clavier se fait loin du piano.') : null,
+    field('Séances au piano par semaine', 'days', PACE_DAYS, String),
+    field('Minutes par séance', 'minutes', PACE_MINUTES, String),
+    field('Minutes par jour loin du piano', 'away', AWAY_MINUTES, v => (v ? String(v) : 'aucune')),
+    preview, goalLine, h('div', { class: 'btn-row mt-1' }, save));
+  upd();
+  return card;
+}
+/** La pause : DS, concours blanc, vacances sans piano. */
+function pauseCard(onChange) {
+  const cp = currentPause();
+  const card = h('div', { class: 'card tp-card' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Une pause'), cp ? h('span', { class: 'tag accent' }, 'en cours') : null));
+  if (cp) {
+    const back = h('button', { class: 'btn primary', type: 'button' }, 'Reprendre maintenant');
+    back.addEventListener('click', () => { const n = endPause(); toast(n ? `Bonne reprise : l’objectif de ta pièce est décalé de ${n} jour${n > 1 ? 's' : ''}.` : 'Bonne reprise !', 'ok', 3600); onChange(); });
+    card.append(h('p', { class: 'small mt-0' }, `En pause depuis le ${dayLabel(cp.from)}, jusqu’au ${dayLabel(cp.to)} (${PAUSE_WHY[cp.why] || 'pause'}). Rien ne compte comme délaissé ; à la reprise, l’objectif de ta pièce est décalé du nombre de jours de pause, et ta première séance commence par remettre la pièce en route.`), h('div', { class: 'btn-row' }, back));
+  } else {
+    let why = 'ds';
+    const inp = h('input', { type: 'date', value: pDayKey(Date.now() + 6 * 864e5), min: pDayKey(Date.now()) });
+    const seg = h('div', { class: 'seg tp-seg tp-why', role: 'group', 'aria-label': 'Pourquoi' });
+    Object.entries(PAUSE_WHY).forEach(([k, label]) => {
+      const b = h('button', { type: 'button', class: k === why ? 'on' : '' }, label);
+      b.addEventListener('click', () => { why = k; seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); });
+      seg.append(b);
+    });
+    const go = h('button', { class: 'btn', type: 'button' }, 'Commencer la pause');
+    go.addEventListener('click', () => { const p = startPause(inp.value, why); if (!p) { toast('Choisis une date à partir d’aujourd’hui.', 'err'); return; } toast(`Pause jusqu’au ${dayLabel(p.to)}.`, 'ok'); onChange(); });
+    card.append(h('p', { class: 'small mt-0' }, 'Une semaine de DS, un concours blanc, des vacances sans piano ? Pendant une pause, rien ne compte comme délaissé, et l’objectif de ta pièce est décalé d’autant à la reprise. Loin du piano reste proposé.'),
+      h('div', { class: 'tp-field' }, h('span', { class: 'tp-label small' }, 'Pourquoi'), seg),
+      h('label', { class: 'field tp-date' }, 'Jusqu’au (inclus)', inp), h('div', { class: 'btn-row mt-1' }, go));
+  }
+  const past = pauses().filter(p => p.ended || p.to < pDayKey()).slice(-3).reverse();
+  if (past.length) card.append(h('p', { class: 'small muted mb-0 mt-1' }, 'Dernières pauses : ' + past.map(p => `${PAUSE_WHY[p.why] || 'pause'}, ${pauseLength(p)} jour${pauseLength(p) > 1 ? 's' : ''} (${new Date(p.from + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })})`).join(' · ') + '.'));
+  return card;
+}
+function pageTemps() {
+  const page = h('div', { class: 'page' });
+  page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Ton temps de piano' }]) + `<div class="page-head"><h1>Ton temps de piano</h1><p class="lead">Combien de temps as-tu en ce moment ? La séance conseillée, le bilan de la semaine et l’objectif de ta pièce s’y règlent. Le parcours ne change pas : toutes les leçons, les mêmes critères « au tempo ». Avec moins de temps, les domaines tournent d’une séance à l’autre au lieu d’être tous travaillés chaque jour.</p></div>`;
+  const host = h('div', { class: 'tp-page' });
+  page.append(host);
+  main.append(page);
+  const render = () => {
+    host.innerHTML = '';
+    host.append(paceEditor({ onSave: () => { toast('Enregistré', 'ok'); render(); } }), pauseCard(render),
+      h('div', { class: 'card tp-card' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Peu de temps, beaucoup de progrès')),
+        h('ul', { class: 'small tp-tips' },
+          h('li', { html: '<b>Une section, une intention.</b> Ce qui fait progresser, ce n’est pas la durée mais la façon : s’arrêter avant la faute, trouver où et pourquoi, varier le tempo, répéter jusqu’à ce que ce soit stable (Duke et al., 2009).' }),
+          h('li', { html: '<b>Finis par ta section</b>, jouée une fois en entier : ce qu’on rejoue en dernier se consolide mieux pendant la nuit (Allen, 2013).' }),
+          h('li', { html: '<b>Court et souvent</b> plutôt que long et rare : la mémoire des gestes se consolide entre les séances, surtout pendant le sommeil. Quatre séances de vingt minutes lui laissent quatre nuits ; une séance d’une heure vingt, une seule.' }),
+          h('li', { html: '<b>Loin du piano</b>, dans les temps morts : <a href="#/loin">ta pièce de tête, l’oreille, le rythme, la théorie</a>.' }))));
+    frenchSpacing(host);
+  };
+  render();
 }
 
 
@@ -1128,7 +1247,20 @@ function pageSettings() {
   });
   const reset = h('button', { class: 'btn ghost', type: 'button' }, 'Tout effacer');
   reset.addEventListener('click', async () => { if (confirm('Effacer toute la progression, les réglages, les prises et les partitions importées ?')) { await resetAll(); router(); } });
-  page.append(card('Progression', h('p', { class: 'small' }, 'Ta progression, tes prises, tes analyses et les partitions que tu as importées sont enregistrées sur cette tablette, dans le navigateur. Exporte-les de temps en temps : vider les données de Chrome les effacerait.'), h('div', { class: 'btn-row' }, exp, impBtn, imp, reset), backupInfo));
+  // V8 : la copie gardée avant la dernière mise à jour
+  const snapBox = h('div', { class: 'snap-box' });
+  snapshotInfo().then(sn => {
+    if (!sn || !page.isConnected) return;
+    const when = new Date(sn.at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    const back = h('button', { class: 'btn sm ghost', type: 'button' }, 'Revenir à cette copie');
+    back.addEventListener('click', async () => {
+      if (!confirm(`Remplacer ta progression actuelle par la copie du ${when} (avant la version ${sn.to}) ? Ce que tu as fait depuis sera perdu ; exporte-le d’abord si tu veux le garder.`)) return;
+      if (await restoreSnapshot()) { toast('Copie rétablie : rechargement…', 'ok'); setTimeout(() => location.reload(), 600); }
+    });
+    snapBox.append(h('p', { class: 'small mt-2 mb-1' }, `Avant chaque mise à jour, l’appli garde une copie de ta progression. Dernière copie : le ${when}${sn.from ? `, en version ${sn.from}` : ''}, avant la version ${sn.to}.`), h('div', { class: 'btn-row' }, back));
+  }).catch(() => {});
+  page.append(card('Progression', h('p', { class: 'small' }, 'Ta progression, tes prises, tes analyses et les partitions que tu as importées sont enregistrées sur cette tablette, dans le navigateur. Exporte-les de temps en temps : vider les données de Chrome les effacerait.'), h('div', { class: 'btn-row' }, exp, impBtn, imp, reset), backupInfo, snapBox));
+  page.append(card('Ton temps de piano', h('p', { class: 'small' }, `${paceLabel()} ; ${awayLabel()}. La séance conseillée, le bilan de la semaine et l’objectif de ta pièce s’y règlent.${currentPause() ? ` En pause jusqu’au ${dayLabel(currentPause().to)}.` : ''}`), h('div', { class: 'btn-row' }, h('a', { class: 'btn sm', href: '#/temps' }, 'Changer, ou faire une pause'))));
 
   // Version et mises à jour
   const verInfo = h('p', { class: 'small mt-0' }, `Version ${version.app} · ${version.build} · construite le ${new Date(version.built + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`);
@@ -1180,6 +1312,8 @@ window.addEventListener('hashchange', router);
 document.addEventListener('visibilitychange', () => { if (document.hidden) audio.stopCurrent(); });
 function boot() {
   try { backfillActivity(); } catch (e) { console.warn(e); }
+  // V8 : une pause finie décale l'objectif de date des pièces (une seule fois)
+  try { const n = settlePauses(); if (n) setTimeout(() => toast(`Fin de la pause : l’objectif de ta pièce est décalé de ${n} jour${n > 1 ? 's' : ''}.`, 'ok', 4200), 800); } catch (e) { console.warn(e); }
   renderMidi(midi.status, midi.deviceName);
   midi.autoInit();
   if (!location.hash && store.get('lastRoute') && store.get('lastRoute') !== '#/') location.hash = store.get('lastRoute');

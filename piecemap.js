@@ -9,13 +9,16 @@ import { PIECE_MAPS, SECTION_STATES } from './content-piecemap.js';
 import { PIECES_META } from './content-meta.js';
 import { LESSONS } from './content-meta.js';
 import { logActivity, daysBetween, dayKey } from './activity.js';
+import { getPace, pieceMinutes, pausedDays, everyDays, paceLabel } from './pace.js';
 
 export const mapOf = piece => PIECE_MAPS[piece] || null;
 export const hasMap = piece => !!PIECE_MAPS[piece];
 const titleOf = piece => (PIECES_META[piece] || {}).title || piece;
 const lessonMeta = id => LESSONS.find(l => l.id === id) || null;
 const bars = s => (s.from === s.to ? `m. ${s.from}` : `m. ${s.from}-${s.to}`);
-const PRACTICE_DAYS = 6; // jours de pratique par semaine visés pour la pièce phare
+// V8 : l'objectif de date suit ton temps de piano. Une « journée » d'effort d'une section = 25 minutes de travail de la
+// pièce (sa part d'une séance d'une heure, à six séances par semaine : le calcul de la V7).
+const REF_MIN = 25;
 
 /* ------------------------------------------------------------------ */
 /* État des sections                                                   */
@@ -65,12 +68,27 @@ export function pieceProgress(piece) {
   }
   return { pct: tot ? got / tot : 0, atTempo, heart, total: M.sections.length, effort: tot, remaining: tot - got };
 }
-/** Date proposée : le travail restant, à 6 jours de pratique par semaine, un peu resserré (objectif ambitieux). */
-export function suggestGoal(piece, now = Date.now()) {
+/** Minutes par semaine pour la pièce phare, à ton temps de piano. */
+export const pieceMinutesPerWeek = (pace = getPace()) => pace.days * pieceMinutes(pace.minutes);
+/** Date proposée : le travail restant, à ton temps de piano (minutes par semaine pour la pièce), un peu resserré
+ *  (objectif ambitieux). À six séances d'une heure, c'est le calcul de la V7. */
+export function suggestGoal(piece, now = Date.now(), pace = getPace()) {
   const p = pieceProgress(piece);
   if (!p) return null;
-  const days = Math.ceil(p.remaining * 7 / PRACTICE_DAYS * 0.9) + (p.remaining > 0 ? 2 : 0);
+  const weeks = p.remaining * REF_MIN / Math.max(1, pieceMinutesPerWeek(pace));
+  const days = Math.ceil(weeks * 7 * 0.9) + (p.remaining > 0 ? 2 : 0);
   return dayKey(now + days * 864e5);
+}
+/** L'explication du calcul, en une phrase. */
+export const goalExplain = (pace = getPace()) => `Calcul : le travail qui reste dans chaque section, à ton temps de piano (${paceLabel(pace)}, dont environ ${pieceMinutes(pace.minutes)} min pour la pièce), un peu resserré pour rester ambitieux.`;
+/** Le temps de piano a changé depuis l'objectif, et la date proposée s'en écarte de deux semaines ou plus. */
+export function goalDrift(piece, now = Date.now()) {
+  const g = goalOf(piece);
+  const pace = store.get('settings.pace');
+  if (!g || !pace || !pace.at || (g.set || 0) >= pace.at) return null;
+  const sug = suggestGoal(piece, now);
+  const gap = daysBetween(parseDay(g.date), parseDay(sug));
+  return Math.abs(gap) >= 14 ? { sug, gap } : null;
 }
 export const goalOf = piece => store.get(`pieces.${piece}.goal`) || null;
 export function setGoal(piece, date) {
@@ -87,8 +105,10 @@ export function goalStatus(piece, now = Date.now()) {
   const end = parseDay(g.date);
   const left = daysBetween(now, end);
   if (p.pct >= 0.999) return { g, p, left, kind: 'done', text: 'objectif atteint : toutes les sections sont au tempo' };
+  // V8 : une pause en cours ne compte pas (à la reprise, la date et le départ sont décalés d'autant : pace.js)
+  const paused = pausedDays(g.set, now, { unsettled: true }) * 864e5;
   const span = Math.max(1, end - g.set);
-  const expected = Math.min(1, (g.startPct || 0) + (1 - (g.startPct || 0)) * Math.max(0, now - g.set) / span);
+  const expected = Math.min(1, (g.startPct || 0) + (1 - (g.startPct || 0)) * Math.max(0, now - g.set - paused) / span);
   const diffDays = Math.round((p.pct - expected) * p.effort);
   let kind = 'ok', text = 'dans les temps';
   if (left < 0) { kind = 'late'; text = `date dépassée de ${-left} jour${left < -1 ? 's' : ''}`; }
@@ -133,12 +153,38 @@ export function nextSection(piece, now = Date.now()) {
 /* Filage                                                              */
 /* ------------------------------------------------------------------ */
 export const lastFilage = piece => store.get(`pieces.${piece}.filage.last`) || null;
-/** Un filage par semaine dès qu'une partie de la pièce tient au tempo. */
+/** Un filage par semaine dès qu'une partie de la pièce tient au tempo (V8 : espacé avec moins de séances). */
 export function filageDue(piece, now = Date.now()) {
   const p = pieceProgress(piece);
   if (!p || p.atTempo < 1) return false;
   const last = lastFilage(piece);
-  return !last || daysBetween(last, now) >= 7;
+  return !last || daysBetween(last, now) >= everyDays(7);
+}
+
+/* ------------------------------------------------------------------ */
+/* Travail de tête, loin du piano (V8)                                  */
+/* ------------------------------------------------------------------ */
+// pieces.<id>.mental = { <section>: { at, note } } : la section travaillée de tête et la note pour le piano. La séance
+// suivante au piano la fait rejouer d'abord de mémoire (pratique mentale, puis vérification au clavier).
+export function setMental(piece, sid, note = '') {
+  const all = { ...(store.get(`pieces.${piece}.mental`) || {}) };
+  all[sid] = { at: Date.now(), note: String(note || '').trim().slice(0, 240) };
+  store.set(`pieces.${piece}.mental`, all);
+}
+/** La dernière section travaillée de tête ces quatre derniers jours, si elle n'a pas été rejouée au piano depuis. */
+export function mentalOf(piece, now = Date.now()) {
+  const M = mapOf(piece);
+  const all = store.get(`pieces.${piece}.mental`) || {};
+  let best = null;
+  for (const [sid, x] of Object.entries(all)) {
+    if (!x || !x.at || now - x.at > 4 * 864e5) continue;
+    const s = M && M.sections.find(y => y.id === sid);
+    if (!s) continue;
+    const played = sectionState(piece, sid).at;
+    if (played && played > x.at) continue;
+    if (!best || x.at > best.at) best = { section: s, at: x.at, note: x.note || '' };
+  }
+  return best;
 }
 
 /* ------------------------------------------------------------------ */
@@ -242,6 +288,8 @@ export function mountSection(el, cfg) {
     h('p', { class: 'pm-goal small' }, h('b', {}, 'Au tempo quand : '), s.goal));
   if (s.ear && s.ear.length) card.append(h('div', { class: 'pm-ear' }, h('div', { class: 'pm-h' }, 'Entendre avant de jouer'), h('ul', {}, s.ear.map(x => h('li', {}, x)))));
   card.append(h('p', { class: 'small muted mb-0' }, `Points de départ : ${s.starts.map(m => 'mesure ' + m).join(', ')}.`));
+  // V8 : la travailler loin du piano (pratique mentale, puis vérification au clavier)
+  card.append(h('p', { class: 'small pm-away mb-0' }, h('a', { href: `#/loin/tete/${piece}/${s.id}` }, 'La travailler de tête, loin du piano'), ' : l’écouter en suivant, la lire en l’entendant, la jouer dans ta tête, puis de mémoire.'));
   el.append(card);
   refresh();
   const un = store.subscribe(p => { if (p === `pieces.${piece}.sections` || p === '*') refresh(); });
@@ -274,6 +322,13 @@ export function mountPieceHead(el, cfg) {
     const goalBox = h('div', { class: 'pm-goalbox' });
     if (gs) {
       goalBox.append(h('p', { class: 'mb-0' }, h('b', {}, 'Objectif : '), `toute la pièce au tempo (${M.tempo}) pour le ${dateLabel(gs.g.date)}. `, h('span', { class: `pm-gs ${gs.kind}` }, gs.text), '.'));
+      // V8 : ton temps de piano a changé depuis : la date proposée à ce rythme
+      const dr = goalDrift(piece);
+      if (dr) {
+        const re = h('button', { class: 'btn sm', type: 'button' }, 'Recaler l’objectif');
+        re.addEventListener('click', () => { setGoal(piece, dr.sug); toast('Objectif recalé sur ton temps de piano', 'ok'); render(); });
+        goalBox.append(h('p', { class: 'small pm-drift' }, `Ton temps de piano a changé : à ce rythme, compte plutôt le ${dateLabel(dr.sug)}.`), h('div', { class: 'btn-row' }, re));
+      }
       if (!cfg.compact) {
         const adj = h('button', { class: 'btn sm ghost', type: 'button' }, 'Changer la date');
         adj.addEventListener('click', () => { goalBox.replaceWith(goalEditor()); });
@@ -283,7 +338,7 @@ export function mountPieceHead(el, cfg) {
       const sug = suggestGoal(piece);
       const weeks = Math.max(1, Math.round(daysBetween(Date.now(), parseDay(sug)) / 7));
       goalBox.append(h('p', { class: 'mb-1' }, h('b', {}, 'Objectif proposé : '), `toute la pièce au tempo pour le ${dateLabel(sug)}, dans ${weeks} semaine${weeks > 1 ? 's' : ''} environ.`));
-      if (!cfg.compact) goalBox.append(h('p', { class: 'small muted mt-0' }, 'Calcul : le travail qui reste dans chaque section, à six jours de pratique par semaine, un peu resserré pour rester ambitieux.'));
+      if (!cfg.compact) goalBox.append(h('p', { class: 'small muted mt-0' }, goalExplain(), ' ', h('a', { href: '#/temps' }, 'Ton temps de piano')));
       const ok = h('button', { class: 'btn sm primary', type: 'button' }, 'Fixer cet objectif');
       ok.addEventListener('click', () => { setGoal(piece, sug); toast('Objectif fixé', 'ok'); render(); });
       const other = h('button', { class: 'btn sm', type: 'button' }, 'Choisir une autre date');
