@@ -453,7 +453,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>Confondre montée et descente.</b> Sur fa : ii6/5 en montant, V4/2 en descendant. Sur la : IV6 en montant, ré 7 (avec fa♯) en descendant.</li>
 <li><b>Penser aux accords avant la basse.</b> Chante la basse : elle guide.</li>
 </ul>`)}
-${W.more('Dans ta pièce', '<p>Dans la descente, la règle place déjà une dominante secondaire sur le 6e degré (ré 7 sur la, avec fa♯, qui mène à sol). Aux mesures 4 à 8 de l’op. 15, Chopin généralise ce principe : la basse descend fa – mi – ré – ré♭ – do – si – la, et presque chaque étape est préparée par la dominante de l’accord suivant. La règle de l’octave, en plus coloré.</p>')}
+${W.more('Dans ta pièce', '<p>Dans la descente, la règle place déjà une dominante secondaire sur le 6e degré (ré 7 sur la, avec fa♯, qui mène à sol). Aux mesures 4 à 8 de l’op. 15, Chopin généralise ce principe : la basse descend fa – mi – ré – ré♭ – do – si♮ – la, et presque chaque étape est préparée par la dominante de l’accord suivant. La règle de l’octave, en plus coloré.</p>')}
 `,
   },
 

@@ -181,7 +181,7 @@ ${W.plan({ piece: 'op15-1', caption: 'Les mesures 36 et 48 passent à 6/8 : leur
 <h2>Les sections, une par une</h2>
 <h3 data-sec="chant">Le chant (mesures 1 à 16)</h3>
 ${W.section({ piece: 'op15-1', id: 'chant' })}
-<p>La mélodie, d’une grande simplicité, flotte au-dessus d’une main gauche écrite à trois voix : une <b>basse</b> tenue, des <b>notes en noires</b> au-dessus, et des <b>triolets</b> intérieurs qui murmurent. La basse reste sur fa pendant trois mesures, puis descend pas à pas à partir de la mesure 4 : fa – mi – ré – ré♭ – do – si – la. Chopin écrit <i>sempre legato</i> : les trois voix doivent rester liées et transparentes.</p>
+<p>La mélodie, d’une grande simplicité, flotte au-dessus d’une main gauche écrite à trois voix : une <b>basse</b> tenue, des <b>notes en noires</b> au-dessus, et des <b>triolets</b> intérieurs qui murmurent. La basse reste sur fa pendant trois mesures, puis descend pas à pas à partir de la mesure 4 : fa – mi – ré – ré♭ – do – si♮ – la. Chopin écrit <i>sempre legato</i> : les trois voix doivent rester liées et transparentes.</p>
 ${W.score({ abc: OP15.e1, title: 'Mesures 1 à 8', bpm: 69, startBpm: 52, caption: 'Écoute la main gauche seule (MG) : trois voix, toutes liées.' })}
 
 <h3 data-sec="sommet">Le sommet et la fioriture (mesures 17 à 24)</h3>

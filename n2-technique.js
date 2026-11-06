@@ -244,7 +244,7 @@ ${W.links([
 
 <h2>Les trois voix</h2>
 <ul>
-<li><b>La basse</b> : fa2, en blanches pointées pendant trois mesures, puis une descente pas à pas : fa – mi – ré, ré – ré♭ – do, do – si, si – la (mesures 4 à 7).</li>
+<li><b>La basse</b> : fa2, en blanches pointées pendant trois mesures, puis une descente pas à pas : fa – mi – ré, ré – ré♭ – do, do – si♮, si♮ – la (mesures 4 à 7) : chromatique par endroits, d’où le si♮.</li>
 <li><b>La voix en noires</b> : elle double d’abord la mélodie à l’octave inférieure (mesures 1-2), puis devient une voix intérieure qui monte chromatiquement, do – do♯ – ré, sous la note tenue de la mélodie (mesure 4). C’est un duo avec la main droite.</li>
 <li><b>Les triolets</b> du milieu : le tissu harmonique, qui murmure sans jamais couvrir le reste.</li>
 </ul>
@@ -338,7 +338,7 @@ ${W.analyzer({ mode: 'evenness', title: 'Analyseur — régularité des octaves'
 ${W.tip('Les octaves liées de Chopin', '<p>Pour lier la voix du haut, alterne 4 et 5 (le 4 de préférence sur les touches noires ; sur deux touches blanches successives, 4 puis 5, voire 3 – 4 – 5), le pouce glissant d’une touche à l’autre. On ne lie vraiment que la voix supérieure ; la pédale et la nuance font le reste.</p>')}
 
 <h2>Dans le nocturne : les mesures 41 à 44</h2>
-<p>Pendant que la main droite poursuit ses doubles notes, la main gauche chante dans le grave. Mesure 41 : elle frappe l’octave la♭ et la tient (pédale, et 5e doigt si possible), tandis que la mélodie mi♭ – fa – ré♭ – do se glisse à l’intérieur. Mesure 42 : la mélodie passe en octaves, si – do – la♭. Même dessin, un degré plus haut, aux mesures 43 et 44.</p>
+<p>Pendant que la main droite poursuit ses doubles notes, la main gauche chante dans le grave. Mesure 41 : elle frappe l’octave la♭ et la tient (pédale, et 5e doigt si possible), tandis que la mélodie mi♭ – fa – ré♭ – do se glisse à l’intérieur. Mesure 42 : la mélodie passe en octaves, si♮ – do – la♭. Même dessin, un degré plus haut, aux mesures 43 et 44.</p>
 ${W.score({ abc: OP15.e6, title: 'Con fuoco, mesures 41 à 44', bpm: 84, startBpm: 46, caption: 'Choisis « MG » : la mélodie doit dominer la main droite, pourtant pleine de notes. Les deux voix de la main gauche se lisent séparément (hampes vers le haut : la mélodie).' })}
 
 <h2>Les accords pleins</h2>
@@ -423,7 +423,7 @@ ${W.exo('Exercice — Le poignet qui guide', `<ol>
 <li><b>Arpèges lents</b> (4 min) : ♩ = 40, une croche par note ; vérifie qu’à chaque pouce le poignet est souple (tu pourrais le bouger).</li>
 <li><b>Par impulsions</b> (3 min) : un groupe vite, arrêt sur le pouce suivant, main détendue ; puis deux groupes, puis tout (méthode des <a href="#/lecon/n2-t1">passages rapides</a>).</li>
 </ol>`)}
-${W.analyzer({ mode: 'evenness', title: 'Analyseur — régularité des arpèges', bpm: 60, sub: 4, help: 'Joue l’arpège de do majeur (monté et descente) en doubles croches à ♩ = 60. Objectif : moins de 10 % d’irrégularité, sans tension.' })}
+${W.analyzer({ mode: 'evenness', title: 'Analyseur — régularité des arpèges', bpm: 60, sub: 4, help: 'Joue l’arpège de do majeur (montée et descente) en doubles croches à ♩ = 60. Objectif : moins de 10 % d’irrégularité, sans tension.' })}
 ${W.warn('Douleur = arrêt', '<p>Une gêne au poignet, à l’avant-bras ou entre le pouce et l’index signale un écart forcé : arrête, reprends plus lentement, en blocs, et réduis l’ouverture (sur une octave d’abord).</p>')}
 
 <h2>2. La main gauche d’une valse</h2>

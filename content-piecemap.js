@@ -113,7 +113,7 @@ export const PIECE_MAPS = {
         needs: [{ l: 'n2-t3' }, { l: 'n1-t3' }, { l: 'n1-t4' }, { l: 'n2-i2', why: 'ce que l’harmonie change au jeu' }, { x: 'mvt-tenir-gauche', t: 'La gauche tient, la droite bouge' }, { th: 'n2-th2', why: 'les dominantes secondaires' }],
         recipe: ['La main gauche seule, voix par voix : la basse, puis les noires, puis les triolets.', 'La main gauche entière, legato, les triolets discrets.', 'Mains ensemble à ♩ = 50, puis montée de tempo.'],
         goal: '3 fois de suite sans faute à ♩ = 60, la mélodie au-dessus, la main gauche transparente.',
-        ear: ['Chante la mélodie des mesures 1 à 4 avant de la jouer.', 'Chante la basse des mesures 4 à 7 : fa – mi – ré – ré♭ – do – si – la.'],
+        ear: ['Chante la mélodie des mesures 1 à 4 avant de la jouer.', 'Chante la basse des mesures 4 à 7 : fa – mi – ré – ré♭ – do – si♮ – la.'],
         ex: ['e1'],
       },
       {

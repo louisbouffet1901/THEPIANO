@@ -205,7 +205,7 @@ ${W.links([W.informance('/content/pages/6-the-art-of-piano-fingering', 'The Art 
       'Pour faire ressortir le chant, <b>alléger l’accompagnement</b> marche mieux que forcer la mélodie.',
       'Dans une même main, la note du haut chante : le poids s’incline vers le 5e doigt, les autres doigts enfoncent leur touche plus lentement.',
     ],
-    goal: 'l’analyseur « Équilibre » mesure au moins +12 de vélocité (la force de frappe, que le piano note de 0 à 127) entre la mélodie et la main gauche, mesures 1 à 4.',
+    goal: 'l’analyseur « Équilibre » mesure au moins +12 de vélocité (la force de frappe, que le piano note de 1 à 127) entre la mélodie et la main gauche, mesures 1 à 4.',
     body: W => `
 <p>Dans l’op. 55 n° 1, trois plans se superposent : la <b>mélodie</b> (main droite), la <b>basse</b> (main gauche, 1er et 3e temps) et les <b>accords</b> (main gauche, 2e et 4e temps). Le soliste doit dominer, la basse soutenir, les accords se fondre. Jouer tout au même niveau, c’est perdre la mélodie.</p>
 ${W.diagram('voicing', {}, 'Ce qu’on vise : la mélodie nettement au-dessus, la basse présente, les accords les plus doux.')}
@@ -219,7 +219,7 @@ ${W.exo('Exercice 1', `<ol>
 <li>Mains ensemble : main droite <i>mf</i>, main gauche telle quelle. Écoute la note longue de la mélodie au-dessus des accords.</li>
 <li>Inverse une fois (main gauche plus forte) : c’est en contrôlant aussi l’inverse qu’on contrôle vraiment.</li>
 </ol>`)}
-${W.analyzer({ mode: 'balance', title: 'Analyseur — équilibre des mains', target: 12, help: 'Joue les mesures 1 à 4 mains ensemble. L’analyseur compare la force moyenne des notes au-dessus et au-dessous du point de séparation (do3 par défaut). Cette force, la vélocité, le piano la note de 0 à 127. Objectif : la mélodie au moins 12 au-dessus.' })}
+${W.analyzer({ mode: 'balance', title: 'Analyseur — équilibre des mains', target: 12, help: 'Joue les mesures 1 à 4 mains ensemble. L’analyseur compare la force moyenne des notes au-dessus et au-dessous du point de séparation (do3 par défaut). Cette force, la vélocité, le piano la note de 1 à 127. Objectif : la mélodie au moins 12 au-dessus.' })}
 
 <h2>Faire chanter le haut d’un accord</h2>
 <p>Dans une même main, la note la plus aiguë doit souvent dominer. Le geste : le poids s’incline vers le côté du 5e doigt, qui est actif et ferme ; les autres doigts sont « passifs », presque à fleur de touche, et enfoncent leur touche plus lentement.</p>

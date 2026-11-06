@@ -233,8 +233,8 @@ ${W.warn('Erreurs fréquentes', '<ul><li>Déplacer tout l’accord en bloc : c�
 <p>La main gauche de l’op. 15 n° 1 est écrite à trois voix : une <b>basse</b> tenue, une voix en <b>noires</b> et des <b>triolets</b> qui remplissent l’harmonie. Voici la mélodie avec la basse et la voix en noires seulement :</p>
 ${W.score({ abc: OP15_VOICES, title: 'Mesures 1 à 8 : mélodie, voix en noires et basse (sans les triolets)', bpm: 66, startBpm: 56, practice: false, analysis: false, caption: 'Réduction : les triolets de la main gauche sont supprimés pour faire entendre les deux lignes qui portent l’harmonie.' })}
 <ul>
-<li><b>La basse</b> reste sur fa pendant trois mesures (pédale de tonique), puis descend pas à pas : fa – mi – ré – ré♭ – do – si – la, puis fa et mi (mesures 7-8).</li>
-<li><b>La voix en noires</b> avance presque toujours par demi-tons ou par tons : do – do♯ – ré (mesure 4), si – si♭ (mesure 5), la (mesure 6), sol♯ – la (mesure 7).</li>
+<li><b>La basse</b> reste sur fa pendant trois mesures (pédale de tonique), puis descend pas à pas : fa – mi – ré – ré♭ – do – si♮ – la, puis fa et mi (mesures 7-8).</li>
+<li><b>La voix en noires</b> avance presque toujours par demi-tons ou par tons : do – do♯ – ré (mesure 4), si♮ – si♭ (mesure 5), la (mesure 6), sol♯ – la (mesure 7).</li>
 <li><b>Les notes à tendance</b> : do♯, sensible de ré, monte vers ré (mesure 4) ; sol♯, sensible de la, monte vers la (mesure 7). Mais à la mesure 5, si♮ glisse vers si♭ : dans une ligne chromatique, c’est la direction de la ligne qui l’emporte.</li>
 <li><b>Mesures 3 → 4</b> : dans les triolets, le si♭ (septième de do 7) descend sur la (tierce de fa) : la règle « la septième descend », en situation réelle.</li>
 </ul>
@@ -581,7 +581,7 @@ ${W.key('À retenir', '<ul><li>Marche = modèle + reprises à d’autres hauteur
 ${W.warn('Erreurs fréquentes', '<ul><li>Prendre une simple répétition (même hauteur) pour une marche.</li><li>Chercher une reproduction exacte : dans une marche tonale, les intervalles s’adaptent à la gamme (seconde majeure ici, mineure là).</li><li>Jouer chaque reprise de la même façon : une marche se dirige, en crescendo ou en diminuendo.</li></ul>')}
 
 <h2>Dans ta pièce : mesures 41 à 48</h2>
-<p><b>Mesures 41 à 44 : une marche ascendante.</b> Modèle de deux mesures : la♭ 7, avec la mélodie à la main gauche (mi♭ – fa – ré♭ – do, puis si – do – la♭). Reprise : si♭ 7, le même dessin <b>un ton plus haut</b> (fa – sol♭ – mi♭ – ré, puis do♯ – ré – si♭). La tension monte avant la redescente.</p>
+<p><b>Mesures 41 à 44 : une marche ascendante.</b> Modèle de deux mesures : la♭ 7, avec la mélodie à la main gauche (mi♭ – fa – ré♭ – do, puis si♮ – do – la♭). Reprise : si♭ 7, le même dessin <b>un ton plus haut</b> (fa – sol♭ – mi♭ – ré, puis do♯ – ré – si♭). La tension monte avant la redescente.</p>
 ${W.score({ abc: OP15.e6, title: 'Mesures 41 à 44 : la marche ascendante', bpm: 84, startBpm: 56 })}
 <p><b>Mesures 45 à 48 : une marche descendante.</b> La basse enchaîne si♭ – mi♭ – la♭ – ré♭ (quintes descendantes, comme dans l’exemple du cours), puis fa – si♭. La mélodie reprend son motif de plus en plus bas, et la♮ annonce le retour de fa majeur.</p>
 ${W.score({ abc: OP15_RED_45, title: 'Mesures 45 à 48 (réduction : mélodie et accords)', bpm: 66, startBpm: 56, practice: false, analysis: AN_RED_45, caption: 'Réduction : les doubles notes de la main droite et les octaves de la main gauche sont ramenées à des accords. La mesure 48 est à 6/8 dans la partition.' })}

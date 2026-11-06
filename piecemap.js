@@ -143,8 +143,8 @@ export function nextSection(piece, now = Date.now()) {
   const fresh = rows.find(r => r.st === 0);
   let pick, why;
   if (fresh && doing.length < 2) { pick = fresh; why = doing.length ? 'nouvelle section, pendant que l’autre mûrit' : 'nouvelle section'; }
-  else if (doing.length) { pick = oldest(doing); why = 'en place lentement : vers le tempo'; }
-  else if (rows.some(r => r.st === 2)) { pick = oldest(rows.filter(r => r.st === 2)); why = 'au tempo : vers le par cœur'; }
+  else if (doing.length) { pick = oldest(doing); why = 'en place lentement, à amener au tempo'; }
+  else if (rows.some(r => r.st === 2)) { pick = oldest(rows.filter(r => r.st === 2)); why = 'au tempo, à apprendre par cœur'; }
   else { pick = oldest(rows); why = 'entretien'; }
   return { section: pick.s, st: pick.st, at: pick.at, why, intention: intentionFor(pick.s, pick.st, now) };
 }
@@ -216,7 +216,7 @@ function needLink(n) {
     return h('li', { class: n.th ? 'pm-need opt' : 'pm-need' },
       h('a', { href: `#/lecon/${id}` }, l.title), lvl ? h('span', { class: 'small muted' }, lvl) : null,
       n.why ? h('span', { class: 'small muted' }, ` : ${n.why}`) : null,
-      n.th ? h('em', { class: 'tag opt-tag' }, 'théorie') : null,
+      n.th ? ' ' : null, n.th ? h('em', { class: 'tag opt-tag' }, 'théorie') : null,
       h('span', { class: 'pm-done' }, store.isDone(id) ? ' ✓' : ''));
   }
   if (n.x) return h('li', { class: 'pm-need' }, h('a', { href: `#/outils/exercices/${n.x}` }, n.t || n.x), h('span', { class: 'small muted' }, ' : exercice des deux mains'));
@@ -321,7 +321,7 @@ export function mountPieceHead(el, cfg) {
     const gs = goalStatus(piece);
     const goalBox = h('div', { class: 'pm-goalbox' });
     if (gs) {
-      goalBox.append(h('p', { class: 'mb-0' }, h('b', {}, 'Objectif : '), `toute la pièce au tempo (${M.tempo}) pour le ${dateLabel(gs.g.date)}. `, h('span', { class: `pm-gs ${gs.kind}` }, gs.text), '.'));
+      goalBox.append(h('p', { class: 'mb-0' }, h('b', {}, 'Objectif : '), `toute la pièce au tempo (${M.tempo}) pour le ${dateLabel(gs.g.date)}. `, h('span', { class: `pm-gs ${gs.kind}` }, gs.text.charAt(0).toUpperCase() + gs.text.slice(1)), '.'));
       // V8 : ton temps de piano a changé depuis : la date proposée à ce rythme
       const dr = goalDrift(piece);
       if (dr) {
