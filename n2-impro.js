@@ -312,7 +312,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>Regarder ses doigts au lieu d’entendre la basse.</b> Chante 3 – 4 – 5 – 1 en jouant : la basse guide la main.</li>
 </ul>`)}
 ${W.tip('La suite : préluder', '<p>La cadence est la charpente du prélude : une cadence, quelques accords arpégés, une cadence. C’est la leçon suivante, <a href="#/lecon/n2-im-preluder">Préluder</a>, à faire ensuite avant chaque pièce.</p>')}
-${W.more('Dans ta pièce', '<p>Les cadences de l’op. 15 n° 1 sont des modèles : mesures 21-22, do 7 → fa (cadence parfaite, la basse va de do à fa) ; mesure 24, arrêt sur do 7 au-dessus de la basse fa (effet de demi-cadence) avant le Con fuoco. Joue la cadence du cours en fa majeur (basse la – si♭ – do – fa), puis écoute ces deux moments.</p>')}
+${W.more('Dans ta pièce', '<p>Les cadences de l’op. 15 n° 1 sont des modèles. Mesures 21-22 : do 7 → fa, une cadence parfaite (la basse va de do à fa). Mesure 24 : arrêt sur do 7 au-dessus de la basse fa, comme une demi-cadence, juste avant le Con fuoco. Joue la cadence du cours en fa majeur (basse la – si♭ – do – fa), puis écoute ces deux moments.</p>')}
 `,
   },
 
@@ -530,7 +530,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>Orner au point de perdre le soprano.</b> La note en or reste au premier temps ; l’ornement vient après.</li>
 <li><b>Un Prinner qui ne descend pas jusqu’à mi.</b> Il finit sur la tierce de l’accord de do, sur la tonique à la basse : c’est sa conclusion.</li>
 </ul>`)}
-${W.more('Où on les entend', '<p>Le Canon de Pachelbel repose sur une variante de la Romanesca à basse sautante (1 – 5 – 6 – 3). Le Prinner est partout chez Mozart et Haydn, à la fin des premières phrases. Dans l’op. 15 de Chopin, mesures 4 à 8, une basse descend aussi pas à pas sous la mélodie, mais Chopin la remplit de couleurs chromatiques là où la Romanesca et le Prinner restent dans la gamme.</p>')}
+${W.more('Où on les entend', '<p>Le Canon de Pachelbel repose sur une variante de la Romanesca dont la basse procède par sauts (1 – 5 – 6 – 3). Le Prinner est partout chez Mozart et Haydn, à la fin des premières phrases. Dans l’op. 15 de Chopin, mesures 4 à 8, une basse descend aussi pas à pas sous la mélodie, mais Chopin la remplit de couleurs chromatiques là où la Romanesca et le Prinner restent dans la gamme.</p>')}
 `,
   },
 
@@ -746,7 +746,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>Changer de rythme à la reprise.</b> Même rythme, même dessin : seule la hauteur change.</li>
 <li><b>Ne pas sortir de la marche.</b> En mesure 7, quitte le modèle : la septième descend, la sensible do♯ mène à ré.</li>
 </ul>`)}
-${W.tip('Écrire ton élégie', '<p>Dans l’onglet <a href="#/outils/composition">Composition</a>, choisis « Élégie » : l’appli joue les vagues en ré mineur, tu enregistres ta mélodie, elle devient une partition de huit mesures que tu peux reprendre mesure par mesure, garder et exporter (MIDI, pour MuseScore).</p>')}
+${W.tip('Écrire ton élégie', '<p>Dans l’outil <a href="#/outils/composition">Composition</a> (page Improvisation), choisis « Élégie » : l’appli joue les vagues en ré mineur, tu enregistres ta mélodie, elle devient une partition de huit mesures que tu peux reprendre mesure par mesure, garder et exporter (MIDI, pour MuseScore).</p>')}
 ${W.more('La même marche, plus simple, en la mineur', `${W.score({ abc: MARCHE, title: 'Un modèle et ses reprises (la mineur)', bpm: 66, startBpm: 56, practice: false, caption: 'Le modèle (mesures 1-2) : mi – ré – do – mi, puis fa – mi – ré – fa. Il est repris un degré plus bas (mesures 3-4), puis encore (mesures 5-6), avant la cadence.' })}<p>Dans ta pièce : le Con fuoco de l’op. 15 contient deux marches (mesures 41 à 48), la♭ 7 → si♭ 7 un ton plus haut, puis si♭ – mi♭ – la♭ – ré♭ à la basse, des quintes descendantes, comme ici.</p>`)}
 ${W.listen([W.yt('Rachmaninoff Elegie op 3 no 1', 'Rachmaninov, Élégie op. 3 n° 1', 'Le modèle du style'), W.yt('Tchaikovsky Romance op 5', 'Tchaïkovski, Romance op. 5', 'Une romance russe en arpèges')], 'Écouter le style')}
 `,
@@ -766,7 +766,7 @@ ${W.listen([W.yt('Rachmaninoff Elegie op 3 no 1', 'Rachmaninov, Élégie op. 3 n
     goal: 'l’exercice « ta note, qui bouge par degrés » est validé.',
     body: W => `
 <p>Dans le Prélude en mi mineur, Chopin fait presque tout avec l’harmonie. La main droite chante si – do – si pendant quatre mesures, puis la – si – la ; la main gauche répète ses accords en croches et, à chaque changement, une seule de ses trois voix descend d’un demi-ton. C’est la ${W.term('conduite des voix', 'la manière dont chaque note d’un accord rejoint une note de l’accord suivant ; ici, par demi-tons, sans saut')} poussée à l’extrême.</p>
-${W.score({ abc: OP28.n4a, title: 'Prélude op. 28 n° 4, mesures 1 à 12', qpm: 54, startBpm: 22, pedal: PED_PRELUDE, pedalEnd: 49, caption: 'Suis une voix de la main gauche : le mi du haut descend (mi – mi♭ – ré – do♯ – do – si…), puis celle du milieu, puis la basse. La mélodie, elle, tient son si, qui change de rôle à chaque accord : quinte de mi mineur, calme (mesure 1) ; partie d’une sixte augmentée fa – la – si – mi♭, très tendue (mesure 3) ; fondamentale de si – ré – fa – la deux temps plus tard. Mesure 12 : la demi-cadence sur si 7, puis le silence.' })}
+${W.score({ abc: OP28.n4a, title: 'Prélude op. 28 n° 4, mesures 1 à 12', qpm: 54, startBpm: 22, pedal: PED_PRELUDE, pedalEnd: 49, caption: 'Suis une voix de la main gauche : le mi du haut descend (mi – mi♭ – ré – do♯ – do – si…), puis celle du milieu, puis la basse. La mélodie, elle, tient son si, qui change de rôle à chaque accord. Mesure 1 : quinte de mi mineur, calme. Mesure 3 : partie d’une sixte augmentée fa – la – si – mi♭, très tendue. Deux temps plus tard : fondamentale de si – ré – fa – la. Mesure 12 : la demi-cadence sur si 7, puis le silence.' })}
 
 <h2>Pourquoi une note tenue suffit</h2>
 <p>Une note ne sonne pas pareil sur tous les accords. Sur l’un, elle est au repos ; sur le suivant, elle frotte ; sur un troisième, elle redevient stable. Quand l’harmonie bouge, la mélodie peut rester immobile : c’est l’accord qui raconte l’histoire.</p>

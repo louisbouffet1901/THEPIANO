@@ -183,7 +183,7 @@ ${W.plan({ piece: 'op55-1', states: false, title: 'La forme, section par section
 <p>Une forme ternaire (A – B – A′) dont le retour est très court : quatre mesures seulement, puis la coda. Dans la section A, le thème (8 mesures) revient trois fois, à chaque fois varié, en alternance avec une phrase b qui monte par marches.</p>
 
 <h2>L’harmonie des mesures 1 à 8</h2>
-${W.score({ abc: OP55_ANALYSE, analysis: AN.op55_1_8, title: 'Mesures 1 à 8, avec l’analyse', bpm: 56, pedal: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31], pedalEnd: 33, caption: 'Les chiffrages sont expliqués dans le module de théorie (degrés et fonctions). N6 : sixte napolitaine.' })}
+${W.score({ abc: OP55_ANALYSE, analysis: AN.op55_1_8, title: 'Mesures 1 à 8, avec l’analyse', bpm: 56, pedal: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31], pedalEnd: 33, caption: 'Les chiffrages (i, iv, V7…) sont expliqués dans le chapitre de théorie « Degrés et fonctions ». N6 : sixte napolitaine (théorie, niveau 2).' })}
 <ul>
 <li><b>Mesures 1 à 4</b> : la basse fait fa – sol – la♭, puis mi♮ – fa. Les accords : i (fa mineur), VII<sup>6</sup> (mi♭ majeur avec sol à la basse), III (la♭ majeur), V<sup>6/5</sup> (do 7 avec mi à la basse). Une boucle qui tourne autour de fa.</li>
 <li><b>Mesures 5 à 8</b> : même départ, mais à la mesure 6 apparaît un accord de <b>sol♭ majeur avec si♭ à la basse</b> : la <b>sixte napolitaine</b>, une couleur sombre et intense, juste avant la cadence (i<sup>6/4</sup> – V – i). C’est le moment le plus expressif de la phrase : le trille sur si♭ et les petites notes l’ornent.</li>

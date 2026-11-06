@@ -194,7 +194,7 @@ defineWidget('cof', (el, cfg) => {
       const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       tx.setAttribute('class', 'cofl'); tx.setAttribute('x', x); tx.setAttribute('y', y); tx.setAttribute('text-anchor', 'middle');
       tx.setAttribute('font-size', black ? '8.5' : '10'); tx.setAttribute('fill', black ? '#fff' : '#2c3138');
-      tx.setAttribute('font-family', 'Inter, system-ui, sans-serif'); tx.textContent = nm[m % 12];
+      tx.setAttribute('font-family', 'Inter, MusicSym, system-ui, sans-serif'); tx.textContent = nm[m % 12];
       kb.append(tx);
     }
     return { sc, sig };
@@ -403,7 +403,7 @@ export function lessonToggle(l, label = 'À apprendre par cœur') {
   cb.checked = lessonOn(l.id);
   cb.addEventListener('change', () => {
     setLessonOn(l.id, cb.checked);
-    toast(cb.checked ? `« ${l.title} » : fiche et exercices dans En cours de maîtrise` : `« ${l.title} » retirée de En cours de maîtrise`, 'ok', 3200);
+    toast(cb.checked ? `« ${l.title} » : sa fiche et ses exercices sont dans Théorie › Fiches et exercices` : `« ${l.title} » retirée des fiches`, 'ok', 3200);
   });
   return h('label', { class: 'check notion-check' }, cb, h('span', {}, label));
 }

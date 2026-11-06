@@ -77,7 +77,7 @@ const routes = [
   [/^#\/outils$/, pageTools],
   [/^#\/outils\/metronome$/, () => toolPage('Métronome', 'Mesures muettes, accélération progressive, tempo tapé.', () => import('./tool-metronome-ui.js').then(m => el => m.mountMetronome(el, { title: false })), 'reglages')],
   [/^#\/outils\/lecture$/, pageLecture],
-  [/^#\/maitrise$/, () => toolPage('Fiches et exercices', 'Les leçons que tu apprends par cœur (« En cours de maîtrise ») : une fiche pour relire l’essentiel, de petits exercices corrigés pour vérifier que tu le sais.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)), 'theorie')],
+  [/^#\/maitrise$/, () => toolPage('Fiches et exercices', 'Les chapitres que tu as cochés « À apprendre par cœur » : pour chacun, une fiche pour relire l’essentiel et de petits exercices corrigés pour vérifier que tu le sais.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)), 'theorie')],
   [/^#\/outils\/rythme$/, () => toolPage('Rythme', 'Lire le rythme : compter, subdiviser, placer chaque attaque. Dix niveaux, des noires aux polyrythmies, et les rythmes de tes pièces.', () => Promise.all([import('./tool-rhythm.js'), ensureAbcjs()]).then(([m]) => el => m.mountRhythmPage(el)), 'lecture')],
   [/^#\/outils\/oreille(?:\/(jouer|parcours))?$/, pageEar],
   [/^#\/outils\/theorie$/, () => pagePresets('theorie')],
@@ -494,7 +494,7 @@ function essentialsCard(l, core, notions = []) {
     const ul = card.querySelector('.ess-notions');
     for (const n of notions) ul.append(h('li', { html: `<b>${esc(n.title)}</b>${n.short ? ` : ${n.short}` : ''}` }));
   }
-  if (heart) card.append(h('div', { class: 'ess-heart' }, lessonToggle(l), h('span', { class: 'small muted' }, 'Sa fiche et ses exercices t’attendent dans ', h('a', { href: '#/maitrise' }, 'En cours de maîtrise'), '.')));
+  if (heart) card.append(h('div', { class: 'ess-heart' }, lessonToggle(l), h('span', { class: 'small muted' }, 'Coché, ce chapitre a sa fiche et ses exercices dans ', h('a', { href: '#/maitrise' }, 'Théorie › Fiches et exercices'), '.')));
   return card;
 }
 /** Typographie française : espace fine insécable avant ? ! ; : et à l'intérieur des guillemets. */
@@ -515,7 +515,7 @@ export function frenchSpacing(root) {
 }
 function lessonListHTML(lessons, { levelTag = false, state = false } = {}) {
   // V7.4 : une case par leçon, pour cocher celles déjà faites (elles ne sont plus proposées dans la séance)
-  return `<ul class="lesson-list">${lessons.map((l, i) => { const d = store.isDone(l.id); return `<li class="${d ? 'done' : ''}${l.prio === 2 ? ' opt' : ''}"><a href="#/lecon/${l.id}"><span class="num" data-n="${i + 1}">${d ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b>${l.prio === 2 ? '<em class="tag opt-tag">complément</em>' : ''}${levelTag ? `<em class="tag opt-tag">niveau ${l.level.slice(1)}</em>` : ''}${state && !d && lessonState(l) === 'en cours' ? '<em class="tag accent st-tag">en cours</em>' : ''}<span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a><button type="button" class="ll-done" data-done="${l.id}" aria-pressed="${d}" aria-label="Leçon déjà faite : ${esc(l.title)}" title="${d ? 'Décocher' : 'Cocher : déjà faite (elle ne sera plus proposée dans la séance)'}"><span class="ll-box"></span></button></li>`; }).join('')}</ul>`;
+  return `<ul class="lesson-list">${lessons.map((l, i) => { const d = store.isDone(l.id); return `<li class="${d ? 'done' : ''}${l.prio === 2 ? ' opt' : ''}"><a href="#/lecon/${l.id}"><span class="num" data-n="${i + 1}">${d ? '✓' : i + 1}</span><span class="t"><b>${esc(l.title)}</b> ${l.prio === 2 ? '<em class="tag opt-tag">complément</em> ' : ''}${levelTag ? `<em class="tag opt-tag">niveau ${l.level.slice(1)}</em> ` : ''}${state && !d && lessonState(l) === 'en cours' ? '<em class="tag accent st-tag">en cours</em> ' : ''}<span>${esc(l.summary || '')}</span></span><span class="dur">${l.minutes ? l.minutes + ' min' : ''}</span></a><button type="button" class="ll-done" data-done="${l.id}" aria-pressed="${d}" aria-label="Leçon déjà faite : ${esc(l.title)}" title="${d ? 'Décocher' : 'Cocher : déjà faite (elle ne sera plus proposée dans la séance)'}"><span class="ll-box"></span></button></li>`; }).join('')}</ul>`;
 }
 /* ================================================================== */
 /* Pages                                                               */
@@ -665,15 +665,16 @@ function toolCard(href, title, txt) {
 /** Ce que donne un temps de piano : la pièce à chaque séance, les domaines qui tournent, loin du piano. */
 function paceSummaryHTML(p) {
   const T = paceTargets(p);
-  const lab = { impro: 'l’improvisation', lecture: 'la lecture à vue', technique: 'la technique', oreille: 'l’oreille', autres: 'tes autres pièces' };
-  const rot = ['impro', 'lecture', 'technique', 'oreille', 'autres'].map(c => `${lab[c]} ${freqLabel(T[c].perWeek)}`);
-  return `<b>Ta pièce à chaque séance</b> (environ ${pieceMinutes(p.minutes)} min). Les autres domaines tournent : ${rot.join(', ')}${p.away ? ', et l’oreille aussi loin du piano' : ''}.`;
+  // V8.2 : une ligne par domaine (une seule phrase de cinq fréquences se lisait mal)
+  const lab = { impro: 'Improvisation', lecture: 'Lecture à vue', technique: 'Technique', oreille: 'Oreille', autres: 'Tes autres pièces' };
+  const rot = ['impro', 'lecture', 'technique', 'oreille', 'autres'].map(c => `<li><span>${lab[c]}</span><b>${freqLabel(T[c].perWeek)}${c === 'oreille' && p.away ? ', et loin du piano' : ''}</b></li>`);
+  return `<p class="mb-1"><b>Ta pièce à chaque séance</b> (environ ${pieceMinutes(p.minutes)} min). Les autres domaines tournent :</p><ul class="tp-rot">${rot.join('')}</ul>`;
 }
 /** Le réglage du temps de piano : séances par semaine, durée, minutes loin du piano. */
 function paceEditor({ first = false, onSave } = {}) {
   const p0 = getPace();
   const cur = { days: p0.days, minutes: p0.minutes, away: p0.away };
-  const preview = h('p', { class: 'small tp-prev' });
+  const preview = h('div', { class: 'small tp-prev' });
   const goalLine = h('p', { class: 'small tp-prev mb-0' });
   const L = currentLevel();
   const upd = () => {
@@ -784,7 +785,7 @@ function pageLevel(id) {
     <div class="tags"><span class="tag accent">${p.done}/${p.total} leçons</span>${isLevelValidated(L) ? '<span class="tag ok">niveau validé</span>' : ''}</div></div>`;
   html += `<div class="grid cols-2">
     <a class="card piece" href="#/piece/${L.piece}"><div class="card-top"><span class="eyebrow">Pièce phare</span></div><h3>${esc(PIECES[L.piece].title)}</h3><p>${esc(PIECES[L.piece].short || '')}</p></a>
-    <div class="card"><div class="card-top"><span class="eyebrow">Pièces complémentaires</span></div>${L.complements.map(cid => `<p class="mb-0"><a href="#/piece/${cid}">${esc(PIECES[cid].title)}</a> <span class="small">${esc(PIECES[cid].status || '')}</span></p>`).join('')}</div>
+    <div class="card"><div class="card-top"><span class="eyebrow">Pièces complémentaires</span></div>${L.complements.map(cid => `<p class="mb-0"><a href="#/piece/${cid}">${esc(PIECES[cid].title)}</a> <span class="small muted">${esc(PIECES[cid].short || '')}</span></p>`).join('')}</div>
   </div>`;
   html += `<div class="section-title"><h2>Objectifs du niveau</h2></div><div class="card"><ul class="goals">${L.goals.map(g => `<li>${g}</li>`).join('')}</ul></div>`;
   html += `<div class="btn-row mt-2"><a class="btn primary" href="#/piece/${L.piece}">La carte de la pièce</a><a class="btn" href="#/validation/${L.id}">Grille de validation</a></div>`;
@@ -865,9 +866,9 @@ async function pagePiece(id, sec = null) {
     const cb = h('input', { type: 'checkbox', checked: !!store.get(`pieces.${id}.byHeart`) });
     cb.addEventListener('change', () => {
       store.set(`pieces.${id}.byHeart`, cb.checked);
-      toast(cb.checked ? 'Le plan et l’accord suivant s’ajoutent aux exercices de la pièce (En cours de maîtrise)' : 'Pièce retirée du par cœur', 'ok', 3500);
+      toast(cb.checked ? 'Le plan et les enchaînements d’accords s’ajoutent à Théorie › Fiches et exercices' : 'Pièce retirée du par cœur', 'ok', 3500);
     });
-    page.append(h('label', { class: 'check heart-toggle' }, cb, 'Je l’apprends par cœur', h('span', { class: 'small muted' }, ' — le plan et les enchaînements d’accords s’ajoutent à ses exercices, dans ', h('a', { href: '#/maitrise' }, 'En cours de maîtrise'), '.')));
+    page.append(h('label', { class: 'check heart-toggle' }, cb, 'Je l’apprends par cœur', h('span', { class: 'small muted' }, ' — le plan et les enchaînements d’accords s’ajoutent à ', h('a', { href: '#/maitrise' }, 'Théorie › Fiches et exercices'), '.')));
   }
   const body = h('div', { class: 'prose' });
   page.append(body);
@@ -943,7 +944,7 @@ function pagePieces() {
       const at = store.get(`pieces.${id}.at`);
       const d = at ? Math.round((new Date().setHours(0, 0, 0, 0) - new Date(at).setHours(0, 0, 0, 0)) / 864e5) : null;
       const when = d == null ? 'pas encore jouée dans l’appli' : d <= 0 ? 'jouée aujourd’hui' : d === 1 ? 'jouée hier' : `jouée il y a ${d} jours`;
-      return `<a class="card pc-card" href="#/piece/${id}"><div class="card-top"><span class="eyebrow">${id === lv.piece ? 'Pièce phare' : 'Complément'}</span><span class="small muted">${esc(when)}</span></div><h3>${esc(P.title)}</h3>${P.short || P.status ? `<p class="small mb-0">${esc(P.status || P.short)}</p>` : ''}</a>`;
+      return `<a class="card pc-card" href="#/piece/${id}"><div class="card-top"><span class="eyebrow">${id === lv.piece ? 'Pièce phare' : 'Complément'}</span><span class="small muted">${esc(when)}</span></div><h3>${esc(P.title)}</h3>${P.short ? `<p class="small mb-0">${esc(P.short)}</p>` : ''}</a>`;
     }).join('')}</div>`);
   }
   main.append(page);
@@ -987,10 +988,10 @@ function pageTheoryPlay(kind, sub = null) {
 function pageLecture() {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Lecture à vue' }]) + hubHead('lecture', 'Trois minutes d’échauffement (le rythme, puis deux exercices d’une minute), puis de vrais extraits du répertoire (Bach, Diabelli, Burgmüller, Schumann…) : prépare-toi 30 secondes, puis joue sans t’arrêter. La difficulté s’ajuste à tes résultats.');
-  page.insertAdjacentHTML('beforeend', `<div class="hub-links">${hubLink('#/outils/rythme', 'rythme', 'Rythme', 'Dix niveaux, des noires aux polyrythmies, et les rythmes de tes pièces')}${hubLink('#cours-lecture', 'book', 'Les cours', 'La méthode de lecture, niveau par niveau')}</div>`);
+  page.insertAdjacentHTML('beforeend', `<div class="hub-links">${hubLink('#/outils/rythme', 'rythme', 'Rythme', 'Dix niveaux, des noires aux polyrythmies, et les rythmes de tes pièces')}${hubLink('#cours-lecture', 'book', 'Les leçons', 'La méthode de lecture, niveau par niveau')}</div>`);
   const host = h('div', { class: 'w' });
   page.append(host);
-  page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3" id="cours-lecture"><h2>Les cours de lecture à vue</h2></div>` + moduleIndexHTML('lecture'));
+  page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3" id="cours-lecture"><h2>Les leçons de lecture à vue</h2></div>` + moduleIndexHTML('lecture'));
   main.append(page);
   page.querySelector('a[href="#cours-lecture"]').addEventListener('click', e => { e.preventDefault(); $('#cours-lecture', page).scrollIntoView({ behavior: 'smooth', block: 'start' }); });
   return mountLazy(host, () => Promise.all([import('./tool-sight.js'), import('./tool-warmup.js'), ensureAbcjs()]).then(([m, wu]) => el => {
@@ -1030,21 +1031,21 @@ function theoryChapters() {
   const box = h('div');
   const all = LEVELS.filter(L => !L.locked).flatMap(L => lessonsOf(L.id, 'theorie'));
   const cur = all.find(l => lessonState(l) === 'en cours') || all.find(l => lessonState(l) === 'à faire' && l.prio !== 2) || null;
-  const top = h('div', { class: 'card th-top' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Où tu en es'), h('span', { class: 'small' }, (n => `${n} chapitre${n > 1 ? 's' : ''} su${n > 1 ? 's' : ''} sur ${all.length}`)(all.filter(l => store.isDone(l.id)).length))));
+  const top = h('div', { class: 'card th-top' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Où tu en es'), h('span', { class: 'small' }, (n => `${n} chapitre${n > 1 ? 's' : ''} terminé${n > 1 ? 's' : ''} sur ${all.length}`)(all.filter(l => store.isDone(l.id)).length))));
   const rev = h('a', { class: 'btn sm', href: '#/theorie/cartes' }, 'Cartes du jour');
   const revNote = h('span', { class: 'small muted' });
   if (cur) {
     const sd = (store.get(`lessonSteps.${cur.id}`)?.done || []).length;
     top.append(h('h3', {}, cur.title), h('p', { class: 'small' }, sd ? `En cours : ${sd} étape${sd > 1 ? 's' : ''} faite${sd > 1 ? 's' : ''}${cur.steps ? ` sur ${cur.steps}` : ''}.` : `À faire : ${cur.summary || ''}`),
       h('div', { class: 'btn-row' }, h('a', { class: 'btn primary sm', href: `#/lecon/${cur.id}` }, sd ? 'Continuer' : 'Commencer'), rev, revNote));
-  } else top.append(h('p', { class: 'small' }, 'Tous les chapitres sont sus. Révise ce qui doit l’être, ou reprends un chapitre au clavier dans une autre tonalité.'), h('div', { class: 'btn-row' }, rev, revNote));
+  } else top.append(h('p', { class: 'small' }, 'Tous les chapitres sont terminés. Révise ce qui doit l’être, ou reprends un chapitre au clavier dans une autre tonalité.'), h('div', { class: 'btn-row' }, rev, revNote));
   import('./tool-cards.js').then(m => m.deckSummary()).then(r => { if (r) revNote.textContent = r.due ? `${r.due} carte${r.due > 1 ? 's' : ''} à revoir` : r.fresh ? `${r.fresh} nouvelle${r.fresh > 1 ? 's' : ''}` : r.total ? 'rien à revoir aujourd’hui' : ''; }).catch(() => {});
   box.append(top);
   for (const L of LEVELS) {
     if (L.locked) continue;
     const lm = lessonsOf(L.id, 'theorie');
     if (!lm.length) continue;
-    box.insertAdjacentHTML('beforeend', `<div class="course-level"><div class="section-title"><h2>Niveau ${L.num} — ${esc(L.short)}</h2><span class="small">${lm.filter(x => store.isDone(x.id)).length}/${lm.length} sus</span></div>${lessonListHTML(lm, { state: true })}</div>`);
+    box.insertAdjacentHTML('beforeend', `<div class="course-level"><div class="section-title"><h2>Niveau ${L.num} — ${esc(L.short)}</h2><span class="small nw" title="chapitres terminés">${lm.filter(x => store.isDone(x.id)).length}/${lm.length}</span></div>${lessonListHTML(lm, { state: true })}</div>`);
   }
   return box;
 }
@@ -1166,7 +1167,7 @@ function pageEar(view = null) {
     hubHead('oreille', 'Le parcours : une étape après l’autre, chacune se <b>reconnaît</b>, se <b>chante</b> et se <b>joue</b> au piano. Jouer d’oreille : des mélodies apprises sans partition, phrase par phrase. La reconnaissance et le chant se font aussi <a href="#/loin">loin du piano</a>.');
   const host = h('div');
   page.append(host);
-  page.insertAdjacentHTML('beforeend', `<details class="train-free" id="cours-oreille"><summary><span>Les cours d’oreille</span><span class="small">leçon par leçon, chaque étape du parcours y renvoie</span></summary>${moduleIndexHTML('oreille')}</details>`);
+  page.insertAdjacentHTML('beforeend', `<details class="train-free" id="cours-oreille"><summary><span>Les leçons d’oreille</span><span class="small">leçon par leçon, chaque étape du parcours y renvoie</span></summary>${moduleIndexHTML('oreille')}</details>`);
   main.append(page);
   return mountLazy(host, () => Promise.all([import('./tool-earpath.js'), ensureAbcjs()]).then(([m]) => el => m.mountEarPath(el, { view: view === 'jouer' ? 'play' : view === 'parcours' ? 'path' : null })));
 }
@@ -1226,7 +1227,7 @@ function pageImproTool() {
   const nbHost = h('div'), freeHost = h('div');
   page.append(cur, h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Jouer librement')), h('p', { class: 'small' }, 'L’accompagnateur joue la main gauche (ou la basse seule) ; improvise à la main droite. Les notes s’allument selon leur rôle dans l’harmonie. Une trouvaille ? « Garder une formule » la range dans ton carnet.'), host,
     h('div', { class: 'section-title mt-3' }, h('h2', {}, 'Ton vocabulaire')), h('div', { class: 'grid-2 impro-own' }, nbHost, freeHost));
-  page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3" id="cours-impro"><h2>La méthode, leçon par leçon</h2></div>` + moduleIndexHTML('impro'));
+  page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3" id="cours-impro"><h2>Les leçons d’improvisation</h2></div>` + moduleIndexHTML('impro'));
   main.append(page);
   page.querySelector('a[href="#cours-impro"]').addEventListener('click', e => { e.preventDefault(); $('#cours-impro', page).scrollIntoView({ behavior: 'smooth', block: 'start' }); });
   const free = import('./tool-improfree.js');
@@ -1359,8 +1360,8 @@ function pageSettings() {
     })));
   });
   page.append(card('Son',
-    h('label', { class: 'range' }, 'Volume du piano', vol),
-    h('label', { class: 'range' }, 'Volume du métronome', mvol),
+    h('label', { class: 'range vol' }, h('span', {}, 'Volume du piano'), vol),
+    h('label', { class: 'range vol' }, h('span', {}, 'Volume du métronome'), mvol),
     h('label', { class: 'check mt-1' }, echo, 'Faire sonner le clavier à l’écran'),
     sync));
 
@@ -1409,7 +1410,7 @@ function pageSettings() {
   page.append(card('Version', verInfo, h('div', { class: 'row' }, verBtn, verStatus)));
 
   page.append(card('Sources et licences', h('div', {
-    class: 'small', html: `<p>Piano : <b>Salamander Grand Piano</b> d’Alexander Holm (CC BY 3.0), via Tone.js. Partitions : <b>abcjs</b> (MIT). Polices : <b>Inter</b> et <b>Literata</b> (SIL OFL).</p>
+    class: 'small', html: `<p>Piano : <b>Salamander Grand Piano</b> d’Alexander Holm (CC BY 3.0), via Tone.js. Partitions : <b>abcjs</b> (MIT). Polices : <b>Inter</b>, <b>Literata</b> et <b>Noto Music</b> pour les signes ♩ ♭ ♯ ♮ (SIL OFL).</p>
     <p>Extraits de Chopin transcrits d’après les éditions LilyPond de <b>Knute Snortum</b> (op. 15 et op. 55, CC BY-SA 4.0) et vérifiés sur l’édition Breitkopf &amp; Härtel ; extraits de Debussy d’après l’édition du Mutopia Project (domaine public). Les extraits sont partagés sous la même licence CC BY-SA 4.0.</p>
     <p>Courbes de tempo des pianistes de référence : jeu de données <b>MAESTRO v3</b> (Hawthorne et al., Google Magenta, 2019), d’après les enregistrements de l’International Piano-e-Competition, CC BY-NC-SA 4.0. Usage non commercial.</p>
     <p>Liens « Informance » : <a href="${INFORMANCE}" target="_blank" rel="noopener">Practising the Piano Online Academy</a> (abonnement).</p>`,

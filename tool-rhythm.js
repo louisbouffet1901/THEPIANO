@@ -1103,7 +1103,7 @@ export function mountRhythmMinute(el, opts = {}) {
 
   const unit = () => (L.compound ? '♩.' : '♩');
   const renderIdle = () => {
-    info.innerHTML = `Niveau ${L.id} de l’onglet Rythme (${esc(L.title.toLowerCase())}), ${unit()} = ${bpm}. Des rythmes d’une mesure, puis de deux : après le décompte, tape chaque note au clic en <b>comptant à voix haute</b> (« 1 et 2 et… »). Deux réussites de suite : le rythme s’allonge, puis le tempo monte.`;
+    info.innerHTML = `Niveau ${L.id} de l’outil Rythme (${esc(L.title.toLowerCase())}), ${unit()} = ${bpm}. Des rythmes d’une mesure, puis de deux : après le décompte, tape chaque note au clic en <b>comptant à voix haute</b> (« 1 et 2 et… »). Deux réussites de suite : le rythme s’allonge, puis le tempo monte.`;
   };
   let running = false, run = null, score = null, t0 = 0, raf = 0, timers = [], session = null, bars = 1, streak = 0;
   pad.addEventListener('pointerdown', e => { e.preventDefault(); run?.tap((e.timeStamp > 0 ? e.timeStamp : performance.now()) - inputLatency('touch'), 'rh'); });
@@ -1188,7 +1188,7 @@ export function mountRhythmMinute(el, opts = {}) {
       h('div', { class: 'stat' }, h('div', { class: 'l' }, 'Rythmes réussis'), h('div', { class: 'v' }, `${session.good}/${its.length}`)),
       h('div', { class: 'stat' }, h('div', { class: 'l' }, 'Attaques à l’heure'), h('div', { class: 'v' }, fmtPct(total ? ok / total : 0))),
       h('div', { class: 'stat' }, h('div', { class: 'l' }, 'Écart moyen'), h('div', { class: 'v' }, `${Math.round(meanAbs)} ms`))));
-    const tip = worst && !worst.good ? advice(worst.res, worst.sc, false).replace('active « Temps et contretemps »', 'dans l’onglet Rythme, active « Temps et contretemps »') : 'Très bien. Demain, le tempo repart de là où tu l’as laissé.';
+    const tip = worst && !worst.good ? advice(worst.res, worst.sc, false).replace('active « Temps et contretemps »', 'dans l’outil Rythme, active « Temps et contretemps »') : 'Très bien. Demain, le tempo repart de là où tu l’as laissé.';
     results.append(h('p', { class: 'small' }, `${tip} Tempo de départ la prochaine fois : ${unit()} = ${bpm}.`));
     results.hidden = false;
     renderIdle();

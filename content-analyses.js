@@ -40,7 +40,7 @@ export const AN = {
     bars: [...A_OP55_1_4, ...A_OP55_5_8],
     notes: [
       'Mesures 1 à 4 : une boucle i – VII6 – III – V6/5, jouée deux fois.',
-      'Mesure 6 : la sixte napolitaine (N6), sous-dominante colorée, sous la trille.',
+      'Mesure 6 : la sixte napolitaine (N6), sous-dominante colorée, sous le trille.',
       'Mesures 7-8 : 6/4 de cadence, V7, i : cadence parfaite.',
     ],
   },
@@ -75,7 +75,7 @@ export const ANALYSES = new Map([
     ],
     notes: [
       'Même harmonie qu’aux mesures 5-6 : seule l’ornementation change.',
-      'Mesure 14 : la trille, préparée par deux petites notes (la♮ – si♭), puis un quintolet (cinq doubles croches dans un temps) qui mène au do de la mesure 15.',
+      'Mesure 14 : le trille, préparé par deux petites notes (la♮ – si♭), puis un quintolet (cinq doubles croches dans un temps) qui mène au do de la mesure 15.',
     ],
   }],
   [OP55.e4, {

@@ -11,7 +11,7 @@ export const COLORS = C;
 function svg(w, hgt, inner, label) {
   return `<svg viewBox="0 0 ${w} ${hgt}" role="img" aria-label="${esc(label || 'Schéma')}" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`;
 }
-const t = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.size || 13}" fill="${o.fill || C.text}" text-anchor="${o.anchor || 'start'}" ${o.weight ? `font-weight="${o.weight}"` : ''} ${o.italic ? 'font-style="italic"' : ''} font-family="Inter, system-ui, sans-serif">${esc(s)}</text>`;
+const t = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-size="${o.size || 13}" fill="${o.fill || C.text}" text-anchor="${o.anchor || 'start'}" ${o.weight ? `font-weight="${o.weight}"` : ''} ${o.italic ? 'font-style="italic"' : ''} font-family="Inter, MusicSym, system-ui, sans-serif">${esc(s)}</text>`;
 const line = (x1, y1, x2, y2, o = {}) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${o.stroke || C.text}" stroke-width="${o.w || 1.5}" ${o.dash ? `stroke-dasharray="${o.dash}"` : ''} stroke-linecap="round"/>`;
 const rect = (x, y, w, hh, o = {}) => `<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="${o.r ?? 4}" fill="${o.fill || 'none'}" stroke="${o.stroke || 'none'}" stroke-width="${o.w || 1}"/>`;
 const arrowDefs = (id, color) => `<defs><marker id="${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${color}"/></marker></defs>`;
@@ -62,11 +62,11 @@ export function keyboard(opts = {}) {
     else if (names === 'marks' && mk) label = noteNameFr(m, { octave: false, flats: opts.flats ?? null });
     if (label != null) {
       const y = black ? top + BH - 8 : top + WH - 9;
-      inner += `<text class="lbl ${black ? 'b' : 'w'}" x="${cx}" y="${y}" font-size="${black ? 9.5 : 11}" text-anchor="middle" fill="${black ? '#fff' : '#3c414a'}" font-family="Inter, system-ui, sans-serif">${esc(label)}</text>`;
+      inner += `<text class="lbl ${black ? 'b' : 'w'}" x="${cx}" y="${y}" font-size="${black ? 9.5 : 11}" text-anchor="middle" fill="${black ? '#fff' : '#3c414a'}" font-family="Inter, MusicSym, system-ui, sans-serif">${esc(label)}</text>`;
     }
     if (mk && mk.finger) {
       const col = mk.hand === 'lh' ? C.lh : C.rh;
-      inner += `<text class="fing" x="${cx}" y="13" font-size="12.5" font-weight="700" text-anchor="middle" fill="${col}" font-family="Inter, system-ui, sans-serif">${esc(mk.finger)}</text>`;
+      inner += `<text class="fing" x="${cx}" y="13" font-size="12.5" font-weight="700" text-anchor="middle" fill="${col}" font-family="Inter, MusicSym, system-ui, sans-serif">${esc(mk.finger)}</text>`;
     }
     if (mk && mk.dot) {
       const y = black ? top + BH - 22 : top + WH - 28;
@@ -105,7 +105,7 @@ export function keyboard(opts = {}) {
       t.setAttribute('font-weight', '700');
       t.setAttribute('text-anchor', 'middle');
       t.setAttribute('pointer-events', 'none');
-      t.setAttribute('font-family', 'Inter, system-ui, sans-serif');
+      t.setAttribute('font-family', 'Inter, MusicSym, system-ui, sans-serif');
       t.setAttribute('fill', mk.labelColor || (black ? '#fff' : '#1d1f24'));
       t.textContent = mk.label;
       el.append(t);
@@ -569,7 +569,7 @@ export const DIAGRAMS = {
       g += `<rect x="52" y="128" width="128" height="96" rx="34" fill="#f3ece2" stroke="#b9a68c" stroke-width="1.5"/>`;
       for (const f of fingers) {
         g += `<g transform="rotate(${f.rot} ${f.x + f.w / 2} ${f.y + f.h})"><rect x="${f.x}" y="${f.y}" width="${f.w}" height="${f.h + 20}" rx="${f.w / 2}" fill="#f3ece2" stroke="#b9a68c" stroke-width="1.5"/>
-          <text x="${f.x + f.w / 2}" y="${f.y + 24}" font-size="16" font-weight="700" text-anchor="middle" fill="${mirror ? C.lh : C.rh}" ${mirror ? `transform="translate(${2 * (f.x + f.w / 2)} 0) scale(-1 1)"` : ''} font-family="Inter, system-ui, sans-serif">${f.n}</text></g>`;
+          <text x="${f.x + f.w / 2}" y="${f.y + 24}" font-size="16" font-weight="700" text-anchor="middle" fill="${mirror ? C.lh : C.rh}" ${mirror ? `transform="translate(${2 * (f.x + f.w / 2)} 0) scale(-1 1)"` : ''} font-family="Inter, MusicSym, system-ui, sans-serif">${f.n}</text></g>`;
       }
       const tr = mirror ? `translate(${ox + 200} 0) scale(-1 1)` : `translate(${ox} 0)`;
       return `<g transform="${tr}">${g}</g>` + t(ox + 100, 248, label, { size: 13, weight: 650, anchor: 'middle', fill: mirror ? C.lh : C.rh });

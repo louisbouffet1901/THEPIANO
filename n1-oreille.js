@@ -18,7 +18,7 @@ export default [
     ],
     goal: 'tu réussis la série « Plus grave ou plus aigu ? » jusqu’aux écarts d’un demi-ton.',
     body: W => `
-<p>Beaucoup de musiciens pensent « ne pas avoir d’oreille ». En réalité, l’oreille se travaille exactement comme les doigts : par un entraînement court, régulier et progressif. Ce module repart de zéro. Les premières étapes te paraîtront peut-être faciles : c’est voulu. On construit des fondations solides, et la difficulté augmente d’elle-même.</p>
+<p>Beaucoup de musiciens pensent « ne pas avoir d’oreille ». En réalité, l’oreille se travaille exactement comme les doigts : par un entraînement court, régulier et progressif. Ce parcours repart de zéro. Les premières étapes te paraîtront peut-être faciles : c’est voulu. On construit des fondations solides, et la difficulté augmente d’elle-même.</p>
 
 <h2>Aigu et grave</h2>
 <p>Une note est plus <b>aiguë</b> quand elle vibre plus vite (vers la droite du clavier), plus <b>grave</b> quand elle vibre plus lentement (vers la gauche). Attention à ne pas confondre :</p>
@@ -43,7 +43,7 @@ ${W.tip('Dessine avec la main', '<p>Pendant l’écoute, suis la mélodie avec l
 ${W.quiz({ kind: 'contour', notes: 4, title: 'Le dessin d’une mélodie (4 notes)', count: 10, stat: 'contour4' })}
 
 <h2>Dans ta pièce</h2>
-<p>Écoute les mesures 1 à 4 du nocturne en suivant la mélodie avec la main : do <b>monte</b> vers fa par un saut, puis <b>descend</b> par petits pas (mi♭, ré♭, do) ; à la mesure 2, elle tourne autour de do (si♮ en dessous, ré♭ au-dessus). Chante ce dessin sur « la » avant de le jouer.</p>
+<p>Écoute les mesures 1 à 4 du nocturne en suivant la mélodie avec la main. Elle <b>monte</b> de do à fa par un saut, puis <b>descend</b> par petits pas : mi♭, ré♭, do. À la mesure 2, elle tourne autour de do : si♮ en dessous, ré♭ au-dessus. Chante ce dessin sur « la » avant de le jouer.</p>
 ${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4 : suis le dessin de la mélodie', bpm: 56, startBpm: 50, hands: false, practice: false })}
 
 ${W.warn('Si c’est difficile', '<p>C’est normal pour les petits écarts (un ou deux demi-tons) : beaucoup de débutants les confondent au début. Réécoute autant que tu veux, fredonne, et reviens-y le lendemain : la perception s’affine en quelques jours.</p>')}

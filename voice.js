@@ -78,7 +78,7 @@ export class VoiceTrace {
     }
     const yOf = m => T + (hi - m) / (hi - lo) * (H - T - B);
     // lignes des notes
-    g.font = '10.5px Inter, system-ui, sans-serif';
+    g.font = '10.5px Inter, MusicSym, system-ui, sans-serif';
     g.textBaseline = 'middle';
     const pxPerSemi = (H - T - B) / (hi - lo);
     const ctr = mode === 'target' ? (this.center ?? this.target) : null;
@@ -110,7 +110,7 @@ export class VoiceTrace {
       g.fillRect(L, y0, W - R - L, y1 - y0);
       g.strokeStyle = '#2e7a4c'; g.lineWidth = 1.5;
       g.beginPath(); g.moveTo(L, yOf(c)); g.lineTo(W - R, yOf(c)); g.stroke();
-      g.fillStyle = '#2e7a4c'; g.textAlign = 'right'; g.font = '600 11px Inter, system-ui, sans-serif';
+      g.fillStyle = '#2e7a4c'; g.textAlign = 'right'; g.font = '600 11px Inter, MusicSym, system-ui, sans-serif';
       g.fillText(noteNameFr(c, { octave: false }), L - 6, yOf(c));
     }
     // le tracé

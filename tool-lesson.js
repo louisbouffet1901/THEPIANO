@@ -70,7 +70,7 @@ function labelKeys(kb, items, cls) {
     t.setAttribute('text-anchor', 'middle');
     t.setAttribute('font-size', top ? (g.black ? 9 : 10.5) : (g.black ? 9 : 11));
     t.setAttribute('font-weight', top ? '700' : '600');
-    t.setAttribute('font-family', 'Inter, system-ui, sans-serif');
+    t.setAttribute('font-family', 'Inter, MusicSym, system-ui, sans-serif');
     t.setAttribute('fill', it.color || (g.black ? '#fff' : '#2c3138'));
     t.textContent = it.text;
     kb.append(t);

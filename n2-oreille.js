@@ -212,7 +212,9 @@ ${W.quiz({ kind: 'chordfunc', set: ['ii', 'IV', 'V', 'vi'], title: 'Après le I 
 ${W.quiz({ kind: 'echo', degrees: [1, 4, 5, 6, 8], length: 4, maxStep: 3, title: 'Rejouer une basse (degrés 1, 4, 5, 6)', count: 8, stat: 'echo-bass' })}
 
 <h2>Dans ta pièce</h2>
-<p>Clair de lune commence sans basse, mais l’harmonie s’entend : ré♭ majeur (mesure 1, tonique) ; à la mesure 2, sous les tierces do – mi♭, la main gauche descend sur sol♭ – si𝄫 : une septième diminuée (dominante), assombrie par le si𝄫 du mineur ; mesure 3, si♭ m7 (vi7), mineur et doux ; mesure 4, la♭ 7 (la dominante), avec mi♭ à la basse. Écoute en chantant la note la plus grave de la main gauche (fa, sol♭, fa, mi♭) : la ligne descend doucement, et la tension monte et retombe à chaque mesure.</p>
+<p>Clair de lune commence sans basse, mais l’harmonie s’entend déjà, un accord par mesure :</p>
+<ul><li><b>mesure 1</b> : ré♭ majeur, la tonique ;</li><li><b>mesure 2</b> : sous les tierces do – mi♭, la main gauche descend sur sol♭ – si𝄫. Ensemble, c’est une septième diminuée qui joue le rôle de dominante, assombrie par le si𝄫 emprunté au mineur ;</li><li><b>mesure 3</b> : si♭ m7 (vi7), mineur et doux ;</li><li><b>mesure 4</b> : la♭ 7, la dominante, avec mi♭ à la basse.</li></ul>
+<p>Écoute en chantant la note la plus grave de la main gauche (fa, sol♭, fa, mi♭) : la ligne descend doucement, et la tension monte et retombe à chaque mesure.</p>
 ${W.score({ abc: CLAIR.e1, title: 'Clair de lune, mesures 1 à 4', bpm: 40, startBpm: 36, practice: false })}
 
 ${W.warn('Si IV et V se confondent', '<p>IV donne envie de revenir doucement à I (« amen ») ; V donne envie d’y revenir avec force. Écoute aussi la basse : vers le haut de quatre notes, IV ; vers le bas, V.</p>')}
@@ -299,7 +301,7 @@ ${W.rhythm({ level: 5, mode: 'echo', bpm: 60, title: 'Doubles croches', stat: 'r
 ${W.rhythm({ level: 3, meter: '3/4', mode: 'echo', bpm: 66, title: 'À trois temps', stat: 'ry-34' })}
 
 <h2>Dans tes pièces</h2>
-<p>Dans l’Andante de l’op. 15, la main gauche joue des <b>triolets</b> (trois croches par temps) sous une mélodie souvent pointée : tape la pulsation, puis le rythme de la mélodie des mesures 5 et 6, où un triolet apparaît aussi à la main droite. Dans Clair de lune (9/8), chaque temps se divise en trois croches ; un <b>duolet</b> met deux valeurs égales dans le temps de trois : compte « 1-2-3 » et place-les sur « 1 » et sur le milieu du « 2 ». Aux mesures 15 et 17, le premier temps est un duolet (un silence, puis un accord) ; aux mesures 16 et 18, le deuxième temps fait entendre deux accords en duolet.</p>
+<p>Dans l’Andante de l’op. 15, la main gauche joue des <b>triolets</b> (trois croches par temps) sous une mélodie souvent pointée. Tape la pulsation, puis le rythme de la mélodie des mesures 5 et 6, où un triolet apparaît aussi à la main droite. Dans Clair de lune (9/8), chaque temps se divise en trois croches ; un <b>duolet</b> met deux valeurs égales dans le temps de trois : compte « 1-2-3 » et place-les sur « 1 » et sur le milieu du « 2 ». Aux mesures 15 et 17, le premier temps est un duolet (un silence, puis un accord) ; aux mesures 16 et 18, le deuxième temps fait entendre deux accords en duolet.</p>
 ${W.score({ abc: CLAIR.e2, title: 'Clair de lune, mesures 15 à 18 : les duolets', bpm: 40, startBpm: 34, click: true, practice: false })}
 
 ${W.warn('Si les triolets se brouillent', '<p>Dis « tri-o-let » sur chaque temps, régulièrement, puis tape en parlant. Les trois notes sont égales : ne les compresse pas vers la fin du temps.</p>')}

@@ -364,13 +364,13 @@ ${W.notion({ id: 'point-liaison', title: 'Le point et la liaison', short: 'le po
 ${W.quiz({ kind: 'measurefill', values: ['w', 'hd', 'h', 'q', 'e'], meters: ['4/4', '3/4'], title: 'À toi : compléter la mesure', count: 10, stat: 'mfill' })}
 
 <h2>Compter à voix haute</h2>
-${idea('Pour lire un rythme, compte les temps et place les notes dessus : « <b>1, 2, 3, 4</b> » pour les noires ; « <b>1 et 2 et</b> » pour les croches (la 2<sup>e</sup> croche tombe sur le « et ») ; « <b>1 e et a</b> » pour quatre doubles croches (comme dans l’onglet Rythme).')}
+${idea('Pour lire un rythme, compte les temps à voix haute et place chaque note sur ce que tu dis. Pour des noires : « <b>1, 2, 3, 4</b> ». Pour des croches : « <b>1 et 2 et</b> » (la 2<sup>e</sup> croche tombe sur le « et »). Pour quatre doubles croches : « <b>1 e et a</b> », comme dans l’outil Rythme (page Lecture à vue).')}
 ${worked('Exemple résolu : croche pointée + double croche', method(['Divise le temps en quatre doubles croches : « 1 – e – et – a ».', 'La croche pointée en dure trois : elle commence sur « 1 » et tient pendant « e » et « et ».', 'La double croche tombe sur le dernier quart : « a », juste avant le temps suivant.']), 'Dis « 1 — — a 2 » : la double croche est courte, collée au temps suivant.')}
 ${W.tip('Taper avant de jouer', '<p>Tape le rythme dans les mains (ou sur le couvercle du piano) en comptant, avant de jouer le passage : tu sépares la difficulté du rythme de celle des notes.</p>')}
 ${W.rhythm({ level: 2, title: 'À toi : lire et taper un rythme', stat: 'rread-1' })}
 
 <h2>Les groupes irréguliers : le triolet</h2>
-${idea('Un <b>triolet</b>, ce sont trois notes égales à la place de deux, marquées d’un 3. On trouve aussi chez Chopin des groupes de cinq ou sept notes, sur un temps ou deux (le septolet de la mesure 44 : sept croches sur deux temps) : ils se répartissent régulièrement, la première avec le temps, la dernière juste avant l’appui suivant.')}
+${idea('Un <b>triolet</b>, ce sont trois notes égales à la place de deux, marquées d’un 3. On trouve aussi chez Chopin des groupes de cinq ou sept notes, sur un temps ou deux : à la mesure 44 de ton nocturne, sept croches occupent deux temps (un septolet). Ces notes se répartissent régulièrement : la première tombe avec le temps, la dernière juste avant l’appui suivant.')}
 ${W.notion({ id: 'triolet', title: 'Le triolet', short: 'trois notes égales à la place de deux', text: '<p><b>Triolet</b> : trois notes égales dans le temps de deux (trois croches pour une noire), marquées d’un 3. Quintolet, septolet : cinq ou sept notes réparties régulièrement, sur un temps ou deux.</p>', cards: [
   { id: 'fact:n1-th-rythme:3', q: 'Un triolet de croches, c’est…', a: ['trois croches dans le temps de deux', 'trois croches accentuées', 'trois notes dans un demi-temps', 'trois croches dans le temps de quatre'], why: 'Trois notes égales à la place de deux : un temps de noire divisé en trois.' },
   ['Comment placer un quintolet (cinq notes dans un temps) ?', ['la première avec le temps, les autres régulièrement jusqu’au temps suivant', 'les cinq très vite, puis attendre', 'deux puis trois', 'la dernière sur le temps suivant'], 'Une division régulière du temps en cinq.'],
@@ -387,7 +387,7 @@ ${W.check({ questions: [
   { q: 'Mesure 2 : do (croche pointée) – si♮ (double croche) – do (croche pointée) – ré♭ (double croche), puis do (blanche). Combien de temps dure ce dernier do, avec sa liaison sur la noire de la mesure 3 ?', options: ['3 temps', '2 temps', '4 temps'], why: 'Blanche 2 + noire 1 = 3 temps, sans rejouer.' },
 ] })}
 ${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4, avec le clic', bpm: 56, startBpm: 46, click: true })}
-${W.score({ abc: OP55.e3, title: 'Mesures 13 et 14 : la trille et le quintolet', bpm: 56, startBpm: 40, caption: 'Mesure 14 : cinq doubles croches dans le temps de quatre (un quintolet), juste après la trille.' })}
+${W.score({ abc: OP55.e3, title: 'Mesures 13 et 14 : le trille et le quintolet', bpm: 56, startBpm: 40, caption: 'Mesure 14 : cinq doubles croches dans le temps de quatre (un quintolet), juste après le trille.' })}
 ${W.exo('Au piano', '<p>Tape le rythme de la main droite des mesures 1 à 4 en comptant à voix haute, puis joue-le sur une seule touche, avec le clic de la partition ci-dessus. Seulement ensuite, joue les vraies notes.</p>')}
 `,
   },
@@ -699,7 +699,7 @@ ${W.notion({ id: 'cycle-quintes', title: 'Le cycle des quintes', short: 'une qui
   ['De do majeur à sol majeur, quelle note change ?', ['fa devient fa♯', 'si devient si♭', 'do devient do♯', 'sol devient sol♯'], 'Fa♯, la sensible de sol : le premier dièse.'],
   ['De do majeur à fa majeur, quelle note change ?', ['si devient si♭', 'fa devient fa♯', 'mi devient mi♭', 'la devient la♭'], 'Une quinte plus bas : un bémol de plus, si♭.'],
 ] })}
-${W.more('Chopin et le cycle : les 24 Préludes', `<p>Chopin a rangé ses <b>24 Préludes op. 28</b> en suivant le cycle des quintes, chaque majeur suivi de sa relative mineure : do majeur, la mineur, sol majeur, <b>mi mineur (le n° 4, celui que tu étudies en improvisation)</b>, ré majeur, si mineur… Écouter le recueil dans l’ordre, c’est faire le tour du cycle.</p>`)}
+${W.more('Chopin et le cycle : les 24 Préludes', `<p>Chopin a rangé ses <b>24 Préludes op. 28</b> en suivant le cycle des quintes, chaque majeur suivi de sa relative mineure : do majeur, la mineur, sol majeur, <b>mi mineur</b>, ré majeur, si mineur… Le n° 4, en mi mineur, est celui que tu étudies en improvisation. Écouter le recueil dans l’ordre, c’est faire le tour du cycle.</p>`)}
 ${W.listen([W.yt('Chopin 24 Preludes op 28 complete', 'Les 24 Préludes op. 28, dans l’ordre', 'Suis le cycle : do, la m, sol, mi m, ré, si m…')], 'Écouter')}
 
 <h2>Dans ta pièce : fa mineur et ses voisines (mesures 17 à 24)</h2>
@@ -1499,13 +1499,13 @@ ${worked('Exemple résolu : la fin du thème, mesures 5 à 8', method([
   '<b>Tonalité</b> : quatre bémols, et un mi♮ à la mesure 7, la sensible de fa : <b>fa mineur</b>.',
   '<b>Accords</b> : mesures 5-6 comme au début (fa mineur, mi♭, la♭), puis sol♭ majeur ; mesure 7, fa mineur posé sur do, puis do 7 ; mesure 8, fa mineur.',
   '<b>Cadence</b> : i6/4 – V7 – i, une <b>cadence parfaite</b>.',
-  '<b>Ornements</b> : une trille (mesure 6) ; une appoggiature, la♭ qui descend sur sol (mesure 7).',
+  '<b>Ornements</b> : un trille (mesure 6) ; une appoggiature, la♭ qui descend sur sol (mesure 7).',
 ]), 'Une phrase en fa mineur, fermée par un point. Mesure 9, le thème recommence.')}
 ${W.spot({ abc: OP55.e2, title: 'Sur la partition : les quatre questions, mesures 5 à 8', tasks: [
   { q: '<b>Tonalité</b> : mesure 7, touche l’altération de la main droite qui confirme fa mineur.', targets: [{ bar: 7, note: 'mi3', hand: 'rh' }], why: 'Mi♮, dans l’accord arpégé : la sensible de fa. Avec quatre bémols à l’armure, c’est fa mineur.' },
   { q: '<b>Accords</b> : mesure 7, touche la basse du <b>6/4 de cadence</b>.', targets: [{ bar: 7, beat: 1, hand: 'lh' }], why: 'Do à la basse, fa mineur au-dessus (la♭ – do – fa) : i6/4, une dominante déguisée.' },
   { q: '<b>Cadence</b> : touche la basse de l’accord d’arrivée.', targets: [{ bar: 8, beat: 1, hand: 'lh' }], why: 'Fa : i6/4 – V7 – i, une cadence parfaite. Le thème se ferme.' },
-  { q: '<b>Ornements</b> : mesure 6, touche la note ornée d’une <b>trille</b>.', targets: [{ bar: 6, beat: 3, note: 'si♭3', hand: 'rh' }], why: 'Si♭, au-dessus de sol♭ majeur, l’accord le plus sombre de la phrase. La trille orne une note de l’accord : sans presser, terminée par ses deux petites notes (la♮ – si♭).' },
+  { q: '<b>Ornements</b> : mesure 6, touche la note ornée d’un <b>trille</b>.', targets: [{ bar: 6, beat: 3, note: 'si♭3', hand: 'rh' }], why: 'Si♭, au-dessus de sol♭ majeur, l’accord le plus sombre de la phrase. La trille orne une note de l’accord : sans presser, terminée par ses deux petites notes (la♮ – si♭).' },
 ] })}
 ${W.score({ abc: OP55.e2, title: 'Mesures 5 à 8 : vérifie avec l’analyse', bpm: 56, startBpm: 46 })}
 ${W.notion({ id: 'analyse-4-questions', title: 'Analyser un passage en quatre questions', short: 'tonalité ? accords ? cadence ? ornements ?', text: '<ol><li><b>Tonalité</b> : l’armure, puis la sensible.</li><li><b>Accords</b> : la basse des temps forts, les notes rangées en tierces.</li><li><b>Cadence</b> : les deux derniers accords de la phrase.</li><li><b>Ornements</b> : les notes étrangères, à alléger ou à appuyer.</li></ol>', cards: [

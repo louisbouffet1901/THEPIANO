@@ -6,7 +6,7 @@ export const STATUS = { ok: '#2e7a4c', warn: '#9c6200', bad: '#b0291f' };
 const GRID = '#e8e5dd', AXIS = '#cdc8ba', TEXT3 = '#767c86', SURFACE = '#ffffff';
 
 function frame(width, height, inner, label) {
-  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(label)}" xmlns="http://www.w3.org/2000/svg" font-family="Inter, system-ui, sans-serif">${inner}</svg>`;
+  return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(label)}" xmlns="http://www.w3.org/2000/svg" font-family="Inter, MusicSym, system-ui, sans-serif">${inner}</svg>`;
 }
 
 function niceTicks(min, max, count = 4) {

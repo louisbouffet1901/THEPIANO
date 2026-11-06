@@ -460,10 +460,15 @@ export function weekCard(now = Date.now()) {
       continue;
     }
     const a = adviceFor(c.id, now);
-    const fresh = !paused && Number.isFinite(a.d) && !a.overdue;
+    const never = a.d === Infinity;
+    const fresh = !paused && !never && !a.overdue;
+    // V8.2 : l'état sur une ligne, « quand · à quelle fréquence » dessous : plus rien de tronqué
+    const state = never ? 'pas encore' : paused ? 'en pause' : fresh ? '✓ à jour' : 'c’est son tour';
+    const sub = [never ? '' : sinceLabel(c.id, now), freqLabel(T[c.id].perWeek)].filter(Boolean).join(' · ');
     grid.append(h('div', { class: 'sx-wrow rot' }, h('span', { class: 'sx-wl' }, c.label),
-      h('span', { class: 'sx-wst small ' + (fresh ? 'ok' : a.d === Infinity ? '' : 'due') }, fresh ? `✓ à jour · ${sinceLabel(c.id, now)}` : a.d === Infinity ? 'pas encore' : a.overdue ? `c’est son tour · ${sinceLabel(c.id, now)}` : `dernière fois : ${sinceLabel(c.id, now)}`),
-      h('span', { class: 'sx-wv small muted' }, freqLabel(T[c.id].perWeek))));
+      h('span', { class: 'sx-wcell' },
+        h('span', { class: 'sx-wst ' + (fresh ? 'ok' : never || paused ? '' : 'due') }, state),
+        h('span', { class: 'sx-wsub' }, sub))));
   }
   card.append(grid);
   card.append(h('p', { class: 'small muted mb-0 mt-1' }, aw.min ? `Loin du piano : ${fmtMin(aw.min)} sur ${aw.days} jour${aw.days > 1 ? 's' : ''}.` : pace.away ? 'Loin du piano : rien cette semaine.' : '',

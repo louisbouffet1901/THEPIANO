@@ -96,7 +96,7 @@ ${W.diagram('form', { total: 5, sections: [
 <h2>Points de travail</h2>
 <ul>
 <li><b>La main gauche de valse</b> : basse au 1er temps, plus profonde ; accords des 2e et 3e temps légers et courts. Pédale prise sur la basse, relevée au 2e ou au 3e temps selon l’harmonie. C’est la même idée que la basse et l’accord du nocturne, en trois temps.</li>
-<li><b>Le chant</b> : la mélodie de la main droite est legato, avec ses appuis sur les notes longues ; les groupes de croches qui montent (avec les doigtés 1 2 1 5 dans la plupart des éditions) se jouent d’un seul geste, comme une respiration.</li>
+<li><b>Le chant</b> : la mélodie de la main droite est legato, avec ses appuis sur les notes longues. Les groupes de croches qui montent (doigtés 1 2 1 5 dans la plupart des éditions) se jouent d’un seul geste, comme une respiration.</li>
 <li><b>Les ornements</b> : les petites notes et le trille de la fin se placent souplement sur le temps, sans retarder la basse.</li>
 <li><b>La section en la majeur</b> : changement de couleur, plus de son (forte), mais toujours dansant. Le trait orné de la deuxième phrase se travaille à part, en rythmes.</li>
 </ul>
@@ -181,7 +181,7 @@ ${W.plan({ piece: 'op15-1', caption: 'Les mesures 36 et 48 passent à 6/8 : leur
 <h2>Les sections, une par une</h2>
 <h3 data-sec="chant">Le chant (mesures 1 à 16)</h3>
 ${W.section({ piece: 'op15-1', id: 'chant' })}
-<p>La mélodie, d’une grande simplicité, flotte au-dessus d’une main gauche écrite à trois voix : une <b>basse</b> tenue (fa pendant trois mesures, puis une descente pas à pas, fa – mi – ré – ré♭ – do – si – la, à partir de la mesure 4), des <b>notes en noires</b> au-dessus, et des <b>triolets</b> intérieurs qui murmurent. Chopin écrit <i>sempre legato</i> : les trois voix doivent rester liées et transparentes.</p>
+<p>La mélodie, d’une grande simplicité, flotte au-dessus d’une main gauche écrite à trois voix : une <b>basse</b> tenue, des <b>notes en noires</b> au-dessus, et des <b>triolets</b> intérieurs qui murmurent. La basse reste sur fa pendant trois mesures, puis descend pas à pas à partir de la mesure 4 : fa – mi – ré – ré♭ – do – si – la. Chopin écrit <i>sempre legato</i> : les trois voix doivent rester liées et transparentes.</p>
 ${W.score({ abc: OP15.e1, title: 'Mesures 1 à 8', bpm: 69, startBpm: 52, caption: 'Écoute la main gauche seule (MG) : trois voix, toutes liées.' })}
 
 <h3 data-sec="sommet">Le sommet et la fioriture (mesures 17 à 24)</h3>

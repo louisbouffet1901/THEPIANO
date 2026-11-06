@@ -301,7 +301,7 @@ ${W.warn('Erreurs fréquentes', '<ul><li>Voir une modulation dans chaque altéra
 <li>Mesure 8 : mi majeur (V/iii), puis do 7 qui ramène vers fa.</li>
 </ul>
 ${W.score({ abc: OP15.e1, title: 'Op. 15 n° 1, mesures 1 à 8', bpm: 66, startBpm: 56 })}
-<p><b>Mesures 17 à 21.</b> Après mi♭ 7, l’accord mi♭ – sol – la – do♯ (une sixte augmentée, que tu étudieras dans la leçon « La sixte napolitaine et la sixte augmentée ») s’ouvre sur <b>ré 7 = V7/ii</b>, qui va non pas sur sol mineur mais sur <b>sol 7 = V7/V</b>, puis sur do : une chaîne de dominantes, ré – sol – do. Au sommet (mesure 20), si – ré – fa – la♭ est la <b>septième diminuée de do</b> (vii°7/V).</p>
+<p><b>Mesures 17 à 21.</b> Après mi♭ 7 vient l’accord mi♭ – sol – la – do♯ : une sixte augmentée (tu l’étudieras dans la leçon « La sixte napolitaine et la sixte augmentée »). Il s’ouvre sur <b>ré 7 = V7/ii</b>. Ce ré 7 ne va pas sur sol mineur, comme on l’attendrait, mais sur <b>sol 7 = V7/V</b>, qui va sur do : une chaîne de dominantes, ré – sol – do. Au sommet (mesure 20), si – ré – fa – la♭ est la <b>septième diminuée de do</b> (vii°7/V).</p>
 ${W.score({ abc: OP15.e2, title: 'Op. 15 n° 1, mesures 17 à 24', bpm: 66, startBpm: 50 })}
 ${W.tip('À l’oreille', '<p>Une dominante secondaire sonne comme une petite surprise lumineuse (une note qui monte d’un demi-ton), aussitôt expliquée par l’accord suivant. Joue la chaîne de dominantes ci-dessus, puis la même suite sans altérations (fa – la m – ré m – sol m – do 7 – fa) : la différence est frappante.</p>')}
 
@@ -347,7 +347,9 @@ ${W.ecoute({ title: 'Moduler par un accord pivot', bpm: 72, items: [
 ] })}
 
 <h3>2. Par une altération</h3>
-<p>Une note est altérée pour appartenir à la nouvelle tonalité : depuis do majeur, fa devient fa♯ (la sensible de sol) pour aller vers sol ; si devient si♭ (le 4e degré de fa, qui efface la sensible de do) pour aller vers fa. La dominante de la nouvelle tonalité vient ensuite confirmer.</p>
+<p>Une note est altérée pour appartenir à la nouvelle tonalité. Depuis do majeur :</p>
+<ul><li>pour aller vers sol, fa devient fa♯, la sensible de sol ;</li><li>pour aller vers fa, si devient si♭, le 4e degré de fa (il efface la sensible de do).</li></ul>
+<p>La dominante de la nouvelle tonalité vient ensuite confirmer.</p>
 
 <h3>3. Par changement de mode</h3>
 <p>On garde la même tonique et on change de mode : c’est la <b>tonalité homonyme</b> (fa majeur ↔ fa mineur). Les deux modes ont la même dominante : do 7 peut mener à l’un comme à l’autre.</p>
@@ -646,7 +648,7 @@ ${W.score({ abc: OP15_RED_15, title: 'Mesures 15 à 19 (et 63 à 67) : réductio
 <li><b>Mesure 16 (64)</b> : ré♭ – fa – sol – si♮ a le son de la sixte augmentée française de fa majeur (6e degré abaissé ré♭, 4e degré haussé si♮). Mais fa est à la basse et l’accord ne s’ouvre pas sur do : si♮ redescend sur si♭, fa sur mi. C’est ici un accord de passage sur la basse chromatique, qui annonce la vraie sixte augmentée de la mesure 18.</li>
 <li><b>Mesure 18 (66)</b> : mi♭ – sol – la – do♯ : la même sorte d’accord, construite pour amener ré. La basse mi♭ descend sur ré ; le do♯, au lieu de monter vers ré, glisse vers do♮, la septième de ré 7 : la ligne chromatique continue de descendre.</li>
 </ul>
-<p><b>Dans l’op. 55 n° 1</b> (niveau 1), les deux accords sont là aussi : la <b>sixte napolitaine</b> à la mesure 6 (sous la trille), et la <b>sixte augmentée allemande</b> aux mesures 22-23 (ré♭ – fa – la♭ – si♮ sur la pédale de do) puis aux mesures 69-70, écrite ré♭ – fa – la♭ – do♭ et résolue sur do.</p>
+<p><b>Dans l’op. 55 n° 1</b> (niveau 1), les deux accords sont là aussi. La <b>sixte napolitaine</b> est à la mesure 6, sous le trille. La <b>sixte augmentée allemande</b> apparaît aux mesures 22-23 (ré♭ – fa – la♭ – si♮, sur la pédale de do), puis aux mesures 69-70 : écrite cette fois ré♭ – fa – la♭ – do♭, elle se résout elle aussi sur do.</p>
 ${W.score({ abc: OP55.e2, title: 'Op. 55 n° 1, mesures 5 à 8 : la sixte napolitaine', bpm: 56, startBpm: 46 })}
 ${W.score({ abc: OP55.e8, title: 'Op. 55 n° 1, mesures 69-70 : la sixte augmentée écrite comme ré♭ 7', bpm: 66, startBpm: 46 })}
 
@@ -712,7 +714,7 @@ ${W.tip('Faire entendre une voix intérieure', '<p>Joue d’abord la voix intér
 <li>En improvisation : <a href="#/lecon/n2-im4">le prélude de Chopin</a> (tenir une note pendant que les voix glissent), <a href="#/lecon/n2-im1">orner comme Chopin</a> (les neuvièmes et appoggiatures dans la mélodie).</li>
 <li>Au piano : dans chaque page, repère la voix qui glisse, la neuvième qui chante, la voix intérieure ; ce sont les notes à écouter, donc à doser.</li>
 </ul>
-${W.exo('Exercice — Dans tes deux nocturnes', '<p>Trouve : (1) dans l’op. 55, un passage où la basse descend par demi-tons ; (2) dans l’op. 15, une voix intérieure ; (3) dans l’op. 15, mesures 1 à 8, une dominante secondaire.</p><details><summary>Corrigé</summary><div><p>(1) Op. 55, mesures 1 à 4 : la basse fa – sol – la♭ – mi♮ – fa reste diatonique, mais la phrase b (mesures 17 à 24) et le Più mosso descendent par demi-tons ; la coda (mesures 85 à 96) fait glisser les voix au-dessus de la pédale de fa. (2) Op. 15, mesures 1 à 8 : la voix en noires de la main gauche (fa – fa – mi, puis do – do♯ – ré). (3) Mesure 4 : la 7 (avec do♯), dominante de ré mineur (V7/vi).</p></div></details>')}
+${W.exo('Exercice — Dans tes deux nocturnes', '<p>Trouve : (1) dans l’op. 55, un passage où la basse descend par demi-tons ; (2) dans l’op. 15, une voix intérieure ; (3) dans l’op. 15, mesures 1 à 8, une dominante secondaire.</p><details><summary>Corrigé</summary><div><p>(1) Op. 55 : pas au début, où la basse fa – sol – la♭ – mi♮ – fa (mesures 1 à 4) reste dans la gamme ; mais dans la phrase b (mesures 17 à 24) et dans le Più mosso, la basse descend par demi-tons. Dans la coda (mesures 85 à 96), ce sont les voix qui glissent par demi-tons au-dessus de la pédale de fa. (2) Op. 15, mesures 1 à 8 : la voix en noires de la main gauche (fa – fa – mi, puis do – do♯ – ré). (3) Mesure 4 : la 7 (avec do♯), dominante de ré mineur (V7/vi).</p></div></details>')}
 
 <h2>Au clavier</h2>
 ${W.clavier({ id: 'n2-th-chopin', keys: ['F', 'C', 'Bb'], tasks: [
@@ -765,7 +767,7 @@ ${W.warn('Erreurs fréquentes', '<ul><li>Croire que Debussy « ne respecte pas l
 
 <h2>Dans ta pièce : mesures 27 à 50</h2>
 <ul>
-<li><b>Un poco mosso (27-36)</b> : des arpèges sur la basse ré♭ – fa – la♭ ; fa♭ et do♭ apportent la couleur de ré♭ mineur ; aux mesures 30-31, mi♭ 9 puis la♭ 9 (dominante de la dominante, puis dominante) ; mesure 34, les deux accords augmentés.</li>
+<li><b>Un poco mosso (27-36)</b> : des arpèges sur la basse ré♭ – fa – la♭, où fa♭ et do♭ apportent la couleur de ré♭ mineur. Mesures 30-31 : mi♭ 9 puis la♭ 9 (dominante de la dominante, puis dominante). Mesure 34 : les deux accords augmentés.</li>
 <li><b>En animant (37-42)</b> : do♯ mineur, la basse qui descend, le forte des mesures 41-42 sur fa♯ m7.</li>
 <li><b>Calmato (43-50)</b> : la pédale de la♭, la mélodie au milieu du clavier, les accords qui glissent (45-46), sol♭ majeur puis sol♭ mineur (49-50) avant le retour du thème.</li>
 </ul>

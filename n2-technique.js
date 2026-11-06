@@ -413,7 +413,7 @@ ${W.links([W.informance('/content/pages/40-intermediate-scales-arpeggios', 'Inte
     ],
     goal: 'les arpèges de do majeur et la mineur passent réguliers à l’analyseur (moins de 10 % d’irrégularité), sans douleur, et tu joues la main gauche de la valse (m. 1 à 8) sans regarder le clavier.',
     body: W => `
-<p>Les grands arpèges de Chopin (l’Étude op. 10 n° 1, les nocturnes à larges arpèges, les basses de valse) ne se jouent pas en écartant les doigts : c’est le <b>poignet</b>, avec l’avant-bras, qui déplace une main détendue d’une position à la suivante. Ici, on prépare ce geste lentement ; l’Étude elle-même viendra plus tard dans le parcours.</p>
+<p>Les grands arpèges de Chopin (l’Étude op. 10 n° 1, les nocturnes à larges arpèges, les basses de valse) ne se jouent pas en écartant les doigts. C’est le <b>poignet</b>, avec l’avant-bras, qui déplace une main détendue d’une position à la suivante. Ici, on prépare ce geste lentement ; l’Étude elle-même viendra plus tard dans le parcours.</p>
 
 <h2>1. La forme, puis le mouvement</h2>
 ${W.score({ abc: ARP_BLOCS, title: 'Les arpèges en blocs', bpm: 50, practice: false, hands: false, caption: 'Chaque groupe de quatre notes, plaqué : c’est la forme que prend la main. Entre deux blocs, la main se referme, se déplace, se rouvre, sans que les doigts se crispent.' })}

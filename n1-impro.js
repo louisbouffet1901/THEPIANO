@@ -737,7 +737,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
 <li><b>Une pédale gardée sur deux accords.</b> Change-la juste après chaque basse.</li>
 <li><b>Une mélodie trop chargée.</b> Des valeurs longues : la main gauche fait déjà le mouvement.</li>
 </ul>`)}
-${W.tip('Garder ce que tu as trouvé', '<p>Une improvisation qui te plaît mérite d’être fixée : l’onglet <a href="#/outils/composition">Composition</a> reprend cette grille (romance en mi mineur). Tu y enregistres ta mélodie mesure par mesure ; elle est notée en partition, vérifiée (question en mesure 4, sommet, cadence) et gardée dans tes compositions.</p>')}
+${W.tip('Garder ce que tu as trouvé', '<p>Une improvisation qui te plaît mérite d’être fixée : l’outil <a href="#/outils/composition">Composition</a> (page Improvisation) reprend cette grille (romance en mi mineur). Tu y enregistres ta mélodie mesure par mesure ; elle est notée en partition, vérifiée (question en mesure 4, sommet, cadence) et gardée dans tes compositions.</p>')}
 ${W.listen([W.yt('Liszt Romance S.169 O pourquoi donc', 'Liszt, Romance S. 169', 'La pièce qui a inspiré ce style'), W.yt('Rachmaninoff Elegie op 3 no 1', 'Rachmaninov, Élégie op. 3 n° 1', 'Le même principe, en plus large (niveau 4)')], 'Écouter le style')}
 `,
   },
@@ -755,7 +755,7 @@ ${W.listen([W.yt('Liszt Romance S.169 O pourquoi donc', 'Liszt, Romance S. 169',
     goals: ['Préluder en fa mineur avant de jouer ta pièce.', 'Improviser un autre thème sur les harmonies de l’op. 55, puis à deux mains.', 'Orner son squelette avec des broderies chromatiques et des rythmes pointés.'],
     goal: 'l’exercice « question – réponse sur les harmonies de Chopin » est validé.',
     body: W => `
-<p>Cette fois, la grille n’est pas inventée pour l’exercice : ce sont les accords des mesures 1 à 8 de ton nocturne, avec les voicings de Chopin à la main gauche (basse au 1er et au 3e temps, accord au 2e et au 4e). Un accord <b>par demi-mesure</b> : les temps forts sont le 1 et le 3.</p>
+<p>Cette fois, la grille n’est pas inventée pour l’exercice : ce sont les accords des mesures 1 à 8 de ton nocturne. La main gauche les dispose comme chez Chopin : la basse au 1er et au 3e temps, l’accord au 2e et au 4e. Un accord <b>par demi-mesure</b> : les temps forts sont le 1 et le 3.</p>
 
 <h2>Ce que fait Chopin</h2>
 ${W.score({ abc: OP55.e1, title: 'Op. 55 n° 1, mesures 1 à 4', bpm: 56, startBpm: 46, pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17, practice: false, caption: 'Son squelette : <b>do</b> au 1er temps (fa mineur), <b>mi♭</b> au 3e (mi♭/sol), <b>do</b> au 1er temps de la mesure 2 (la♭), <b>do</b> au 3e (do 7). Entre eux : fa, ré♭ (notes de l’accord ou de passage), la broderie si♮ – do – ré♭ autour de do, et le rythme pointé do – si♮.' })}
@@ -774,7 +774,7 @@ ${W.score({ abc: EX_NOCT_HAB, title: '2. Le même, habillé', bpm: 56, startBpm:
 <h2>Les exercices</h2>
 ${W.paliers({ lesson: 'n1-im3', steps: [
   { id: 'prelude', title: 'Préluder en fa mineur', preset: 'n1-nocturne', mode: 'libre', loops: 1, lh: 'moi', formula: 'arpege', bpm: 60,
-    what: 'Avant ton nocturne, trente secondes pour installer la tonalité : la cadence i – iv – V7 – i en fa mineur, la main gauche en arpège (la basse, puis l’accord égrené), la main droite qui pose une note longue par accord et finit sur fa. Écoute d’abord la main gauche.',
+    what: 'Avant ton nocturne, trente secondes pour installer la tonalité : la cadence i – iv – V7 – i en fa mineur. La main gauche joue en arpège (la basse, puis l’accord égrené) ; la main droite pose une note longue par accord et finit sur fa. Écoute d’abord la main gauche.',
     why: 'Les pianistes du XIXe siècle préludaient avant de jouer une pièce (Czerny en a fait une méthode, l’op. 200) : l’oreille et les mains entrent dans la tonalité, et le trac retombe. Tu le feras au début de chaque étape Pièce.',
     checks: [{ k: 'bass', min: 0.75 }, { k: 'lhChord', min: 0.75 }, { k: 'final' }] },
   { id: 'chopin', title: 'Le squelette de Chopin', preset: 'nocturne-op55', mode: 'squelette', loops: 1,

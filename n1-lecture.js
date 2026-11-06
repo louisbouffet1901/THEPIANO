@@ -33,7 +33,7 @@ export default [
 <p>On ne progresse pas en lecture à vue en rejouant des pièces connues : il faut lire du <b>neuf</b>, un peu plus facile que ton répertoire, <b>chaque jour</b>, dix minutes. C’est ce que propose l’outil de lecture : de vrais extraits de pièces (Bach, Diabelli, Burgmüller, Schumann…), classés en cinq niveaux, jamais deux fois le même tant que le niveau n’est pas épuisé. La difficulté suit tes résultats.</p>
 
 <h2>D’abord, trois minutes d’échauffement</h2>
-<p>Dans l’outil de lecture, un échauffement court précède les extraits : <b>une minute de rythme</b> (tu tapes au clic en comptant à voix haute ; c’est l’entraînement de la lecture le mieux étudié, et le rythme est ton point faible), puis <b>deux exercices d’une minute</b> qui tournent d’un jour à l’autre entre les notes, les intervalles et les accords. Tu apprends ainsi à lire par motifs (un écart, une forme d’accord) plutôt que note par note. L’essentiel du temps reste aux vrais extraits.</p>
+<p>Sur la page Lecture à vue, un échauffement de trois minutes précède les extraits. D’abord <b>une minute de rythme</b> : tu tapes au clic en comptant à voix haute. C’est l’entraînement de la lecture le mieux étudié, et le rythme est ton point faible. Puis <b>deux exercices d’une minute</b>, qui changent d’un jour à l’autre : les notes, les intervalles ou les accords. Tu apprends ainsi à lire par motifs (un écart, une forme d’accord) plutôt que note par note. L’essentiel du temps reste aux vrais extraits.</p>
 
 <h2>Avant de jouer (30 secondes)</h2>
 <ol>
@@ -85,7 +85,7 @@ ${W.score({ abc: LANDMARKS, title: 'Les notes repères', bpm: 50, practice: fals
 </ul>
 
 <h2>Lire par intervalles</h2>
-<p>D’un repère, une note voisine est une seconde (ligne → interligne), puis une tierce (ligne → ligne), etc. Dans une mélodie, on lit le <b>mouvement</b> : ça monte d’une seconde, saute d’une tierce, redescend… Le module de théorie détaille la lecture des intervalles sur la portée.</p>
+<p>D’un repère, une note voisine est une seconde (ligne → interligne), puis une tierce (ligne → ligne), etc. Dans une mélodie, on lit le <b>mouvement</b> : ça monte d’une seconde, saute d’une tierce, redescend… Le chapitre de théorie <a href="#/lecon/n1-th-intervalles">Les intervalles</a> détaille leur lecture sur la portée.</p>
 
 ${W.quiz({ kind: 'notes', clefs: ['treble'], title: 'Notes en clé de sol', count: 12, stat: 'notes-t' })}
 ${W.quiz({ kind: 'notes', clefs: ['bass'], title: 'Notes en clé de fa', count: 12, stat: 'notes-b' })}

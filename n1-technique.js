@@ -184,7 +184,7 @@ ${W.score({ abc: EX_FIVE, title: 'Cinq notes liées (fa – sol – la♭ – si
 ${W.analyzer({ mode: 'legato', title: 'Analyseur — legato', help: 'Appuie sur « Enregistrer », joue les cinq notes montantes et descendantes <b>sans pédale</b>, puis attends : l’analyse s’affiche après un court silence.' })}
 
 <h2>La substitution de doigts</h2>
-<p>Quand une note longue est jouée avec un doigt qui ne convient pas pour la suite, on change de doigt <b>sans relever la touche</b> : par exemple, enfoncer une note avec le 4, puis glisser le 5 à sa place pour libérer le 4. Chopin l’utilise sans cesse pour lier des mélodies et des voix intérieures. Exerce-toi sur une note tenue : 3 → 1, 4 → 5, 5 → 4, sans que la note se répète ni s’éteigne.</p>
+<p>Quand une note longue est jouée avec un doigt qui ne convient pas pour la suite, on change de doigt <b>sans relever la touche</b>. Par exemple : enfoncer une note avec le 4, puis glisser le 5 à sa place pour libérer le 4. Chopin l’utilise sans cesse pour lier des mélodies et des voix intérieures. Exerce-toi sur une note tenue : 3 → 1, 4 → 5, 5 → 4, sans que la note se répète ni s’éteigne.</p>
 
 <h2>La mélodie du nocturne, sans pédale</h2>
 <p>Doigté possible pour les mesures 1 à 2 : levée do (2) ; fa (5), mi♭ (4), ré♭ (3) ; do (2), si♮ (1), do (2), ré♭ (3), do (2). Le si♮ et le ré♭ ne sont que des broderies autour de do : joue-les plus légèrement que les notes d’appui.</p>
