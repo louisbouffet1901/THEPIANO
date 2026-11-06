@@ -314,7 +314,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
 <tr><td><b>IV</b> (fa)</td><td>fa – la – do</td><td>éloignement</td></tr>
 <tr><td><b>V7</b> (sol 7)</td><td>sol – si – ré – fa</td><td>tension, qui ramène vers I</td></tr>
 </tbody></table>
-<p class="small">La théorie de ces accords : <a href="#/lecon/n1-th-accords">les accords de trois sons</a> et <a href="#/lecon/n1-th-fonctions">degrés et fonctions</a>.</p>
+<p class="small">La théorie de ces accords : les chapitres <a href="#/lecon/n1-th-accords">Les accords de trois sons</a> et <a href="#/lecon/n1-th-fonctions">Degrés et fonctions</a>.</p>
 
 <h2>Pourquoi ça marche</h2>
 <p>Ce ne sont pas les notes qui sont justes ou fausses, c’est leur <b>place</b>. La même note de la gamme sonne stable sur un temps fort si elle appartient à l’accord, et dure si elle n’y appartient pas. Écoute deux mélodies faites des mêmes touches blanches, sur la même grille.</p>
@@ -389,7 +389,7 @@ ${W.more('La note la plus proche : pourquoi ça marche', '<p>Quand l’accord ch
 <tr><td><b>I</b></td><td>do – mi – sol</td><td>si monte à do (la sensible), fa descend à mi (la septième)</td></tr>
 </tbody></table>
 ${W.score({ abc: EX_MG_PRES, title: 'Les mêmes accords, sautés puis au plus près', bpm: 60, practice: false, hands: false, caption: 'Mesures 1 à 4 : chaque accord à l’état fondamental, la main saute d’une position à l’autre. Mesures 5 à 8 : la position la plus proche, la main reste en place et les voix bougent d’un pas. À l’oreille aussi, la seconde version est plus liée.' })}
-<p class="small">La théorie : <a href="#/lecon/n1-th-renv">renversements et chiffrage</a>, <a href="#/lecon/n1-th-fonctions">degrés et fonctions</a>.</p>
+<p class="small">La théorie : les chapitres <a href="#/lecon/n1-th-renv">Renversements et chiffrage</a> et <a href="#/lecon/n1-th-fonctions">Degrés et fonctions</a>.</p>
 
 <h2>Les quatre formules</h2>
 <p>Une ${W.term('formule', 'un dessin de main gauche répété à chaque accord : il donne le rythme et le caractère de l’accompagnement')} fait vivre les accords en rythme. Elle tourne seule une fois dans la main, et l’attention va à la mélodie. Toutes partent des mêmes positions serrées ; la basse, quand il y en a une, est la note qui donne son nom à l’accord, plus bas.</p>
@@ -542,7 +542,7 @@ ${W.warn('Erreurs fréquentes', `<ul>
     goals: ['Placer une appoggiature au premier temps et la résoudre.', 'Doser son poids : appui, puis détente.'],
     goal: 'l’exercice « appuyer, puis alléger » et les suivants sont validés : l’appoggiature plus forte que sa résolution, jusqu’à deux mains.',
     body: W => `
-<p>Jusqu’ici, les temps forts étaient sur l’accord. L’${W.term('appoggiature', 'note étrangère à l’accord, placée sur le temps fort, qui se résout ensuite par degré sur une note de l’accord')} renverse la règle, exprès : une note qui n’appartient pas à l’accord tombe sur le temps, crée une tension, puis glisse sur la note voisine. Chopin, Liszt, Rachmaninov en remplissent leurs mélodies. Tu en entends une dans ton nocturne : le ré♭ qui retombe sur do.</p>
+<p>Jusqu’ici, les temps forts étaient sur l’accord. L’${W.term('appoggiature', 'note étrangère à l’accord, placée sur le temps fort, qui se résout ensuite par degré sur une note de l’accord')} renverse la règle, exprès : une note qui n’appartient pas à l’accord tombe sur le temps, crée une tension, puis glisse sur la note voisine. Chopin, Liszt, Rachmaninov en remplissent leurs mélodies. Tu en entends une dans ton nocturne, à la mesure 7 : le la♭ appuyé sur l’accord de dominante, qui retombe sur sol.</p>
 
 <h2>Pourquoi ça marche</h2>
 <p>Sur le temps fort, l’oreille attend une note de l’accord. L’appoggiature la fait attendre : la dissonance crée l’expression, la résolution d’un degré la rend supportable. C’est pour cela qu’elle se joue avec du poids, puis qu’on relâche.</p>

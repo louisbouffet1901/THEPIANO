@@ -165,7 +165,8 @@ ${W.exo('Exercice — Le chef d’orchestre', `<ol>
 ${W.metronome({ bpm: 56, beats: 4 })}
 
 <h2>Mesure ton rubato</h2>
-<p>Joue les mesures 1 à 4 sur le piano connecté, puis touche « Analyser » : la partie <b>Rubato</b> de l’analyse mesure trois choses. <b>Main gauche</b> : sa régularité, temps par temps (un ralenti d’ensemble est toléré, un temps qui flotte ne l’est pas) : vise ± 6 % ou moins. <b>Main droite</b> : son décalage moyen avec la gauche quand elles jouent ensemble : à 0, tout est collé (propre mais droit) ; 20 à 80 ms, la main droite respire. <b>Retrouvailles</b> : la part des premiers temps où les mains sont ensemble.</p>
+<p>Joue les mesures 1 à 4 sur le piano connecté, puis touche « Analyser ». La partie <b>Rubato</b> de l’analyse mesure trois choses :</p>
+<ul><li><b>Main gauche</b> : sa régularité, temps par temps. Un ralenti d’ensemble est toléré, un temps qui flotte ne l’est pas. Vise ± 6 % ou moins.</li><li><b>Main droite</b> : son décalage moyen avec la gauche quand elles jouent ensemble. À 0 ms, tout est collé (propre, mais droit) ; entre 20 et 80 ms, la main droite respire.</li><li><b>Retrouvailles</b> : la part des premiers temps où les deux mains se retrouvent ensemble.</li></ul>
 ${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4 : mesure ton rubato', bpm: 56, startBpm: 50, focus: 'rubato', pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17, caption: 'Trois prises : (1) main gauche seule, avec le clic ; (2) mains ensemble, strict ; (3) mains ensemble, la main droite s’attarde sur le fa (mesure 1) et sur le si♮ (mesure 2), et rattrape avant le temps fort suivant.' })}
 ${W.warn('Ce que le rubato n’est pas', '<ul><li>Ce n’est pas jouer plus lentement : le temps volé est rendu.</li><li>Ce n’est pas ralentir à chaque fin de mesure : un tic qui devient vite pénible.</li><li>Ce n’est pas une liberté de la main gauche : si la basse flotte, tout flotte.</li></ul>')}
 `,
@@ -183,7 +184,7 @@ ${W.plan({ piece: 'op55-1', states: false, title: 'La forme, section par section
 <p>Une forme ternaire (A – B – A′) dont le retour est très court : quatre mesures seulement, puis la coda. Dans la section A, le thème (8 mesures) revient trois fois, à chaque fois varié, en alternance avec une phrase b qui monte par marches.</p>
 
 <h2>L’harmonie des mesures 1 à 8</h2>
-${W.score({ abc: OP55_ANALYSE, analysis: AN.op55_1_8, title: 'Mesures 1 à 8, avec l’analyse', bpm: 56, pedal: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31], pedalEnd: 33, caption: 'Les chiffrages (i, iv, V7…) sont expliqués dans le chapitre de théorie « Degrés et fonctions ». N6 : sixte napolitaine (théorie, niveau 2).' })}
+${W.score({ abc: OP55_ANALYSE, analysis: AN.op55_1_8, title: 'Mesures 1 à 8, avec l’analyse', bpm: 56, pedal: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31], pedalEnd: 33, caption: 'Les chiffrages sont expliqués en théorie : les degrés (i, iv, V7…) dans « Degrés et fonctions », les chiffres des renversements (6, 6/5, 6/4) dans « Renversements et chiffrage ». N6 : sixte napolitaine (théorie, niveau 2).' })}
 <ul>
 <li><b>Mesures 1 à 4</b> : la basse fait fa – sol – la♭, puis mi♮ – fa. Les accords : i (fa mineur), VII<sup>6</sup> (mi♭ majeur avec sol à la basse), III (la♭ majeur), V<sup>6/5</sup> (do 7 avec mi à la basse). Une boucle qui tourne autour de fa.</li>
 <li><b>Mesures 5 à 8</b> : même départ, mais à la mesure 6 apparaît un accord de <b>sol♭ majeur avec si♭ à la basse</b> : la <b>sixte napolitaine</b>, une couleur sombre et intense, juste avant la cadence (i<sup>6/4</sup> – V – i). C’est le moment le plus expressif de la phrase : le trille sur si♭ et les petites notes l’ornent.</li>
@@ -208,7 +209,7 @@ ${W.score({ abc: OP55_ANALYSE, analysis: AN.op55_1_8, title: 'Mesures 1 à 8, av
 <h2>Des décisions d’interprétation</h2>
 ${W.key('À retenir', `<ul>
 <li>Les trois passages du thème ne se jouent pas de la même manière : du plus intime au plus intense.</li>
-<li>La sixte napolitaine (mesure 6) mérite un temps et une couleur : c’est un sommet expressif, même dans le <i>p</i>.</li>
+<li>La sixte napolitaine (mesure 6) mérite un temps et une couleur : c’est un sommet expressif, même dans la nuance <i>piano</i>.</li>
 <li>La pédale de dominante (mesures 22-24) est une attente : ne te presse pas d’en sortir.</li>
 <li>Le Più mosso doit être plus animé, mais il reste un nocturne : ne joue pas un autre morceau.</li>
 <li>La coda en fa majeur est un apaisement, pas une victoire : <i>molto legato</i>, sonorité ronde.</li>

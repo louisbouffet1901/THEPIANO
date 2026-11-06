@@ -57,7 +57,7 @@ export default [
 <h2>Après</h2>
 <p>Rejoue une seule fois, puis demande-toi ce qui a coincé : la lecture des notes, le rythme, l’anticipation ? L’outil garde la trace de tes derniers essais en rythme.</p>
 
-${W.tip('Les deux modes de l’outil', '<p><b>Préparer 30 s puis jouer</b> : deux ou trois questions sur l’extrait (tonalité, mesure, motif qui revient, valeur la plus courte), la mesure la plus délicate signalée, puis départ en rythme. Répondre oblige à lire vraiment avant de jouer. <b>Jouer en rythme</b> : décompte, métronome, et on ne s’arrête pas ; seul ce mode fait avancer la difficulté. <b>Mode attente</b> : le curseur attend la bonne note. Utile pour une nouvelle clé ou tonalité, mais ce n’est pas encore de la lecture à vue.</p>')}
+${W.tip('Trois façons de jouer un extrait', '<ul><li><b>Préparer 30 s puis jouer</b> : deux ou trois questions sur l’extrait (tonalité, mesure, motif qui revient, valeur la plus courte), la mesure la plus délicate signalée, puis départ en rythme. Répondre oblige à lire vraiment avant de jouer.</li><li><b>Jouer en rythme</b> : décompte, métronome, et on ne s’arrête pas. Seul ce mode fait avancer la difficulté.</li><li><b>Mode attente</b> : le curseur attend la bonne note. Utile pour une nouvelle clé ou une nouvelle tonalité, mais ce n’est pas encore de la lecture à vue.</li></ul>')}
 ${W.sight({ level: '1rh', levels: ['1rh', '1lh', '2'] })}
 ${W.links([W.informance('/content/pages/198-music-at-sight', 'Music at Sight'), W.informance('/content/pages/136-advanced-sight-reading-curriculum', 'Advanced Sight-Reading Curriculum')], 'Pour aller plus loin')}
 `,
@@ -136,7 +136,7 @@ ${W.sight({ level: '1rh', levels: ['1rh', '1lh', '2'] })}
     goal: '85 % de notes justes en rythme sur cinq extraits de suite, niveau 2 (deux mains) de l’outil de lecture.',
     body: W => `
 <h2>Lire verticalement</h2>
-<p>À deux mains, on lit d’abord <b>ce qui sonne ensemble</b> (une colonne), puis on avance de colonne en colonne. Les accords se lisent par leur forme : trois notes sur trois lignes (ou trois interlignes) consécutives forment un accord à l’état fondamental ; une forme « une ligne, un interligne, une ligne » signale un renversement.</p>
+<p>À deux mains, on lit d’abord <b>ce qui sonne ensemble</b> (une colonne), puis on avance de colonne en colonne. Les accords se lisent par leur forme : trois notes toutes sur des lignes voisines, ou toutes dans des interlignes voisins, forment un accord à l’état fondamental (deux tierces empilées). Si l’une des notes est décalée, une quarte apparaît entre deux notes voisines : c’est un renversement.</p>
 <h2>Reconnaître les formules</h2>
 <p>La main gauche répète souvent une <b>formule</b> : notes tenues, basse et accord (comme dans le nocturne ou la valse), basse d’Alberti (do-sol-mi-sol). Une fois la formule reconnue, la main gauche suit presque seule et les yeux restent sur la main droite.</p>
 <h2>Les priorités</h2>

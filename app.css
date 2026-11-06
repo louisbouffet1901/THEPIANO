@@ -354,7 +354,7 @@ a.card:hover { border-color: var(--line-strong); transform: translateY(-1px); }
   font-size: 15px; font-weight: 500; color: var(--text);
 }
 .range { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-2); }
-.range.vol { display: grid; grid-template-columns: 10.5em 1fr; margin: 4px 0; }
+.range.vol { display: grid; grid-template-columns: 11.6em 1fr; margin: 4px 0; }
 .range.vol input { width: 100%; min-width: 0; }
 .range input[type="range"] { flex: 1; accent-color: var(--accent); min-width: 120px; }
 .range output { font-variant-numeric: tabular-nums; font-weight: 650; color: var(--text); min-width: 54px; text-align: right; }

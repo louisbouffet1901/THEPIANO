@@ -130,7 +130,7 @@ ${W.diagram('posture', {}, 'Repères de posture. Le plus important : un avant-br
 <ul>
 <li><b>Hauteur</b> : coude au niveau des touches ou très légèrement au-dessus. Trop bas, le poignet casse et les doigts « tirent » ; trop haut, on écrase le clavier par les épaules.</li>
 <li><b>Distance</b> : assez loin pour que les coudes soient un peu en avant du buste et puissent bouger latéralement. Si tes coudes touchent ton corps, recule.</li>
-<li><b>Assise</b> : sur la moitié avant du banc, dos droit sans raideur, le poids du corps sur les ischions et un peu sur les pieds.</li>
+<li><b>Assise</b> : sur la moitié avant du banc, dos droit sans raideur, le poids du corps sur les ischions (les deux os du bassin sur lesquels on est assis) et un peu sur les pieds.</li>
 <li><b>Pieds</b> : à plat ; le pied droit devant la pédale, talon au sol (la cheville fait le mouvement).</li>
 </ul>
 
@@ -205,7 +205,7 @@ ${W.links([W.informance('/content/pages/6-the-art-of-piano-fingering', 'The Art 
       'Pour faire ressortir le chant, <b>alléger l’accompagnement</b> marche mieux que forcer la mélodie.',
       'Dans une même main, la note du haut chante : le poids s’incline vers le 5e doigt, les autres doigts enfoncent leur touche plus lentement.',
     ],
-    goal: 'l’analyseur « Équilibre » mesure au moins +12 de vélocité entre la mélodie et la main gauche, mesures 1 à 4.',
+    goal: 'l’analyseur « Équilibre » mesure au moins +12 de vélocité (la force de frappe, que le piano note de 0 à 127) entre la mélodie et la main gauche, mesures 1 à 4.',
     body: W => `
 <p>Dans l’op. 55 n° 1, trois plans se superposent : la <b>mélodie</b> (main droite), la <b>basse</b> (main gauche, 1er et 3e temps) et les <b>accords</b> (main gauche, 2e et 4e temps). Le soliste doit dominer, la basse soutenir, les accords se fondre. Jouer tout au même niveau, c’est perdre la mélodie.</p>
 ${W.diagram('voicing', {}, 'Ce qu’on vise : la mélodie nettement au-dessus, la basse présente, les accords les plus doux.')}
@@ -219,11 +219,11 @@ ${W.exo('Exercice 1', `<ol>
 <li>Mains ensemble : main droite <i>mf</i>, main gauche telle quelle. Écoute la note longue de la mélodie au-dessus des accords.</li>
 <li>Inverse une fois (main gauche plus forte) : c’est en contrôlant aussi l’inverse qu’on contrôle vraiment.</li>
 </ol>`)}
-${W.analyzer({ mode: 'balance', title: 'Analyseur — équilibre des mains', target: 12, help: 'Joue les mesures 1 à 4 mains ensemble. L’analyseur compare la force moyenne au-dessus et au-dessous du point de séparation (do3 par défaut). Objectif : au moins +12.' })}
+${W.analyzer({ mode: 'balance', title: 'Analyseur — équilibre des mains', target: 12, help: 'Joue les mesures 1 à 4 mains ensemble. L’analyseur compare la force moyenne des notes au-dessus et au-dessous du point de séparation (do3 par défaut). Cette force, la vélocité, le piano la note de 0 à 127. Objectif : la mélodie au moins 12 au-dessus.' })}
 
 <h2>Faire chanter le haut d’un accord</h2>
 <p>Dans une même main, la note la plus aiguë doit souvent dominer. Le geste : le poids s’incline vers le côté du 5e doigt, qui est actif et ferme ; les autres doigts sont « passifs », presque à fleur de touche, et enfoncent leur touche plus lentement.</p>
-${W.score({ abc: EX_VOICING, title: 'Accords : la voix du haut chante (fa – mi♭ – ré♭ – do – fa)', bpm: 50, hands: false, caption: 'Les chiffrages (i, VII6, iv, V6) sont expliqués en théorie. D’abord la note du haut seule, chantée ; puis les accords en gardant la même ligne au-dessus.' })}
+${W.score({ abc: EX_VOICING, title: 'Accords : la voix du haut chante (fa – mi♭ – ré♭ – do – fa)', bpm: 50, hands: false, caption: 'D’abord la note du haut seule, chantée ; puis les accords en gardant la même ligne au-dessus. Les chiffrages (i, VII6, iv, V6) sont expliqués dans les chapitres de théorie « Degrés et fonctions » et « Renversements et chiffrage ».' })}
 ${W.analyzer({ mode: 'voicing', title: 'Analyseur — voix supérieure', target: 10, help: 'Joue la suite d’accords. Objectif : la note du haut au moins 10 points de vélocité au-dessus des autres, dans 80 % des accords.' })}
 ${W.tip('Alléger plutôt que forcer', '<p>Pour que la mélodie ressorte, il est presque toujours plus efficace d’alléger l’accompagnement que de forcer la mélodie. Un chant forcé devient dur ; un accompagnement très doux laisse le chant respirer.</p>')}
 `,
@@ -243,7 +243,7 @@ ${W.tip('Alléger plutôt que forcer', '<p>Pour que la mélodie ressorte, il est
     body: W => `
 <p>La pédale de droite soulève tous les étouffoirs : les cordes continuent de vibrer, et les autres cordes entrent en résonance. Le son s’enrichit, mais deux harmonies successives se mélangent si on garde la pédale. La solution est la <b>pédale syncopée</b> (ou pédale de legato) : on la relève au moment où l’on joue le nouvel accord, et on la reprend juste après.</p>
 ${W.diagram('pedal', { mode: 'sync' }, 'Pédale syncopée : les doigts jouent, puis le pied relève et rabaisse aussitôt. Les doigts tiennent l’accord pendant le changement : aucun trou, aucun mélange.')}
-${W.diagram('pedal', { mode: 'direct' }, 'L’erreur fréquente : enfoncer la pédale en même temps que l’accord. Si on la relevait juste avant, il y a un trou ; si on la relève trop tard, les harmonies se mélangent.')}
+${W.diagram('pedal', { mode: 'direct' }, 'L’erreur fréquente : changer la pédale en même temps que l’accord. Relevée juste avant l’accord, elle laisse un trou ; relevée trop tard, elle mélange les deux harmonies.')}
 
 <h2>Le geste du pied</h2>
 <ul>
@@ -295,7 +295,7 @@ ${W.links([W.informance('/content/pages/8-the-art-of-pedalling', 'The Art of Ped
 <tr><td>La♭ majeur</td><td>3 4 · 1 2 3 · 1 2 3 (pouces sur do et fa)</td><td>3 2 1 · 4 3 2 1 · 3</td></tr>
 </tbody></table>
 <p>Deux octaves, mains ensemble (à l’octave), en montant et en descendant. Arpèges des accords parfaits de do, fa, sol majeur et la, ré, mi, do, fa mineur : main droite 1 2 3 · 1 2 3 5, main gauche 5 4 2 1 · 4 2 1.</p>
-${W.score({ abc: EX_SCALE_FM, title: 'Fa mineur harmonique (une octave, mains ensemble)', bpm: 72, startBpm: 60, caption: 'Le mi bécarre est la sensible. Pour deux octaves, on reprend le même doigté ; la main droite finit sur le 4, la main gauche passe sur le 1.' })}
+${W.score({ abc: EX_SCALE_FM, title: 'Fa mineur harmonique (une octave, mains ensemble)', bpm: 72, startBpm: 60, caption: 'Le mi bécarre est la sensible. Pour deux octaves, on enchaîne le même doigté : en haut, la main droite finit sur le 4 ; au milieu, la main gauche arrive sur fa avec le pouce, puis passe le 4 par-dessus pour le sol.' })}
 ${W.score({ abc: EX_ARP, title: 'Arpège de do majeur', bpm: 60, caption: 'Triolets de croches : le pouce glisse sous la main pendant les notes 2 et 3, sans mouvement du coude.' })}
 
 <h2>Le passage du pouce</h2>

@@ -36,7 +36,7 @@ ${ROUTINE([
   'Cinq minutes : série « Plus grave ou plus aigu ? ». L’écart se resserre quand tu réussis et s’élargit quand tu te trompes : tu travailles toujours à la limite de ce que tu perçois.',
   'Trois minutes : série « Le dessin d’une mélodie », à trois notes puis à quatre.',
 ])}
-${W.quiz({ kind: 'highlow', minSt: 1, maxSt: 12, title: 'Plus grave ou plus aigu ?', count: 12, stat: 'hl', intro: 'Douze questions. L’écart diminue quand tu réponds juste ; vise un écart d’un ou deux demi-tons en quelques jours.' })}
+${W.quiz({ kind: 'highlow', minSt: 1, maxSt: 12, title: 'Plus grave ou plus aigu ?', count: 12, stat: 'hl', intro: 'L’écart diminue quand tu réponds juste ; vise un écart d’un ou deux demi-tons en quelques jours.' })}
 ${W.tip('Fredonne', '<p>Fredonne les deux notes à mi-voix après les avoir entendues : ta voix sent très nettement si elle monte ou descend, souvent mieux que ton oreille seule.</p>')}
 ${W.quiz({ kind: 'contour', notes: 3, title: 'Le dessin d’une mélodie (3 notes)', count: 10, stat: 'contour' })}
 ${W.tip('Dessine avec la main', '<p>Pendant l’écoute, suis la mélodie avec la main, de bas en haut : le geste fixe l’attention sur la direction.</p>')}
@@ -99,7 +99,7 @@ ${ROUTINE([
   'Cinq minutes : série « Chanter une note, au milieu de ta voix », puis « Chanter une note entendue » quand tu réussis 6 notes sur 8.',
   'Trois minutes : joue la mélodie des mesures 1 et 2 du nocturne (do – fa – mi♭ – ré♭ – do) et chante-la en même temps, puis seul, puis vérifie au piano.',
 ])}
-${W.quiz({ kind: 'sing', task: 'match', span: 4, title: 'Chanter une note, au milieu de ta voix', count: 8, stat: 'sing-match-a', intro: 'Huit notes, toutes proches du milieu de ta voix. Si tu en manques, les suivantes se resserrent encore et durent plus longtemps.' })}
+${W.quiz({ kind: 'sing', task: 'match', span: 4, title: 'Chanter une note, au milieu de ta voix', count: 8, stat: 'sing-match-a', intro: 'Des notes toutes proches du milieu de ta voix. Si tu en manques, les suivantes se resserrent encore et durent plus longtemps.' })}
 ${W.tip('Les boutons d’aide', '<p><b>Réécouter</b> rejoue la note (le micro se tait pendant le son). <b>Je passe</b> donne la réponse et la fait entendre. Dans les exercices de degrés, <b>Indice</b> fait entendre la tonique ou la première note : la question ne compte plus « du premier coup », mais tu apprends.</p>')}
 ${W.quiz({ kind: 'sing', task: 'match', title: 'Chanter une note entendue', count: 8, stat: 'sing-match' })}
 
@@ -146,7 +146,7 @@ ${W.tip('Chante avant de taper', '<p>Chante le rythme sur « ta » juste après 
 <p>Écoute les mesures 1 à 4 en tapant la pulsation de la main gauche (une noire par temps), puis en tapant le rythme de la mélodie. Repère la seule note longue (le do tenu, mesures 2-3) et compte bien ses trois temps.</p>
 ${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4', bpm: 56, startBpm: 50, click: true, practice: false })}
 
-${W.warn('Si tu tapes en retard', '<p>Si l’appli te dit que ton rythme est juste mais décalé, tape bien <b>avec</b> les clics, sans attendre de les entendre. Si le décalage persiste, calibre la latence dans les Réglages : la tablette met parfois quelques dizaines de millisecondes à faire sortir le son.</p>')}
+${W.warn('Si tu tapes en retard', '<p>Si l’appli te dit que ton rythme est juste mais décalé, tape bien <b>avec</b> les clics, sans attendre de les entendre. Si le décalage persiste, mesure-le une fois pour toutes dans <a href="#/reglages">Réglages</a> › Son › « Synchronisation avec les clics » : la tablette met parfois quelques dizaines de millisecondes à faire sortir le son.</p>')}
 `,
   },
 
@@ -263,7 +263,7 @@ ${W.tip('La dernière note', '<p>Dans les mélodies à rejouer, la dernière not
 <h2>Dans ta pièce</h2>
 <p>La levée de l’op. 55 fait <b>do → fa</b>. En fa mineur, do est le degré <b>5</b> et fa le degré <b>1</b> : 5 → 1, le plus fort des appels mélodiques. Chante « cinq, un » sur do – fa, puis joue le début : entends-tu la phrase s’ouvrir sur la tonique ?</p>
 
-${W.warn('Si 4 et 5 se confondent', '<p>Chante 3 – 4 – 3 puis 3 – 5 – 3 : 4 est collé à 3 (un demi-ton en majeur), 5 en est séparé par un ton. Ce contraste de distance est le meilleur indice.</p>')}
+${W.warn('Si 4 et 5 se confondent', '<p>Chante 3 – 4 – 3 puis 3 – 5 – 3 : 4 est collé à 3 (un demi-ton en majeur), alors que 5 en est séparé par un saut d’une tierce (trois demi-tons). Ce contraste de distance est le meilleur indice.</p>')}
 `,
   },
 

@@ -1852,7 +1852,7 @@ export function mountQuiz(el, cfg) {
         const medDev = median(devAll);
         const shifted = got.length >= exp.length - 1 && got.length <= exp.length + 1 && Math.abs(medDev) > tolMs * 0.8 && devAll.every(d => Math.sign(d) === Math.sign(medDev));
         fb.innerHTML = got.length === 0 ? 'Je n’ai rien reçu : tape sur la zone, sur une touche du piano ou sur la barre d’espace.'
-          : shifted ? `Le rythme a l’air juste, mais décalé d’environ ${Math.round(Math.abs(medDev))} ms (${medDev > 0 ? 'en retard' : 'en avance'}). Tape bien avec les clics ; si le décalage persiste, calibre la latence dans les Réglages.`
+          : shifted ? `Le rythme a l’air juste, mais décalé d’environ ${Math.round(Math.abs(medDev))} ms (${medDev > 0 ? 'en retard' : 'en avance'}). Tape bien avec les clics ; si le décalage persiste, mesure-le dans Réglages › Son › « Synchronisation avec les clics ».`
             : `${hits} note${hits > 1 ? 's' : ''} sur ${exp.length} à temps${extra ? `, ${extra} en trop` : ''}. ${state.tries >= 3 ? '' : 'Réessaie.'}`;
         ctx.showTip();
         if (state.tries >= 3) ctx.done(false, false);
