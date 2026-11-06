@@ -156,7 +156,9 @@ const AN_RED_TRIADS = {
 /* ---------- Aides de rédaction (V6 : une idée, un exemple résolu, un exercice) ---------- */
 const idea = t => `<p class="idea"><b>L’idée.</b> ${t}</p>`;
 const worked = (title, body, res) => `<div class="worked"><div class="wk-title">${title}</div>${body}${res ? `<p class="res">${res}</p>` : ''}</div>`;
-const trap = t => `<p class="trap"><b>Piège.</b> ${t}</p>`;
+// V8.2 : majuscule après « Piège. » (les textes commencent en minuscule)
+const cap1 = t => t.replace(/^((?:<[^>]+>|[«\s\u00a0])*)(\p{Ll})/u, (m, pre, c) => pre + c.toUpperCase());
+const trap = t => `<p class="trap"><b>Piège.</b> ${cap1(t)}</p>`;
 const method = items => `<ol class="method">${items.map(x => `<li>${x}</li>`).join('')}</ol>`;
 const steps7 = (pairs, row2) => `<table class="grid-notes"><thead><tr>${pairs.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody><tr>${row2.map(x => `<td>${x}</td>`).join('')}</tr></tbody></table>`;
 
@@ -189,7 +191,7 @@ ${W.quiz({ kind: 'keyname', title: 'À toi : nommer les touches blanches', count
 
 <h2>Les octaves : quel do ?</h2>
 ${idea('De do au do suivant, il y a une <b>octave</b> : huit touches blanches. Pour savoir de quel do on parle, on ajoute un numéro : en France, le do du milieu du clavier s’appelle <b>do3</b>.')}
-<p>Les notes suivantes sont ré3, mi3… jusqu’à si3 ; puis vient do4. Le piano couvre un peu plus de sept octaves : 88 touches, de la la plus grave (la-1) au do le plus aigu (do7).</p>
+<p>Les notes suivantes sont ré3, mi3… jusqu’à si3 ; puis vient do4. Le piano couvre un peu plus de sept octaves : 88 touches, du la le plus grave (la-1) au do le plus aigu (do7).</p>
 ${W.tip('Deux conventions', '<p>Les ouvrages anglophones appellent le do central <b>C4</b>, un numéro de plus qu’en France. Dans cette application, on utilise la convention française : do3 = do central.</p>')}
 ${W.check({ questions: [
   { q: 'Le do juste au-dessus de do3 s’appelle…', options: ['do4', 'do2', 'do3 aussi'], why: 'Le numéro change à chaque do : do3, ré3… si3, puis do4.' },
@@ -1047,10 +1049,10 @@ ${W.notion({ id: 'accords-majeur', title: 'Les accords d’une tonalité majeure
 <h2>Les accords de fa mineur</h2>
 ${idea('En mineur, l’accord de dominante prend la <b>sensible</b> (gamme harmonique) : i et iv sont mineurs, mais <b>V est majeur</b>, grâce au mi♮. Les accords sur les 3<sup>e</sup> et 6<sup>e</sup> degrés (la♭, ré♭) sont majeurs.')}
 <table class="grid-notes">
-<thead><tr><th>Degré</th><th>1</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr></thead>
+<thead><tr><th>Degré</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr></thead>
 <tbody>
-<tr><td>Fa mineur</td><td>fa m</td><td>la♭</td><td>si♭ m</td><td>do (mi♮)</td><td>ré♭</td><td>mi♭, ou mi dim. (mi♮)</td></tr>
-<tr><td>Chiffre</td><td><b>i</b></td><td>III</td><td><b>iv</b></td><td><b>V</b></td><td>VI</td><td>VII ou vii°</td></tr>
+<tr><td>Fa mineur</td><td>fa m</td><td>sol dim.</td><td>la♭</td><td>si♭ m</td><td>do (mi♮)</td><td>ré♭</td><td>mi♭, ou mi dim. (mi♮)</td></tr>
+<tr><td>Chiffre</td><td><b>i</b></td><td>ii°</td><td>III</td><td><b>iv</b></td><td><b>V</b></td><td>VI</td><td>VII ou vii°</td></tr>
 </tbody></table>
 <p>Le 7<sup>e</sup> degré a deux versions : avec mi♭ (l’accord de mi♭ majeur, VII, qu’on entend dès la mesure 1 de ton nocturne) ou avec la sensible mi♮ (mi diminué, vii°, qui sonne comme une dominante).</p>
 ${worked('Exemple résolu : la dominante de fa mineur', method(['5<sup>e</sup> degré de fa mineur : <b>do</b>.', 'Une note sur deux dans la gamme harmonique : do, <b>mi♮</b>, sol (le mi est la sensible).', 'Do → mi♮ : 4 demi-tons : <b>do majeur</b>.']), 'En fa mineur, V = do majeur (do – mi♮ – sol). Sans le mi♮, ce serait do mineur, et la cadence perdrait sa force.')}
@@ -1059,7 +1061,7 @@ ${W.check({ questions: [
   { q: 'En fa mineur, l’accord du <b>6<sup>e</sup> degré</b> (VI) est…', options: ['ré♭ majeur', 'ré mineur', 'ré♭ mineur', 'do majeur'], why: 'Ré♭ – fa – la♭ : majeur.' },
   { q: 'Pourquoi l’accord de do est-il majeur en fa mineur ?', options: ['grâce à la sensible mi♮', 'parce que fa mineur a quatre bémols', 'parce que do est la tonique', 'il est toujours mineur'], why: 'Le 7<sup>e</sup> degré haussé (mi♮) fait la tierce majeure de do.' },
 ] })}
-${W.notion({ id: 'accords-mineur', title: 'Les accords de fa mineur (et du mineur)', short: 'i et iv mineurs, V majeur (sensible), III et VI majeurs', text: '<p>En mineur : <b>i</b> et <b>iv</b> mineurs ; <b>V majeur</b> grâce à la sensible ; <b>III</b> et <b>VI</b> majeurs ; VII majeur (sans sensible) ou vii° diminué (avec).</p><p>Fa mineur : fa m · la♭ · si♭ m · do · ré♭ · mi♭ / mi dim.</p>', cards: [
+${W.notion({ id: 'accords-mineur', title: 'Les accords de fa mineur (et du mineur)', short: 'i et iv mineurs, V majeur (sensible), III et VI majeurs', text: '<p>En mineur : <b>i</b> et <b>iv</b> mineurs ; <b>V majeur</b> grâce à la sensible ; <b>III</b> et <b>VI</b> majeurs ; ii° diminué ; VII majeur (sans sensible) ou vii° diminué (avec).</p><p>Fa mineur : fa m · sol dim. · la♭ · si♭ m · do · ré♭ · mi♭ / mi dim.</p>', cards: [
   { id: 'fact:n1-th-accords:3', q: 'En fa mineur, quelle est la nature de la♭ – do – mi♭ ?', a: ['majeur (III)', 'mineur (iii)', 'diminué', 'augmenté'], why: 'La♭ → do : 4 demi-tons. Regarde toujours l’armure avant de juger.' },
   ['En fa mineur, quel est l’accord de dominante ?', ['do majeur (do – mi♮ – sol)', 'do mineur (do – mi♭ – sol)', 'mi♭ majeur', 'si♭ mineur'], 'Avec la sensible mi♮ : majeur.'],
   ['En mineur, quelle est la nature de l’accord V ?', ['majeur, grâce à la sensible', 'mineur, comme la tonique', 'diminué', 'augmenté'], 'Le 7e degré haussé donne une tierce majeure à l’accord de dominante.'],
