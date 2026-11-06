@@ -333,7 +333,7 @@ function builderCard(L, props, started, { state = null, skip = null, undo = null
   const pause = currentPause();
   const intro = pause
     ? h('p', { class: 'small mt-0 sx-intro' }, `En pause jusqu’au ${dayLabel(pause.to)} : rien ne compte comme délaissé. Si tu trouves un moment, voici quand même une séance.`)
-    : h('p', { class: 'small mt-0 sx-intro' }, 'Cochée d’avance : ta pièce et ce dont c’est le tour, d’après ', h('a', { href: '#/temps' }, 'ton temps de piano'), ` (${paceLabel(pace)}). Coche ou décoche à ton gré.`);
+    : h('p', { class: 'small mt-0 sx-intro' }, 'Cochée d’avance : ta pièce, puis les domaines qui attendent depuis le plus longtemps, d’après ', h('a', { href: '#/temps' }, 'ton temps de piano'), ` (${paceLabel(pace)}). Coche ou décoche à ton gré.`);
   card.append(
     h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Nouvelle séance'), h('span', { class: 'sx-durwrap' }, h('span', { class: 'small muted' }, 'min'), seg)),
     intro, rows, more, hint, h('div', { class: 'btn-row mt-1' }, go, reset));
