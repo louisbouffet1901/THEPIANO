@@ -291,7 +291,7 @@ export class Score {
     const auto = voiceIds.length ? voiceIds.map(v => (/^(LH|MG|L)/i.test(v) ? 'lh' : 'rh')) : null;
     const tracksMap = this.opts.tracks || auto || ['rh', 'lh', 'lh', 'lh'];
     // éléments ornés (et arpégés) de chaque voix, dans l'ordre : même ordre que les pistes audio
-    const ornEls = [], arpChars = new Set();
+    const ornEls = [], arpChars = new Set(), stacChars = new Set();
     for (const line of this.visual.lines || []) {
       if (!line.staff) continue;
       let vi = 0;
@@ -302,6 +302,7 @@ export class Score {
             if (el.el_type !== 'note' || !el.decoration) continue;
             if (el.decoration.some(d => ORN.includes(d))) list.push({ el, key: st.key });
             if (el.decoration.includes('arpeggio')) arpChars.add(el.startChar);
+            if (el.decoration.includes('staccato')) stacChars.add(el.startChar);
           }
           vi++;
         }
@@ -317,6 +318,7 @@ export class Score {
           pitch: ev.pitch, t: ev.start * 4, dur: ev.duration * 4, vol: ev.volume,
           track: ti, hand: tracksMap[ti] || 'rh', char: ev.startChar ?? null,
           orn: ev.orn || null, arp: ev.startChar != null && arpChars.has(ev.startChar),
+          stac: ev.startChar != null && stacChars.has(ev.startChar), // V8.3 : détaché à l'écoute (sauf sous la pédale)
           grace: ev.style === 'grace',
           // petites notes : rang dans le groupe, taille du groupe, début du groupe (noires), terminaison de trille
           gk: ev.gInfo ? ev.gInfo.k : null, gn: ev.gInfo ? ev.gInfo.n : null,
@@ -457,6 +459,8 @@ export class Player {
         ts += sh; te += sh;
       }
       if (o.legato === false) te = ts + (te - ts) * 0.55;
+      // V8.3 : note piquée (point) : la touche se relève à mi-valeur ; la pédale, si elle est prise, la prolonge
+      else if (e.stac && o.legato !== true) te = ts + Math.max(Math.min(0.1, te - ts), (te - ts) * 0.5);
       return { ...e, vel: clamp(vel, 28, 118), ts, te };
     });
     // Petites notes : vives quel que soit le tempo (≈ 35 à 60 ms chacune), au lieu d'une fraction de temps.
@@ -507,9 +511,12 @@ export class Player {
         if (e.ts + 1e-6 < changes[0] || e.ts >= pedalEnd) continue;
         if (lastBefore(ups, e.ts) > lastBefore(changes, e.ts)) continue; // pédale relevée à ce moment
         const nextUp = ups.find(c => c > e.ts + 0.01) ?? Infinity;
-        const next = Math.min(changes.find(c => c > e.ts + 0.01) ?? pedalEnd, nextUp, pedalEnd);
-        if (next !== Infinity && next > e.te) e.te = next + 0.01;
-        else if (next === Infinity) e.te = Math.max(e.te, tmap(range ? range[1] : this.score.totalQ) - shift + 0.6);
+        let next = Math.min(changes.find(c => c > e.ts + 0.01) ?? pedalEnd, nextUp, pedalEnd);
+        if (next === Infinity) next = Math.max(e.te, tmap(range ? range[1] : this.score.totalQ) - shift + 0.6);
+        // V8.3 : notes de passage rapides (fioritures, septolet, petites notes) : la pédale les prolonge moins,
+        // comme un pianiste qui « demi-pédale » ; sinon elles se mêlent en grappe aux notes suivantes
+        if (e.hand === 'rh' && (e.grace || e.dur <= 0.34)) next = Math.min(next, e.te + Math.max(0.35, 2 * (e.te - e.ts)));
+        if (next > e.te) e.te = next + 0.01;
       }
     }
     // Ornements réalisés selon le tempo ; accords arpégés égrenés du grave à l'aigu.

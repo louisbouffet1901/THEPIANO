@@ -137,6 +137,34 @@ V:LH clef=bass
 [V:LH] [F,,C,=A,]4 z4 z8 | [B,,,B,,]8 [C,,C,]8 | !arpeggio![F,,C,F,]16 | !arpeggio![F,,C,F,]8 !arpeggio![F,,C,F,]8 | !arpeggio!H[F,,C,F,]16 |]`,
 };
 
+/**
+ * Pédale des extraits de l'op. 55 n° 1 (V8.3), d'après les indications de Chopin (Ped. et * de l'édition Snortum,
+ * établie sur l'autographe) : pedal = instants (en noires depuis le début de l'extrait) où la pédale est prise ou
+ * reprise, pedalUp = instants où elle est levée, pedalEnd = fin. Une partition sans pédale indiquée s'en sert pour
+ * l'écoute (score-widget.js) ; « pedal: null » demande explicitement une écoute sans pédale.
+ * Schéma courant : pédale sur la basse du 1er temps, reprise sur celle du 3e, levée sur la dernière croche.
+ */
+const halfBars = (from, bars) => [...Array(bars * 2)].map((_, i) => from + i * 2);
+const lastEighths = (from, bars) => [...Array(bars)].map((_, i) => from + i * 4 + 3.5);
+export const PEDALS = new Map([
+  [OP55.e1, { pedal: halfBars(1, 4), pedalUp: lastEighths(1, 4), pedalEnd: 17 }],
+  // m. 7 : pédale sur le 1er temps seulement, levée au 2e (l'accord du 2e temps reste sec), reprise au 3e
+  [OP55.e2, { pedal: [0, 2, 4, 6, 8, 10, 12, 14], pedalUp: [3.5, 7.5, 9, 11.5, 15.5], pedalEnd: 16 }],
+  // m. 14 : levée juste avant la mesure suivante (après la fioriture)
+  [OP55.e3, { pedal: halfBars(0, 2), pedalUp: [3.5, 7.75], pedalEnd: 8 }],
+  // m. 17 : pédale à partir du 3e temps
+  [OP55.e4, { pedal: [2, ...halfBars(4, 3)], pedalUp: [3.5, ...lastEighths(4, 3)], pedalEnd: 16 }],
+  [OP55.e5, { pedal: halfBars(0, 2), pedalUp: lastEighths(0, 2), pedalEnd: 8 }],
+  [OP55.e5b, { pedal: halfBars(0, 2), pedalUp: lastEighths(0, 2), pedalEnd: 8 }],
+  // Più mosso : une pédale par mesure de réponse (m. 49 et 51), levée au 4e temps ; les triolets restent secs
+  [OP55.e6, { pedal: [4, 12], pedalUp: [7, 15], pedalEnd: 20 }],
+  [OP55.e7, { pedal: halfBars(0, 4), pedalUp: lastEighths(0, 4), pedalEnd: 16 }],
+  // m. 80 : levée au milieu de chaque demi-mesure
+  [OP55.e9, { pedal: halfBars(0, 4), pedalUp: [3.5, 7.5, 11.5, 13.5, 15.5], pedalEnd: 16 }],
+  // m. 97 : la pédale prise à la m. 92 se lève au 3e temps ; le choral final se tient aux doigts
+  [OP55.e10, { pedal: [0], pedalUp: [2], pedalEnd: 20 }],
+]);
+
 export const OP15 = {
   e1: `X:1
 M:3/4

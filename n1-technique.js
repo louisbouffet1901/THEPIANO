@@ -258,7 +258,7 @@ ${W.analyzer({ mode: 'pedal', title: 'Analyseur — pédale', help: 'Joue la sui
 
 <h2>Dans le nocturne : une pédale par basse</h2>
 <p>La main gauche de l’op. 55 n° 1 alterne basse et accord, notés <i>staccato</i>. C’est la pédale qui relie la basse à son accord : on la change sur chaque basse (1er et 3e temps), après l’attaque. Les points de staccato indiquent une attaque légère et une main qui quitte vite le clavier, pas un son sec.</p>
-${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4 : avec et sans pédale', bpm: 56, variants: [{ label: 'Sans pédale' }, { label: 'Une pédale par demi-mesure', pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17 }], caption: 'La pédale est reprise sur chaque basse. Remarque comme la main gauche cesse de sonner « piquée ».' })}
+${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4 : avec et sans pédale', bpm: 56, variants: [{ label: 'Sans pédale', pedal: null }, { label: 'Une pédale par demi-mesure', pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17 }], caption: 'La pédale est reprise sur chaque basse. Remarque comme la main gauche cesse de sonner « piquée ».' })}
 <h2>La pédale chez Chopin : nocturne et valse</h2>
 <p>Chopin note la pédale avec précision (« Ped. » pour l’enfoncer, une étoile pour la lever). Ses pédales suivent l’harmonie : une par accord, parfois longue sur une basse tenue. Sur un piano moderne, plus résonant que le sien, on les raccourcit souvent un peu. Dans une <b>valse</b>, la pédale prend la basse du premier temps (que la main quitte aussitôt pour l’accord) et se lève avant le troisième temps, pour que les accords restent légers. Compare :</p>
 ${W.score({ abc: OP70.n2, title: 'Valse op. 70 n° 2, mesures 1 à 8 : trois pédales', bpm: 52, practice: false, variants: [

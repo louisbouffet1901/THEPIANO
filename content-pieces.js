@@ -23,7 +23,7 @@ ${W.plan({ piece: 'op55-1' })}
 ${W.section({ piece: 'op55-1', id: 'theme' })}
 <p>La mélodie tient sur quelques notes : do, puis une descente fa – mi♭ – ré♭ – do, puis do brodé par si♮ et ré♭. Tout l’art est dans la ligne : la levée part de rien, le fa est le sommet, la descente se détend. La main gauche, notée <i>staccato</i>, est légère ; la pédale relie chaque basse à son accord.</p>
 ${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4', bpm: 60, startBpm: 50, pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17, caption: 'Démonstration avec une pédale par demi-mesure.' })}
-${W.score({ abc: OP55.e2, title: 'Mesures 5 à 8 : trille, accord arpégé, cadence', bpm: 60, startBpm: 50, caption: 'Mesure 6 : trille sur si♭ terminé par deux petites notes (la – si♭) ; mesure 7 : accord arpégé de bas en haut, la note du haut (la♭) arrive sur le temps et chante.' })}
+${W.score({ abc: OP55.e2, title: 'Mesures 5 à 8 : trille, accord arpégé, cadence', bpm: 60, startBpm: 50, caption: 'Mesure 6 : trille sur si♭ terminé par deux petites notes (la♮ – si♭), qui mènent au do du 4e temps. Mesure 7 : accord arpégé de bas en haut, commencé sur le temps avec la basse (comme le voulait Chopin) ; la note du haut (la♭) arrive en dernier et chante.' })}
 <p>Au deuxième passage du thème, Chopin orne la cadence : trille sur si♭, puis cinq petites notes à jouer dans le quatrième temps (mesures 13-14). Elles ne doivent ni presser ni retarder la main gauche : la première tombe avec l’accord du 4e temps, les autres s’égrènent jusqu’à la mesure suivante.</p>
 ${W.score({ abc: OP55.e3, title: 'Mesures 13 et 14 : la première fioriture', bpm: 60, startBpm: 44 })}
 
@@ -39,7 +39,7 @@ ${W.score({ abc: OP55.e5, title: 'Mesures 27 et 28 : triolets', bpm: 60, startBp
 
 <h3 data-sec="septolet">Le thème le plus orné (mesures 41 à 48)</h3>
 ${W.section({ piece: 'op55-1', id: 'septolet' })}
-<p>Troisième passage du thème : un septolet, sept croches dans deux temps (mesure 44). Comme pour les triolets, seuls le départ et l’arrivée sont alignés sur la main gauche.</p>
+<p>Troisième retour du thème (après ceux des mesures 9 et 25), le plus orné : un septolet, sept croches dans deux temps (mesure 44). Comme pour les triolets, seuls le départ et l’arrivée sont alignés sur la main gauche. Le cinquième son du septolet est un si♮ (sensible de do), comme aux mesures 28 et 76 ; certaines éditions anciennes (Breitkopf, 1844) oublient le bécarre.</p>
 ${W.score({ abc: OP55.e5b, title: 'Mesures 43 et 44 : septolet', bpm: 60, startBpm: 40 })}
 ${W.diagram('meeting', { n: 7, beats: 2, lhPer: 1 }, 'Mesure 44 : sept croches de la main droite pour les deux premiers temps de la main gauche. Seul le premier temps est commun ; le deuxième temps de la main gauche tombe entre la 4e et la 5e note.')}
 

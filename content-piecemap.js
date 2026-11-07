@@ -94,7 +94,7 @@ export const PIECE_MAPS = {
         ex: ['e9', 'e10'],
       },
     ],
-    returns: { title: 'Le thème et ses retours', items: [['e1', 'Le thème (m. 1-4)'], ['e5', 'Deuxième passage, en triolets (m. 27-28)'], ['e5b', 'Troisième passage, le septolet (m. 43-44)']],
+    returns: { title: 'Le thème et ses retours', items: [['e1', 'Le thème (m. 1-4)'], ['e5', 'Deuxième retour, en triolets (m. 27-28)'], ['e5b', 'Troisième retour, le septolet (m. 43-44)']],
       answer: 'Les notes d’appui ne changent pas (do, puis fa – mi♭ – ré♭ – do) : c’est le rythme de la mélodie qui s’anime à chaque passage, des croches aux triolets, puis au septolet. Et Chopin écrit forte pour la deuxième moitié des retours. Joue chaque retour plus intense que le précédent.' },
   },
 

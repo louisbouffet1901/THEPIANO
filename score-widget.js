@@ -7,6 +7,7 @@ import { store } from './store.js';
 import { keyboard } from './diagrams.js';
 import { ICONS } from './icons.js';
 import { ANALYSES } from './content-analyses.js';
+import { PEDALS } from './content-excerpts.js';
 import { barTools } from './analysis-engine.js';
 import { analyze } from './analysis-client.js';
 import { db } from './db.js';
@@ -70,9 +71,11 @@ export function mountScore(el, cfg) {
   const statusRow = h('div', { style: { width: '100%' } }, status, results);
   const takeHost = h('div');
 
+  // pédale de l'écoute : celle du widget, sinon celle de l'extrait (indications de Chopin, content-excerpts.js)
+  const ped = cfg.pedal !== undefined ? { pedal: cfg.pedal, pedalUp: cfg.pedalUp, pedalEnd: cfg.pedalEnd } : (PEDALS.get(cfg.abc) || {});
   const playOpts = (extra = {}) => ({
     qpm: bpm * score.beatQ, hands, loop: loopOn, click: clickOn, range: rangeQ(),
-    countIn: !!cfg.countIn, pedal: cfg.pedal, pedalEnd: cfg.pedalEnd, pedalUp: cfg.pedalUp, dyn: cfg.dyn, tempoMap: cfg.tempoMap,
+    countIn: !!cfg.countIn, pedal: ped.pedal, pedalEnd: ped.pedalEnd, pedalUp: ped.pedalUp, dyn: cfg.dyn, tempoMap: cfg.tempoMap,
     rhShift: cfg.rhShift, balance: cfg.balance, legato: cfg.legato, flat: cfg.flat, trackGain: cfg.trackGain, ...extra,
   });
 
@@ -343,7 +346,7 @@ export function mountScore(el, cfg) {
     const expectedFull = score.filtered(hands).filter(e => !rq || (e.t >= rq[0] - 1e-6 && e.t < rq[1] - 1e-6));
     const expected = expectedFull.map(e => ({ pitch: e.pitch, t: e.t, dur: e.dur, hand: e.hand, vol: e.vol, orn: e.orn, grace: e.grace, arp: e.arp, ag: e.ag, gterm: e.gterm }));
     // changements d'harmonie (contrôle de la pédale) : indications de pédale de l'extrait, sinon analyse harmonique
-    let harmony = cfg.pedal ? cfg.pedal.slice() : null;
+    let harmony = ped.pedal ? ped.pedal.slice() : null;
     if (!harmony && an) harmony = harmonyStarts(score, an, cfg.abc);
     const input = { expected, notes: take.notes.map(n => ({ pitch: n.pitch, on: n.on, off: n.off, vel: n.vel })), pedal: take.pedal, harmony: harmony || [], meta: { ...meta, qpm: baseBpm * score.beatQ } };
     let res;

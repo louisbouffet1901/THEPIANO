@@ -21,6 +21,7 @@ const DEFAULTS = () => ({
     demoOutput: 'sampler', // 'sampler' | 'midi'
     volume: 0.85,
     metroVolume: 0.7,
+    room: 0.5,           // résonance de la salle (réverbération du piano échantillonné), 0 à 1 (V8.3)
     latency: 0,          // ms, ancienne compensation unique (V2) — remplacée par latencyBy
     latencyBy: { midi: 0, touch: 0, key: 0 }, // ms, compensation par entrée : piano, écran, clavier
     split: 60,           // séparation main gauche / main droite (MIDI)

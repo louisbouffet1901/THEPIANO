@@ -22,7 +22,7 @@ K:Fmin
 %%setbarnb 0
 V:RH clef=treble
 V:LH clef=bass
-[V:RH] ("^do"c4- | c4 "^fa"f4 "^mi♭"e4 "^ré♭"d4 | "^do"c3"^si♮"=B c3"^ré♭"d c8- | c4) (f4 e4 d4 | c3=B c3d c8) |]
+[V:RH] ("^do"c4- | c4 "^fa"f4 "^mi♭"e4 "^ré♭"d4 | "^do"c3"^si♮"=B c3"^ré♭"d c8- | c4) (f4 e4 d4 | c3=B c3{/e}d c8) |]
 [V:LH] z4 | "_fa1".F,,4 .[A,CF]4 "_sol1".G,,4 .[E,B,E]4 | "_la♭1".A,,4 .[CA]4 "_mi1".=E,,4 .[B,CG]4 | "_fa1".F,,4 .[A,CF]4 "_sol1".G,,4 .[E,B,E]4 | "_la♭1".A,,4 .[CA]4 "_mi1".=E,,4 .[B,CG]4 |]`;
 
 const VALUES = `X:1

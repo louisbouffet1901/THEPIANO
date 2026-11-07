@@ -12,6 +12,7 @@ Application web installable (PWA) pour apprendre le piano classique sur tablette
 - **Loin du piano** : 5 à 15 minutes sans clavier — la pièce de tête (pratique mentale de la section du jour : écouter, lire en entendant, jouer dans sa tête, de mémoire, une note pour le piano), l’oreille (l’étape en cours, à reconnaître ou à chanter), le rythme et les notes sur l’écran, la théorie. La séance suivante au piano commence par rejouer de mémoire la section travaillée de tête.
 - **Un domaine, une page** : le menu se range en trois groupes (Jouer : tes pièces, technique, interprétation, lecture à vue, improvisation ; Entendre et comprendre : oreille, théorie ; Ton parcours). Chaque page de domaine réunit ce que tu fais maintenant, ses outils et toutes ses leçons, niveau par niveau. Sur téléphone, une barre en bas (Accueil, Pièces, Sans piano, Théorie, Menu).
 - **Théorie ludique** : cartes du jour à mémoire espacée, façon Anki (de tête ou avec les choix ; À revoir, Difficile, Bien, Facile), tirées des leçons faites, commencées ou cochées ; défi éclair d’une minute (armures, relatives, intervalles, accords, degrés, quintes) avec records, médailles et défi du jour.
+- **Le son (V8.3)** : piano échantillonné refait (trois couches de nuance, accord corrigé, attaques calées, sans la compression MP3 qui coupait tout au-dessus de 8 kHz), réverbération de salle réglable, pédale de Chopin sur les extraits de l’op. 55 n° 1, notes piquées détachées.
 - **Lisibilité (V8.2)** : contenu des niveaux 1 et 2 relu pour la clarté et l’exactitude ; signes ♩ ♭ ♯ ♮ 𝄪 𝄫 dessinés par une police dédiée (Noto Music réduite à ces signes, `music-symbols.woff2`, SIL OFL).
 - **Grille de validation** pour chaque niveau.
 
@@ -31,12 +32,12 @@ Version « à plat » : tous les fichiers sont à la racine du dépôt, pour pou
 
 - `index.html`, `app.css`, `app.js` et les autres modules `.js` : l’application.
 - `content-*.js`, `n1-*.js`, `n2-*.js` : le contenu pédagogique.
-- `piano-*.mp3` : échantillons de piano. Polices `.woff2`, `abcjs-basic-min.js` : rendu.
+- `piano-p|mf|f-*.ogg` : échantillons de piano (Opus) ; `piano-*.mp3` : ancienne série, en repli. Polices `.woff2`, `abcjs-basic-min.js` : rendu.
 - `sw.js` : cache hors connexion.
 
 ## Crédits et licences
 
 - Extraits de Chopin d’après les éditions LilyPond de Knute Snortum (CC BY-SA 4.0) ; Debussy d’après le Mutopia Project (domaine public).
-- Échantillons : Salamander Grand Piano, Alexander Holm (CC BY 3.0).
+- Échantillons : Salamander Grand Piano V3, Alexander Holm (CC BY 3.0) — trois couches de nuance (p, mf, f), accord retouché (Markus Fiedler), Opus mono 56 kbit/s (`piano-p|mf|f-*.ogg`) ; l’ancienne série MP3 (`piano-*.mp3`) sert de repli aux navigateurs qui ne lisent pas l’Opus.
 - Rendu des partitions : abcjs (licence MIT). Polices Inter et Literata (SIL Open Font License).
 - Les liens vers l’Online Academy d’Informance et vers des enregistrements renvoient à des contenus externes, non reproduits ici.
