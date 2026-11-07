@@ -40,7 +40,7 @@ ${W.score({ abc: OP55.e5, title: 'Mesures 27 et 28 : triolets', bpm: 60, startBp
 <h3 data-sec="septolet">Le thème le plus orné (mesures 41 à 48)</h3>
 ${W.section({ piece: 'op55-1', id: 'septolet' })}
 <p>Troisième retour du thème (après ceux des mesures 9 et 25), le plus orné : un septolet, sept croches dans deux temps (mesure 44). Comme pour les triolets, seuls le départ et l’arrivée sont alignés sur la main gauche. Le cinquième son du septolet est un si♮ (sensible de do), comme aux mesures 28 et 76 ; certaines éditions anciennes (Breitkopf, 1844) oublient le bécarre.</p>
-${W.score({ abc: OP55.e5b, title: 'Mesures 43 et 44 : septolet', bpm: 60, startBpm: 40 })}
+${W.score({ abc: OP55.e5b, title: 'Mesures 42 à 44 : septolet', bpm: 60, startBpm: 40, caption: 'Le do de la fin de la mesure 42 est lié : il tient le 1er temps de la mesure 43 (on ne le rejoue pas), et la main droite repart sur le 2e temps, avec le mi♮ du premier triolet. Mesure 44 : sept croches sur les temps 1 et 2, puis do (blanche) sur les temps 3 et 4.' })}
 ${W.diagram('meeting', { n: 7, beats: 2, lhPer: 1 }, 'Mesure 44 : sept croches de la main droite pour les deux premiers temps de la main gauche. Seul le premier temps est commun ; le deuxième temps de la main gauche tombe entre la 4e et la 5e note.')}
 
 <h3 data-sec="piumosso">Più mosso (mesures 48 à 72)</h3>

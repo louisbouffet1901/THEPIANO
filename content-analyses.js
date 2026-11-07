@@ -106,11 +106,13 @@ export const ANALYSES = new Map([
   [OP55.e5b, {
     key: 'fa mineur',
     bars: [
+      { m: 42, ch: [['la♭', 'III', 'T', 1], ['do 7/mi', 'V6/5', 'D', 3]] },
       { m: 43, ch: [['fa m', 'i', 'T', 1], ['mi♭/sol', 'VII6', '', 3]] },
       { m: 44, ch: [['la♭', 'III', 'T', 1], ['do 7/mi', 'V6/5', 'D', 3]] },
     ],
     notes: [
-      'Mesure 44 : le septolet (sept croches dans le temps de quatre, sur deux temps) orne l’accord de la♭ ; l’harmonie reste celle des mesures 27-28.',
+      'Mesure 42 : comme la mesure 2 (si♮ et ré♭ brodent le do). Le do de la fin de la mesure est lié : il tient le 1er temps de la mesure 43 sans être rejoué.',
+      'Mesure 44 : le septolet (sept croches dans le temps de quatre, sur deux temps) orne l’accord de la♭ ; l’harmonie reste celle des mesures 26-28.',
       'La main gauche ne bouge pas pendant l’ornement : c’est elle qui garde le temps.',
     ],
   }],

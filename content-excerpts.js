@@ -61,17 +61,18 @@ V:RH clef=treble
 V:LH clef=bass
 [V:RH] c4 (3(=e2g2f2 (3_e2E2B2 (3c2e2d2 | (3c2C2E2 (3A2=B2d2 c8) |]
 [V:LH] .F,,4 .[A,CF]4 .G,,4 .[E,B,E]4 | .A,,4 .[E,A,E]4 .=E,,4 .[B,CG]4 |]`,
+  // V8.3 : l'extrait commence à la m. 42 : le do du 1er temps de la m. 43 y est lié (tenu, pas rejoué)
   e5b: `X:1
 M:4/4
 L:1/16
 K:Fmin
 %%barnumbers 1
-%%setbarnb 43
+%%setbarnb 42
 %%score {RH | LH}
 V:RH clef=treble
 V:LH clef=bass
-[V:RH] c4 (3(=e2g2f2 (3_e2E2B2 (3c2e2d2 | (7:4:7c2C2E2A2=B2c2{/e}d2 c8) |]
-[V:LH] .F,,4 .[A,CF]4 .G,,4 .[E,B,E]4 | .A,,4 .[E,C]4 .=E,,4 .[B,CG]4 |]`,
+[V:RH] (c3=B c3{/e}d c8- | c4) (3(=e2g2f2 (3_e2E2B2 (3c2e2d2 | (7:4:7c2C2E2A2=B2c2{/e}d2 c8) |]
+[V:LH] .A,,4 .[CA]4 .=E,,4 .[B,CG]4 | .F,,4 .[A,CF]4 .G,,4 .[E,B,E]4 | .A,,4 .[E,C]4 .=E,,4 .[B,CG]4 |]`,
   e6: `X:1
 M:4/4
 L:1/16
@@ -155,7 +156,7 @@ export const PEDALS = new Map([
   // m. 17 : pédale à partir du 3e temps
   [OP55.e4, { pedal: [2, ...halfBars(4, 3)], pedalUp: [3.5, ...lastEighths(4, 3)], pedalEnd: 16 }],
   [OP55.e5, { pedal: halfBars(0, 2), pedalUp: lastEighths(0, 2), pedalEnd: 8 }],
-  [OP55.e5b, { pedal: halfBars(0, 2), pedalUp: lastEighths(0, 2), pedalEnd: 8 }],
+  [OP55.e5b, { pedal: halfBars(0, 3), pedalUp: lastEighths(0, 3), pedalEnd: 12 }],
   // Più mosso : une pédale par mesure de réponse (m. 49 et 51), levée au 4e temps ; les triolets restent secs
   [OP55.e6, { pedal: [4, 12], pedalUp: [7, 15], pedalEnd: 20 }],
   [OP55.e7, { pedal: halfBars(0, 4), pedalUp: lastEighths(0, 4), pedalEnd: 16 }],
