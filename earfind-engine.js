@@ -278,7 +278,7 @@ export function motifResult(S, k, allFirst) {
  * Après chaque note seule : { action: 'add' | 'remove' | 'full', d } ou null. Bilans par blocs de 10 notes.
  * Ajout : 90 % du premier coup sur les 20 dernières notes depuis le dernier changement (18 sur 20), ou 14 réussies de
  * suite, et aucune note en jeu sous 70 % (sur ses 5 derniers essais, si elle en a au moins 3).
- * Retrait de la dernière note ajoutée : sous 60 % sur 20 notes, ou 3 réussies sur 10 ; dans les 30 notes qui suivent un
+ * Retrait de la dernière note ajoutée : sous 60 % sur 20 notes, ou 3 réussies ou moins sur 10 ; dans les 30 notes qui suivent un
  * ajout, seulement sous 45 % sur 15 (la note nouvelle a droit à quelques erreurs).
  * Simulation (joueurs fictifs de 45 à 97 % de réussite, 900 notes) : le niveau se stabilise autour de 75 à 80 % de
  * réussite du premier coup, avec deux fois plus d'ajouts que de retraits chez un joueur qui progresse.
@@ -300,7 +300,7 @@ export function adapt(S, k) {
     if (nd == null) return ks.full ? null : { action: 'full' };
     return { action: 'add', d: nd };
   }
-  // retrait : sous 55 % sur 20 notes, ou 3 réussies sur 10 ; juste après un ajout (30 notes), seulement sous 40 % sur 15
+  // retrait : sous 60 % sur 20 notes, ou 3 réussies ou moins sur 10 ; juste après un ajout (30 notes), seulement sous 45 % sur 15
   const grace = ks.added && since.length < TUNE.graceN;
   const acc = n => (since.length >= n ? rate(since.slice(-n)).ok : null);
   const tooHard = grace ? (atBlock && acc(15) != null && acc(15) < TUNE.grace) : ((atBlock && acc(20) != null && acc(20) < TUNE.drop) || (acc(10) != null && acc(10) <= TUNE.drop10));
