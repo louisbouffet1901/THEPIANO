@@ -27,8 +27,10 @@ export const voiceRangeLabel = () => {
  * En mode cible, l'axe est centré sur la note visée, transposée dans l'octave où tu chantes (à l'octave près).
  */
 export class VoiceTrace {
-  constructor({ height = 150, span = 7, tol = 0.45, win = 6000 } = {}) {
+  constructor({ height = 150, span = 7, tol = 0.45, win = 6000, labels = true } = {}) {
     this.height = height; this.span = span; this.tol = tol; this.win = win;
+    // labels: false (V8.4, « Trouve la note ») : aucun nom de note sur l'axe, pour ne pas souffler la réponse
+    this.labels = labels;
     this.cv = h('canvas', { class: 'vt-cv', role: 'img', 'aria-label': 'Ta voix en direct : la ligne montre la hauteur que tu chantes, la bande verte la note visée.' });
     this.el = h('div', { class: 'vt' }, this.cv);
     this.pts = [];
@@ -67,7 +69,7 @@ export class VoiceTrace {
     const g = cv.getContext('2d');
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, W, H);
-    const L = 44, R = 10, T = 8, B = 8;
+    const L = this.labels ? 44 : 10, R = 10, T = 8, B = 8;
     let lo, hi;
     const mode = this.target != null ? 'target' : 'free';
     if (mode === 'target') {
@@ -93,7 +95,7 @@ export class VoiceTrace {
       // étiquettes : notes naturelles, espacées d'au moins 12 px (en mode libre serré : do et sol seulement)
       const wanted = pxPerSemi * 2 >= 12 ? nat : [0, 7].includes(pcOf(m));
       const isCtr = ctr != null && Math.abs(m - ctr) < 0.01;
-      if ((wanted && y - lastLabelY >= 12 && (ctr == null || Math.abs(y - yOf(ctr)) >= 11)) || isCtr) {
+      if (this.labels && ((wanted && y - lastLabelY >= 12 && (ctr == null || Math.abs(y - yOf(ctr)) >= 11)) || isCtr)) {
         if (!isCtr) {
           g.fillStyle = '#767c86';
           g.textAlign = 'right';
@@ -110,8 +112,10 @@ export class VoiceTrace {
       g.fillRect(L, y0, W - R - L, y1 - y0);
       g.strokeStyle = '#2e7a4c'; g.lineWidth = 1.5;
       g.beginPath(); g.moveTo(L, yOf(c)); g.lineTo(W - R, yOf(c)); g.stroke();
-      g.fillStyle = '#2e7a4c'; g.textAlign = 'right'; g.font = '600 11px Inter, MusicSym, system-ui, sans-serif';
-      g.fillText(noteNameFr(c, { octave: false }), L - 6, yOf(c));
+      if (this.labels) {
+        g.fillStyle = '#2e7a4c'; g.textAlign = 'right'; g.font = '600 11px Inter, MusicSym, system-ui, sans-serif';
+        g.fillText(noteNameFr(c, { octave: false }), L - 6, yOf(c));
+      }
     }
     // le tracé
     const now = performance.now();

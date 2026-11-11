@@ -1,6 +1,8 @@
 // Jouer d'oreille (V7.3) : apprendre des mélodies sans partition, à la manière des musiciens de tradition orale
 // (Hildebrandt, 2016). L'appli joue une phrase avec son accompagnement ; tu la chantes, puis tu la rejoues : d'abord
-// avec elle, puis seul sur l'accompagnement. Les phrases s'allongent (une mesure, deux, la phrase, la mélodie entière).
+// avec elle, puis seul sur l'accompagnement. V8.4 : avant de la jouer en rythme, tu cherches ses notes une à une
+// (la première est donnée, les touches de la phrase sont repérées, l'appli aide après une erreur), comme les élèves du
+// projet de Lucy Green qui copient une phrase en boucle, par essais ; puis tu la joues d'un trait, sans tempo. Les phrases s'allongent (une mesure, deux, la phrase, la mélodie entière).
 // Entre deux phrases, une question d'analyse. Pour prouver que tu la sais : sans aide, dans une autre tonalité, chantée.
 import { h, esc, shuffle, noteNameFr, fmtPct } from './util.js';
 import { store } from './store.js';
@@ -11,6 +13,8 @@ import { inputLatency } from './latency.js';
 import { scheduleCountIn, countInPosition } from './countin.js';
 import { MELODIES, MELODY_LEVELS } from './content-melodies.js';
 import { logActivity } from './activity.js';
+import * as EF from './earfind-engine.js';
+import { singPanel } from './tool-earfind.js';
 
 const MAJ = [0, 2, 4, 5, 7, 9, 11], MIN = [0, 2, 3, 5, 7, 8, 10];
 const OWNER = 'earplay';
@@ -296,22 +300,56 @@ export function questionFor(song, chunks, c, k = 0) {
 /* ------------------------------------------------------------------ */
 /* État                                                                 */
 /* ------------------------------------------------------------------ */
-const stateOf = id => ({ done: {}, proof: {}, q: 0, ...(store.get(`earsongs.${id}`) || {}) });
+const stateOf = id => ({ done: {}, found: {}, proof: {}, q: 0, ...(store.get(`earsongs.${id}`) || {}) });
 const saveState = (id, st) => { store.set(`earsongs.${id}`, { ...st, at: Date.now() }); };
 export const sizesFor = def => (def.level <= 2 ? [1, 2, 'phrase', 'all'] : [2, 'phrase', 'all']);
 const SIZE_LABEL = { 1: '1 mesure', 2: '2 mesures', phrase: 'Les phrases', all: 'En entier' };
 /** Où en est une mélodie : 'neuve', 'en cours', 'sue' (sans aide), avec les preuves faites. */
 export function songStatus(def) {
   const st = stateOf(def.id);
-  const n = Object.values(st.done).filter(v => v >= 2).length;
+  const n = Object.values(st.done).filter(v => v >= 2).length + Object.keys(st.found || {}).filter(k => !st.done[k]).length;
   const proofs = ['solo', 'transp', 'sing'].filter(p => st.proof[p]);
   return { st, n, proofs, known: !!st.proof.solo, full: proofs.length === 3, label: st.proof.solo ? `sue${proofs.length === 3 ? ', transposée et chantée' : st.proof.transp ? ', transposée' : ''}` : n ? 'en cours' : 'à découvrir' };
 }
 /** Une mélodie travaillée ces 7 derniers jours ? (règle : une mélodie d'oreille par semaine ; V8 : la fenêtre s'élargit
  *  avec moins de séances) */
 export const earplayRecent = (now = Date.now(), days = 7) => Object.values(store.get('earsongs') || {}).some(x => x && x.at && now - x.at < days * 864e5);
-/** La mélodie à apprendre maintenant : la première, dans l'ordre, qui n'est pas encore sue. */
-export function nextMelody() { return MELODIES.find(d => !songStatus(d).known) || null; }
+/** Les degrés d'une mélodie écrite (1 à 7, 8 = tonique aiguë, -5 à -7 sous la tonique) ; null si une note sort de la
+ *  gamme (altération) ou de l'ambitus de « Trouve la note », ou pour un thème relevé sur une partition. */
+export function melodyDegrees(def) {
+  if (def.excerpt) return null;
+  const { notes } = parseNotes(def.notes, def.mode);
+  const mode = def.mode === 'min' ? 'min' : 'maj';
+  const out = new Set();
+  for (const n of notes) {
+    const d = [...EF.ORDER[mode]].find(x => EF.degOffset(x, mode) === n.s);
+    if (d == null) return null;
+    out.add(d);
+  }
+  return out;
+}
+/** Les notes que tu entends déjà dans « Trouve la note » (toutes tonalités du mode) ; au départ, celles de la première
+ *  séance (1, 5, 3). */
+function acquired(mode) {
+  const S = EF.normalize(store.get('earfind'));
+  const out = new Set();
+  for (const [k, ks] of Object.entries(S.keys)) if (EF.isKey(k) && EF.keyInfo(k).mode === mode && ks && Array.isArray(ks.set)) ks.set.forEach(d => out.add(d));
+  if (!out.size) EF.ORDER[mode].slice(0, EF.START).forEach(d => out.add(d));
+  return out;
+}
+/** Les degrés d'une mélodie que tu n'entends pas encore (null : on ne sait pas). */
+export function missingDegrees(def) {
+  const set = melodyDegrees(def);
+  if (!set) return null;
+  const acq = acquired(def.mode === 'min' ? 'min' : 'maj');
+  return [...set].filter(d => !acq.has(d));
+}
+/** La mélodie à apprendre maintenant (V8.4) : la première pas encore sue dont tu entends déjà toutes les notes (une
+ *  nouvelle au plus) ; sinon la première pas encore sue. */
+export function nextMelody() {
+  const open = MELODIES.filter(d => !songStatus(d).known);
+  return open.find(d => { const m = missingDegrees(d); return m != null && m.length <= 1; }) || open[0] || null;
+}
 
 /* ------------------------------------------------------------------ */
 /* Affichage                                                            */
@@ -320,11 +358,11 @@ export function mountEarPlay(el, opts = {}) {
   const intro = h('div', { class: 'card ep-intro' },
     h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'La méthode'), h('span', { class: 'small muted' }, 'une mélodie par semaine')),
     h('ol', { class: 'ep-method small' },
-      h('li', { html: '<b>Écoute</b> la phrase avec son accompagnement, puis <b>chante-la</b>.' }),
-      h('li', { html: '<b>Rejoue-la avec l’appli</b>, qui la joue avec toi, puis <b>seul</b> sur l’accompagnement.' }),
-      h('li', { html: 'Les phrases <b>s’allongent</b> : une mesure, deux, la phrase, puis la mélodie entière. Entre deux, une question : où va la phrase, qu’est-ce qui revient ?' }),
-      h('li', { html: '<b>Preuve</b> que tu la sais : sans aide, puis dans une autre tonalité, puis chantée.' })),
-    h('p', { class: 'small muted mb-0' }, 'C’est ainsi que les musiciens de tradition orale apprennent : imiter des phrases courtes puis plus longues, avec un partenaire qui joue avec eux. Jouer d’oreille nourrit l’improvisation, la mémoire et la lecture.'));
+      h('li', { html: '<b>Écoute</b> la phrase, en boucle si tu veux, et chante-la si tu veux.' }),
+      h('li', { html: '<b>Cherche ses notes</b> une à une : la première est donnée, les touches de la phrase sont repérées, l’appli t’aide après une erreur.' }),
+      h('li', { html: 'Joue-la <b>d’un trait</b>, puis <b>en rythme</b> : avec l’appli, puis seul sur l’accompagnement.' }),
+      h('li', { html: 'Les phrases <b>s’allongent</b> jusqu’à la mélodie entière. <b>Preuve</b> que tu la sais : sans aide, dans une autre tonalité, chantée.' })),
+    h('p', { class: 'small muted mb-0' }, 'Comme les musiciens qui jouent d’oreille (Lucy Green, Hildebrandt) : une phrase courte en boucle, la première note, des essais, un peu d’aide, puis des phrases plus longues. Les mélodies conseillées n’utilisent que les notes que tu trouves déjà dans « Trouve la note ».'));
   const list = h('div', { class: 'ep-list' });
   const trainer = h('div', { class: 'ep-trainer' });
   el.append(intro, list, trainer);
@@ -346,8 +384,12 @@ export function mountEarPlay(el, opts = {}) {
       const grid = h('div', { class: 'ep-grid' });
       for (const d of defs) {
         const s = songStatus(d);
+        const miss = missingDegrees(d);
+        const degs = melodyDegrees(d);
+        const notesTxt = degs ? `notes : ${EF.byPitch([...degs], d.mode === 'min' ? 'min' : 'maj').map(EF.degShort).join(' ')}` : '';
         const b = h('button', { type: 'button', class: 'ep-song' + (s.known ? ' known' : '') + (nx === d ? ' next' : '') },
-          h('b', {}, d.title), h('span', { class: 'small muted' }, d.src), h('span', { class: 'ep-st small' }, s.known ? `✓ ${s.label}` : nx === d ? 'à apprendre maintenant' : s.label));
+          h('b', {}, d.title), h('span', { class: 'small muted' }, d.src), notesTxt ? h('span', { class: 'small muted ep-degs' }, notesTxt) : null,
+          h('span', { class: 'ep-st small' }, s.known ? `✓ ${s.label}` : nx === d ? (miss && miss.length === 1 ? `conseillée : une seule note nouvelle (le ${EF.degLabel(miss[0])})` : miss && !miss.length ? 'conseillée : tu en entends déjà toutes les notes' : 'à apprendre maintenant') : s.label));
         b.addEventListener('click', () => open(d));
         grid.append(b);
       }
@@ -379,13 +421,14 @@ function mountTrainer(host, def, onChange) {
   frame.append(body);
   host.append(frame);
   let alive = true, take = null, song = null, chunks = [], size = null, idx = 0, kbd = null, tempo = def.level >= 3 ? 0.8 : 0.85;
+  let looping = false, searchBox = null, searchStop = null; // V8.4 : boucle, recherche note par note
   let flash = null; // message d'une preuve réussie, gardé après le nouvel affichage
   const st = stateOf(def.id);
   const save = () => { saveState(def.id, st); onChange?.(); };
   const status = h('div', { class: 'rhythm-phase ep-phase', 'aria-live': 'polite' });
   const fb = h('div', { class: 'quiz-feedback' });
   const qBox = h('div', { class: 'ep-q' });
-  const stopAll = () => { take?.cancel(); take = null; stopSound(); status.innerHTML = ''; };
+  const stopAll = () => { take?.cancel(); take = null; stopSound(); status.innerHTML = ''; try { searchStop?.(); } catch (e) { /* */ } searchStop = null; };
 
   buildSong(def).then(s => {
     if (!alive) return;
@@ -429,24 +472,41 @@ function mountTrainer(host, def, onChange) {
     body.append(h('div', { class: 'ep-sizerow' }, h('span', { class: 'small' }, 'Apprendre par :'), seg));
     // le morceau en cours
     const c = chunks[idx];
-    const dots = h('div', { class: 'ep-dots', 'aria-hidden': 'true' }, ...chunks.map((x, i) => h('i', { class: ((st.done[x.key] || 0) >= 2 ? 'ok' : (st.done[x.key] || 0) >= 1 ? 'half' : '') + (i === idx ? ' on' : '') })));
+    const lvl = st.done[c.key] || 0;
+    const fnd = (st.found || {})[c.key] || 0;
+    const dots = h('div', { class: 'ep-dots', 'aria-hidden': 'true' }, ...chunks.map((x, i) => h('i', { class: ((st.done[x.key] || 0) >= 2 ? 'ok' : (st.done[x.key] || 0) >= 1 || (st.found || {})[x.key] ? 'half' : '') + (i === idx ? ' on' : '') })));
     const where = size === 'all' ? 'La mélodie entière' : `${size === 'phrase' ? 'Phrase' : 'Partie'} ${idx + 1} sur ${chunks.length} · mesure${c.b1 - c.b0 > 1 ? 's' : ''} ${c.b0 + 1}${c.b1 - c.b0 > 1 ? `-${c.b1}` : ''}`;
     const listenB = h('button', { class: 'btn', type: 'button', html: '▶ Écouter' });
-    const withB = h('button', { class: 'btn', type: 'button' }, 'Avec moi');
-    const soloB = h('button', { class: 'btn primary', type: 'button' }, 'Seul, sur l’accompagnement');
+    const loopB = h('button', { class: 'btn ghost sm', type: 'button', 'aria-pressed': 'false' }, '🔁 En boucle');
+    const findB = h('button', { class: 'btn' + (!fnd ? ' primary' : ''), type: 'button' }, fnd ? 'Chercher encore' : 'Chercher les notes');
+    const oneB = h('button', { class: 'btn' + (fnd === 1 ? ' primary' : ''), type: 'button' }, 'D’un trait');
+    const withB = h('button', { class: 'btn' + (fnd >= 2 && lvl < 1 ? ' primary' : ''), type: 'button' }, 'Avec moi, en rythme');
+    const soloB = h('button', { class: 'btn' + (lvl >= 1 ? ' primary' : ''), type: 'button' }, 'Seul, sur l’accompagnement');
     const prevB = h('button', { class: 'btn sm ghost', type: 'button', disabled: idx === 0 }, '‹ Précédente');
     const nextB = h('button', { class: 'btn sm ghost', type: 'button', disabled: idx >= chunks.length - 1 }, 'Suivante ›');
-    listenB.addEventListener('click', () => playChunk(c, { melody: true }));
-    withB.addEventListener('click', () => runTake(c, 'with'));
-    soloB.addEventListener('click', () => runTake(c, 'solo'));
+    listenB.addEventListener('click', () => { looping = false; loopB.setAttribute('aria-pressed', 'false'); loopB.classList.remove('on'); playChunk(c, { melody: true }); });
+    loopB.addEventListener('click', () => {
+      looping = !looping;
+      loopB.setAttribute('aria-pressed', String(looping)); loopB.classList.toggle('on', looping);
+      if (looping) loopChunk(c); else stopSound();
+    });
+    findB.addEventListener('click', () => searchChunk(c));
+    oneB.addEventListener('click', () => oneGo(c));
+    withB.addEventListener('click', () => { looping = false; runTake(c, 'with'); });
+    soloB.addEventListener('click', () => { looping = false; runTake(c, 'solo'); });
     prevB.addEventListener('click', () => { idx--; render(); });
     nextB.addEventListener('click', () => { idx++; render(); });
-    const lvl = st.done[c.key] || 0;
+    const stageTxt = lvl >= 2 ? 'Réussie seul ✓ : passe à la suivante, ou rejoue-la pour le plaisir.'
+      : lvl === 1 ? 'Réussie avec l’appli : maintenant seul, sur l’accompagnement.'
+      : fnd >= 2 ? 'Jouée d’un trait ✓ : maintenant en rythme, avec l’appli puis seul.'
+      : fnd === 1 ? 'Notes trouvées ✓ : joue-la maintenant d’un trait, sans tempo.'
+      : 'Écoute (en boucle si tu veux), puis cherche ses notes une à une : la première est donnée.';
+    searchBox = h('div', { class: 'ep-search' });
     body.append(h('div', { class: 'ep-chunk' },
       h('div', { class: 'ep-chead' }, h('b', {}, where), dots),
-      h('p', { class: 'small mt-0' }, lvl >= 2 ? 'Réussie seul ✓ : passe à la suivante, ou rejoue-la pour le plaisir.' : lvl === 1 ? 'Réussie avec l’appli : maintenant seul, sur l’accompagnement.' : 'Écoute, chante-la à mi-voix, puis rejoue-la : d’abord avec l’appli, puis seul.'),
-      h('div', { class: 'btn-row' }, listenB, withB, soloB),
-      status, fb, qBox,
+      h('p', { class: 'small mt-0' }, stageTxt),
+      h('div', { class: 'btn-row' }, listenB, loopB, findB, oneB, withB, soloB),
+      searchBox, status, fb, qBox,
       h('div', { class: 'btn-row ep-nav' }, prevB, nextB)));
     // clavier à l'écran sans piano
     if (midi.status !== 'ready') {
@@ -456,7 +516,7 @@ function mountTrainer(host, def, onChange) {
     }
     // les preuves
     body.append(proofs());
-    if (st.done[c.key] === undefined && !take) setTimeout(() => { if (alive && chunks[idx] === c) playChunk(c, { melody: true }); }, 400);
+    if (st.done[c.key] === undefined && !(st.found || {})[c.key] && !take) setTimeout(() => { if (alive && chunks[idx] === c) playChunk(c, { melody: true }); }, 400);
   }
 
   async function listenAll() {
@@ -466,11 +526,133 @@ function mountTrainer(host, def, onChange) {
     status.innerHTML = '<span class="ph-label">Écoute</span>';
     setTimeout(() => { if (alive && !take) status.innerHTML = ''; }, Math.max(0, s.endPerf - performance.now()));
   }
-  async function playChunk(c, { melody = true } = {}) {
-    stopAll();
+  async function playChunk(c, { melody = true, keepSearch = false } = {}) {
+    if (keepSearch) { take?.cancel(); take = null; stopSound(); } else stopAll();
     const s = await schedule(song, { from: c.a, to: c.z, downbeat: c.b0 * song.meter.barQ, tempo, melody });
     status.innerHTML = '<span class="ph-label">Écoute</span>';
-    setTimeout(() => { if (alive && !take) status.innerHTML = '<span class="small">Chante-la à mi-voix, puis rejoue-la.</span>'; }, Math.max(0, s.endPerf - performance.now()));
+    setTimeout(() => { if (alive && !take) status.innerHTML = keepSearch ? '' : '<span class="small">Chante-la à mi-voix, puis cherche ses notes.</span>'; }, Math.max(0, s.endPerf - performance.now()));
+    return s;
+  }
+  /** En boucle (V8.4) : la phrase revient tant que la boucle est allumée (comme un riff qu'on copie d'oreille). */
+  async function loopChunk(c) {
+    if (!looping || !alive) return;
+    const s = await playChunk(c, { melody: true, keepSearch: true });
+    setTimeout(() => { if (looping && alive && chunks[idx] === c) loopChunk(c); }, Math.max(0, s.endPerf - performance.now()) + 1100);
+  }
+
+  /* --- chercher les notes une à une (V8.4) --- */
+  function searchChunk(c) {
+    stopAll();
+    const exp = c.notes.map(n => n.m);
+    const mode = song.mode === 'min' ? 'min' : 'maj';
+    const degOf = m => [...EF.ORDER[mode]].find(x => EF.degOffset(x, mode) === m - song.tonic) ?? null;
+    const label = m => { const d = degOf(m); return d != null ? EF.degShort(d) : nameIn(m, song.tonic); };
+    let i = 0, tries = 0, total = 0, perNote = [], lastWrong = null, showMarks = store.get('earsongs.opts.marks') !== false;
+    const box = searchBox;
+    box.innerHTML = '';
+    // sans piano : le clavier de la recherche suffit (celui du bas se cache le temps de chercher)
+    if (kbd) { kbd.hidden = true; const p0 = kbd.previousElementSibling; if (p0 && p0.tagName === 'P') p0.hidden = true; }
+    const slots = h('div', { class: 'tn-slots' }, ...exp.map(() => h('span', { class: 'tn-slot' }, '○')));
+    const info = h('div', { class: 'tn-fb', 'aria-live': 'polite' });
+    const hintBox = h('div', { class: 'tn-help', hidden: true });
+    const hintB = h('button', { class: 'btn ghost sm', type: 'button' }, 'Le contour');
+    const againB = h('button', { class: 'btn ghost sm', type: 'button', html: '▶ Réécouter' });
+    const marksCb = h('input', { type: 'checkbox', checked: showMarks });
+    const singB = h('button', { class: 'btn ghost sm tn-singb', type: 'button', 'aria-pressed': 'false' }, '🎤 Chanter');
+    const sing = singPanel({});
+    sing.el.hidden = true;
+    const lo = Math.min(...exp) - 3, hi = Math.max(...exp) + 3;
+    const kb = keyboard({ from: Math.min(lo, hi - 14), to: hi, interactive: true, names: 'none', height: 100, label: 'Clavier : cherche les notes de la phrase', onDown: (m, v) => midi.virtualOn(m, v), onUp: m => midi.virtualOff(m) });
+    let extra = [];
+    const paint = () => {
+      const marks = [];
+      if (showMarks) for (const m of [...new Set(exp)]) { const d = degOf(m); const black = [1, 3, 6, 8, 10].includes(((m % 12) + 12) % 12); marks.push({ m, color: d === 1 || d === 8 ? '#c99a2e' : black ? '#476aa3' : '#d2def0', label: d != null ? EF.degNum(d) : '', labelColor: black ? '#fff' : '#1d3a66' }); }
+      marks.push({ m: exp[0], color: '#2e7a4c', label: i === 0 ? 'ici' : label(exp[0]), labelColor: '#fff' });
+      kb.setMarks([...marks.filter(x => !extra.some(e => e.m === x.m)), ...extra]);
+    };
+    const flash = (m, color) => { const mk = { m, color, label: '' }; extra = [...extra.filter(e => e.m !== m), mk]; paint(); setTimeout(() => { extra = extra.filter(e => e !== mk); paint(); }, 480); };
+    marksCb.addEventListener('change', () => { showMarks = marksCb.checked; store.set('earsongs.opts.marks', showMarks); paint(); });
+    againB.addEventListener('click', () => { sing.muteFor(4000); playChunk(c, { melody: true, keepSearch: true }); });
+    hintB.addEventListener('click', () => {
+      // le contour (Karpinski) : monte ou descend, par pas ou par saut, d'une note à l'autre
+      const parts = [];
+      for (let k = 1; k < exp.length; k++) { const dd = exp[k] - exp[k - 1]; parts.push(dd === 0 ? '= même note' : `${dd > 0 ? '↗' : '↘'} ${Math.abs(dd) <= 2 ? 'pas' : Math.abs(dd) <= 4 ? 'petit saut' : 'grand saut'}`); }
+      hintBox.hidden = false;
+      hintBox.innerHTML = `<b>Le contour.</b> ${parts.map((x, k) => `<span class="${k < i - 1 ? 'muted' : ''}">${x}</span>`).join(' · ')}`;
+    });
+    singB.addEventListener('click', async () => {
+      if (sing.on) { sing.stop(); sing.el.hidden = true; singB.classList.remove('on'); singB.setAttribute('aria-pressed', 'false'); return; }
+      sing.el.hidden = false; singB.classList.add('on'); singB.setAttribute('aria-pressed', 'true');
+      sing.setTarget(exp[Math.min(i, exp.length - 1)]);
+      if (!(await sing.start())) { singB.classList.remove('on'); singB.setAttribute('aria-pressed', 'false'); }
+    });
+    box.append(h('div', { class: 'ep-search-in' },
+      h('p', { class: 'small mt-0 mb-1' }, `${exp.length} notes. La première est donnée : `, h('b', {}, `${label(exp[0])} (${nameIn(exp[0], song.tonic)})`), ', en vert. Cherche les suivantes : une fausse note ne fait que sonner.'),
+      slots, h('div', { class: 'btn-row' }, againB, hintB, singB, h('label', { class: 'check small' }, marksCb, 'Touches de la phrase repérées')),
+      sing.el, info, hintBox, h('div', { class: 'quiz-kbd' }, kb)));
+    paint();
+    const fill = () => { [...slots.children].forEach((sl, k) => { if (k < i) { sl.textContent = label(exp[k]); sl.classList.add(perNote[k] === 1 ? 'ok' : 'found'); } }); };
+    const off = midi.on('noteon', ev => {
+      if (i >= exp.length) return;
+      kb.press(ev.note, true); setTimeout(() => kb.press(ev.note, false), 250);
+      sing.muteFor(1400);
+      tries++; total++;
+      const target = exp[i];
+      if (((ev.note - target) % 12 + 12) % 12 === 0) {
+        flash(ev.note, '#2e7a4c');
+        perNote.push(tries); tries = 0; lastWrong = null; i++;
+        fill(); paint();
+        info.className = 'tn-fb ok';
+        if (i < exp.length) { info.textContent = `Oui (${i} sur ${exp.length}). La suivante ?`; if (sing.on) sing.setTarget(exp[i]); return; }
+        // trouvée
+        const per = total / exp.length;
+        info.innerHTML = `<b>Trouvée</b> : ${exp.map(label).join(' – ')} · ${per.toFixed(1).replace('.', ',')} essai${per >= 1.95 ? 's' : ''} par note. Joue-la maintenant <b>d’un trait</b>.`;
+        st.found = { ...(st.found || {}), [c.key]: Math.max(1, (st.found || {})[c.key] || 0) };
+        st.search = [...(st.search || []), { at: Date.now(), n: exp.length, t: total }].slice(-30);
+        save(); logActivity('oreille');
+        off(); sing.stop();
+        searchStop = null;
+        setTimeout(() => { if (alive && chunks[idx] === c) { const keep = info.innerHTML; render(); searchBox.append(h('div', { class: 'tn-fb ok', html: keep })); } }, 900);
+        return;
+      }
+      flash(ev.note, '#d9534f');
+      lastWrong = ev.note;
+      info.className = 'tn-fb bad';
+      if (tries === 1) {
+        info.innerHTML = '';
+        const cmp = h('button', { class: 'btn sm ghost', type: 'button' }, '▶ Ta note, puis la bonne');
+        cmp.addEventListener('click', async () => { sing.muteFor(2500); await playList([{ m: lastWrong ?? ev.note, t: 0, d: 0.6, v: 74 }, { m: target, t: 0.75, d: 1.0, v: 82 }]); });
+        info.append(h('span', {}, 'Pas celle-ci. '), cmp);
+      } else if (tries === 2) {
+        const prevNote = exp[i - 1];
+        const dd = target - prevNote;
+        info.innerHTML = `Depuis la note d’avant, elle ${dd === 0 ? 'se répète' : `${dd > 0 ? 'monte' : 'descend'} ${Math.abs(dd) <= 2 ? 'd’un pas' : Math.abs(dd) <= 4 ? 'd’un petit saut' : 'd’un grand saut'}`}. Et par rapport à ta touche : <b>${target > ev.note ? 'plus haut ↑' : 'plus bas ↓'}</b>.`;
+      } else if (tries === 3) {
+        const other = [target + (target > ev.note ? 2 : -2), target].sort(() => Math.random() - 0.5);
+        extra = other.map(m => ({ m, color: '#f0b54a', label: '?', labelColor: '#3a2800' }));
+        paint();
+        info.innerHTML = 'C’est l’une de ces deux touches (en orange).';
+      } else {
+        extra = [{ m: target, color: '#2e7a4c', label: 'ici', labelColor: '#fff' }];
+        paint();
+        info.innerHTML = 'La voici, en vert : joue-la.';
+      }
+    });
+    searchStop = () => { off(); sing.stop(); };
+    box.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+  }
+  /** D'un trait (V8.4) : toutes les notes de la phrase, justes, sans tempo. */
+  function oneGo(c) {
+    stopAll();
+    looping = false;
+    fb.className = 'quiz-feedback'; fb.textContent = `Joue les ${c.notes.length} notes d’un trait, à ton rythme. Je t’écoute.`;
+    take = listen({ expect: c.notes.length, silenceMs: 4000, onDone: played => {
+      take = null;
+      const r = judge(c.notes, played, { tonic: song.tonic });
+      fb.className = 'quiz-feedback ' + (r.ok ? 'ok' : 'bad');
+      fb.textContent = r.ok ? 'D’un trait ! Maintenant en rythme : avec l’appli, puis seul.' : r.msg;
+      if (r.ok) { st.found = { ...(st.found || {}), [c.key]: 2 }; save(); logActivity('oreille'); const keep = fb.textContent; setTimeout(() => { if (alive && chunks[idx] === c) { render(); fb.className = 'quiz-feedback ok'; fb.textContent = keep; } }, 700); }
+    } });
   }
   /** Une prise : décompte, accompagnement (et mélodie si « avec moi »), puis vérification. */
   async function runTake(c, mode) {
@@ -618,5 +800,5 @@ function mountTrainer(host, def, onChange) {
     return box;
   }
 
-  return () => { alive = false; stopAll(); };
+  return () => { alive = false; looping = false; stopAll(); };
 }

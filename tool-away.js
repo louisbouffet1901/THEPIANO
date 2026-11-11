@@ -1,6 +1,6 @@
 // Loin du piano (V8) : 5 à 15 minutes utiles sans clavier — dans les transports, entre deux cours, en vacances.
-// Quatre blocs qui tournent : ta pièce de tête (pratique mentale de la section du jour), l'oreille (l'étape en cours du
-// parcours, à reconnaître ou à chanter), le rythme et les notes (sur l'écran), la théorie (fiches à revoir ou chapitre
+// Quatre blocs qui tournent : ta pièce de tête (pratique mentale de la section du jour), l'oreille (« Trouve la note »
+// sur le clavier de l'écran, V8.4), le rythme et les notes (sur l'écran), la théorie (fiches à revoir ou chapitre
 // en cours). Rien ne remplace le piano : ce travail prépare la séance suivante, qui commence par rejouer de mémoire ce
 // qui a été travaillé de tête.
 import { h, esc } from './util.js';
@@ -37,14 +37,11 @@ function nextTheory(L) {
   }
   return null;
 }
-/** L'oreille loin du piano : l'étape en cours, sous ses formes sans clavier (reconnaître, chanter). */
+/** L'oreille loin du piano (V8.4) : « Trouve la note » sur le clavier de l'écran, dans la tonalité de la prochaine séance. */
 async function earChoice() {
-  const ep = await import('./tool-earpath.js');
-  const pr = ep.trackProgress();
-  const s = pr.cur;
-  const firstNot = ids => (ids || []).find(id => !ep.seriesStatus(id).mastered) || (ids || [])[0] || null;
-  if (!s) return { ep, title: 'Révision : tout mélanger', R: 'iv-all', C: 'sing-match-p' };
-  return { ep, step: s, title: `Étape ${pr.index} sur ${pr.total} : ${s.title}`, R: firstNot(s.forms.R), C: firstNot(s.forms.C) };
+  const ef = await import('./tool-earfind.js');
+  const info = ef.nextSessionInfo();
+  return { info, title: `Trouve la note, ${info.name}` };
 }
 /** Pour chaque bloc : { title, sub } (une ligne), et la section de la pièce pour le bloc « de tête ». */
 export async function awayProposals(L = currentLevel(), now = Date.now()) {
@@ -52,7 +49,7 @@ export async function awayProposals(L = currentLevel(), now = Date.now()) {
   const out = {};
   const nx = pm.nextSection(L.piece, now);
   if (nx) out.tete = { section: nx.section, piece: L.piece, sub: `${nx.section.name} (m. ${nx.section.from}-${nx.section.to}) : l’écouter en suivant, la lire en l’entendant, la jouer dans ta tête, puis de mémoire.` };
-  out.oreille = { ...ear, sub: `${ear.title} : ${ear.R && ear.C ? 'la reconnaître (avec écouteurs) ou la chanter (au calme)' : ear.R ? 'reconnaître, avec écouteurs' : 'chanter, au calme'}.` };
+  out.oreille = { ...ear, sub: `Trouve la note en ${ear.info.name} : la note sonne, tu la trouves sur le clavier de l’écran, avec des écouteurs. Chanter est facultatif.` };
   out.lecture = { sub: 'Une minute de rythme à taper sur l’écran en comptant, une minute de notes à nommer : ton point faible, sans clavier.' };
   let due = null;
   try { due = await ms.dueSummary(now); } catch (e) { due = null; }
@@ -162,30 +159,12 @@ export function mountMental(el, { piece, section, onDone } = {}) {
 /* ------------------------------------------------------------------ */
 /* Les autres blocs                                                     */
 /* ------------------------------------------------------------------ */
-function mountEar(el, prop) {
-  let un = null;
-  const forms = [['R', 'Reconnaître', 'avec écouteurs'], ['C', 'Chanter', 'au calme : micro, ou « Je m’évalue »']].filter(([f]) => prop[f]);
-  const seg = h('div', { class: 'seg', role: 'group', 'aria-label': 'Comment' });
-  const why = h('p', { class: 'small muted mt-1 mb-0' });
-  const host = h('div', { class: 'mt-1' });
-  el.append(h('p', { class: 'small mt-0' }, h('b', {}, prop.title), prop.step ? ` — ${prop.step.why}` : ''), forms.length > 1 ? seg : null, why, host);
-  const pick = f => {
-    try { un?.(); } catch (e) { /* */ }
-    host.innerHTML = '';
-    seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.f === f));
-    const id = prop[f];
-    const q = prop.ep.seriesOf(id);
-    why.textContent = f === 'R' ? 'Tu écoutes et tu réponds en touchant l’écran : tes réponses comptent dans le parcours.' : 'Tu chantes : le micro vérifie (ou tu écoutes la réponse et tu juges toi-même). Tes réponses comptent dans le parcours.';
-    import('./tool-ear.js').then(m => { un = m.mountQuiz(host, { ...q, stat: id }); });
-  };
-  for (const [f, label, sub] of forms) {
-    const b = h('button', { type: 'button', 'data-f': f, title: sub }, label);
-    b.addEventListener('click', () => pick(f));
-    seg.append(b);
-  }
-  if (forms.length) pick(forms[0][0]);
-  else host.append(h('p', { class: 'small' }, 'Cette étape se fait au piano : choisis un autre bloc.'));
-  return () => { try { un?.(); } catch (e) { /* */ } };
+function mountEar(el, prop, { onFinish } = {}) {
+  let un = null, dead = false;
+  const host = h('div');
+  el.append(h('p', { class: 'small mt-0' }, 'Avec des écouteurs : la note sonne, tu la trouves sur le clavier de l’écran. Tes résultats comptent comme au piano.'), host);
+  import('./tool-earfind.js').then(m => { if (!dead) un = m.mountEarFind(host, { away: true, minutes: 5, key: prop?.info?.key, onFinish }); }).catch(e => { host.append(h('p', { class: 'small' }, 'Indisponible : ' + e.message)); });
+  return () => { dead = true; try { un?.(); } catch (e) { /* */ } };
 }
 function mountReading(el, { onFinish } = {}) {
   let un = null, gen = 0;
@@ -385,7 +364,7 @@ export function mountAway(el, { piece = null, section = null } = {}) {
         const pc = s.piece || p?.piece;
         if (!sec || !alive) { host.append(h('p', { class: 'small' }, 'Pas de section à travailler.')); return; }
         blockUn = mountMental(host, { piece: pc, section: sec, onDone: () => markDone('tete') });
-      } else if (b === 'oreille') blockUn = mountEar(host, props.oreille);
+      } else if (b === 'oreille') blockUn = mountEar(host, props.oreille, { onFinish: () => markDone('oreille') });
       else if (b === 'lecture') blockUn = mountReading(host, { onFinish: () => markDone('lecture') });
       else blockUn = mountTheory(host, props.theorie, { onFinish: () => markDone('theorie') });
     }
@@ -420,7 +399,7 @@ export function mountAwayCard(el) {
     const s = readSess();
     const plan = s && !s.blocks.every(b => s.done[b]) ? s.blocks : awayPlan(minutes, props);
     const PHRASE = { tete: 'ta pièce de tête', oreille: 'l’oreille', lecture: 'le rythme et les notes', theorie: 'la théorie' };
-    const parts = plan.map(b => (b === 'tete' && props.tete ? `ta pièce de tête (${esc(props.tete.section.name)})` : b === 'oreille' && props.oreille.step ? `l’oreille (${esc(props.oreille.step.title.toLowerCase())})` : PHRASE[b]));
+    const parts = plan.map(b => (b === 'tete' && props.tete ? `ta pièce de tête (${esc(props.tete.section.name)})` : b === 'oreille' && props.oreille.info ? `l’oreille (trouve la note en ${esc(props.oreille.info.name)})` : PHRASE[b]));
     const txt = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' et ' + parts[parts.length - 1] : parts[0] || '';
     card.append(h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Loin du piano'), h('span', { class: 'small muted' }, s && !s.blocks.every(b => s.done[b]) ? 'en cours' : `${plan.reduce((a, b) => a + BLOCKS[b].min, 0)} min`)),
       h('p', { class: 'small mb-1', html: `${txt.charAt(0).toUpperCase()}${txt.slice(1)}. Dans les transports ou entre deux cours : avec des écouteurs, sans clavier.` }),

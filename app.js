@@ -574,6 +574,7 @@ function pageHome() {
   $('#domGrid', page).append(...domainTiles(L));
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '8.4': '<ul><li><b>L’oreille, refaite</b> autour d’un seul exercice, <b>Trouve la note</b>, inspiré des méthodes qui ont fait leurs preuves (méthode fonctionnelle de Benbassat, Kodály, Gordon, Lucy Green). Une cadence installe la tonalité, une note sonne, tu la cherches au clavier. Tes essais sont comptés, sans pénalité ; après une erreur, l’appli t’aide : plus haut ou plus bas, deux touches possibles, la touche. Puis la note rentre à la tonique : c’est ce chemin que l’oreille apprend.</li><li><b>Une tonalité par séance</b>, et une difficulté qui s’ajuste seule : tu commences avec trois notes (1, 3, 5) ; une note s’ajoute quand tu en réussis 9 sur 10 du premier coup, la dernière arrivée se retire si c’est trop dur. Ensuite, de courtes formules de deux à cinq notes. Ton progrès se lit en <b>essais par note</b>.</li><li><b>Plus d’aide</b> : les touches possibles numérotées, l’échelle des degrés, un bouton Indice (où est la note, sa couleur, deux touches, la touche), « Comment ça marche » et les stratégies pour ne plus tâtonner.</li><li><b>Le chant</b>, facultatif mais toujours là : à chaque note, le bouton « Chanter » ouvre le micro, qui te dit si tu chantes juste sans jamais nommer la note.</li><li><b>Mélodies d’oreille</b> : avant de jouer en rythme, tu cherches les notes une à une (la première est donnée, les touches de la phrase repérées), en boucle si tu veux, puis tu la joues d’un trait. L’appli te conseille celles dont tu entends déjà les notes.</li><li>Le parcours en seize étapes et les seize leçons d’oreille sont retirés ; tes résultats sont gardés. Quelques exercices de reconnaissance (accords, cadences, intervalles) restent, repliés, en bas de la page Oreille.</li></ul>',
     '8.3': '<ul><li><b>Un piano qui sonne mieux</b> : les échantillons sont refaits à partir des enregistrements d’origine. L’ancienne compression coupait tout le haut du son (rien au-dessus de 8 kHz) : le piano était terne. Il a maintenant <b>trois nuances</b> enregistrées (p, mf, f), dont le timbre change comme sur un vrai piano, un accord corrigé (l’aigu était trop haut) et des attaques calées au même instant.</li><li><b>Une salle</b> autour du piano, réglable dans Réglages › Son (« Résonance de la salle »), et plus de compresseur qui écrasait les nuances.</li><li><b>Ta pièce jouée avec la pédale de Chopin</b> : chaque extrait de l’op. 55 n° 1 suit ses indications (reprise sur les basses, levée sur la dernière croche) ; les notes piquées sont détachées quand la pédale est levée ; les notes rapides des fioritures et du septolet ne se mélangent plus en grappe.</li><li><b>Partitions revérifiées</b> note à note sur les deux premières éditions (Paris et Leipzig, 1844). <b>Mesures 43-44</b> : le do du 1er temps de la mesure 43 est lié depuis la mesure 42 ; l’extrait le jouait comme une nouvelle note. Il commence maintenant à la mesure 42 et le do est tenu, sans être rejoué. Le si♮ du septolet est expliqué (l’édition de Leipzig oublie le bécarre). L’accord arpégé de la mesure 7 commence sur le temps avec la basse, comme le voulait Chopin.</li></ul>',
     '8.2': '<ul><li><b>Le contenu relu, leçon par leçon</b> (niveaux 1 et 2, pièces) : les passages trop denses sont découpés ou mis en liste, les termes techniques expliqués là où ils apparaissent (vélocité, ischions…), les renvois pointent vers les pages actuelles (Théorie › Fiches et exercices, l’outil Rythme, l’outil Composition, Réglages › Son). Quelques erreurs corrigées : de 3 à 5, il y a une tierce et non un ton ; l’appoggiature du nocturne est le la♭ de la mesure 7 ; la forme d’un accord renversé sur la portée ; le si♮ de la basse de l’op. 15 ; « le » trille.</li><li><b>Les signes de musique</b> (♩, ♭, ♯, ♮) s’affichent partout pareil, avec une police faite pour eux : fini le trou dans « ♩ = 60 ».</li><li><b>Plus lisible</b> : le bilan de la semaine n’est plus coupé ; le résumé de chaque leçon tient sur deux lignes ; « leçons » partout (et plus « cours ») ; ton temps de piano, domaine par domaine ; l’objectif de ta pièce et la section du jour, en phrases simples.</li></ul>',
     '8.1': '<ul><li><b>Un site plus clair</b> : le menu se range en trois groupes, <b>Jouer</b> (tes pièces, technique, interprétation, lecture à vue, improvisation), <b>Entendre et comprendre</b> (oreille, théorie) et <b>Ton parcours</b>. Chaque domaine a <b>une seule page</b> : ce que tu fais maintenant, ses outils, et toutes ses leçons niveau par niveau. Le Rythme est dans Lecture à vue, les Exercices dans Technique, la Composition dans Improvisation, les fiches dans Théorie.</li><li><b>Sur téléphone</b> (et tablette tenue en hauteur), une barre en bas : Accueil, Pièces, Sans piano, Théorie, Menu.</li><li><b>L’accueil</b> montre tes sept domaines et où tu en es dans chacun.</li><li><b>Théorie, les cartes du jour</b>, façon Anki : une question, tu cherches de tête, tu découvres la réponse, tu notes (À revoir, Difficile, Bien, Facile). Les cartes sues reviennent de plus en plus tard, celles qui résistent reviennent vite. Elles viennent des leçons faites, commencées ou cochées « par cœur ». Trois minutes par jour, aussi loin du piano.</li><li><b>Le défi éclair</b> : une minute pour répondre juste au plus de questions (armures, relatives, intervalles, accords, degrés, quintes), un record par thème, des médailles, un défi du jour.</li></ul>',
@@ -650,7 +651,7 @@ function domainTiles(L) {
   const sTh = tile('theorie', '');
   import('./piecemap.js').then(pm => { const pr = pm.pieceProgress(L.piece); if (pr) sPiece.textContent = `${PIECES[L.piece].title} · ${pr.atTempo}/${pr.total} sections au tempo`; }).catch(() => {});
   import('./tool-warmup.js').then(m => { const w = m.warmupStatus(); if (w.done >= w.total) sLect.textContent = 'Échauffement fait aujourd’hui · ' + sLect.textContent.toLowerCase(); }).catch(() => {});
-  import('./tool-earpath.js').then(m => { const pr = m.trackProgress(); sEar.textContent = pr.cur ? `Étape ${pr.index} sur ${pr.total} : ${pr.cur.title.toLowerCase()}` : 'Parcours terminé : révision libre'; }).catch(() => { sEar.textContent = 'Le parcours'; });
+  import('./tool-earfind.js').then(m => { sEar.textContent = m.earFindLine(); }).catch(() => { sEar.textContent = 'Trouve la note'; });
   import('./tool-cards.js').then(m => m.deckSummary()).then(r => {
     sTh.textContent = r && r.due ? `${r.due} carte${r.due > 1 ? 's' : ''} à revoir` : r && r.fresh ? `${r.fresh} carte${r.fresh > 1 ? 's' : ''} nouvelle${r.fresh > 1 ? 's' : ''} · défi du jour` : 'Cartes, défi du jour, chapitres';
     renderNav(location.hash);
@@ -795,6 +796,12 @@ function pageLevel(id) {
   html += `<div class="section-title"><h2>Les six domaines</h2><span class="small">un toucher ouvre la prochaine leçon ; chaque domaine a sa page dans le menu</span></div><div class="grid cols-3 module-grid">`;
   for (const M of MODULES) {
     const lm = lessonsOf(L.id, M.id);
+    if (M.id === 'oreille') {
+      // V8.4 : plus de leçons d'oreille ; l'exercice « Trouve la note » et les mélodies d'oreille
+      html += `<a class="card module-card" href="${hubOfModule(M.id).href}"><div class="card-top"><h3>${esc(M.label)}</h3><span class="small">exercice</span></div>
+      <p class="small mb-0" id="lvl-ear">Trouve la note, puis les mélodies d’oreille.</p></a>`;
+      continue;
+    }
     const d = lm.filter(x => store.isDone(x.id)).length;
     const nx = lm.find(x => !store.isDone(x.id) && x.prio !== 2) || lm.find(x => !store.isDone(x.id));
     html += `<a class="card module-card" href="${nx ? `#/lecon/${nx.id}` : hubOfModule(M.id).href}"><div class="card-top"><h3>${esc(M.label)}</h3><span class="small">${d}/${lm.length}</span></div>
@@ -804,12 +811,13 @@ function pageLevel(id) {
   html += `</div>`;
   page.innerHTML = html;
   main.append(page);
+  import('./tool-earfind.js').then(m => { const x = $('#lvl-ear', page); if (x) x.textContent = m.earFindLine() + '.'; }).catch(() => {});
 }
 
 async function pageLesson(id) {
   const tok = navToken;
   const meta = lessonById(id);
-  if (!meta) { location.hash = '#/'; return; }
+  if (!meta) { location.replace(/^n[12]-or\d$/.test(id) ? '#/outils/oreille' : '#/'); return; } // V8.4 : leçons d'oreille retirées
   main.append(h('div', { class: 'page' }, h('p', { class: 'w-loading' }, 'Chargement de la leçon…')));
   const l = await loadLesson(id);
   if (!stillHere(tok)) return;
@@ -1096,10 +1104,6 @@ function recommendPreset(presets, st) {
 }
 
 const PRESET_PAGES = {
-  oreille: {
-    title: 'Oreille', presets: m => m.EAR_PRESETS, lessonsTitle: 'Le cours d’oreille, leçon par leçon',
-    lead: 'Dix minutes chaque jour valent mieux qu’une longue séance par semaine. Les leçons du parcours expliquent chaque étape ; ici, tu retrouves toutes les séries pour t’entraîner librement. Objectif : 80 % du premier coup, deux jours de suite, avant de passer à la série suivante.',
-  },
   theorie: {
     title: 'Théorie', presets: m => m.THEORY_PRESETS, lessonsTitle: 'Les cours de théorie, chapitre par chapitre',
     lead: 'Ce qui sert au clavier : chaque chapitre se lit en cinq ou six étapes et se termine au piano. Ce que tu as appris revient dans tes cartes du jour ; le défi éclair, c’est pour le plaisir (et la vitesse).',
@@ -1163,15 +1167,51 @@ async function pagePresets(kind) {
   return () => cleanupQuiz?.();
 }
 
+/* L'oreille (V8.4) : « Trouve la note » (l'exercice central, une tonalité par séance), les mélodies d'oreille, et
+   quelques exercices de reconnaissance repliés. Le parcours en seize étapes et les seize leçons d'oreille sont retirés. */
+const EAR_OTHER = [
+  ['ch-mm', 'Majeur ou mineur ?', 'La couleur d’un accord : c’est la tierce, au milieu, qui décide.'],
+  ['cad-2', 'Fin ou suspension ?', 'Les deux ponctuations de la musique : on s’arrête, ou on attend la suite.'],
+  ['cad', 'Les quatre cadences', 'Parfaite, demi-cadence, plagale, rompue.'],
+  ['func', 'Après le I : IV, V ou vi ?', 'Entendre la basse sous les accords : ce qui sert pour improviser et harmoniser.'],
+  ['iv-n1', 'Les intervalles, de la seconde à la quinte', 'Avec un début de chanson connu comme repère.'],
+  ['ch7-b', 'Trois accords de septième', 'Dominante, majeure, mineure : trois couleurs de Chopin.'],
+];
+async function mountOtherEar(box) {
+  const ear = await import('./tool-ear.js');
+  const host = h('div', { class: 'es-quiz' });
+  const list = h('div', { class: 'more-body' });
+  let un = null;
+  const all = store.get('stats.ear') || [];
+  list.append(h('p', { class: 'small' }, 'Reconnaître sans clavier (avec des écouteurs, aussi loin du piano). Pas d’étape à valider : prends ce qui t’est utile.'));
+  for (const [id, title, why] of EAR_OTHER) {
+    const q = ear.EAR_PRESETS.find(x => x.id === id);
+    if (!q) continue;
+    const last = all.filter(x => x.id === id).slice(-1)[0];
+    const go = h('button', { class: 'btn sm', type: 'button' }, 'Commencer');
+    go.addEventListener('click', () => { try { un?.(); } catch (e) { /* */ } host.innerHTML = ''; un = ear.mountQuiz(host, { ...q, stat: q.id }); host.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    list.append(h('div', { class: 'es-row' }, go, h('span', { class: 'es-st' }, h('b', {}, title), h('span', { class: 'small' }, why + (last ? ` Dernier score : ${fmtPct(last.pct)}.` : '')))));
+  }
+  list.append(host);
+  box.append(list);
+  return () => { try { un?.(); } catch (e) { /* */ } };
+}
 function pageEar(view = null) {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Oreille' }]) +
-    hubHead('oreille', 'Le parcours : une étape après l’autre, chacune se <b>reconnaît</b>, se <b>chante</b> et se <b>joue</b> au piano. Jouer d’oreille : des mélodies apprises sans partition, phrase par phrase. La reconnaissance et le chant se font aussi <a href="#/loin">loin du piano</a>.');
-  const host = h('div');
-  page.append(host);
-  page.insertAdjacentHTML('beforeend', `<details class="train-free" id="cours-oreille"><summary><span>Les leçons d’oreille</span><span class="small">leçon par leçon, chaque étape du parcours y renvoie</span></summary>${moduleIndexHTML('oreille')}</details>`);
+    hubHead('oreille', 'Entendre une note et trouver sa touche sans tâtonner : c’est l’exercice central, quelques minutes par séance, dans une seule tonalité. Puis de vraies mélodies, retrouvées note à note. Le chant est facultatif, mais toujours à portée de main.');
+  const findHost = h('div', { id: 'trouve' });
+  const melHead = h('div', { class: 'section-title mt-3', id: 'melodies' }, h('h2', {}, 'Mélodies d’oreille'), h('span', { class: 'small' }, 'de vraies mélodies, retrouvées note à note'));
+  const melHost = h('div');
+  const other = h('details', { class: 'train-free ear-other' }, h('summary', {}, h('span', {}, 'Autres exercices d’oreille'), h('span', { class: 'small' }, 'accords, cadences, intervalles')));
+  page.append(findHost, melHead, melHost, other);
   main.append(page);
-  return mountLazy(host, () => Promise.all([import('./tool-earpath.js'), ensureAbcjs()]).then(([m]) => el => m.mountEarPath(el, { view: view === 'jouer' ? 'play' : view === 'parcours' ? 'path' : null })));
+  const un1 = mountLazy(findHost, () => import('./tool-earfind.js').then(m => el => m.mountEarFind(el)));
+  const un2 = mountLazy(melHost, () => Promise.all([import('./tool-earplay.js'), ensureAbcjs()]).then(([m]) => el => m.mountEarPlay(el)));
+  let un3 = null, asked = false;
+  other.addEventListener('toggle', () => { if (other.open && !asked) { asked = true; mountOtherEar(other).then(u => { un3 = u; }).catch(e => console.error(e)); } });
+  if (view === 'jouer') setTimeout(() => melHead.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
+  return () => { un1(); un2(); try { un3?.(); } catch (e) { /* */ } };
 }
 
 /* L'onglet Technique (V7.4.3) : les leçons rangées par thème, la leçon en cours, les gammes de la semaine, les outils. */

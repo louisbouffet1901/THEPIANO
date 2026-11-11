@@ -132,7 +132,7 @@ function otherPieces(L) {
 
 /** Pour chaque catégorie : { title, html, href, meta }. Asynchrone : quelques outils se chargent à la demande. */
 export async function proposals(L, now = Date.now()) {
-  const [pm, ex, ear, wu, ep] = await Promise.all([import('./piecemap.js'), import('./tool-exercises.js'), import('./tool-earpath.js'), import('./tool-warmup.js'), import('./tool-earplay.js')]);
+  const [pm, ex, ef, wu, ep] = await Promise.all([import('./piecemap.js'), import('./tool-exercises.js'), import('./tool-earfind.js'), import('./tool-warmup.js'), import('./tool-earplay.js')]);
   const out = {};
   // pièce phare : la section du jour
   const nx = pm.nextSection(L.piece, now);
@@ -195,13 +195,14 @@ export async function proposals(L, now = Date.now()) {
   out.lecture = { title: 'Échauffement et extraits', html: `${link('#/outils/lecture', 'Lecture à vue')} : ${warm}des extraits nouveaux, ${esc(LVN[lv] || 'à ton niveau')}, sans t’arrêter.`, href: '#/outils/lecture',
     // séance courte : l'échauffement de trois minutes, ou un extrait s'il est déjà fait
     short: 5, shortHtml: `${link('#/outils/lecture', 'Lecture à vue')} : ${ws.done >= ws.total ? `un ou deux extraits nouveaux, ${esc(LVN[lv] || 'à ton niveau')}, sans t’arrêter` : `l’échauffement de 3 minutes (le rythme, puis deux exercices d’une minute), puis un extrait nouveau s’il reste du temps (${esc(LVN[lv] || 'à ton niveau')})`}.` };
-  // oreille : l'étape en cours du parcours
-  const pr = ear.trackProgress();
+  // oreille (V8.4) : « Trouve la note », dans la tonalité de la prochaine séance (une par séance) ; une mélodie d'oreille
+  // de temps en temps. Plus d'étapes à valider : rien à cocher « déjà faite ».
+  const nf = ef.nextSessionInfo(now);
   const nm = ep.nextMelody();
   const melodyDays = everyDays(7);
   const weekly = !ep.earplayRecent(now, melodyDays) && nm ? ` <span class="sx-sub">${melodyDays > 7 ? 'De temps en temps' : 'Cette semaine'} aussi, une mélodie d’oreille : ${link('#/outils/oreille/jouer', nm.title)}.</span>` : '';
-  out.oreille = { title: pr.cur ? pr.cur.title : 'Révision', html: `${link('#/outils/oreille/parcours', 'Oreille')} : ${pr.cur ? `étape ${pr.index} sur ${pr.total}, ${esc(pr.cur.title)}` : 'révision libre'}.${weekly}`, href: '#/outils/oreille/parcours',
-    skip: pr.cur ? { kind: 'ear', id: pr.cur.id, label: `l’étape « ${pr.cur.title} »` } : null };
+  const triesTxt = nf.tries != null ? `, ${nf.tries.toFixed(1).replace('.', ',')} essai${nf.tries >= 1.95 ? 's' : ''} par note la dernière fois` : '';
+  out.oreille = { title: `Trouve la note, ${nf.name}`, html: `${link('#/outils/oreille', 'Trouve la note')} en <b>${esc(nf.name)}</b> : ${nf.n} notes en jeu${triesTxt}. Chante la note avant de la chercher, si tu veux.${weekly}`, href: '#/outils/oreille' };
   // autres pièces
   const others = otherPieces(L);
   const op = others[0];
