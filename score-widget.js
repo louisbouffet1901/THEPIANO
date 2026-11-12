@@ -180,6 +180,23 @@ export function mountScore(el, cfg) {
     allBtn.addEventListener('click', () => setRange(null));
     ctrl2.append(h('label', { class: 'field range-m' }, 'Mesures', selFrom, h('span', { class: 'small' }, 'à'), selTo), allBtn);
   }
+  // V8.5 : plage choisie de l'extérieur (partition complète : sections, adresse), puis amenée à l'écran
+  const scrollToBar = m => {
+    // le haut de la mesure : la note la plus haute de ses notes (portée du haut), puis une marge pour l'en-tête
+    let top = Infinity;
+    for (const e of score.events) {
+      if (e.char == null || bars.barOf(e.t) !== m) continue;
+      for (const node of score.elementsFor(e.char)) top = Math.min(top, node.getBoundingClientRect().top);
+    }
+    if (!Number.isFinite(top)) return;
+    window.scrollTo({ top: Math.max(0, top + window.scrollY - 130), behavior: 'smooth' });
+  };
+  el.addEventListener('score-range', e => {
+    const r = e.detail && e.detail.range;
+    setRange(r && r.length === 2 ? r : null);
+    if (r && e.detail.scroll !== false) scrollToBar(Math.max(r[0], measures[0]));
+  });
+  if (cfg.range && cfg.range.length === 2) setRange(cfg.range, true);
 
   /* ---------------- Carte des erreurs ---------------- */
   let mapAlive = true;
@@ -404,6 +421,31 @@ export function mountScore(el, cfg) {
     stopAnalysis = panel.stop;
   }
   if (cfg.caption) el.append(h('div', { class: 'w-caption', html: cfg.caption }));
+  // V8.5 : partition longue : la page suit les notes jouées (écoute, en rythme, mode attente), sauf si tu viens de
+  // faire défiler toi-même ; la barre de commandes reste visible en bas de l'écran (classe follow, app.css)
+  let followTimer = null;
+  if (cfg.follow) {
+    frame.classList.add('follow');
+    let userAt = 0;
+    const mark = () => { userAt = performance.now(); };
+    window.addEventListener('wheel', mark, { passive: true });
+    window.addEventListener('touchmove', mark, { passive: true });
+    followTimer = setInterval(() => {
+      if (!scoreHost.isConnected || performance.now() - userAt < 2500) return;
+      const nodes = scoreHost.querySelectorAll('.n-on, .n-next');
+      if (!nodes.length) return;
+      let top = Infinity;
+      nodes.forEach(n => { top = Math.min(top, n.getBoundingClientRect().top); });
+      const footH = getComputedStyle(foot).position === 'sticky' ? foot.getBoundingClientRect().height : 0;
+      const tab = document.querySelector('.tabbar');
+      const tabH = tab && getComputedStyle(tab).display !== 'none' ? tab.getBoundingClientRect().height : 0;
+      const low = window.innerHeight - footH - tabH - 110, high = 90;
+      if (top > high && top < low) return;
+      window.scrollTo({ top: Math.max(0, window.scrollY + top - Math.round(window.innerHeight * 0.3)), behavior: 'smooth' });
+    }, 350);
+    const unFollow = () => { clearInterval(followTimer); window.removeEventListener('wheel', mark); window.removeEventListener('touchmove', mark); };
+    return () => { unFollow(); mapAlive = false; player.stop(); stopModes(); clearTimeout(ladder?.timer); stopAnalysis(); audio.stopAll('replay'); };
+  }
   return () => { mapAlive = false; player.stop(); stopModes(); clearTimeout(ladder?.timer); stopAnalysis(); audio.stopAll('replay'); };
 }
 

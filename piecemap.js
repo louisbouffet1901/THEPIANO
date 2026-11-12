@@ -13,6 +13,10 @@ import { getPace, pieceMinutes, pausedDays, everyDays, paceLabel } from './pace.
 
 export const mapOf = piece => PIECE_MAPS[piece] || null;
 export const hasMap = piece => !!PIECE_MAPS[piece];
+// V8.5 : pièces dont l'appli publie la partition complète (page #/piece/<id>/partition, plage facultative « 42-44 »)
+export const FULL_SCORES = { 'op55-1': { bars: 101 } };
+export const hasFullScore = piece => !!FULL_SCORES[piece];
+export const fullScoreHref = (piece, from, to) => `#/piece/${piece}/partition${from ? `/${from}-${to || from}` : ''}`;
 const titleOf = piece => (PIECES_META[piece] || {}).title || piece;
 const lessonMeta = id => LESSONS.find(l => l.id === id) || null;
 const bars = s => (s.from === s.to ? `m. ${s.from}` : `m. ${s.from}-${s.to}`);
@@ -287,6 +291,9 @@ export function mountSection(el, cfg) {
   card.append(h('div', { class: 'pm-h' }, 'Comment la travailler'), h('ol', { class: 'pm-recipe' }, (s.recipe || []).map(r => h('li', {}, r))),
     h('p', { class: 'pm-goal small' }, h('b', {}, 'Au tempo quand : '), s.goal));
   if (s.ear && s.ear.length) card.append(h('div', { class: 'pm-ear' }, h('div', { class: 'pm-h' }, 'Entendre avant de jouer'), h('ul', {}, s.ear.map(x => h('li', {}, x)))));
+  if (hasFullScore(piece)) {
+    card.append(h('p', { class: 'small mb-1' }, h('a', { class: 'btn sm', href: fullScoreHref(piece, s.from, s.to) }, `Dans la partition complète, ${bars(s)}`)));
+  }
   card.append(h('p', { class: 'small muted mb-0' }, `Points de départ : ${s.starts.map(m => 'mesure ' + m).join(', ')}.`));
   // V8 : la travailler loin du piano (pratique mentale, puis vérification au clavier)
   card.append(h('p', { class: 'small pm-away mb-0' }, h('a', { href: `#/loin/tete/${piece}/${s.id}` }, 'La travailler de tête, loin du piano'), ' : l’écouter en suivant, la lire en l’entendant, la jouer dans ta tête, puis de mémoire.'));
@@ -353,6 +360,12 @@ export function mountPieceHead(el, cfg) {
         h('div', { class: 'small muted' }, 'Section du jour'),
         h('p', { class: 'mb-0' }, h('a', { href: `#/piece/${piece}/${nx.section.id}` }, `${nx.section.name} (${bars(nx.section)})`), ` : ${nx.why}.`),
         h('p', { class: 'small mb-0' }, nx.intention)));
+    }
+    // V8.5 : la partition complète, et la section du jour dans la partition
+    if (hasFullScore(piece)) {
+      card.append(h('div', { class: 'btn-row pm-full' },
+        h('a', { class: 'btn sm' + (cfg.compact ? '' : ' primary'), href: fullScoreHref(piece) }, 'La partition complète'),
+        nx ? h('a', { class: 'btn sm ghost', href: fullScoreHref(piece, nx.section.from, nx.section.to) }, `Section du jour dans la partition`) : null));
     }
     if (filageDue(piece)) {
       card.append(h('p', { class: 'small pm-filage-due' }, ICONS.target ? h('span', { class: 'ic', html: ICONS.target }) : null,

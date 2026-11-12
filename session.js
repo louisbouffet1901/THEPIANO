@@ -149,7 +149,7 @@ export async function proposals(L, now = Date.now()) {
     const lead = restart || mental ? `<span class="sx-sub">${restart}${mental}</span>` : '';
     out.piece = {
       title: `${s.name} (m. ${s.from}-${s.to})`,
-      html: `${link(`#/piece/${L.piece}/${s.id}`, `${s.name} (m. ${s.from}-${s.to})`)} : ${esc(lowerFirst(nx.intention))}${lead}<span class="sx-sub">Commence par 30 secondes de prélude en ${esc(M.key.name)} : la cadence, quelques accords arpégés, la cadence (${link('#/lecon/n2-im-preluder', 'Préluder')}). Pour finir, rejoue la section une fois en entier, sans t’arrêter.${fil ? ' Aujourd’hui aussi : le <b>filage enregistré</b> (en bas de la page de la pièce).' : ''}</span>`,
+      html: `${link(`#/piece/${L.piece}/${s.id}`, `${s.name} (m. ${s.from}-${s.to})`)}${pm.hasFullScore(L.piece) ? ` (${link(pm.fullScoreHref(L.piece, s.from, s.to), 'dans la partition complète')})` : ''} : ${esc(lowerFirst(nx.intention))}${lead}<span class="sx-sub">Commence par 30 secondes de prélude en ${esc(M.key.name)} : la cadence, quelques accords arpégés, la cadence (${link('#/lecon/n2-im-preluder', 'Préluder')}). Pour finir, rejoue la section une fois en entier, sans t’arrêter.${fil ? ' Aujourd’hui aussi : le <b>filage enregistré</b> (en bas de la page de la pièce).' : ''}</span>`,
       href: `#/piece/${L.piece}/${s.id}`, meta: { piece: L.piece, section: s.id },
     };
   } else out.piece = { title: PIECES[L.piece].title, html: link(`#/piece/${L.piece}`, PIECES[L.piece].title), href: `#/piece/${L.piece}`, meta: { piece: L.piece } };

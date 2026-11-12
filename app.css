@@ -1902,3 +1902,25 @@ h3.lesson-group { font-size: 14px; font-weight: 650; color: var(--text-2); margi
 .btn.ghost.on { background: var(--accent-tint); border-color: var(--accent); color: var(--accent-strong); }
 .tn-chip.low { font-style: italic; }
 #melodies { scroll-margin-top: 72px; }
+
+/* V8.5 — partition complète */
+.pm-full { margin-top: 10px; }
+.fs-chips { gap: 6px; margin-bottom: 10px; }
+.fs-chips .btn { white-space: nowrap; }
+.fs-score .score-svg { min-height: 200px; }
+.fs-notes { margin-top: 14px; }
+.fs-notes summary { cursor: pointer; font-weight: 650; }
+.fs-notes ul { margin: 8px 0 0; padding-left: 20px; }
+.fs-notes li { margin: 4px 0; }
+/* barre de commandes collée en bas de l'écran pendant la lecture d'une partition longue */
+.w-frame.follow { overflow: clip; }
+.w-frame.follow > .w-foot { position: sticky; bottom: 0; z-index: 6; background: var(--surface, #fff); box-shadow: 0 -6px 14px rgba(20, 24, 31, .08); }
+@media (max-width: 960px) { .w-frame.follow > .w-foot { bottom: calc(62px + env(safe-area-inset-bottom, 0px)); } }
+.w-frame.follow .score-status:empty { display: none; }
+@media (max-width: 599px) {
+  .w-frame.follow { display: flex; flex-direction: column; }
+  .w-frame.follow > .w-head { order: 0; }
+  .w-frame.follow > .w-foot { order: 1; position: static; box-shadow: none; border-top: 0; border-bottom: 1px solid var(--line); }
+  .w-frame.follow > .w-body { order: 2; }
+  .w-frame.follow > :not(.w-head):not(.w-foot):not(.w-body) { order: 3; }
+}

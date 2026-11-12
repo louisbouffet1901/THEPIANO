@@ -70,6 +70,8 @@ const routes = [
   [/^#\/interpretation$/, pageInterpretation],
   [/^#\/theorie\/(cartes|defis)(?:\/([\w-]+))?$/, pageTheoryPlay],
   [/^#\/lecon\/([\w-]+)$/, pageLesson],
+  // V8.5 : partition complète d'une pièce, plage de mesures facultative (#/piece/op55-1/partition/42-44)
+  [/^#\/piece\/([\w-]+)\/partition(?:\/(\d+)-(\d+))?$/, pageFullScore],
   [/^#\/piece\/([\w-]+)(?:\/([\w-]+))?$/, pagePiece],
   // le plan hebdomadaire (V2 à V6) est remplacé par la carte de la pièce
   [/^#\/plan\/(n\d)$/, id => { location.hash = `#/piece/${levelById(id)?.piece || ''}`; }],
@@ -574,6 +576,7 @@ function pageHome() {
   $('#domGrid', page).append(...domainTiles(L));
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '8.5': '<ul><li><b>La partition complète</b> de ton nocturne (op. 55 n° 1), ses 101 mesures : sur la page de la pièce, « La partition complète ». Tu peux l’écouter en entier (avec la pédale de Chopin, le Più mosso plus vite), choisir une section ou n’importe quelles mesures, la travailler en mode attente ou en rythme, et faire analyser ton jeu, comme pour les extraits.</li><li>Le texte est celui des premières éditions de 1844, vérifié note à note contre l’autographe ; les quelques choix là où les sources diffèrent sont expliqués sous la partition (« À savoir »).</li><li>Depuis chaque section de la pièce et depuis la séance : un lien vers ses mesures dans la partition complète.</li></ul>',
     '8.4': '<ul><li><b>L’oreille, refaite</b> autour d’un seul exercice, <b>Trouve la note</b>, inspiré des méthodes qui ont fait leurs preuves (méthode fonctionnelle de Benbassat, Kodály, Gordon, Lucy Green). Une cadence installe la tonalité, une note sonne, tu la cherches au clavier. Tes essais sont comptés, sans pénalité ; après une erreur, l’appli t’aide : plus haut ou plus bas, deux touches possibles, la touche. Puis la note rentre à la tonique : c’est ce chemin que l’oreille apprend.</li><li><b>Une tonalité par séance</b>, et une difficulté qui s’ajuste seule : tu commences avec trois notes (1, 3, 5) ; une note s’ajoute quand tu en réussis 9 sur 10 du premier coup, la dernière arrivée se retire si c’est trop dur. Ensuite, de courtes formules de deux à cinq notes. Ton progrès se lit en <b>essais par note</b>.</li><li><b>Plus d’aide</b> : les touches possibles numérotées, l’échelle des degrés, un bouton Indice (où est la note, sa couleur, deux touches, la touche), « Comment ça marche » et les stratégies pour ne plus tâtonner.</li><li><b>Le chant</b>, facultatif mais toujours là : à chaque note, le bouton « Chanter » ouvre le micro, qui te dit si tu chantes juste sans jamais nommer la note.</li><li><b>Mélodies d’oreille</b> : avant de jouer en rythme, tu cherches les notes une à une (la première est donnée, les touches de la phrase repérées), en boucle si tu veux, puis tu la joues d’un trait. L’appli te conseille celles dont tu entends déjà les notes.</li><li>Le parcours en seize étapes et les seize leçons d’oreille sont retirés ; tes résultats sont gardés. Quelques exercices de reconnaissance (accords, cadences, intervalles) restent, repliés, en bas de la page Oreille.</li></ul>',
     '8.3': '<ul><li><b>Un piano qui sonne mieux</b> : les échantillons sont refaits à partir des enregistrements d’origine. L’ancienne compression coupait tout le haut du son (rien au-dessus de 8 kHz) : le piano était terne. Il a maintenant <b>trois nuances</b> enregistrées (p, mf, f), dont le timbre change comme sur un vrai piano, un accord corrigé (l’aigu était trop haut) et des attaques calées au même instant.</li><li><b>Une salle</b> autour du piano, réglable dans Réglages › Son (« Résonance de la salle »), et plus de compresseur qui écrasait les nuances.</li><li><b>Ta pièce jouée avec la pédale de Chopin</b> : chaque extrait de l’op. 55 n° 1 suit ses indications (reprise sur les basses, levée sur la dernière croche) ; les notes piquées sont détachées quand la pédale est levée ; les notes rapides des fioritures et du septolet ne se mélangent plus en grappe.</li><li><b>Partitions revérifiées</b> note à note sur les deux premières éditions (Paris et Leipzig, 1844). <b>Mesures 43-44</b> : le do du 1er temps de la mesure 43 est lié depuis la mesure 42 ; l’extrait le jouait comme une nouvelle note. Il commence maintenant à la mesure 42 et le do est tenu, sans être rejoué. Le si♮ du septolet est expliqué (l’édition de Leipzig oublie le bécarre). L’accord arpégé de la mesure 7 commence sur le temps avec la basse, comme le voulait Chopin.</li></ul>',
     '8.2': '<ul><li><b>Le contenu relu, leçon par leçon</b> (niveaux 1 et 2, pièces) : les passages trop denses sont découpés ou mis en liste, les termes techniques expliqués là où ils apparaissent (vélocité, ischions…), les renvois pointent vers les pages actuelles (Théorie › Fiches et exercices, l’outil Rythme, l’outil Composition, Réglages › Son). Quelques erreurs corrigées : de 3 à 5, il y a une tierce et non un ton ; l’appoggiature du nocturne est le la♭ de la mesure 7 ; la forme d’un accord renversé sur la portée ; le si♮ de la basse de l’op. 15 ; « le » trille.</li><li><b>Les signes de musique</b> (♩, ♭, ♯, ♮) s’affichent partout pareil, avec une police faite pour eux : fini le trou dans « ♩ = 60 ».</li><li><b>Plus lisible</b> : le bilan de la semaine n’est plus coupé ; le résumé de chaque leçon tient sur deux lignes ; « leçons » partout (et plus « cours ») ; ton temps de piano, domaine par domaine ; l’objectif de ta pièce et la section du jour, en phrases simples.</li></ul>',
@@ -899,6 +902,63 @@ async function pagePiece(id, sec = null) {
   return unmount;
 }
 
+/** V8.5 : la partition complète d'une pièce (écoute, passage, mode attente, analyse) ; les sections en raccourcis. */
+async function pageFullScore(id, from, to) {
+  const tok = navToken;
+  const pm = await import('./piecemap.js');
+  if (!stillHere(tok)) return;
+  if (!PIECES[id] || !pm.hasFullScore(id)) { location.replace(`#/piece/${id}`); return; }
+  const P = PIECES[id];
+  const M = pm.mapOf(id);
+  const nBars = pm.FULL_SCORES[id].bars;
+  const page = h('div', { class: 'page fs-page' });
+  page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Tes pièces', href: '#/pieces' }, { label: P.title, href: `#/piece/${id}` }, { label: 'Partition complète' }]) +
+    `<div class="page-head"><h1>Partition complète</h1><p class="lead">${esc(P.title)} · ${nBars} mesures</p></div>`;
+  const loading = h('p', { class: 'w-loading', role: 'status' }, 'Chargement de la partition…');
+  page.append(loading);
+  main.append(page);
+  let mod, sw;
+  try {
+    [mod, sw] = await Promise.all([import('./content-op55-full.js'), import('./score-widget.js'), ensureAbcjs()]);
+  } catch (e) {
+    loading.replaceWith(h('div', { class: 'callout warn' }, h('div', { class: 'c-title' }, 'Partition indisponible'), h('p', {}, e.message || String(e))));
+    return;
+  }
+  if (!stillHere(tok)) return;
+  loading.remove();
+  const F = mod.OP55_FULL;
+  const host = h('div', { class: 'w fs-score' });
+  const chips = h('div', { class: 'btn-row fs-chips', role: 'group', 'aria-label': 'Sections de la pièce' });
+  const setChip = r => chips.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.r === (r ? `${r[0]}-${r[1]}` : 'all')));
+  const go = r => {
+    host.dispatchEvent(new CustomEvent('score-range', { detail: { range: r, scroll: true } }));
+    setChip(r);
+    history.replaceState(null, '', pm.fullScoreHref(id, r && r[0], r && r[1]));
+  };
+  const allB = h('button', { class: 'btn sm', type: 'button', 'data-r': 'all' }, 'Toute la pièce');
+  allB.addEventListener('click', () => go(null));
+  chips.append(allB);
+  for (const sec of M.sections) {
+    const b = h('button', { class: 'btn sm', type: 'button', 'data-r': `${sec.from}-${sec.to}` }, `${sec.name.split(',')[0]} · ${sec.from}-${sec.to}`);
+    b.addEventListener('click', () => go([sec.from, sec.to]));
+    chips.append(b);
+  }
+  page.append(h('p', { class: 'small mb-1' }, 'Choisis une section : seules ses mesures sont jouées, travaillées et analysées. Pour une autre plage : « Mesures … à … », sous la partition.'), chips, host);
+  let range = from ? [Math.min(+from, +to), Math.max(+from, +to)] : null;
+  if (range && (range[0] < 0 || range[1] > nBars)) range = null;
+  const dispose = sw.mountScore(host, {
+    abc: F.abc, title: P.title, sub: `${nBars} mesures · Andante ♩ = 60, Più mosso plus vite`, bpm: 60, piece: id, passage: `${id}:complete`,
+    pedal: F.pedal, pedalUp: F.pedalUp, pedalEnd: F.pedalEnd, tempoMap: F.tempoMap, analysis: false, range, follow: true,
+  });
+  setChip(range);
+  if (range) requestAnimationFrame(() => { if (stillHere(tok)) host.dispatchEvent(new CustomEvent('score-range', { detail: { range, scroll: true } })); });
+  page.append(
+    h('details', { class: 'callout tip fs-notes' }, h('summary', {}, 'À savoir sur cette partition'), h('ul', {}, mod.OP55_FULL_NOTES.map(t => h('li', {}, t)))),
+    h('p', { class: 'small muted' }, 'Sources : premières éditions de 1844 (Breitkopf & Härtel, Leipzig ; M. Schlesinger, Paris), encodées par l’Institut Fryderyk Chopin (chopinscores.org, CC BY 4.0) ; corrections d’après l’autographe (édition de K. Snortum, CC BY-SA 4.0) et l’Édition nationale. Les extraits commentés de chaque section restent sur ', h('a', { href: `#/piece/${id}` }, 'la page de la pièce'), '.'));
+  frenchSpacing(page);
+  return () => { try { if (typeof dispose === 'function') dispose(); } catch (e) { /* */ } };
+}
+
 function pageValidation(id) {
   const L = levelById(id);
   if (!L) { location.hash = '#/'; return; }
@@ -943,7 +1003,8 @@ function pagePieces() {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Tes pièces' }]) + hubHead('pieces', 'Ta pièce phare se travaille section par section, d’après sa carte ; les autres pièces s’entretiennent ou se découvrent.');
   const head = h('div', { class: 'pc-head' });
-  page.append(head, h('div', { class: 'btn-row mt-1' }, h('a', { class: 'btn primary', href: `#/piece/${L.piece}` }, `Ouvrir : ${PIECES[L.piece].title}`)));
+  page.append(head, h('div', { class: 'btn-row mt-1' }, h('a', { class: 'btn primary', href: `#/piece/${L.piece}` }, `Ouvrir : ${PIECES[L.piece].title}`),
+    L.piece === 'op55-1' ? h('a', { class: 'btn', href: `#/piece/${L.piece}/partition` }, 'La partition complète') : null));
   const offs = [];
   import('./piecemap.js').then(pm => { if (page.isConnected && pm.hasMap(L.piece)) { const un = pm.mountPieceHead(head, { piece: L.piece, compact: true }); if (un) offs.push(un); frenchSpacing(head); } }).catch(e => console.warn(e));
   for (const lv of LEVELS) {
@@ -1457,7 +1518,7 @@ function pageSettings() {
 
   page.append(card('Sources et licences', h('div', {
     class: 'small', html: `<p>Piano : <b>Salamander Grand Piano V3</b> d’Alexander Holm (CC BY 3.0), trois couches de nuance, accord retouché par Markus Fiedler, d’après la version SFZ de sfzinstruments ; ancienne série via Tone.js. Partitions : <b>abcjs</b> (MIT). Polices : <b>Inter</b>, <b>Literata</b> et <b>Noto Music</b> pour les signes ♩ ♭ ♯ ♮ (SIL OFL).</p>
-    <p>Extraits de Chopin transcrits d’après les éditions LilyPond de <b>Knute Snortum</b> (op. 15 et op. 55, CC BY-SA 4.0) et vérifiés sur l’édition Breitkopf &amp; Härtel ; extraits de Debussy d’après l’édition du Mutopia Project (domaine public). Les extraits sont partagés sous la même licence CC BY-SA 4.0.</p>
+    <p>Extraits de Chopin transcrits d’après les éditions LilyPond de <b>Knute Snortum</b> (op. 15 et op. 55, CC BY-SA 4.0) et vérifiés sur l’édition Breitkopf &amp; Härtel. Partition complète de l’op. 55 n° 1 : premières éditions de 1844 (Breitkopf &amp; Härtel, Leipzig ; M. Schlesinger, Paris) d’après les encodages de l’<b>Institut Fryderyk Chopin</b> (chopinscores.org, CC BY 4.0), corrigées d’après l’autographe et l’Édition nationale ; extraits de Debussy d’après l’édition du Mutopia Project (domaine public). Les extraits sont partagés sous la même licence CC BY-SA 4.0.</p>
     <p>Courbes de tempo des pianistes de référence : jeu de données <b>MAESTRO v3</b> (Hawthorne et al., Google Magenta, 2019), d’après les enregistrements de l’International Piano-e-Competition, CC BY-NC-SA 4.0. Usage non commercial.</p>
     <p>Liens « Informance » : <a href="${INFORMANCE}" target="_blank" rel="noopener">Practising the Piano Online Academy</a> (abonnement).</p>`,
   }), sightSources()));

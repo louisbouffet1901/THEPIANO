@@ -19,6 +19,7 @@ ${W.tip('À quoi sert le plan', '<ul><li><b>Travailler par sections</b> : chaque
 ${W.plan({ piece: 'op55-1' })}
 
 <h2>Les sections, une par une</h2>
+<p class="small">Pour chaque section, des extraits commentés. Pour lire et jouer la pièce d’un bout à l’autre : <a href="#/piece/op55-1/partition">la partition complète</a>.</p>
 <h3 data-sec="theme">Le thème, deux fois (mesures 1 à 16)</h3>
 ${W.section({ piece: 'op55-1', id: 'theme' })}
 <p>La mélodie tient sur quelques notes : do, puis une descente fa – mi♭ – ré♭ – do, puis do brodé par si♮ et ré♭. Tout l’art est dans la ligne : la levée part de rien, le fa est le sommet, la descente se détend. La main gauche, notée <i>staccato</i>, est légère ; la pédale relie chaque basse à son accord.</p>
@@ -78,6 +79,7 @@ ${W.listen([
 ])}
 
 <h2>Partition</h2>
+<p><a class="btn primary" href="#/piece/op55-1/partition">La partition complète</a> : les 101 mesures dans l’appli, à écouter, à travailler par passage et à faire analyser. Pour l’imprimer, ou la lire dans une autre édition :</p>
 ${W.links([imslp('Nocturnes,_Op.55_(Chopin,_Fr%C3%A9d%C3%A9ric)', 'Nocturnes op. 55 sur IMSLP', 'Éditions Breitkopf, Mikuli, Paderewski, Cortot (annotée en français)…')])}
 `,
   },
