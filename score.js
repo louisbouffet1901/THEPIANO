@@ -8,6 +8,21 @@ import { scheduleCountIn, countInPosition } from './countin.js';
 
 /** Plage [q0, q1[ (en noires) ou null : filtre d'événements. */
 const inRange = (range, t) => !range || (t >= range[0] - 1e-6 && t < range[1] - 1e-6);
+/** V8.6 : prises de pédale d'une lecture (en noires) : celles de la plage, plus son début si la pédale y est déjà
+ *  enfoncée (plage qui commence au milieu d'une pédale longue). */
+function pedalTakes(o) {
+  const range = o.range || null;
+  const takes = o.pedal.filter(b => !range || (b >= range[0] - 1e-6 && b <= range[1] + 1e-6));
+  if (!range) return takes;
+  const lastBefore = (list, t) => { let v = -Infinity; for (const x of list || []) if (x < t - 1e-6 && x > v) v = x; return v; };
+  const lt = lastBefore(o.pedal, range[0]);
+  const down = lt > -Infinity && lt >= lastBefore(o.pedalUp, range[0]) && !(o.pedalEnd != null && range[0] >= o.pedalEnd - 1e-6);
+  if (down && !takes.some(b => Math.abs(b - range[0]) < 1e-6)) takes.unshift(range[0]);
+  return takes;
+}
+/** V8.6 : demi-pédale : les étouffoirs effleurent les cordes. Les basses graves (sous le do2, MIDI 48) continuent de sonner ;
+ *  au-dessus, le son s'éteint peu après la fin de la note (HALF_HOLD secondes). */
+const HALF_BASS = 48, HALF_HOLD = 0.6;
 
 let uid = 0;
 
@@ -501,8 +516,9 @@ export class Player {
     }
     // Pédale simulée : chaque note sonne jusqu'au prochain changement de pédale (ou au relâchement écrit).
     if (o.pedal && o.pedal.length && !(this._useMidiOut())) {
-      const changes = o.pedal.filter(b => !range || (b >= range[0] - 1e-6 && b <= range[1] + 1e-6)).map(b => tmap(b) - shift);
+      const changes = pedalTakes(o).map(b => tmap(b) - shift);
       const ups = (o.pedalUp || []).map(b => tmap(b) - shift);
+      const halves = (o.pedalHalf || []).map(([a, b]) => [tmap(a) - shift, tmap(b) - shift]);
       const pedalEnd = o.pedalEnd != null ? tmap(o.pedalEnd) - shift : Infinity;
       if (!changes.length) changes.push(0);
       const lastBefore = (list, t) => { let v = -Infinity; for (const x of list) if (x <= t + 0.005 && x > v) v = x; return v; };
@@ -516,6 +532,7 @@ export class Player {
         // V8.3 : notes de passage rapides (fioritures, septolet, petites notes) : la pédale les prolonge moins,
         // comme un pianiste qui « demi-pédale » ; sinon elles se mêlent en grappe aux notes suivantes
         if (e.hand === 'rh' && (e.grace || e.dur <= 0.34)) next = Math.min(next, e.te + Math.max(0.35, 2 * (e.te - e.ts)));
+        if (e.pitch >= HALF_BASS) for (const [a, b] of halves) if (next > a + 0.01 && e.ts < b - 0.01) next = Math.min(next, Math.max(e.te, a) + HALF_HOLD);
         if (next > e.te) e.te = next + 0.01;
       }
     }
@@ -578,13 +595,19 @@ export class Player {
         if (v) audio.noteOff(v, this.t0 + e.te);
       }
     }
-    if (useMidi && o.pedal) {
-      for (const b of o.pedal.filter(x => inRange(o.range, x))) {
+    if (useMidi && o.pedal && o.pedal.length) {
+      for (const b of pedalTakes(o).filter(x => inRange(o.range, x))) {
         const t = this.t0 + this.tmap(b);
         midi.outPedal(false, audio.ctxToPerf(t));
         midi.outPedal(true, audio.ctxToPerf(t + 0.08));
       }
       for (const b of (o.pedalUp || []).filter(x => inRange(o.range, x))) midi.outPedal(false, audio.ctxToPerf(this.t0 + this.tmap(b)));
+      // demi-pédale : valeur intermédiaire (un piano numérique qui la gère étouffe à moitié)
+      for (const [a, b] of o.pedalHalf || []) {
+        const r = o.range;
+        if (r && (b <= r[0] + 1e-6 || a >= r[1] - 1e-6)) continue;
+        midi.outPedal(true, audio.ctxToPerf(this.t0 + this.tmap(r ? Math.max(a, r[0]) : a) + 0.1), 64);
+      }
       midi.outPedal(false, audio.ctxToPerf(this.t0 + this.endTime));
     }
     if (o.click) {

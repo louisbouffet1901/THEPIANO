@@ -1,8 +1,13 @@
 // V8.5 — Partition complète du Nocturne op. 55 n° 1 (101 mesures), chargée à la demande.
 // Texte : premières éditions (Leipzig, Breitkopf & Härtel, et Paris, M. Schlesinger, 1844), d'après les encodages
 // Humdrum de l'Institut Fryderyk Chopin (chopinscores.org, CC BY 4.0), corrigés d'après l'autographe (édition de
-// K. Snortum, CC BY-SA 4.0) et les commentaires de l'Édition nationale (voir NOTES). Pédale de l'écoute : indications
-// de Chopin (Ped. et * de l'édition Snortum). Vérifiée note à note : écarts restants = choix listés dans NOTES.
+// K. Snortum, CC BY-SA 4.0) et les commentaires de l'Édition nationale (voir NOTES). Vérifiée note à note : écarts
+// restants = choix listés dans NOTES.
+// V8.6 — Pédale (écoute et marques dessinées) : celle de Chopin dans la première édition de Leipzig (mesure 40 d'après
+// Paris), lue dans les encodages MEI de chopinscores.org. Une étoile placée sous un accord d'un temps se lève 1/3 de
+// temps après lui (dans les mesures en triolets, l'édition la place après la première croche) ; ailleurs (septolet,
+// croches, doubles croches), sur la note qu'elle marque. Une prise sans étoile avant elle est un changement. pedalHalf : demi-pédale conseillée pour un piano
+// moderne (mesures 16-17 et 32-33, pédale longue sous une ligne chromatique) : une suggestion, pas une indication.
 // Mêmes conventions que les extraits (content-excerpts.js) : petites notes sur le temps, fioritures dans le 4e temps,
 // octaves du Più mosso à la portée inférieure ; mesures 93 à 96 dans la voix RH8 (clé de sol 8va : écrite une octave
 // plus bas, jouée à sa hauteur).
@@ -175,8 +180,9 @@ V:LH2 clef=bass
 [V:LH1] [F,,C,=A,]4 z4 z8 | ([B,,,B,,]8 [C,,C,]8) | !arpeggio![F,,C,F,]16 | !arpeggio![F,,C,F,]8 !arpeggio![F,,C,F,]8 | !arpeggio!H[F,,C,F,]16 |]
 [V:LH2] x16 | x16 | x16 | x16 | x16 |]`,
   // en noires depuis le début de la levée (mesure n : 1 + 4 (n − 1))
-  pedal: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 67, 69, 71, 73, 75, 77, 79, 81, 83, 97, 99, 101, 103, 105, 107, 109, 111, 113, 115, 117, 119, 121, 123, 125, 131, 133, 135, 137, 139, 141, 143, 145, 147, 161, 163, 165, 167, 169, 171, 173, 175, 177, 179, 181, 183, 185, 187, 193, 201, 209, 217, 225, 227, 229, 231, 233, 235, 237, 239, 241, 243, 245, 247, 249, 251, 253, 255, 257, 259, 261, 263, 265, 267, 289, 291, 293, 295, 297, 299, 301, 303, 305, 307, 309, 311, 313, 315, 317, 319, 321, 323, 325, 327, 329, 341, 345, 349, 365],
-  pedalUp: [4.5, 8.5, 12.5, 16.5, 20.5, 24.5, 26, 28.5, 32.5, 36.5, 40.5, 44.5, 48.5, 52.5, 56.75, 58.5, 60.5, 62.5, 68.5, 72.5, 76.5, 80.5, 84.5, 100.5, 104.5, 108.5, 112.5, 116.5, 120.5, 122.5, 124.75, 126.5, 132.5, 136.5, 140.5, 144.5, 148.5, 164.5, 168.5, 172.5, 176.5, 180.5, 184.75, 186.5, 188.75, 196, 204, 212, 220, 228.5, 232.5, 236.5, 240.5, 244.5, 248.5, 252.5, 256.5, 260.5, 264.5, 272.5, 292.5, 296.5, 300.5, 302.5, 304.5, 308.5, 312.5, 316.5, 318.5, 320.5, 324.5, 328.5, 330, 343, 347, 352.5, 387],
+  pedal: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 67, 69, 71, 73, 75, 77, 79, 81, 83, 94, 97, 99, 101, 103, 105, 107, 109, 111, 113, 115, 117, 119, 121, 123, 125, 131, 133, 135, 137, 139, 141, 143, 145, 147, 158, 161, 163, 165, 167, 169, 171, 173, 175, 177, 179, 181, 183, 185, 187, 193, 201, 209, 217, 225, 227, 229, 231, 233, 235, 237, 239, 241, 243, 245, 247, 249, 251, 253, 255, 257, 259, 261, 263, 265, 267, 269, 289, 291, 293, 295, 297, 299, 301, 303, 305, 307, 309, 311, 313, 315, 317, 319, 321, 323, 325, 327, 329, 341, 345, 349, 365],
+  pedalUp: [2.3333, 6.3333, 10.3333, 14.3333, 16.3333, 18.3333, 22.3333, 24.75, 26.3333, 28.75, 30.3333, 34.3333, 38.3333, 42.3333, 46.3333, 50.3333, 54.3333, 58.3333, 60.5, 70.3333, 74.3333, 76.5, 78.3333, 80.75, 82.3333, 84.75, 96.3333, 98.3333, 102.3333, 106.3333, 108.3333, 110.3333, 114.3333, 118.3333, 124.75, 132.5, 134.3333, 138.5, 140.5, 142.3333, 144.75, 146.3333, 148.75, 160.3333, 162.3333, 166.3333, 170.3333, 172.3333, 174.1429, 178.3333, 186.3333, 188.75, 196.3333, 205.3333, 213.3333, 221.3333, 226.3333, 228.6667, 230.3333, 234.3333, 236.3333, 238.3333, 242.3333, 244.6667, 246.3333, 250.3333, 252.3333, 254.3333, 258.3333, 260.3333, 262.3333, 266.3333, 268.3333, 271.6667, 290.3333, 294.3333, 298.3333, 300.6667, 302.3333, 306.3333, 308.3333, 310.3333, 312.3333, 314.3333, 316.3333, 318.3333, 320.3333, 322.3333, 324.3333, 326.3333, 328.3333, 330.3333, 343.3333, 347.3333, 352.6667, 385.3333],
+  pedalHalf: [[63, 67], [127, 131]],
   pedalEnd: 405,
   // tempo de l'écoute, en proportion du tempo choisi : ritenuto (m. 24, 40), Più mosso (m. 48), rallent. puis stretto et
   // ritenuto (m. 69-72), molto legato e stretto (m. 77), accelerando (m. 90-96), fin élargie
@@ -193,4 +199,16 @@ export const OP55_FULL_NOTES = [
   'Mesures 89 à 97 : fa, do et la restent tenus sous les arpèges, jusqu’à la mesure 97. Chopin avait oublié une liaison (Édition nationale).',
   'Petites notes jouées sur le temps, avec la basse, comme le voulait Chopin. Les fioritures (mesures 14, 30 et 46) occupent le 4e temps.',
   'Più mosso : les octaves des deux mains sont écrites à la portée du bas, comme dans les extraits. Mesures 93 à 96 : 8va, une octave plus haut que l’écrit.',
+  'Pédale : celle de la première édition de Leipzig (mesure 40 d’après Paris). La levée notée sous l’accord du 2e temps se fait juste après lui : dans les mesures en triolets, Chopin la place après la première croche. Les éditions de Leipzig et de Paris diffèrent surtout aux mesures 65 à 68.',
+];
+
+/** V8.6 — La pédale de Chopin, section par section (page de la partition complète). */
+export const OP55_PEDAL_GUIDE = [
+  { from: 1, to: 16, title: 'Le thème', text: 'Une pédale par basse. Prends-la sur la basse du 1er temps et lève-la juste après l’accord du 2e temps ; reprends-la sur la basse du 3e temps et garde-la jusqu’à la basse suivante, où tu la changes. En fin de phrase (m. 4, 6, 7 et 15), lève-la aussi au 4e temps. Mesure 16 : une seule pédale jusqu’au 3e temps de la mesure 17. Le ténor y descend par demi-tons (fa, mi, mi♭) : à partir du 3e temps, passe en demi-pédale.' },
+  { from: 17, to: 24, title: 'La montée', text: 'Même geste jusqu’à la mesure 21. Mesures 22-23 : sans pédale ; la basse do est tenue par les doigts et les accords changent à chaque temps. Mesure 24 (ritenuto) : une pédale du 2e temps jusqu’après le 4e.' },
+  { from: 25, to: 40, title: 'Le thème en triolets', text: 'Même geste. Mesures 32-33 : comme 16-17, une seule pédale, en demi-pédale à partir du 3e temps de la mesure 32. Mesures 38 à 40 : comme 22 à 24.' },
+  { from: 41, to: 47, title: 'Le thème le plus orné', text: 'Même geste. Mesure 44 : la pédale se lève sur le si♮, 5e note du septolet. Mesure 46 : elle n’est pas levée au 2e temps, seulement changée au 3e.' },
+  { from: 48, to: 72, title: 'Più mosso', text: 'Les mesures en triolets (48, 50, 52, 54 et 56) restent sans pédale. Une pédale dans chaque réponse : mesure 49, du 1er temps jusqu’après le 4e ; mesures 51, 53 et 55, jusqu’après le 1er temps de la mesure suivante. Puis (m. 57 à 68) une pédale par demi-mesure, comme dans le thème. Mesures 69 à 72 (rallentando, stretto) : sans pédale. L’édition de Paris tient la pédale deux mesures de suite (m. 65-66, puis 67-68), sur une seule harmonie au-dessus de la basse do♯ : les deux lectures se défendent, la partition suit Leipzig.' },
+  { from: 73, to: 76, title: 'Le retour', text: 'Une pédale par demi-mesure, comme dans le thème.' },
+  { from: 77, to: 101, title: 'La coda', text: 'Mesures 77 à 83 : une pédale par demi-mesure, levée aussi après le 4e temps. Mesures 84-85 : sans pédale. Mesures 86 à 88 : une pédale par mesure, pour les arpèges. Mesures 89 à 91 : sans pédale, les doigts tiennent fa, do et la. Mesure 92 : une seule pédale jusqu’au 1er temps de la mesure 97, pendant que les arpèges montent dans l’aigu. Mesures 98 à 101 : sans pédale, le choral se tient aux doigts.' },
 ];

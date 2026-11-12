@@ -59,6 +59,7 @@
   --hl: #2f66c9;
   --rh: #2b4c7e;
   --lh: #8c5a26;
+  --ped: #6b4fa0;     /* pédale dessinée sous les partitions (V8.6) */
   --radius: 10px;
   --radius-sm: 6px;
   --shadow: 0 1px 2px rgba(30, 28, 20, .06), 0 2px 8px rgba(30, 28, 20, .05);
@@ -236,6 +237,12 @@ a:hover { color: var(--accent-strong); }
 .prose th { font-weight: 650; color: var(--text-2); font-size: 13.5px; background: var(--surface-2); }
 .prose td.num, .prose th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .score-svg.wrapped .abcjs-bar-number { display: none; }
+/* V8.6 : pédale dessinée sous la portée du bas (pedal-marks.js) */
+.score-svg .ped-marks { stroke: var(--ped); fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.score-svg .ped-marks line, .score-svg .ped-marks polyline { stroke-width: 1.3px; vector-effect: non-scaling-stroke; }
+.score-svg .ped-marks .half { stroke-dasharray: 3 2.5; }
+.score-svg .ped-marks text { fill: var(--ped); stroke: none; font-family: var(--font-ui); font-style: italic; font-weight: 600; }
+.w-frame.ped-off .ped-marks { display: none; }
 @media (max-width: 600px) {
   .prose table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; font-size: 14px; }
   .prose th, .prose td { padding: 7px 8px; }
@@ -1912,6 +1919,15 @@ h3.lesson-group { font-size: 14px; font-weight: 650; color: var(--text-2); margi
 .fs-notes summary { cursor: pointer; font-weight: 650; }
 .fs-notes ul { margin: 8px 0 0; padding-left: 20px; }
 .fs-notes li { margin: 4px 0; }
+/* V8.6 : légende et guide de la pédale (partition complète) */
+.ped-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 2px 0 10px; font-size: .86rem; color: var(--text-2, #4a4d55); }
+.ped-legend .pl-title { font-weight: 650; color: var(--text); }
+.ped-legend .pl-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.ped-legend svg { display: block; stroke: var(--ped); stroke-width: 1.4; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.ped-legend svg .half { stroke-dasharray: 3 2.5; }
+.fs-ped { margin: 0 0 12px; }
+.fs-ped p { margin: 8px 0 0; }
+.fs-ped-list li { margin: 6px 0; }
 /* barre de commandes collée en bas de l'écran pendant la lecture d'une partition longue */
 .w-frame.follow { overflow: clip; }
 .w-frame.follow > .w-foot { position: sticky; bottom: 0; z-index: 6; background: var(--surface, #fff); box-shadow: 0 -6px 14px rgba(20, 24, 31, .08); }

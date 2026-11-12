@@ -8,6 +8,7 @@ import { keyboard } from './diagrams.js';
 import { ICONS } from './icons.js';
 import { ANALYSES } from './content-analyses.js';
 import { PEDALS } from './content-excerpts.js';
+import { drawPedal } from './pedal-marks.js';
 import { barTools } from './analysis-engine.js';
 import { analyze } from './analysis-client.js';
 import { db } from './db.js';
@@ -27,6 +28,11 @@ export function mountScore(el, cfg) {
   const mapHost = h('div');
   const scoreHost = h('div');
   body.append(mapHost, scoreHost);
+  // pédale de l'écoute et des marques dessinées : celle du widget, sinon celle de l'extrait (indications de Chopin,
+  // content-excerpts.js) ; une variante qui donne sa propre pédale la donne en entier (prises, levées, demi-pédale)
+  const ped = cfg.pedal !== undefined ? { pedal: cfg.pedal, pedalUp: cfg.pedalUp, pedalEnd: cfg.pedalEnd, pedalHalf: cfg.pedalHalf } : (PEDALS.get(cfg.abc) || {});
+  const pedOf = v => (v && Object.prototype.hasOwnProperty.call(v, 'pedal') ? { pedal: v.pedal, pedalUp: v.pedalUp, pedalEnd: v.pedalEnd, pedalHalf: v.pedalHalf } : ped);
+  const hasPedal = [ped, ...(cfg.variants || []).map(pedOf)].some(p => p && p.pedal && p.pedal.length);
   let score;
   try {
     score = new Score(scoreHost, cfg.abc, { tracks: cfg.tracks, staffwidth: cfg.staffwidth, scale: cfg.scale });
@@ -71,13 +77,44 @@ export function mountScore(el, cfg) {
   const statusRow = h('div', { style: { width: '100%' } }, status, results);
   const takeHost = h('div');
 
-  // pédale de l'écoute : celle du widget, sinon celle de l'extrait (indications de Chopin, content-excerpts.js)
-  const ped = cfg.pedal !== undefined ? { pedal: cfg.pedal, pedalUp: cfg.pedalUp, pedalEnd: cfg.pedalEnd } : (PEDALS.get(cfg.abc) || {});
-  const playOpts = (extra = {}) => ({
-    qpm: bpm * score.beatQ, hands, loop: loopOn, click: clickOn, range: rangeQ(),
-    countIn: !!cfg.countIn, pedal: ped.pedal, pedalEnd: ped.pedalEnd, pedalUp: ped.pedalUp, dyn: cfg.dyn, tempoMap: cfg.tempoMap,
-    rhShift: cfg.rhShift, balance: cfg.balance, legato: cfg.legato, flat: cfg.flat, trackGain: cfg.trackGain, ...extra,
-  });
+  const playOpts = (extra = {}) => {
+    const P = pedOf(extra);
+    const { pedal, pedalUp, pedalEnd, pedalHalf, ...rest } = extra;
+    return {
+      qpm: bpm * score.beatQ, hands, loop: loopOn, click: clickOn, range: rangeQ(),
+      countIn: !!cfg.countIn, pedal: P.pedal, pedalEnd: P.pedalEnd, pedalUp: P.pedalUp, pedalHalf: P.pedalHalf, dyn: cfg.dyn, tempoMap: cfg.tempoMap,
+      rhShift: cfg.rhShift, balance: cfg.balance, legato: cfg.legato, flat: cfg.flat, trackGain: cfg.trackGain, ...rest,
+    };
+  };
+
+  /* ---------------- V8.6 : pédale dessinée sous la portée ---------------- */
+  // les marques suivent la version écoutée (variantes) ; dessinées dès que la partition est affichée
+  let pedShown = null, pedObs = null;
+  const showPedal = P => {
+    pedShown = P;
+    if (!hasPedal) return;
+    if (!scoreHost.getBoundingClientRect().width) {
+      if (!pedObs && 'ResizeObserver' in window) {
+        pedObs = new ResizeObserver(() => { if (scoreHost.getBoundingClientRect().width) { pedObs.disconnect(); pedObs = null; showPedal(pedShown); } });
+        pedObs.observe(scoreHost);
+      }
+      return;
+    }
+    try { drawPedal(score, P); } catch (e) { /* marques facultatives */ }
+  };
+  const pedOn = () => store.get('settings.pedalMarks') !== false;
+  frame.classList.toggle('ped-off', !pedOn());
+  const pedBtn = hasPedal ? h('button', { class: 'btn sm' + (pedOn() ? ' on' : ''), type: 'button', 'aria-pressed': String(pedOn()), title: 'Afficher sous la portée la pédale de l’écoute (trait : enfoncée ; encoche : changement ; pointillés : demi-pédale)' }, 'Pédale') : null;
+  const paintPedBtn = () => {
+    const on = pedOn();
+    pedBtn.classList.toggle('on', on);
+    pedBtn.setAttribute('aria-pressed', String(on));
+    frame.classList.toggle('ped-off', !on);
+  };
+  pedBtn?.addEventListener('click', () => store.set('settings.pedalMarks', !pedOn()));
+  // un seul réglage pour toutes les partitions de la page
+  const unPed = pedBtn ? store.subscribe(path => { if (path === 'settings.pedalMarks' || path === 'settings') paintPedBtn(); }) : null;
+  showPedal(ped);
 
   // Boutons lecture (une version ou plusieurs variantes à comparer)
   const variants = cfg.variants && cfg.variants.length ? cfg.variants : [{ label: 'Écouter' }];
@@ -97,6 +134,7 @@ export function mountScore(el, cfg) {
       activeVariant = i;
       if (audio.loading || !audio.ready) status.textContent = 'Chargement du piano…';
       const { label, ...opts } = v;
+      if (variants.length > 1 && pedOf(opts) !== pedShown) showPedal(pedOf(opts));
       player.set(playOpts(opts));
       try { await player.play(); status.textContent = v.note || ''; }
       catch (e) { status.textContent = 'Audio indisponible : ' + e.message; }
@@ -144,9 +182,10 @@ export function mountScore(el, cfg) {
   // et ce choix vaut pour toutes les partitions. Partition d'illustration (sans entraînement) : la boucle reste visible.
   const ctrlOpt = h('div', { class: 'score-ctrl score-ctrl-opt' });
   if (cfg.practice === false) ctrl.append(loopBtn); else ctrlOpt.append(loopBtn);
+  if (pedBtn) (cfg.practice === false ? ctrl : ctrlOpt).append(pedBtn);
   const optOpen = () => store.get('ui.scoreOpts') === true || loopOn;
   ctrlOpt.hidden = !optOpen();
-  const moreBtn = h('button', { class: 'btn sm ghost more-btn' + (ctrlOpt.hidden ? '' : ' on'), type: 'button', 'aria-expanded': String(!ctrlOpt.hidden), title: 'Boucle, montée de tempo, clavier à l’écran' }, 'Options');
+  const moreBtn = h('button', { class: 'btn sm ghost more-btn' + (ctrlOpt.hidden ? '' : ' on'), type: 'button', 'aria-expanded': String(!ctrlOpt.hidden), title: 'Boucle, ' + (pedBtn ? 'pédale dessinée, ' : '') + 'montée de tempo, clavier à l’écran' }, 'Options');
   moreBtn.addEventListener('click', () => {
     ctrlOpt.hidden = !ctrlOpt.hidden;
     moreBtn.classList.toggle('on', !ctrlOpt.hidden);
@@ -444,9 +483,9 @@ export function mountScore(el, cfg) {
       window.scrollTo({ top: Math.max(0, window.scrollY + top - Math.round(window.innerHeight * 0.3)), behavior: 'smooth' });
     }, 350);
     const unFollow = () => { clearInterval(followTimer); window.removeEventListener('wheel', mark); window.removeEventListener('touchmove', mark); };
-    return () => { unFollow(); mapAlive = false; player.stop(); stopModes(); clearTimeout(ladder?.timer); stopAnalysis(); audio.stopAll('replay'); };
+    return () => { unFollow(); pedObs?.disconnect(); unPed?.(); mapAlive = false; player.stop(); stopModes(); clearTimeout(ladder?.timer); stopAnalysis(); audio.stopAll('replay'); };
   }
-  return () => { mapAlive = false; player.stop(); stopModes(); clearTimeout(ladder?.timer); stopAnalysis(); audio.stopAll('replay'); };
+  return () => { pedObs?.disconnect(); unPed?.(); mapAlive = false; player.stop(); stopModes(); clearTimeout(ladder?.timer); stopAnalysis(); audio.stopAll('replay'); };
 }
 
 /* Typographie française dans le panneau de résultats (espaces fines), sans dépendre de app.js */

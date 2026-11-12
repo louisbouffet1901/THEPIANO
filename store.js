@@ -30,6 +30,7 @@ const DEFAULTS = () => ({
     voice: 'grave',      // tessiture pour les exercices de chant : 'grave' | 'aigue'
     voiceRange: null,    // tessiture mesurée [grave, aigu] en MIDI (outil « Trouver ma voix »)
     voiceMode: 'measured', // 'measured' : tessiture mesurée si elle existe ; 'preset' : voix grave / aiguë
+    pedalMarks: true,    // pédale de l'écoute dessinée sous les partitions (V8.6, bouton « Pédale » des options)
   },
   pieces: {},          // options par pièce (ex. { byHeart: true })
   sight: {},           // lecture à vue : niveau choisi, progression par niveau (cible, extraits lus, essais), tempo

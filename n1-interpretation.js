@@ -55,7 +55,7 @@ ${W.diagram('phrase', { labels: ['do (levée)', 'fa', 'mi♭', 'ré♭', 'do', '
 <p>Dans les mesures 1-2, le fa est à la fois la note la plus aiguë et le premier temps fort après la levée : c’est le sommet. La descente mi♭ – ré♭ – do se détend. Puis do est « brodé » par si♮ et ré♭ : ces notes sont des ornements de do, plus légères que lui.</p>
 
 <h2>Écoute la différence</h2>
-${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4 : plat ou phrasé', bpm: 56, pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17, variants: [
+${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4 : plat ou phrasé', bpm: 56, variants: [
   { label: 'Plat', flat: true, dyn: null },
   { label: 'Phrasé', dyn: { rh: [[0, 0.8], [2, 1.16], [3, 1.05], [4, 0.95], [5, 0.86], [6, 0.78], [8, 0.8], [10, 1.08], [11, 1.0], [13, 0.84], [16, 0.72]], lh: [[0, 0.9], [8, 0.82], [9, 0.9], [16, 0.75]] } },
 ], caption: 'Même tempo, mêmes notes. Dans la version phrasée, chaque note a un rôle : la levée prépare, le fa culmine, la descente se détend, la deuxième phrase reprend un peu moins fort.' })}
@@ -97,7 +97,7 @@ ${W.checklist({ id: 'n1-i1-check', title: 'Je vérifie', items: ['Chaque phrase 
 <h2>Écouter la note jusqu’au bout</h2>
 ${W.diagram('decay', {}, 'Après une note longue, la note suivante doit partir du niveau sonore atteint. Trop forte, elle crée un « trou » dans la ligne.')}
 <p>Le geste est d’abord un geste d’écoute : pendant une note longue, suis sa décroissance, puis attaque la note suivante <b>au niveau</b> où la précédente est arrivée. La ligne paraît alors continue, comme chantée.</p>
-${W.score({ abc: OP55.e1, title: 'Mesures 2-3 : la longue note do et la reprise sur fa', bpm: 56, pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17, variants: [
+${W.score({ abc: OP55.e1, title: 'Mesures 2-3 : la longue note do et la reprise sur fa', bpm: 56, variants: [
   { label: 'Reprise trop forte', dyn: { rh: [[0, 0.9], [9.9, 0.9], [10, 1.4], [11, 1.15], [16, 0.9]] } },
   { label: 'Reprise au niveau du son', dyn: { rh: [[0, 0.9], [2, 1.12], [5, 0.86], [9.9, 0.8], [10, 0.8], [11, 0.92], [12, 0.88], [16, 0.75]] } },
 ], caption: 'Écoute surtout le passage entre le do tenu (fin de la mesure 2) et le fa de la mesure 3.' })}

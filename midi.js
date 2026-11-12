@@ -195,7 +195,7 @@ export const midi = {
   send(data, timeMs) { try { output?.send(data, timeMs); } catch (e) { /* */ } },
   outNoteOn(note, vel, timeMs) { this.send([0x90, note, Math.max(1, Math.min(127, Math.round(vel)))], timeMs); },
   outNoteOff(note, timeMs) { this.send([0x80, note, 0], timeMs); },
-  outPedal(down, timeMs) { this.send([0xb0, 64, down ? 127 : 0], timeMs); },
+  outPedal(down, timeMs, value) { this.send([0xb0, 64, value != null ? value : down ? 127 : 0], timeMs); },
   panic() {
     if (!output) return;
     try { output.clear?.(); } catch (e) { /* */ }

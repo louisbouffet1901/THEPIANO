@@ -576,6 +576,7 @@ function pageHome() {
   $('#domGrid', page).append(...domainTiles(L));
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '8.6': '<ul><li><b>La pédale dessinée</b> sous la portée de fa : un trait tant qu’elle est enfoncée, une encoche pour la changer, un trait vertical pour la lever. Sur la partition complète de ton nocturne, sur ses extraits et dans les leçons ; l’écoute suit exactement le dessin. Le bouton « Pédale », dans « Options », la masque.</li><li>La pédale de l’op. 55 n° 1 est maintenant celle de la première édition (Leipzig, 1844). Celle de la V8.5 venait d’une édition moderne : elle ne levait pas la pédale après l’accord du 2e temps et différait aux mesures 16-17, 65-68 et dans la coda.</li><li><b>Demi-pédale</b> (pointillés, « demi ») aux mesures 16-17 et 32-33 : une suggestion pour piano moderne, que l’écoute imite (la basse continue de sonner, le reste s’éteint). Chopin ne note jamais la profondeur de la pédale.</li><li>Sur la partition complète : une légende et « La pédale, section par section », le geste de Chopin expliqué mesure par mesure.</li></ul>',
     '8.5': '<ul><li><b>La partition complète</b> de ton nocturne (op. 55 n° 1), ses 101 mesures : sur la page de la pièce, « La partition complète ». Tu peux l’écouter en entier (avec la pédale de Chopin, le Più mosso plus vite), choisir une section ou n’importe quelles mesures, la travailler en mode attente ou en rythme, et faire analyser ton jeu, comme pour les extraits.</li><li>Le texte est celui des premières éditions de 1844, vérifié note à note contre l’autographe ; les quelques choix là où les sources diffèrent sont expliqués sous la partition (« À savoir »).</li><li>Depuis chaque section de la pièce et depuis la séance : un lien vers ses mesures dans la partition complète.</li></ul>',
     '8.4': '<ul><li><b>L’oreille, refaite</b> autour d’un seul exercice, <b>Trouve la note</b>, inspiré des méthodes qui ont fait leurs preuves (méthode fonctionnelle de Benbassat, Kodály, Gordon, Lucy Green). Une cadence installe la tonalité, une note sonne, tu la cherches au clavier. Tes essais sont comptés, sans pénalité ; après une erreur, l’appli t’aide : plus haut ou plus bas, deux touches possibles, la touche. Puis la note rentre à la tonique : c’est ce chemin que l’oreille apprend.</li><li><b>Une tonalité par séance</b>, et une difficulté qui s’ajuste seule : tu commences avec trois notes (1, 3, 5) ; une note s’ajoute quand tu en réussis 9 sur 10 du premier coup, la dernière arrivée se retire si c’est trop dur. Ensuite, de courtes formules de deux à cinq notes. Ton progrès se lit en <b>essais par note</b>.</li><li><b>Plus d’aide</b> : les touches possibles numérotées, l’échelle des degrés, un bouton Indice (où est la note, sa couleur, deux touches, la touche), « Comment ça marche » et les stratégies pour ne plus tâtonner.</li><li><b>Le chant</b>, facultatif mais toujours là : à chaque note, le bouton « Chanter » ouvre le micro, qui te dit si tu chantes juste sans jamais nommer la note.</li><li><b>Mélodies d’oreille</b> : avant de jouer en rythme, tu cherches les notes une à une (la première est donnée, les touches de la phrase repérées), en boucle si tu veux, puis tu la joues d’un trait. L’appli te conseille celles dont tu entends déjà les notes.</li><li>Le parcours en seize étapes et les seize leçons d’oreille sont retirés ; tes résultats sont gardés. Quelques exercices de reconnaissance (accords, cadences, intervalles) restent, repliés, en bas de la page Oreille.</li></ul>',
     '8.3': '<ul><li><b>Un piano qui sonne mieux</b> : les échantillons sont refaits à partir des enregistrements d’origine. L’ancienne compression coupait tout le haut du son (rien au-dessus de 8 kHz) : le piano était terne. Il a maintenant <b>trois nuances</b> enregistrées (p, mf, f), dont le timbre change comme sur un vrai piano, un accord corrigé (l’aigu était trop haut) et des attaques calées au même instant.</li><li><b>Une salle</b> autour du piano, réglable dans Réglages › Son (« Résonance de la salle »), et plus de compresseur qui écrasait les nuances.</li><li><b>Ta pièce jouée avec la pédale de Chopin</b> : chaque extrait de l’op. 55 n° 1 suit ses indications (reprise sur les basses, levée sur la dernière croche) ; les notes piquées sont détachées quand la pédale est levée ; les notes rapides des fioritures et du septolet ne se mélangent plus en grappe.</li><li><b>Partitions revérifiées</b> note à note sur les deux premières éditions (Paris et Leipzig, 1844). <b>Mesures 43-44</b> : le do du 1er temps de la mesure 43 est lié depuis la mesure 42 ; l’extrait le jouait comme une nouvelle note. Il commence maintenant à la mesure 42 et le do est tenu, sans être rejoué. Le si♮ du septolet est expliqué (l’édition de Leipzig oublie le bécarre). L’accord arpégé de la mesure 7 commence sur le temps avec la basse, comme le voulait Chopin.</li></ul>',
@@ -943,12 +944,15 @@ async function pageFullScore(id, from, to) {
     b.addEventListener('click', () => go([sec.from, sec.to]));
     chips.append(b);
   }
-  page.append(h('p', { class: 'small mb-1' }, 'Choisis une section : seules ses mesures sont jouées, travaillées et analysées. Pour une autre plage : « Mesures … à … », sous la partition.'), chips, host);
+  page.append(h('p', { class: 'small mb-1' }, 'Choisis une section : seules ses mesures sont jouées, travaillées et analysées. Pour une autre plage : « Mesures … à … », sous la partition.'), chips);
+  // V8.6 : la pédale dessinée sous la portée : légende, puis le geste section par section
+  if (mod.OP55_PEDAL_GUIDE) page.append(pedalLegend(), pedalGuide(mod.OP55_PEDAL_GUIDE, r => go(r)));
+  page.append(host);
   let range = from ? [Math.min(+from, +to), Math.max(+from, +to)] : null;
   if (range && (range[0] < 0 || range[1] > nBars)) range = null;
   const dispose = sw.mountScore(host, {
     abc: F.abc, title: P.title, sub: `${nBars} mesures · Andante ♩ = 60, Più mosso plus vite`, bpm: 60, piece: id, passage: `${id}:complete`,
-    pedal: F.pedal, pedalUp: F.pedalUp, pedalEnd: F.pedalEnd, tempoMap: F.tempoMap, analysis: false, range, follow: true,
+    pedal: F.pedal, pedalUp: F.pedalUp, pedalEnd: F.pedalEnd, pedalHalf: F.pedalHalf, tempoMap: F.tempoMap, analysis: false, range, follow: true,
   });
   setChip(range);
   if (range) requestAnimationFrame(() => { if (stillHere(tok)) host.dispatchEvent(new CustomEvent('score-range', { detail: { range, scroll: true } })); });
@@ -957,6 +961,32 @@ async function pageFullScore(id, from, to) {
     h('p', { class: 'small muted' }, 'Sources : premières éditions de 1844 (Breitkopf & Härtel, Leipzig ; M. Schlesinger, Paris), encodées par l’Institut Fryderyk Chopin (chopinscores.org, CC BY 4.0) ; corrections d’après l’autographe (édition de K. Snortum, CC BY-SA 4.0) et l’Édition nationale. Les extraits commentés de chaque section restent sur ', h('a', { href: `#/piece/${id}` }, 'la page de la pièce'), '.'));
   frenchSpacing(page);
   return () => { try { if (typeof dispose === 'function') dispose(); } catch (e) { /* */ } };
+}
+
+/* V8.6 : légende de la pédale dessinée (mêmes traits que pedal-marks.js, en petit) */
+function pedalLegend() {
+  const icon = (d, dash) => `<svg viewBox="0 0 46 14" width="46" height="14" aria-hidden="true"><path d="${d}"/>${dash ? `<path class="half" d="${dash}"/>` : ''}</svg>`;
+  const item = (svg, label) => h('span', { class: 'pl-item' }, h('span', { html: svg }), label);
+  return h('div', { class: 'ped-legend', role: 'note', 'aria-label': 'Lire la pédale dessinée' },
+    h('span', { class: 'pl-title' }, 'Pédale, sous la portée de fa :'),
+    item(icon('M3 3V11H43'), 'enfoncée'),
+    item(icon('M3 11H20L23 5L26 11H43'), 'changement'),
+    item(icon('M3 11H40V3'), 'levée'),
+    item(icon('M3 11H14V7', 'M14 7H43'), 'demi-pédale (suggestion)'));
+}
+
+/* V8.6 : la pédale de Chopin section par section ; chaque plage de mesures se choisit d'un toucher */
+function pedalGuide(guide, pick) {
+  const list = h('ul', { class: 'fs-ped-list' });
+  for (const g of guide) {
+    const b = h('button', { class: 'linklike', type: 'button', title: 'Choisir ces mesures dans la partition' }, `${g.title} · m. ${g.from}-${g.to}`);
+    b.addEventListener('click', () => pick([g.from, g.to]));
+    list.append(h('li', {}, b, ' — ', g.text));
+  }
+  return h('details', { class: 'callout tip fs-notes fs-ped' }, h('summary', {}, 'La pédale, section par section'),
+    h('p', {}, 'Chopin ne note que deux choses : où enfoncer la pédale (« Ped. ») et où la lever (une étoile). Le dessin sous la portée les reprend, l’écoute les suit. Le geste de base : la pédale se prend juste après la basse, jamais avant, pour que deux harmonies ne se mélangent pas.'),
+    h('p', {}, 'La profondeur, elle, n’est jamais notée. La demi-pédale des mesures 16-17 et 32-33 est une suggestion pour piano moderne, plus résonant que celui de Chopin : le pied remonte à mi-course sans quitter la pédale ; la basse continue de sonner, le reste s’éteint. Sur un piano numérique, il faut une pédale progressive (pas un simple interrupteur).'),
+    list);
 }
 
 function pageValidation(id) {
@@ -1518,7 +1548,7 @@ function pageSettings() {
 
   page.append(card('Sources et licences', h('div', {
     class: 'small', html: `<p>Piano : <b>Salamander Grand Piano V3</b> d’Alexander Holm (CC BY 3.0), trois couches de nuance, accord retouché par Markus Fiedler, d’après la version SFZ de sfzinstruments ; ancienne série via Tone.js. Partitions : <b>abcjs</b> (MIT). Polices : <b>Inter</b>, <b>Literata</b> et <b>Noto Music</b> pour les signes ♩ ♭ ♯ ♮ (SIL OFL).</p>
-    <p>Extraits de Chopin transcrits d’après les éditions LilyPond de <b>Knute Snortum</b> (op. 15 et op. 55, CC BY-SA 4.0) et vérifiés sur l’édition Breitkopf &amp; Härtel. Partition complète de l’op. 55 n° 1 : premières éditions de 1844 (Breitkopf &amp; Härtel, Leipzig ; M. Schlesinger, Paris) d’après les encodages de l’<b>Institut Fryderyk Chopin</b> (chopinscores.org, CC BY 4.0), corrigées d’après l’autographe et l’Édition nationale ; extraits de Debussy d’après l’édition du Mutopia Project (domaine public). Les extraits sont partagés sous la même licence CC BY-SA 4.0.</p>
+    <p>Extraits de Chopin transcrits d’après les éditions LilyPond de <b>Knute Snortum</b> (op. 15 et op. 55, CC BY-SA 4.0) et vérifiés sur l’édition Breitkopf &amp; Härtel. Partition complète de l’op. 55 n° 1 : premières éditions de 1844 (Breitkopf &amp; Härtel, Leipzig ; M. Schlesinger, Paris) d’après les encodages de l’<b>Institut Fryderyk Chopin</b> (chopinscores.org, CC BY 4.0), corrigées d’après l’autographe et l’Édition nationale, avec la pédale de la première édition de Leipzig ; extraits de Debussy d’après l’édition du Mutopia Project (domaine public). Les extraits sont partagés sous la même licence CC BY-SA 4.0.</p>
     <p>Courbes de tempo des pianistes de référence : jeu de données <b>MAESTRO v3</b> (Hawthorne et al., Google Magenta, 2019), d’après les enregistrements de l’International Piano-e-Competition, CC BY-NC-SA 4.0. Usage non commercial.</p>
     <p>Liens « Informance » : <a href="${INFORMANCE}" target="_blank" rel="noopener">Practising the Piano Online Academy</a> (abonnement).</p>`,
   }), sightSources()));

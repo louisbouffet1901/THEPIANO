@@ -23,7 +23,7 @@ ${W.plan({ piece: 'op55-1' })}
 <h3 data-sec="theme">Le thème, deux fois (mesures 1 à 16)</h3>
 ${W.section({ piece: 'op55-1', id: 'theme' })}
 <p>La mélodie tient sur quelques notes : do, puis une descente fa – mi♭ – ré♭ – do, puis do brodé par si♮ et ré♭. Tout l’art est dans la ligne : la levée part de rien, le fa est le sommet, la descente se détend. La main gauche, notée <i>staccato</i>, est légère ; la pédale relie chaque basse à son accord.</p>
-${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4', bpm: 60, startBpm: 50, pedal: [1, 3, 5, 7, 9, 11, 13, 15], pedalEnd: 17, caption: 'Démonstration avec une pédale par demi-mesure.' })}
+${W.score({ abc: OP55.e1, title: 'Mesures 1 à 4', bpm: 60, startBpm: 50, caption: 'Avec la pédale de Chopin (première édition), dessinée sous la portée : prise sur chaque basse, levée juste après l’accord du 2e temps.' })}
 ${W.score({ abc: OP55.e2, title: 'Mesures 5 à 8 : trille, accord arpégé, cadence', bpm: 60, startBpm: 50, caption: 'Mesure 6 : trille sur si♭ terminé par deux petites notes (la♮ – si♭), qui mènent au do du 4e temps. Mesure 7 : accord arpégé de bas en haut, commencé sur le temps avec la basse (comme le voulait Chopin) ; la note du haut (la♭) arrive en dernier et chante.' })}
 <p>Au deuxième passage du thème, Chopin orne la cadence : trille sur si♭, puis cinq petites notes à jouer dans le quatrième temps (mesures 13-14). Elles ne doivent ni presser ni retarder la main gauche : la première tombe avec l’accord du 4e temps, les autres s’égrènent jusqu’à la mesure suivante.</p>
 ${W.score({ abc: OP55.e3, title: 'Mesures 13 et 14 : la première fioriture', bpm: 60, startBpm: 44 })}

@@ -139,31 +139,34 @@ V:LH clef=bass
 };
 
 /**
- * Pédale des extraits de l'op. 55 n° 1 (V8.3), d'après les indications de Chopin (Ped. et * de l'édition Snortum,
- * établie sur l'autographe) : pedal = instants (en noires depuis le début de l'extrait) où la pédale est prise ou
- * reprise, pedalUp = instants où elle est levée, pedalEnd = fin. Une partition sans pédale indiquée s'en sert pour
- * l'écoute (score-widget.js) ; « pedal: null » demande explicitement une écoute sans pédale.
- * Schéma courant : pédale sur la basse du 1er temps, reprise sur celle du 3e, levée sur la dernière croche.
+ * Pédale des extraits de l'op. 55 n° 1 (V8.6) : celle de Chopin dans la première édition de Leipzig (mesure 40
+ * d'après Paris), comme la partition complète (content-op55-full.js). pedal = instants (en noires depuis le début de
+ * l'extrait) où la pédale est prise ou reprise, pedalUp = instants où elle est levée, pedalHalf = plages de demi-pédale
+ * (suggestion pour piano moderne, pas de Chopin), pedalEnd = fin. Une étoile placée sous un accord d'un temps se lève
+ * 1/3 de temps après lui (after) ; ailleurs, sur la note qu'elle marque. Une partition sans pédale indiquée s'en sert
+ * pour l'écoute et pour les marques dessinées
+ * (score-widget.js) ; « pedal: null » demande explicitement une écoute sans pédale.
+ * Schéma du thème : pédale sur la basse du 1er temps, levée juste après l'accord du 2e, reprise sur la basse du 3e,
+ * changée sur la basse suivante.
  */
-const halfBars = (from, bars) => [...Array(bars * 2)].map((_, i) => from + i * 2);
-const lastEighths = (from, bars) => [...Array(bars)].map((_, i) => from + i * 4 + 3.5);
+const after = x => x + 1 / 3;
+const quarters = (from, n, step = 2) => [...Array(n)].map((_, i) => from + i * step);
 export const PEDALS = new Map([
-  [OP55.e1, { pedal: halfBars(1, 4), pedalUp: lastEighths(1, 4), pedalEnd: 17 }],
-  // m. 7 : pédale sur le 1er temps seulement, levée au 2e (l'accord du 2e temps reste sec), reprise au 3e
-  [OP55.e2, { pedal: [0, 2, 4, 6, 8, 10, 12, 14], pedalUp: [3.5, 7.5, 9, 11.5, 15.5], pedalEnd: 16 }],
-  // m. 14 : levée juste avant la mesure suivante (après la fioriture)
-  [OP55.e3, { pedal: halfBars(0, 2), pedalUp: [3.5, 7.75], pedalEnd: 8 }],
-  // m. 17 : pédale à partir du 3e temps
-  [OP55.e4, { pedal: [2, ...halfBars(4, 3)], pedalUp: [3.5, ...lastEighths(4, 3)], pedalEnd: 16 }],
-  [OP55.e5, { pedal: halfBars(0, 2), pedalUp: lastEighths(0, 2), pedalEnd: 8 }],
-  [OP55.e5b, { pedal: halfBars(0, 3), pedalUp: lastEighths(0, 3), pedalEnd: 12 }],
-  // Più mosso : une pédale par mesure de réponse (m. 49 et 51), levée au 4e temps ; les triolets restent secs
-  [OP55.e6, { pedal: [4, 12], pedalUp: [7, 15], pedalEnd: 20 }],
-  [OP55.e7, { pedal: halfBars(0, 4), pedalUp: lastEighths(0, 4), pedalEnd: 16 }],
-  // m. 80 : levée au milieu de chaque demi-mesure
-  [OP55.e9, { pedal: halfBars(0, 4), pedalUp: [3.5, 7.5, 11.5, 13.5, 15.5], pedalEnd: 16 }],
-  // m. 97 : la pédale prise à la m. 92 se lève au 3e temps ; le choral final se tient aux doigts
-  [OP55.e10, { pedal: [0], pedalUp: [2], pedalEnd: 20 }],
+  [OP55.e1, { pedal: quarters(1, 8), pedalUp: [2, 6, 10, 14, 16].map(after), pedalEnd: 17 }],
+  // m. 6 et 7 : levée aussi avant la dernière double croche
+  [OP55.e2, { pedal: quarters(0, 8), pedalUp: [after(1), after(5), 7.75, after(9), 11.75, after(13)], pedalEnd: 16 }],
+  // m. 14 : la pédale du 3e temps tient la fioriture jusqu'à la mesure suivante
+  [OP55.e3, { pedal: quarters(0, 4), pedalUp: [after(1), after(5)], pedalEnd: 8 }],
+  // m. 17 : suite de la pédale longue de la m. 16, en demi-pédale jusqu'au 3e temps
+  [OP55.e4, { pedal: quarters(0, 8), pedalUp: [after(5), after(9), 11.5, after(13), 15.75], pedalHalf: [[0, 2]], pedalEnd: 16 }],
+  [OP55.e5, { pedal: quarters(0, 4), pedalUp: [after(1), after(3), after(5)], pedalEnd: 8 }],
+  // m. 44 : levée sur le si♮, 5e note du septolet
+  [OP55.e5b, { pedal: quarters(0, 6), pedalUp: [after(1), after(5), after(7), 9 + 1 / 7], pedalEnd: 12 }],
+  // Più mosso : triolets sans pédale ; m. 49 du 1er au 4e temps, m. 51 jusqu'au 1er temps de la m. 52
+  [OP55.e6, { pedal: [4, 12], pedalUp: [after(7), after(16)], pedalEnd: 20 }],
+  [OP55.e7, { pedal: quarters(0, 8), pedalUp: [after(1), 3 + 2 / 3, after(5), after(9), after(11), after(13)], pedalEnd: 16 }],
+  // e8 (m. 69-70) et e10 (m. 97-101) : sans pédale
+  [OP55.e9, { pedal: quarters(0, 8), pedalUp: [1, 3, 5, 7, 9, 11, 13, 15].map(after), pedalEnd: 16 }],
 ]);
 
 export const OP15 = {
