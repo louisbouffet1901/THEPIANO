@@ -6,6 +6,8 @@
 import { h, esc, shuffle } from './util.js';
 import { store } from './store.js';
 import { LEVELS, lessonsOf } from './content-index.js';
+import { cycleState, cycleDef } from './quinze.js';
+import { parseNote, noteName, triadOn, keySignature, relative, keyName } from './theory.js';
 
 const KEY = 'cards';
 export const PER_DAY = [5, 8, 12, 20];
@@ -21,15 +23,57 @@ const theoryLessons = () => LEVELS.filter(l => !l.locked).flatMap(l => lessonsOf
 const started = id => ((store.get(`lessonSteps.${id}`) || {}).done || []).length > 0;
 const byHeart = id => !!(store.get(`mastery.lessons.${id}`) || {}).on;
 export const deckLessons = () => theoryLessons().filter(l => store.isDone(l.id) || byHeart(l.id) || started(l.id));
+/* ------------------------------------------------------------------ */
+/* V9.1 : les réflexes du cycle (Tes 15 minutes), en cartes             */
+/* ------------------------------------------------------------------ */
+// Bilan du 17 novembre (§ 4.6) : les cartes portent d'abord sur les réflexes du cycle en cours, puis révisent ceux des
+// cycles passés. Sans clavier : un degré → ses notes, des notes → leur degré, une armure → la tonalité et sa relative.
+const DEG_LIST = { maj: [[1], [4], [5, true], [6], [2]], min: [[1], [4], [5, true], [6], [2]] };
+const countLabel = c => (c === 0 ? 'Aucune altération' : c > 0 ? `${c} dièse${c > 1 ? 's' : ''}` : `${-c} bémol${c < -1 ? 's' : ''}`);
+/** Les cartes de réflexes : cycle en cours d'abord, puis les cycles passés (du plus récent au plus ancien). */
+export function reflexCards(n = cycleState().n) {
+  const out = [], seen = new Set();
+  const add = c => { if (!seen.has(c.id)) { seen.add(c.id); out.push(c); } };
+  for (let ci = n; ci >= 1; ci--) {
+    const cyc = cycleDef(ci);
+    const src = ci === n ? `Réflexes du cycle ${ci} (en cours)` : `Réflexes du cycle ${ci} (révision)`;
+    for (const k of cyc.keys) {
+      const t = { ...parseNote(k.tonic), o: 3 };
+      const kn = keyName(t, k.mode);
+      const chords = DEG_LIST[k.mode].map(([d, sev]) => { const c = triadOn(t, k.mode, d, { seventh: !!sev }); return { d, roman: c.roman, spell: c.notes.map(noteName).join(' – '), root: noteName(c.root) }; });
+      for (const c of chords) {
+        const others = chords.filter(x => x.roman !== c.roman);
+        add({ id: `rx:deg:${k.tonic}${k.mode}:${c.roman}`, q: `En <b>${esc(kn)}</b>, les notes de <b>${esc(c.roman)}</b> ?`, a: esc(c.spell),
+          options: [c.spell, ...others.slice(0, 3).map(x => x.spell)].map(esc), why: `${esc(c.roman)} : l’accord bâti sur le ${c.d === 1 ? '1er' : c.d + 'e'} degré (${esc(c.root)})${c.roman.endsWith('7') ? ', avec sa septième' : ''}.`, lesson: 'quinze', lessonTitle: src });
+        add({ id: `rx:fn:${k.tonic}${k.mode}:${c.roman}`, q: `En <b>${esc(kn)}</b> : <b>${esc(c.spell)}</b>, quel degré ?`, a: esc(c.roman),
+          options: [c.roman, ...others.map(x => x.roman)].slice(0, 4).map(esc), why: `La fondamentale, ${esc(c.root)}, est le ${c.d === 1 ? '1er' : c.d + 'e'} degré de ${esc(kn)}.`, lesson: 'quinze', lessonTitle: src });
+      }
+      const f = keySignature(t, k.mode).count;
+      const maj = k.mode === 'maj' ? t : relative(t, 'min');
+      const pair = M => `${noteName(M)} majeur / ${noteName(relative(M, 'maj'))} mineur`;
+      const near = [...new Set([f + 1, f - 1, -f, f + 2, f - 2])].filter(x => x !== f && Math.abs(x) <= 6).slice(0, 3).map(x => {
+        const MAJ = { 0: 'do', 1: 'sol', 2: 'ré', 3: 'la', 4: 'mi', 5: 'si', 6: 'fa♯', '-1': 'fa', '-2': 'si♭', '-3': 'mi♭', '-4': 'la♭', '-5': 'ré♭', '-6': 'sol♭' };
+        return pair({ ...parseNote(MAJ[x]), o: 3 });
+      });
+      add({ id: `rx:arm:${f}`, q: `<b>${countLabel(f)}</b> à l’armure${f ? ` (${esc(keySignature(t, k.mode).list.join(', '))})` : ''} : la tonalité majeure et sa relative ?`, a: esc(pair(maj)),
+        options: [pair(maj), ...near].slice(0, 4).map(esc), why: 'La relative mineure est une tierce mineure plus bas, avec la même armure.', lesson: 'quinze', lessonTitle: src });
+    }
+  }
+  return out;
+}
+
 let cache = null;
-/** Les cartes du paquet : { id, q, a, why, options, lesson, lessonTitle }. */
+/** Les cartes du paquet : { id, q, a, why, options, lesson, lessonTitle }. V9.1 : les réflexes du cycle en tête. */
 export async function deck() {
   const ls = deckLessons();
-  const key = ls.map(l => l.id).join(',');
+  const cyc = cycleState().n;
+  const key = cyc + ':' + ls.map(l => l.id).join(',');
   if (cache && cache.key === key) return cache.cards;
   const ms = await import('./tool-mastery.js');
   const seen = new Set();
-  const out = [];
+  const rx = reflexCards(cyc);
+  const cur = rx.filter(c => c.lessonTitle.endsWith('(en cours)')), past = rx.filter(c => !c.lessonTitle.endsWith('(en cours)'));
+  const out = [...cur];
   for (const l of ls) {
     let d = null;
     try { d = await ms.lessonData(l.id); } catch (e) { d = null; }
@@ -40,6 +84,7 @@ export async function deck() {
       out.push({ id: it.id, q: it.q, a: it.answer, why: it.why || '', options: Array.isArray(it.options) ? it.options : null, lesson: l.id, lessonTitle: l.title, src: it.src || '' });
     }
   }
+  out.push(...past);
   cache = { key, cards: out };
   return out;
 }
@@ -146,10 +191,10 @@ export function mountCards(el, { compact = false, onFinish = null } = {}) {
     const queue = buildQueue(cards, st, today, Math.min(sum.unseen, sum.fresh + extraNew));
     const go = h('button', { class: 'btn primary lg', type: 'button', disabled: !queue.length }, queue.length ? `Commencer · ${queue.length} carte${queue.length > 1 ? 's' : ''} (≈ ${Math.max(1, Math.round(queue.length * 9 / 60))} min)` : 'Rien à revoir aujourd’hui');
     go.addEventListener('click', () => run(queue));
-    body.append(stats,
-      compact ? null : h('p', { class: 'small fc-how' }, 'Lis la question et cherche la réponse ', h('b', {}, 'de tête'), ', vraiment, avant de la découvrir. Puis dis honnêtement comment ça s’est passé : c’est ce qui règle le moment où la carte reviendra.'),
+    body.append(...[stats,
+      compact ? null : h('p', { class: 'small fc-how' }, 'Lis la question et cherche la réponse ', h('b', {}, 'de tête'), ', vraiment, avant de la découvrir. Puis dis honnêtement comment ça s’est passé : c’est ce qui règle le moment où la carte reviendra. Les réflexes de ton cycle (Tes 15 minutes) passent en premier.'),
       h('div', { class: 'fc-opts' }, h('label', { class: 'field inline small' }, 'Répondre', mode), compact ? null : h('label', { class: 'field inline small' }, 'Nouvelles par jour', per)),
-      h('div', { class: 'btn-row mt-1' }, go));
+      h('div', { class: 'btn-row mt-1' }, go)].filter(Boolean));
     if (!queue.length && sum.unseen) {
       const more = h('button', { class: 'btn', type: 'button' }, `Apprendre 5 cartes de plus (${sum.unseen} pas encore vues)`);
       more.addEventListener('click', () => idle(extraNew + 5));
@@ -200,7 +245,7 @@ export function mountCards(el, { compact = false, onFinish = null } = {}) {
       };
       const reveal = () => {
         box.classList.add('back');
-        box.append(h('div', { class: 'fc-a', html: c.a }), c.why ? h('div', { class: 'fc-why small', html: c.why }) : null);
+        box.append(...[h('div', { class: 'fc-a', html: c.a }), c.why ? h('div', { class: 'fc-why small', html: c.why }) : null].filter(Boolean));
         act.innerHTML = '';
         const row = h('div', { class: 'fc-grades' });
         const cur = read().s[c.id] || null;

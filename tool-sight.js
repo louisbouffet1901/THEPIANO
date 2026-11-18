@@ -5,6 +5,7 @@ import { Score, Player, Follower, TempoReader } from './score.js';
 import { midi } from './midi.js';
 import { store } from './store.js';
 import { keyboard } from './diagrams.js';
+import { parseNote, noteName, midiOf, triadOn } from './theory.js';
 
 /* ------------------------------------------------------------------ */
 /* Niveaux et données                                                  */
@@ -163,6 +164,56 @@ export function buildQuestions(item, { done = id => store.isDone(id), rnd = Math
   const rest = shuffle(extra, rnd);
   while (out.length < 3 && rest.length) out.push(rest.shift());
   return out.slice(0, 3);
+}
+
+/**
+ * V9.1 : nommer un accord de la main gauche pendant la préparation (bilan : « 20 secondes pour nommer les accords de la
+ * main gauche »). On cherche, à partir de la mesure 2, la première mesure dont toutes les notes de la main gauche tiennent
+ * dans un seul accord de la tonalité (les sept accords de trois sons, et V7) et qui n'est pas le I ; à défaut, la mesure 1.
+ * Rien si la tonalité n'est pas sûre (analyse sans q.key), si la main gauche a des notes de passage ou si deux accords
+ * conviennent (do – mi : I ou iii). Les noms des notes viennent de l'accord, pas du MIDI (orthographe juste).
+ */
+export function lhChordQuestion(item, score, { rnd = Math.random } = {}) {
+  const k = item?.q?.key;
+  if (!k || !score || !score.events) return null;
+  const mode = k.answer === 'minor' ? 'min' : 'maj';
+  let tonic;
+  try { tonic = { ...parseNote(String(k[k.answer] || '').split(' ')[0]), o: 3 }; } catch (e) { return null; }
+  if (!tonic || tonic.l == null) return null;
+  const pcOf = n => ((midiOf({ ...n, o: 3 }) % 12) + 12) % 12;
+  const cands = [];
+  for (let d = 1; d <= 7; d++) cands.push({ d, seventh: false, ...triadOn(tonic, mode, d) });
+  cands.push({ d: 5, seventh: true, ...triadOn(tonic, mode, 5, { seventh: true }) });
+  for (const c of cands) c.pcs = new Set(c.notes.map(pcOf));
+  const lh = score.events.filter(e => e.hand === 'lh' && !e.grace);
+  if (lh.length < 2) return null;
+  const bars = Math.round((score.totalQ - (score.pickupQ || 0)) / score.barQ);
+  const chordOfBar = n => {
+    const t0 = (score.pickupQ || 0) + n * score.barQ, t1 = t0 + score.barQ;
+    const ns = lh.filter(e => e.t >= t0 - 1e-6 && e.t < t1 - 1e-6);
+    const pcs = new Set(ns.map(e => ((e.pitch % 12) + 12) % 12));
+    if (pcs.size < 2) return null;
+    let fit = cands.filter(c => [...pcs].every(x => c.pcs.has(x)));
+    if (fit.some(c => c.d === 5 && !c.seventh)) fit = fit.filter(c => !(c.d === 5 && c.seventh)); // sans septième : V
+    if (fit.length !== 1) return null;
+    const bass = Math.min(...ns.map(e => e.pitch));
+    return { ...fit[0], bar: n + 1, bassPc: ((bass % 12) + 12) % 12 };
+  };
+  let pick = null;
+  for (let n = 1; n < bars && !pick; n++) { const c = chordOfBar(n); if (c && c.d !== 1) pick = c; }
+  if (!pick) pick = chordOfBar(0);
+  if (!pick) return null;
+  const QN = { M: 'majeur', m: 'mineur', dim: 'diminué', aug: 'augmenté', '7': '7' };
+  const label = c => `${c.roman} (${noteName(c.root)}${c.q === '7' ? '7' : ' ' + (QN[c.q] || '')})`;
+  const common = mode === 'maj' ? [[1], [4], [5], [6], [2]] : [[1], [4], [5], [6], [2]];
+  const pool = common.map(([d]) => cands.find(c => c.d === d && !c.seventh)).filter(c => c && c.roman !== pick.roman);
+  const sh = pool.slice(); for (let i = sh.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [sh[i], sh[j]] = [sh[j], sh[i]]; }
+  const opts = sh.slice(0, 3).concat(pick).sort((a, b) => a.d - b.d || a.notes.length - b.notes.length).map(label);
+  const inv = pick.bassPc === pcOf(pick.notes[0]) ? '' : pick.bassPc === pcOf(pick.notes[1]) ? ', renversé (la tierce à la basse)' : pick.bassPc === pcOf(pick.notes[2]) ? ', renversé (la quinte à la basse)' : ', renversé (la septième à la basse)';
+  return {
+    kind: 'lhchord', text: `Mesure ${pick.bar}, main gauche : quel accord ?`, options: opts, answer: label(pick), bar: pick.bar,
+    why: `En ${k[k.answer]}, ${pick.notes.map(noteName).join(' – ')} = ${pick.roman}${inv}. Lis l’accord d’un coup, comme une forme : c’est ce qui accélère le plus la lecture.`,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -335,6 +386,9 @@ export function mountSight(el, cfg = {}) {
     stopAll(); score.clear(); results.replaceChildren(); advice.replaceChildren();
     prepBtn.classList.add('on');
     const qs = buildQuestions(item);
+    // V9.1 : un accord de la main gauche à nommer (toujours dans « Tes 15 minutes », sinon après la leçon des fonctions)
+    const lq = (cfg.lhChords || store.isDone('n1-th-fonctions')) ? lhChordQuestion(item, score) : null;
+    if (lq) { qs.splice(qs[0]?.kind === 'key' ? 1 : 0, 0, lq); qs.length = Math.min(qs.length, 3); }
     let left = cfg.prepSeconds || 30;
     let answered = 0;
     const clock = h('div', { class: 'sight-clock' });

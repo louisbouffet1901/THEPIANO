@@ -2101,3 +2101,21 @@ h3.lesson-group { font-size: 14px; font-weight: 650; color: var(--text-2); margi
 .rh-moved { margin: 8px 0 0; font-weight: 600; color: var(--accent-strong); }
 .reflexes .rf-ear { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 15px; text-align: center; }
 .qz-where-list { margin: 4px 0 0; padding-left: 20px; }
+/* V9.1 : la main gauche vérifiée à titre indicatif dans les exercices des leçons */
+.ir-lh { margin: 8px 0 0; padding: 7px 10px; border-radius: 8px; background: var(--surface-2); font-size: 14px; line-height: 1.45; border-left: 4px solid var(--line-strong); }
+.ir-lh.ok { border-left-color: var(--ok); }
+.ir-lh.todo { border-left-color: var(--lh); }
+/* V9.1 : ton analyse de la section */
+.pm-ana { margin: 10px 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.pm-ana > summary { cursor: pointer; padding: 8px 12px; font-weight: 650; font-size: 14.5px; color: var(--accent-strong); }
+.pm-ana.done > summary { color: var(--ok); }
+.pm-ana-body { padding: 0 12px 10px; }
+.pm-ana-f { display: block; margin: 0 0 8px; }
+.pm-ana-f .pm-h { display: block; margin-bottom: 3px; }
+.pm-ana-f textarea { width: 100%; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: #fff; font-size: 14.5px; line-height: 1.4; resize: vertical; }
+.pm-ana-saved { display: block; min-height: 18px; }
+.pm-ana-test { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
+.pm-ana-test .btn.on { background: var(--ok-tint); border-color: var(--ok); color: var(--ok); }
+/* V9.1 : Défi éclair des cellules */
+.df-q .df-staff { margin: 6px auto 0; display: flex; justify-content: center; }
+.df-q .df-staff svg { max-width: 100%; height: auto; }

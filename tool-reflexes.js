@@ -24,6 +24,13 @@ const QUAL_FR = { M: 'majeur', m: 'mineur', dim: 'diminué', aug: 'augmenté', '
 // cibles : réponse en moins de… (millisecondes)
 export const TARGETS = { armure: 2000, degre: 3000, cadence: 2000, accord: 3000 };
 export const TYPE_LABEL = { armure: 'armure → tonalité', degre: 'degré → accord joué', cadence: 'cadence entendue', accord: 'accord lu et joué' };
+// V9.1 : chaque réflexe renvoie à son chapitre, à relire seulement après une erreur (bilan, § 4.6)
+export const CHAPTER = {
+  armure: { id: 'n1-th-armures', title: 'Armures et tonalités' },
+  degre: { id: 'n1-th-fonctions', title: 'Degrés et fonctions' },
+  cadence: { id: 'n1-th-cadences', title: 'Les cadences' },
+  accord: { id: 'n1-th-renv', title: 'Renversements et chiffrage' },
+};
 
 /* ------------------------------------------------------------------ */
 /* Tonalités, armures et notes en ABC                                   */
@@ -100,7 +107,7 @@ const pickR = (arr, rnd) => arr[Math.floor(rnd() * arr.length)];
 function shuffleR(arr, rnd) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
 /** Une question de réflexe : { type, prompt, abc?, choices?, answer, chord? }. maxAcc : altérations des armures. */
-export function genReflex(K, { maxAcc = 4, cycleN = 1, last = null, rnd = Math.random } = {}) {
+export function genReflex(K, { maxAcc = 4, cycleN = 1, last = null, rnd = Math.random, review = [] } = {}) {
   const types = ['armure', 'degre', 'degre', 'cadence'].filter(t => t !== last || rnd() < 0.3);
   const type = pickR(types, rnd);
   if (type === 'armure') {
@@ -111,10 +118,12 @@ export function genReflex(K, { maxAcc = 4, cycleN = 1, last = null, rnd = Math.r
     return { type, prompt: 'Quelle tonalité ?', abc: signatureAbc(KK, rnd() < 0.5 ? 'treble' : 'bass'), choices, answer: pairOf(f), info: `${Math.abs(f)} ${f >= 0 ? 'dièse' : 'bémol'}${Math.abs(f) > 1 ? 's' : ''}` };
   }
   if (type === 'degre') {
-    const deg = pickR(DEGREES[K.mode], rnd);
-    const c = degreeChord(K, deg, 0, 'rh');
+    // V9.1 : une fois sur trois, une tonalité d'un cycle passé (révision)
+    const KK = review.length && rnd() < 0.33 ? keyInfo(pickR(review, rnd)) : K;
+    const deg = pickR(DEGREES[KK.mode], rnd);
+    const c = degreeChord(KK, deg, 0, 'rh');
     const pcs = [...new Set(c.midis.map(m => ((m % 12) + 12) % 12))];
-    return { type, prompt: `En ${K.name}, joue l’accord`, big: c.roman, pcs, chord: c, answer: `${c.roman} = ${chordSpelling(K, deg)}` };
+    return { type, prompt: `En ${KK.name}${KK !== K ? ' (révision)' : ''}, joue l’accord`, big: c.roman, pcs, chord: c, answer: `${c.roman} = ${chordSpelling(KK, deg)}`, review: KK !== K };
   }
   // cadence : parfaite (IV – V7 – I) ou demi-cadence (I – IV – V) ; à partir du cycle 2, rompue (V7 – vi)
   const kinds = cycleN >= 2 ? ['parfaite', 'demi', 'rompue'] : ['parfaite', 'demi'];
@@ -187,7 +196,7 @@ export function lastScore(mode, kName = null) {
  * mode : 'reflexes' ou 'accords' ; key : { tonic, mode } ; cycleN ; maxAcc ; onFinish({ mode, npm, acc, avgMs }).
  * Renvoie la fonction de nettoyage.
  */
-export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc = 4, seconds = 60, bare = false, onFinish } = {}) {
+export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc = 4, seconds = 60, bare = false, review = [], onFinish } = {}) {
   const K = keyInfo(key);
   const isChords = mode === 'accords';
   const frame = h('div', { class: 'w-frame notespeed reflexes' + (bare ? ' ns-bare' : '') });
@@ -226,7 +235,7 @@ export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc =
   const next = () => {
     choicesBox.innerHTML = ''; fb.textContent = ''; fb.className = 'ns-fb';
     played = new Set(); locked = false;
-    cur = isChords ? genChordItem(K, { last: cur?.chord }) : genReflex(K, { maxAcc, cycleN, last: lastType });
+    cur = isChords ? genChordItem(K, { last: cur?.chord }) : genReflex(K, { maxAcc, cycleN, last: lastType, review });
     if (!cur) { finish(false); return; }
     lastType = cur.type;
     prompt.textContent = isChords ? '' : cur.prompt;
@@ -278,6 +287,7 @@ export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc =
       session.err++;
       const sp = cur.type === 'accord' ? ` (${esc(cur.spelling)})` : '';
       fb.innerHTML = `C’était <b>${esc(cur.answer)}</b>${sp}${given ? ` ; ${esc(given)}` : ''}.`;
+      session.missed.add(cur.type);
       fb.className = 'ns-fb bad';
       choicesBox.querySelectorAll('button').forEach(b => { if (b.textContent === cur.answer) b.classList.add('right'); b.disabled = true; });
       timers.push(setTimeout(next, 1600));
@@ -308,7 +318,7 @@ export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc =
     if (running) return;
     try { await audio.ensure(); } catch (e) { /* */ }
     await ensureAbcjs().catch(() => null);
-    session = { ok: 0, err: 0, items: [] };
+    session = { ok: 0, err: 0, items: [], missed: new Set() };
     running = true;
     idle.hidden = true; results.hidden = true; stage.hidden = false;
     buildInput();
@@ -365,6 +375,9 @@ export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc =
     const lines = Object.entries(byType).map(([t, o]) => `${TYPE_LABEL[t]} : ${o.ok}/${o.n}${o.ok ? `, ${(o.rt / o.ok / 1000).toFixed(1).replace('.', ',')} s` : ''}`);
     if (!isChords && lines.length) results.append(h('ul', { class: 'small ns-weak' }, ...lines.map(l => h('li', {}, l))));
     if (prev) results.append(h('p', { class: 'small' }, isChords ? `La fois d’avant : ${prev.npm} par minute.` : `La fois d’avant : ${prev.ok} justes, ${prev.avgMs ? (prev.avgMs / 1000).toFixed(1).replace('.', ',') + ' s en moyenne' : ''}.`));
+    // après une erreur seulement : le chapitre à relire (plus tard, pas maintenant)
+    const ch = [...session.missed].map(t => CHAPTER[t]).filter(Boolean).filter((c, i, a) => a.findIndex(x => x.id === c.id) === i);
+    if (ch.length) results.append(h('p', { class: 'small rf-chap' }, 'À relire plus tard, pour ce qui t’a trompé : ', ...ch.flatMap((c, i) => [i ? ' ; ' : '', h('a', { href: `#/lecon/${c.id}` }, c.title)]), '.'));
     results.hidden = false;
     onFinish?.({ mode, npm, acc, avgMs, ok: session.ok });
   };

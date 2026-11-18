@@ -122,6 +122,26 @@ export function goalStatus(piece, now = Date.now()) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Ton analyse de la section (V9.1)                                     */
+/* ------------------------------------------------------------------ */
+// Bilan du 17 novembre (§ 4.5) : avant d'apprendre une section, deux minutes d'analyse, notées ici (les accords et leurs
+// degrés, les cadences, ce qui revient et ce qui change) ; ce sont les repères de la lecture et de la mémoire (Chaffin).
+// Test de la section : la rejouer en partant de chaque repère, puis dire ses accords sans jouer.
+// pieces.<id>.analysis = { <section>: { chords, cad, same, at, test: { at, starts: [mesures], chords } } }
+export const ANALYSIS_FIELDS = [
+  { id: 'chords', label: 'Les accords et leurs degrés', ph: 'm. 1-2 : i – V7 ; m. 3 : iv…' },
+  { id: 'cad', label: 'Les cadences', ph: 'm. 4 : demi-cadence (sur V) ; m. 8 : parfaite…' },
+  { id: 'same', label: 'Ce qui revient, ce qui change', ph: 'm. 5-8 = m. 1-4, sauf la fin…' },
+];
+export const analysisOf = (piece, sid) => (store.get(`pieces.${piece}.analysis`) || {})[sid] || {};
+export const analysisDone = (piece, sid) => { const a = analysisOf(piece, sid); return ANALYSIS_FIELDS.some(f => String(a[f.id] || '').trim().length >= 3); };
+export function saveAnalysis(piece, sid, patch) {
+  const all = { ...(store.get(`pieces.${piece}.analysis`) || {}) };
+  all[sid] = { ...(all[sid] || {}), ...patch, at: Date.now() };
+  store.set(`pieces.${piece}.analysis`, all);
+}
+
+/* ------------------------------------------------------------------ */
 /* La section du jour                                                  */
 /* ------------------------------------------------------------------ */
 const dayIndex = (now = Date.now()) => Math.floor((now - new Date(new Date(now).getFullYear(), 0, 1).getTime()) / 864e5);
@@ -131,7 +151,7 @@ export function intentionFor(s, st, now = Date.now()) {
   const d = dayIndex(now);
   if (st <= 0) return r.length ? r[d % Math.min(2, r.length)] : s.play;
   if (st === 1) return r.length > 2 ? r[2 + d % (r.length - 2)] : (r[r.length - 1] || s.play);
-  if (st === 2) return `Par cœur : repars de chaque point de départ (${s.starts.map(m => 'm. ' + m).join(', ')}), sans regarder la partition.`;
+  if (st === 2) return `Par cœur : repars de chaque point de départ (${s.starts.map(m => 'm. ' + m).join(', ')}), sans regarder la partition ; puis dis ses accords sans jouer.`;
   return 'Entretien : joue la section d’une traite, puis enchaîne avec celle d’avant et celle d’après.';
 }
 /**
@@ -150,7 +170,10 @@ export function nextSection(piece, now = Date.now()) {
   else if (doing.length) { pick = oldest(doing); why = 'en place lentement, à amener au tempo'; }
   else if (rows.some(r => r.st === 2)) { pick = oldest(rows.filter(r => r.st === 2)); why = 'au tempo, à apprendre par cœur'; }
   else { pick = oldest(rows); why = 'entretien'; }
-  return { section: pick.s, st: pick.st, at: pick.at, why, intention: intentionFor(pick.s, pick.st, now) };
+  let intention = intentionFor(pick.s, pick.st, now);
+  // V9.1 : une section à découvrir s'analyse d'abord (deux minutes, sans jouer)
+  if (pick.st === 0 && !analysisDone(piece, pick.s.id)) intention = 'Avant de la jouer, analyse-la (deux minutes, partition sous les yeux) : les accords et leurs degrés, les cadences, ce qui revient. Note-les dans « Ton analyse » de la section : ce seront tes repères.';
+  return { section: pick.s, st: pick.st, at: pick.at, why, intention };
 }
 
 /* ------------------------------------------------------------------ */
@@ -262,6 +285,53 @@ export function mountPlan(el, cfg) {
 /* ------------------------------------------------------------------ */
 /* Une section : W.section({ piece, id })                               */
 /* ------------------------------------------------------------------ */
+/** « Ton analyse » (V9.1) : trois notes à écrire avant d'apprendre la section, puis le test des repères. */
+function analysisBox(piece, s) {
+  const a = analysisOf(piece, s.id);
+  const st = sectionState(piece, s.id).st;
+  const done = analysisDone(piece, s.id);
+  const det = h('details', { class: 'pm-ana' + (done ? ' done' : '') }, h('summary', {}, done ? 'Ton analyse ✓' : 'Ton analyse, avant d’apprendre'));
+  det.open = !done && st === 0;
+  const saved = h('span', { class: 'small muted pm-ana-saved', 'aria-live': 'polite' });
+  const body = h('div', { class: 'pm-ana-body' },
+    h('p', { class: 'small' }, 'Deux minutes, partition sous les yeux, sans jouer. Ce que tu notes ici, ce sont tes repères : tu lis par accords au lieu de note à note, et ta mémoire s’appuie sur la structure, pas seulement sur les doigts.'));
+  let tmr = null;
+  const tas = {};
+  // les trois notes enregistrées ensemble (une saisie rapide d'un champ à l'autre ne perd rien)
+  const saveAll = () => { clearTimeout(tmr); tmr = null; saveAnalysis(piece, s.id, Object.fromEntries(ANALYSIS_FIELDS.map(f => [f.id, tas[f.id].value.trim().slice(0, 600)]))); saved.textContent = 'Enregistré.'; const ok = analysisDone(piece, s.id); det.classList.toggle('done', ok); det.querySelector('summary').textContent = ok ? 'Ton analyse ✓' : 'Ton analyse, avant d’apprendre'; };
+  for (const f of ANALYSIS_FIELDS) {
+    const ta = h('textarea', { rows: 2, placeholder: f.ph, 'aria-label': f.label, maxlength: 600 });
+    ta.value = a[f.id] || '';
+    tas[f.id] = ta;
+    ta.addEventListener('input', () => { clearTimeout(tmr); saved.textContent = ''; tmr = setTimeout(saveAll, 600); });
+    ta.addEventListener('blur', () => { if (tmr) saveAll(); });
+    body.append(h('label', { class: 'pm-ana-f' }, h('span', { class: 'pm-h' }, f.label), ta));
+  }
+  body.append(saved);
+  // le test des repères : repartir de chaque point de départ, puis dire les accords sans jouer
+  const test = a.test || {};
+  const ticks = new Set(test.at && daysBetween(test.at, Date.now()) === 0 ? test.starts || [] : []);
+  let chordsOk = !!(test.at && daysBetween(test.at, Date.now()) === 0 && test.chords);
+  const last = h('span', { class: 'small muted' });
+  const showLast = () => { const t = analysisOf(piece, s.id).test; last.textContent = t && t.at ? `Dernier test : ${(() => { const d = daysBetween(t.at, Date.now()); return d <= 0 ? 'aujourd’hui' : d === 1 ? 'hier' : `il y a ${d} jours`; })()} (${(t.starts || []).length}/${s.starts.length} repères${t.chords ? ', accords dits' : ''}).` : ''; };
+  const saveTest = () => saveAnalysis(piece, s.id, { test: { at: Date.now(), starts: [...ticks], chords: chordsOk } });
+  const row = h('div', { class: 'pm-ana-test' });
+  for (const m of s.starts) {
+    const b = h('button', { type: 'button', class: 'btn sm' + (ticks.has(m) ? ' on' : '') }, `Repartir de m. ${m}`);
+    b.addEventListener('click', () => { if (ticks.has(m)) ticks.delete(m); else ticks.add(m); b.classList.toggle('on', ticks.has(m)); saveTest(); showLast(); });
+    row.append(b);
+  }
+  const cb = h('button', { type: 'button', class: 'btn sm' + (chordsOk ? ' on' : '') }, 'Dire ses accords sans jouer');
+  cb.addEventListener('click', () => { chordsOk = !chordsOk; cb.classList.toggle('on', chordsOk); saveTest(); showLast(); });
+  row.append(cb);
+  body.append(h('div', { class: 'pm-h' }, 'Test de la section'),
+    h('p', { class: 'small mb-1' }, 'Quand elle est en place : rejoue-la en partant de chaque repère, sans regarder la partition, puis dis ses accords dans l’ordre, sans jouer. Coche ce qui a tenu.'),
+    row, last);
+  showLast();
+  det.append(body);
+  return det;
+}
+
 export function mountSection(el, cfg) {
   const { piece, id } = cfg;
   const M = mapOf(piece);
@@ -295,6 +365,7 @@ export function mountSection(el, cfg) {
     card.append(h('p', { class: 'small mb-1' }, h('a', { class: 'btn sm', href: fullScoreHref(piece, s.from, s.to) }, `Dans la partition complète, ${bars(s)}`)));
   }
   card.append(h('p', { class: 'small muted mb-0' }, `Points de départ : ${s.starts.map(m => 'mesure ' + m).join(', ')}.`));
+  card.append(analysisBox(piece, s));
   // V8 : la travailler loin du piano (pratique mentale, puis vérification au clavier)
   card.append(h('p', { class: 'small pm-away mb-0' }, h('a', { href: `#/loin/tete/${piece}/${s.id}` }, 'La travailler de tête, loin du piano'), ' : l’écouter en suivant, la lire en l’entendant, la jouer dans ta tête, puis de mémoire.'));
   el.append(card);

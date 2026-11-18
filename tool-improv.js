@@ -19,7 +19,7 @@ import { midi } from './midi.js';
 import { store } from './store.js';
 import { keyboard, COLORS } from './diagrams.js';
 import { scheduleCountIn, countInPosition } from './countin.js';
-import { analyzeTake, evaluate, judgeAnswer, judgeEcho, FIG_LABEL, lhMove } from './impro-check.js';
+import { analyzeTake, evaluate, judgeAnswer, judgeEcho, FIG_LABEL, lhMove, CHECKS } from './impro-check.js';
 
 const PC_NAMES_FLAT = ['do', 'ré♭', 'ré', 'mi♭', 'mi', 'fa', 'sol♭', 'sol', 'la♭', 'la', 'si♭', 'si'];
 const PC_NAMES_SHARP = ['do', 'do♯', 'ré', 'ré♯', 'mi', 'fa', 'fa♯', 'sol', 'sol♯', 'la', 'la♯', 'si'];
@@ -645,6 +645,8 @@ export { ornateMelody as _ornateMelody, figureMelody as _figureMelody, OP15_GRID
 // cfg.step (palier d'une leçon) : { preset, presets?, mode ('libre' | 'qr' | 'echo' | 'squelette'), loops, lh ('app' | 'moi'),
 //   tr (transposition, en demi-tons), bpm?, qr: { variant, figure }, echo: { rhythms, end, count, sing }, checks: [...] }
 // cfg.onResult(res) : appelé à la fin d'une prise de palier, avec { ok, lines, score }.
+// formules dont le rythme de main gauche est vérifiable (formulaSteps) ; l'ostinato des leçons = une note par temps
+const LH_DIAG = new Set(['plaque', 'basse', 'basse-accord', 'valse', 'arpege', 'alberti', 'ostinato']);
 export function mountImprov(el, cfg = {}) {
   const step = cfg.step || null;
   let presetId = step?.preset || cfg.preset || 'n1-nocturne';
@@ -1188,6 +1190,17 @@ export function mountImprov(el, cfg = {}) {
       legend.querySelectorAll('.lg-target').forEach(x => { x.hidden = !showsTargets(); });
       updateHelpers();
       resBox.append(h('p', { class: 'small ir-gold' }, 'L’or revient pour la prise suivante : regarde-le, puis cache-le dès que tu peux.'));
+    }
+    // V9.1 : quand tu joues la main gauche sur une formule connue, son rythme est vérifié à titre indicatif (lhGrid :
+    // entraînée par la droite, arrêtée, décalée) ; s'il cloche, renvoi vers l'échelle de coordination (Tes 15 minutes, C).
+    // Pas pour les préludes (la figuration passe d'une main à l'autre) ni quand l'exercice vérifie déjà la main gauche ainsi.
+    if (lhMode === 'moi' && LH_DIAG.has(step.formula) && !/^prelude/.test(presetId) && !(step.checks || []).some(c => c.k === 'lhGrid')) {
+      const r = CHECKS.lhGrid(A, { formula: step.formula, min: 0.8 });
+      if (r.line && !/^Trop peu/.test(r.line)) {
+        resBox.append(h('div', { class: 'ir-lh ' + (r.ok ? 'ok' : 'todo') }, h('b', {}, 'Ta main gauche, en plus (indicatif) : '), r.line,
+          ...(r.ok ? [] : [' ', h('a', { href: '#/quinze' }, 'L’échelle de coordination'), ' (Tes 15 minutes, bloc C) travaille ça, une difficulté à la fois.'])));
+        res.lh = { ok: r.ok, line: r.line };
+      }
     }
     status.textContent = res.ok ? 'Réussi. Réécoute-toi, ou passe à l’exercice suivant.' : 'Relance quand tu veux : un essai de plus, un peu plus lentement si besoin (curseur du tempo).';
     cfg.onResult?.(res, { A, bpm });

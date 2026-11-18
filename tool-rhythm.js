@@ -1013,6 +1013,12 @@ const PIECE_RHYTHMS = [
   { piece: 'OP15', key: 'e1', hand: 'lh', bpm: 56, label: 'Op. 15 n° 1, m. 1-8 — main gauche : triolets d’accompagnement' },
   { piece: 'OP15', key: 'e1', hand: 'rh', bpm: 56, label: 'Op. 15 n° 1, m. 1-8 — main droite : la mélodie' },
   { piece: 'CLAIR', key: 'e1', hand: 'rh', bpm: 32, label: 'Clair de lune, m. 1-4 — main droite : 9/8, liaisons et duolets' },
+  // V9.1, niveau 14 : les rythmes de tes pièces avec la vraie main gauche (touche grave) et la droite (touche aiguë)
+  { piece: 'OP55', key: 'e1', hand: 'both', bpm: 48, label: 'Op. 55 n° 1, m. 1-4 — à deux mains : la gauche régulière, la droite pointée' },
+  { piece: 'OP55', key: 'e5', hand: 'both', bpm: 40, label: 'Op. 55 n° 1, m. 27-28 — à deux mains : triolets contre noires' },
+  { piece: 'OP15', key: 'e1', hand: 'both', bpm: 48, label: 'Op. 15 n° 1, m. 1-8 — à deux mains : la mélodie sur les triolets' },
+  { piece: 'OP28', key: 'n4a', hand: 'both', bpm: 46, label: 'Prélude op. 28 n° 4, début — à deux mains : les croches de la gauche, les longues de la droite' },
+  { piece: 'OP70', key: 'n2', hand: 'both', bpm: 92, label: 'Valse op. 70 n° 2, début — à deux mains : la valse sous la mélodie' },
 ];
 
 export const RHYTHM_PROGRESS_KEY = 'rhythm';
@@ -1065,7 +1071,7 @@ export function mountRhythmPage(el) {
     }
   };
 
-  const TABS = [['read', 'Lire et taper'], ['dict', 'Dictée'], ['pieces', 'Tes pièces'], ['count', 'Compter']];
+  const TABS = [['read', 'Lire et taper'], ['dict', 'Dictée'], ['pieces', 'Tes pièces'], ['cells', 'Cellules'], ['count', 'Compter']];
   let activeTab = 'read';
   const show = (id) => {
     activeTab = id;
@@ -1080,20 +1086,31 @@ export function mountRhythmPage(el) {
     } else if (id === 'dict') {
       cleanup.push(mountDictation(host, { level: Math.min(current, 9), title: `Dictée — niveau ${Math.min(current, 9)}` }));
     } else if (id === 'pieces') {
-      const list = h('div', { class: 'grid cols-2' });
       const exHost = h('div', { class: 'w mt-2' });
-      for (const it of PIECE_RHYTHMS) {
+      const cardOf = it => {
         const c = h('button', { class: 'card', type: 'button', style: { textAlign: 'left', cursor: 'pointer', font: 'inherit' } }, h('h3', {}, it.label.split(' — ')[0]), h('p', {}, it.label.split(' — ')[1]));
         c.addEventListener('click', async () => {
           cleanup.forEach(f => { try { f(); } catch (e) { /* */ } }); cleanup = [];
           const ex = await import('./content-excerpts.js');
           exHost.innerHTML = '';
-          cleanup.push(mountRhythm(exHost, { abc: ex[it.piece][it.key], handFilter: it.hand, bpm: it.bpm, title: it.label, stat: `piece:${it.piece}.${it.key}.${it.hand}` }));
+          const both = it.hand === 'both';
+          cleanup.push(mountRhythm(exHost, { abc: ex[it.piece][it.key], handFilter: both ? null : it.hand, bpm: it.bpm, title: it.label, stat: `piece:${it.piece}.${it.key}.${it.hand}` }));
           exHost.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
-        list.append(c);
-      }
-      host.append(h('p', { class: 'small mt-0' }, 'Tape le rythme d’une seule main sur une touche : les hauteurs ne comptent pas. Les petites notes et les trilles ne se tapent pas.'), list, exHost);
+        return c;
+      };
+      const one = PIECE_RHYTHMS.filter(it => it.hand !== 'both'), two = PIECE_RHYTHMS.filter(it => it.hand === 'both');
+      host.append(h('p', { class: 'small mt-0' }, 'Tape le rythme d’une seule main sur une touche : les hauteurs ne comptent pas. Les petites notes et les trilles ne se tapent pas.'),
+        h('div', { class: 'grid cols-2' }, ...one.map(cardOf)),
+        h('h3', { class: 'mt-2' }, 'Niveau 14 : tes pièces, à deux mains'),
+        h('p', { class: 'small mt-0' }, 'Le vrai rythme de la main gauche sur une touche grave, celui de la droite sur une touche aiguë (ou les deux zones de l’écran). L’appli juge chaque main à part, et voit si ta gauche se laisse entraîner par la droite. Commence lentement.'),
+        h('div', { class: 'grid cols-2' }, ...two.map(cardOf)), exHost);
+    } else if (id === 'cells') {
+      import('./tool-defis.js').then(m => {
+        if (activeTab !== 'cells') return;
+        host.append(h('p', { class: 'small mt-0' }, 'Les seize façons de remplir un temps de doubles croches, avec silences et liaisons : on les reconnaît d’un coup, comme des mots, au lieu de les compter. Une minute, le plus de bonnes réponses ; puis tape-les dans « Lire et taper » (niveaux 5 et 6).'));
+        cleanup.push(m.mountDefis(host, { theme: 'cellules', title: false }));
+      });
     } else if (id === 'count') {
       import('./tool-ear.js').then(m => {
         if (activeTab !== 'count') return;

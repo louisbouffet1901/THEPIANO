@@ -1,8 +1,11 @@
 // Défi éclair (V8.1) : une minute pour répondre juste au plus de questions de théorie, tirées au hasard et vérifiées
 // par le moteur de théorie (theory.js) : armures, relatives, intervalles, accords, degrés, cycle des quintes. Un record
 // par thème, un défi du jour, et à la fin ce qui t'a trompé.
+// V9.1 : les cellules de rythme (bilan du 17 novembre, § 4.4) : les seize façons de remplir un temps de doubles croches,
+// avec silences et liaisons, à reconnaître d'un coup d'œil (on les lit comme des mots, on ne les compte plus).
 import { h, esc, shuffle, pick } from './util.js';
 import { store } from './store.js';
+import { ensureAbcjs } from './lazy.js';
 import { noteName, transpose, interval, chord, scale, keySignature, relative, keyName, ivName, parseNote, CHORD_NAME, FLAT_ORDER, SHARP_ORDER } from './theory.js';
 
 export const THEMES = [
@@ -12,7 +15,8 @@ export const THEMES = [
   { id: 'accords', label: 'Accords', sub: 'les notes d’un accord, ou son nom' },
   { id: 'degres', label: 'Degrés', sub: 'dominante, sous-dominante, sensible…' },
   { id: 'quintes', label: 'Cycle des quintes', sub: 'une quinte au-dessus, au-dessous' },
-  { id: 'tout', label: 'Tout mélangé', sub: 'un peu de tout' },
+  { id: 'cellules', label: 'Cellules de rythme', sub: 'un temps en doubles croches, d’un coup d’œil' },
+  { id: 'tout', label: 'Tout mélangé', sub: 'un peu de tout (sans le rythme)' },
 ];
 const DURATION = 60;
 const MEDALS = [[20, 'or'], [14, 'argent'], [8, 'bronze']];
@@ -151,10 +155,51 @@ const GEN = {
     return { q: `La tonalité voisine qui a ${up ? 'un dièse de plus (ou un bémol de moins)' : 'un bémol de plus (ou un dièse de moins)'} que ${keyName(t, 'maj')} ?`, a: ans, options: four(ans, pool), why: up ? 'Une quinte au-dessus : un dièse de plus.' : 'Une quinte en dessous : un bémol de plus.' };
   },
 };
-/** Une question d'un thème (« tout » : un thème au hasard). Toujours quatre réponses différentes. */
+/* ------------------------------------------------------------------ */
+/* Cellules de rythme (V9.1)                                            */
+/* ------------------------------------------------------------------ */
+// Une cellule = les attaques d'un temps parmi les quatre doubles croches (1, e, et, a) : 2⁴ = 16 cellules (la vide est
+// un silence, ou une note tenue). Écritures : chaque note tenue jusqu'à la suivante, ou courte suivie d'un silence ; sans
+// attaque sur le temps, un silence, ou une liaison venue du temps d'avant (on montre alors deux temps).
+export const CELL_SETS = Array.from({ length: 16 }, (_, m) => [0, 1, 2, 3].filter(i => m & (8 >> i)));
+const SYL = ['1', 'e', 'et', 'a'];
+export const cellSyl = (set, beat = 1) => [0, 1, 2, 3].map(i => (set.includes(i) ? (i ? SYL[i] : String(beat)) : '·')).join(' ');
+const len16 = n => (n === 1 ? '' : String(n));
+/** L'écriture ABC d'un temps (L:1/16) : tenu = chaque note jusqu'à la suivante ; court = note puis silence. */
+export function cellBody(set, { short = [], tieIn = false } = {}) {
+  if (!set.length) return tieIn ? 'B4' : 'z4';
+  let out = '';
+  if (set[0] > 0) out += (tieIn ? 'B' : 'z') + len16(set[0]);
+  set.forEach((p, i) => {
+    const span = (set[i + 1] ?? 4) - p;
+    out += short[i] && span > 1 ? `B${'z' + len16(span - 1)}` : `B${len16(span)}`;
+  });
+  return out;
+}
+export function cellQuestion(rnd = Math.random) {
+  const sets = CELL_SETS.filter(x => x.length);
+  const set = sets[Math.floor(rnd() * sets.length)];
+  const tie = set[0] > 0 && rnd() < 0.45; // sans attaque sur le temps : une fois sur deux, une liaison
+  const short = set.map(() => rnd() < 0.3);
+  const beat = tie ? 2 : 1;
+  const body = cellBody(set, { short, tieIn: tie });
+  const abc = `X:1\nM:${tie ? '2/4' : 'none'}\nL:1/16\nK:C clef=perc stafflines=1\nV:1 clef=perc stafflines=1 stem=up\n${tie ? 'B4-' : ''}${body} |]`;
+  const key = s => s.join('');
+  const dist = (a, b) => [0, 1, 2, 3].filter(i => a.includes(i) !== b.includes(i)).length;
+  const near = sets.filter(x => key(x) !== key(set)).sort((a, b) => dist(a, set) - dist(b, set) || rnd() - 0.5);
+  const opts = shuffle([set, ...near.slice(0, 3)]).map(x => cellSyl(x, beat));
+  const n = set.length;
+  const why = tie
+    ? `Le ${beat}e temps commence lié : pas d’attaque sur « ${beat} ». Les attaques : ${cellSyl(set, beat).replace(/·/g, '–')}.`
+    : `${n} attaque${n > 1 ? 's' : ''} : ${cellSyl(set, beat).replace(/·/g, '–')}${short.some(Boolean) ? ' (une note courte suivie d’un silence se compte comme une note tenue : seule l’attaque compte)' : ''}.`;
+  return { q: tie ? `Le ${beat}e temps : où sont les attaques ?` : 'Où sont les attaques dans ce temps ?', abc, a: cellSyl(set, beat), options: opts, why };
+}
+GEN.cellules = () => cellQuestion();
+
+/** Une question d'un thème (« tout » : un thème au hasard, sans le rythme). Toujours quatre réponses différentes. */
 export function question(theme) {
   for (let k = 0; k < 30; k++) {
-    const t = theme === 'tout' || !GEN[theme] ? pick(Object.keys(GEN)) : theme;
+    const t = theme === 'tout' || !GEN[theme] ? pick(Object.keys(GEN).filter(x => x !== 'cellules')) : theme;
     const q = GEN[t]();
     if (q && q.options && q.options.length === 4 && q.options.includes(q.a) && new Set(q.options).size === 4) return { ...q, theme: t };
   }
@@ -202,11 +247,13 @@ export function mountDefis(el, { theme = null, compact = false, title = true, on
     }
     const go = h('button', { class: 'btn primary lg', type: 'button' }, `C’est parti : ${THEMES.find(t => t.id === chosen).label.toLowerCase()} (1 minute)`);
     go.addEventListener('click', play);
-    body.append(compact ? null : h('p', { class: 'small mt-0' }, 'Réponds juste au plus de questions en une minute. Une erreur ne coûte que du temps : la bonne réponse s’affiche, puis on continue. Médailles : bronze à 8, argent à 14, or à 20.'), grid, h('div', { class: 'btn-row mt-1' }, go));
+    body.append(...[compact ? null : h('p', { class: 'small mt-0' }, 'Réponds juste au plus de questions en une minute. Une erreur ne coûte que du temps : la bonne réponse s’affiche, puis on continue. Médailles : bronze à 8, argent à 14, or à 20.'), grid, h('div', { class: 'btn-row mt-1' }, go)].filter(Boolean));
   }
 
-  function play() {
+  async function play() {
     stop();
+    if (chosen === 'cellules') { try { await ensureAbcjs(); } catch (e) { /* hors connexion sans abcjs : questions sans portée */ } }
+    if (!alive) return;
     body.innerHTML = '';
     let score = 0, n = 0, streak = 0, best = 0, locked = false;
     const misses = [];
@@ -231,6 +278,11 @@ export function mountDefis(el, { theme = null, compact = false, title = true, on
       el.__defi.current = q;
       locked = false;
       qEl.textContent = q.q;
+      if (q.abc && window.ABCJS) {
+        const st = h('div', { class: 'df-staff' });
+        qEl.append(st);
+        try { window.ABCJS.renderAbc(st, q.abc, { scale: 2.2, staffwidth: q.abc.includes('M:2/4') ? 300 : 170, paddingtop: 0, paddingbottom: 0, paddingleft: 0, paddingright: 0 }); } catch (e) { st.textContent = '…'; }
+      }
       opts.innerHTML = '';
       q.options.forEach((o, i) => {
         const b = h('button', { type: 'button', class: 'df-opt' }, h('span', { class: 'df-k' }, String(i + 1)), o);

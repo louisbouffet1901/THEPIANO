@@ -207,7 +207,8 @@ export function mountQuinze(el) {
     cleanup = null;
     host.replaceChildren(h('p', { class: 'small muted' }, 'Chargement…'));
     todo.textContent = TODO[id](p.cyc);
-    why.replaceChildren(h('summary', {}, 'Pourquoi ?'), h('div', { class: 'more-body' }, ...WHY[id].map(t => h('p', { class: 'small' }, t))));
+    why.replaceChildren(h('summary', {}, 'Pourquoi ?'), h('div', { class: 'more-body' }, ...WHY[id].map(t => h('p', { class: 'small' }, t)),
+      ...(id === 'A' ? [h('p', { class: 'small' }, 'Pour reconnaître les cellules d’un coup d’œil : ', h('a', { href: '#/theorie/defis/cellules' }, 'le Défi éclair des cellules'), ' (une minute, même loin du piano).')] : [])));
     why.open = false;
     renderSteps(); buildTimer(); renderAfter();
     try {
@@ -297,7 +298,10 @@ function mountBlockB(el, p, still) {
     if (s.id === 'reflexes' || s.id === 'accords') {
       const [m] = await Promise.all([import('./tool-reflexes.js'), ensureAbcjs()]);
       if (my !== g || !still()) return;
-      un = m.mountReflexes(box, { mode: s.id, key, cycleN: p.c.n, maxAcc: Math.min(7, 3 + p.c.n), bare: false,
+      // les tonalités des cycles passés, en révision (degrés)
+      const review = [];
+      for (let ci = 1; ci < p.c.n; ci++) for (const k of Q.cycleDef(ci).keys) if (!(k.tonic === key.tonic && k.mode === key.mode) && !review.some(r => r.tonic === k.tonic && r.mode === k.mode)) review.push({ tonic: k.tonic, mode: k.mode });
+      un = m.mountReflexes(box, { mode: s.id, key, cycleN: p.c.n, maxAcc: Math.min(7, 3 + p.c.n), bare: false, review,
         onFinish: r => {
           mark(s.id, s.id === 'accords' ? `${r.npm} par minute` : `${r.ok} justes, ${fmtSec(r.avgMs)}`);
           Q.snapshot();
@@ -315,7 +319,7 @@ function mountBlockB(el, p, still) {
       if (my !== g || !still()) return;
       const K = r.keyInfo(key);
       const stored = String(store.get('sight.level') || '');
-      un = m.mountSight(box, { levels: ['2', '3'], level: ['2', '3'].includes(stored) ? stored : '3', fifths: [K.fifths], prepSeconds: 20,
+      un = m.mountSight(box, { levels: ['2', '3'], level: ['2', '3'].includes(stored) ? stored : '3', fifths: [K.fifths], prepSeconds: 20, lhChords: true,
         title: `Un extrait avec l’armure de ${Q.keyLabel(key)}`,
         onResult: x => mark('lire', `${Math.round(x.accuracy * 100)} % justes`) });
     }
