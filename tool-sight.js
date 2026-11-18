@@ -57,7 +57,8 @@ function saveLevel(lv, st) { store.set('sight.levels.' + lv, st); }
 
 /** Filtre d'une leçon : armure minimale, mesure composée. */
 function applyFilter(items, f = {}) {
-  return items.filter(x => (!f.minFifths || Math.abs(x.f) >= f.minFifths) && (!f.compound || (x.m[1] === 8 && x.m[0] % 3 === 0 && x.m[0] > 3)));
+  return items.filter(x => (!f.minFifths || Math.abs(x.f) >= f.minFifths) && (!f.compound || (x.m[1] === 8 && x.m[0] % 3 === 0 && x.m[0] > 3))
+    && (!f.fifths || f.fifths.includes(x.f))); // V9 : la tonalité du cycle (armure)
 }
 
 /**
@@ -181,7 +182,7 @@ export function mountSight(el, cfg = {}) {
   const stored = levelId(store.get('sight.level'));
   let lv = levelId(cfg.level) || levelId(cfg.preset) || (stored && choices.includes(stored) ? stored : choices[0]);
   if (!choices.includes(lv)) lv = choices[0];
-  const filter = { minFifths: cfg.minFifths || 0, compound: !!cfg.compound };
+  const filter = { minFifths: cfg.minFifths || 0, compound: !!cfg.compound, fifths: cfg.fifths || null };
 
   const frame = h('div', { class: 'w-frame sight' });
   const sel = h('select', { class: 'sight-level', 'aria-label': 'Niveau de lecture' }, ...choices.map(id => h('option', { value: id, selected: id === lv }, LEVELS[id].title)));
@@ -201,12 +202,12 @@ export function mountSight(el, cfg = {}) {
   el.append(frame);
 
   let items = [], sources = [], item = null, score = null, player = null, follower = null, reader = null, vk = null;
-  let prepTimer = null, mask = false, attempted = false, alive = true, loadGen = 0;
+  let prepTimer = null, mask = false, attempted = false, alive = true, loadGen = 0, noKey = false;
   let st = levelState(lv);
   let bpm = 60;
 
   const btn = (label, cls = '', title) => h('button', { class: 'btn ' + cls, type: 'button', title }, label);
-  const prepBtn = btn('Préparer 30 s puis jouer', 'primary', 'Analyse guidée de l’extrait, puis départ en rythme');
+  const prepBtn = btn(`Préparer ${cfg.prepSeconds || 30} s puis jouer`, 'primary', 'Analyse guidée de l’extrait, puis départ en rythme');
   const playBtn = btn('Jouer en rythme', '', 'Un décompte, puis on ne s’arrête plus');
   const waitBtn = btn('Mode attente', '', 'Le curseur attend la bonne note : pour une nouvelle clé ou tonalité, ce n’est pas encore de la lecture à vue');
   const nextBtn = btn('Extrait suivant', '');
@@ -289,6 +290,8 @@ export function mountSight(el, cfg = {}) {
 
   function next() {
     stopAll();
+    // V9 : aucun extrait avec l'armure demandée à ce niveau (quatre bémols au niveau 3, par exemple) : toutes les armures
+    if (filter.fifths && !applyFilter(items, filter).length) { filter.fifths = null; noKey = true; }
     const pool = applyFilter(items, filter);
     // pas deux fois de suite le même compositeur (ni la même pièce)
     const prev = item ? (sources[item.s] || {}).c : null;
@@ -306,7 +309,8 @@ export function mountSight(el, cfg = {}) {
     bpm = Math.round(clamp(item.b * speed, 30, 160));
     rng.value = bpm; showTempo();
     caption.textContent = srcText(item);
-    status.textContent = r.reset ? 'Tu as lu tous les extraits de ce niveau : ils reviennent, dans un autre ordre.' : 'Commence par « Préparer » : 30 secondes pour lire avant de jouer.';
+    status.textContent = r.reset ? 'Tu as lu tous les extraits de ce niveau : ils reviennent, dans un autre ordre.' : `Commence par « Préparer » : ${cfg.prepSeconds || 30} secondes pour lire avant de jouer.`;
+    if (noKey) status.textContent += ' (Pas d’extrait avec cette armure à ce niveau : toutes les armures.)';
     renderInfo();
     renderHistory();
   }
@@ -390,7 +394,7 @@ export function mountSight(el, cfg = {}) {
     goBtn.addEventListener('click', go);
     tick();
     prepTimer = setInterval(tick, 1000);
-    status.textContent = 'Réponds en lisant la partition, sans jouer. Le départ se fait seul au bout de 30 s.';
+    status.textContent = `Réponds en lisant la partition, sans jouer. Le départ se fait seul au bout de ${cfg.prepSeconds || 30} s.`;
   }
 
   async function runTempo() {
@@ -449,6 +453,7 @@ export function mountSight(el, cfg = {}) {
     markSeen();
     saveLevel(lv, st);
     store.push('stats.sight', { id: 'corpus:' + lv, ex: item.i, mode: 'tempo', bpm, at: Date.now(), accuracy: res.accuracy, precision: res.precision, extra: res.extra, meanAbsMs: res.meanAbsMs });
+    try { cfg.onResult?.({ accuracy: res.accuracy, precision: res.precision, first }); } catch (e) { console.warn(e); }
     const wb = worstBar(res);
     const lines = [];
     lines.push(verdict ? VERDICT[verdict] : 'Deuxième lecture : elle ne compte pas pour la progression (ce n’est plus de la lecture à vue).');

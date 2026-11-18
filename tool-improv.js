@@ -334,6 +334,17 @@ export function buildTimeline(P) {
   return list;
 }
 
+/** V9 : une grille I – IV – V7 – I (ou i – iv – V7 – i) dans une tonalité et une mesure, créée à la demande (échelle de coordination). */
+export function ensureCadencePreset(tonic, mode, meter) {
+  const id = `q-${tonic}-${mode}-${meter}`;
+  if (!IMPROV_PRESETS[id]) {
+    const maj = mode === 'maj';
+    IMPROV_PRESETS[id] = { title: `${pcName(tonic, { tonic, mode })} ${maj ? 'majeur' : 'mineur'} : ${maj ? 'I – IV – V7 – I' : 'i – iv – V7 – i'}`, tonic, mode, meter,
+      bars: maj ? ['I', 'IV', 'V7', 'I'] : ['i', 'iv', 'V7', 'i'], pattern: meter === 3 ? 'mg-valse' : 'mg-basse-accord', bpm: 56, hidden: true };
+  }
+  return id;
+}
+
 /** Voicing : basse, accord au-dessus (ou les notes exactes de la grille), échelle d'arpège. */
 export function voicing(ch) {
   const pcs = CHORDS[ch.q].iv.map(x => (ch.root + x) % 12);
@@ -637,7 +648,7 @@ export { ornateMelody as _ornateMelody, figureMelody as _figureMelody, OP15_GRID
 export function mountImprov(el, cfg = {}) {
   const step = cfg.step || null;
   let presetId = step?.preset || cfg.preset || 'n1-nocturne';
-  const presetIds = (step ? (step.presets || [step.preset]) : (cfg.presets || Object.keys(IMPROV_PRESETS))).filter(p => IMPROV_PRESETS[p]);
+  const presetIds = (step ? (step.presets || [step.preset]) : (cfg.presets || Object.keys(IMPROV_PRESETS).filter(p => !IMPROV_PRESETS[p].hidden))).filter(p => IMPROV_PRESETS[p]);
   if (!IMPROV_PRESETS[presetId]) presetId = presetIds[0];
   const split = store.get('settings.split') || 60;
   const frame = h('div', { class: 'w-frame improv' + (step ? ' improv-step' : '') });
@@ -666,7 +677,7 @@ export function mountImprov(el, cfg = {}) {
   el.append(frame);
 
   let P, timeline, kb, playing = false, timer = null, nextTime, idx, chordLog = [], played = [], offNote = null, offOff = null, bpm;
-  let mode = step?.mode || 'libre', lhMode = step?.lh || 'app', clickOn = lhMode !== 'app', rec = [], recStart = null, lastRec = null, replaying = false;
+  let mode = step?.mode || 'libre', lhMode = step?.lh || cfg.lh || 'app', clickOn = lhMode !== 'app', rec = [], recStart = null, lastRec = null, replaying = false;
   let plan = [];          // ta main gauche : { bass, chord } pour chaque accord de la grille (V7.4)
   let demo = null;        // écoute d'un modèle : { kind: 'mg' | 'skeleton' }, sans enregistrement ni vérification
   let goldOn = step?.gold !== 'memo';   // notes en or affichées (de mémoire : cachées, sauf après un échec ou à la demande)
@@ -1158,6 +1169,7 @@ export function mountImprov(el, cfg = {}) {
     const enough = segs ? segResults.length >= 2 : A.all.length >= 3 && span >= Math.min(3, barsGrid - 1);
     if (!enough) { status.textContent = 'Prise trop courte : rien n’est enregistré. Relance quand tu es prêt.'; return; }
     const res = evaluate(A, step.checks || [], { segResults, targetAt: hasTargets() ? targetAt : null, chordTargets: !!P.chordTargets, melody: P.melody || null });
+    if (step.hideResult) { status.textContent = res.ok ? 'Réussi.' : 'Pas encore : relance quand tu veux.'; cfg.onResult?.(res, { A, bpm }); return; }
     resBox.hidden = false;
     resBox.innerHTML = '';
     resBox.append(
@@ -1178,7 +1190,7 @@ export function mountImprov(el, cfg = {}) {
       resBox.append(h('p', { class: 'small ir-gold' }, 'L’or revient pour la prise suivante : regarde-le, puis cache-le dès que tu peux.'));
     }
     status.textContent = res.ok ? 'Réussi. Réécoute-toi, ou passe à l’exercice suivant.' : 'Relance quand tu veux : un essai de plus, un peu plus lentement si besoin (curseur du tempo).';
-    cfg.onResult?.(res);
+    cfg.onResult?.(res, { A, bpm });
   };
 
   const stop = (natural = false) => {

@@ -27,10 +27,21 @@ const CELLS = {
   // mesure composée (temps = noire pointée = 6 doubles croches)
   eee: [2, 2, 2], qe: [4, 2], eq: [2, 4], qdot: [6], qdr: ['r6'], e_ss_e: [2, 1, 1, 2], ssss_e: [1, 1, 1, 1, 2], er_ee: ['r2', 2, 2],
   hdot: [12],
+  // n-olets (V9) : un temps, notes hors de la grille des doubles croches (voir TUPLETS)
+  sext: ['u'], e_t16: ['u'], t16_e: ['u'], quint: ['u'], sept: ['u'],
+};
+/** n-olets d'un temps (durées en doubles croches) : sextolet, croche + triolet de doubles croches, quintolet, septolet. */
+const TUPLETS = {
+  sext: { abc: n => `(6:4${n.repeat(6)}`, durs: Array(6).fill(4 / 6), sub: 6 },
+  e_t16: { abc: n => `${n}2(3${n.repeat(3)}`, durs: [2, 2 / 3, 2 / 3, 2 / 3], sub: 4 },
+  t16_e: { abc: n => `(3${n.repeat(3)}${n}2`, durs: [2 / 3, 2 / 3, 2 / 3, 2], sub: 4 },
+  quint: { abc: n => `(5:4${n.repeat(5)}`, durs: Array(5).fill(4 / 5), sub: 4 },
+  sept: { abc: n => `(7:4${n.repeat(7)}`, durs: Array(7).fill(4 / 7), sub: 4 },
 };
 /** Longueur d'une cellule en doubles croches. */
 function cellLen(c) {
   const v = CELLS[c];
+  if (TUPLETS[c]) return 4;
   if (c === 'q_tie') return 8;
   if (v[0] === 't') return 4;
   return v.reduce((a, x) => a + (typeof x === 'string' ? +x.slice(1) : x), 0);
@@ -61,7 +72,17 @@ export const LEVELS = [
   { id: 10, title: 'Deux mains : 2 contre 3, 3 contre 4', meters: ['2/4', '3/4'], twoHands: true,
     intro: '<p>Une main fait deux notes par temps, l’autre trois. Ensemble sur le temps ; entre les deux, l’ordre est : 2e note du triolet, 2e note du duolet, 3e note du triolet (« nice cup of tea »). Commence très lentement, une main sur une touche grave, l’autre sur une touche aiguë.</p>' },
 ];
+LEVELS.push(
+  { id: 11, title: 'Changer d’unité : les triples croches', meters: ['4/8', '2/8'], halve: { '4/8': '4/4', '2/8': '2/4' }, from: [5, 6, 9], unit: 'croche',
+    intro: '<p>Dans un tempo lent, l’unité devient la croche : chaque croche est un temps, partagé en quatre triples croches (« 1 e et a »). Une double croche pointée suivie d’une triple se lit comme une croche pointée et une double : le même geste, deux fois plus serré sur la page. C’est ainsi qu’on lit les passages ornés des nocturnes, où la mesure est à quatre temps mais le tempo très lent.</p>' },
+  { id: 12, title: 'Sextolets et triolets de doubles croches', meters: ['2/4', '3/4', '4/4'], cells: { q: 2, ssss: 2, trip: 2, sext: 4, e_t16: 3, t16_e: 2 }, focus: ['sext', 'e_t16', 't16_e'], weakHalf: true,
+    intro: '<p>Six notes dans un temps : deux triolets de doubles croches (« 1 · et · a · »). Croche puis triolet de doubles croches : la croche sur le temps, les trois brèves serrées dans la seconde moitié. La pulsation ne change pas : seul le nombre de notes change.</p>' },
+  { id: 13, title: 'Groupes irréguliers : 5, 6, 7 notes', meters: ['2/4', '3/4'], cells: { q: 2, ee: 1, ssss: 2, sext: 1, quint: 3, sept: 3 }, focus: ['quint', 'sept'], lenient: true, weakHalf: true,
+    intro: '<p>Cinq ou sept notes dans un temps : on ne les compte pas. Départ avec le temps, arrivée sur le temps suivant, notes réparties également entre les deux, comme le septolet de l’op. 55 (m. 44). Seuls la première note et le temps suivant sont jugés de près ; les notes du milieu doivent être là, à peu près égales.</p>' },
+);
 const levelById = id => LEVELS.find(l => l.id === id) || LEVELS[0];
+/** Unité de la pulsation affichée : noire, noire pointée (mesures composées) ou croche (niveau 11). */
+const unitOf = L => (L.unit === 'croche' ? '♪' : L.compound ? '♩.' : '♩');
 
 /* ------------------------------------------------------------------ */
 /* Génération : une phrase avec une logique (motif, variante ou question, contraste, conclusion) */
@@ -196,6 +217,10 @@ export function genPhrase(levelId, { bars = 4, meter = null, form = null } = {})
   meter = meter || pick(L.meters);
   const mi = meterInfo(meter);
   if (L.twoHands) return genPoly(meter, bars);
+  if (L.halve) {
+    const base = genPhrase(pick(L.from), { bars, meter: L.halve[meter] || '4/4', form });
+    return { ...base, meter, level: L.id, unit32: true, abc: base.abc.replace(/^M:.*$/m, `M:${meter}`).replace(/^L:1\/16$/m, 'L:1/32') };
+  }
   const A = genBar(L, mi, { mustHave: L.focus, avoidStartRest: L.id <= 2 });
   let list, labels, formId;
   if (bars === 2) {
@@ -239,6 +264,7 @@ export function phraseEvents(bars, mi) {
       const v = CELLS[c];
       if (c === 'q_tie') { evs.push({ t: t16, d: 2 }, { t: t16 + 2, d: 4 }, { t: t16 + 6, d: 2 }); t16 += 8; continue; }
       if (v[0] === 't') { for (let k = 0; k < 3; k++) evs.push({ t: t16 + k * 4 / 3, d: 4 / 3 }); t16 += 4; continue; }
+      if (TUPLETS[c]) { let u = t16; for (const d of TUPLETS[c].durs) { evs.push({ t: u, d }); u += d; } t16 += 4; continue; }
       for (const x of v) {
         if (typeof x === 'string') { t16 += +x.slice(1); continue; }
         evs.push({ t: t16, d: x }); t16 += x;
@@ -252,6 +278,7 @@ function cellAbc(c, note = 'B') {
   const v = CELLS[c];
   // deux temps : croche, croche liée à la croche suivante, croche (attaques sur 1, « et », « et » du 2e temps)
   if (c === 'q_tie') return `${note}2${note}2- ${note}2${note}2`;
+  if (TUPLETS[c]) return TUPLETS[c].abc(note);
   if (v[0] === 't') return `(3${note}2${note}2${note}2`;
   return v.map(x => (typeof x === 'string' ? `z${x.slice(1)}` : `${note}${x === 1 ? '' : x}`)).join('');
 }
@@ -286,6 +313,12 @@ function barSyllables(cells, mi) {
       out.push(String(b0 + 1), 'et', 'a');
       u += 4; continue;
     }
+    if (TUPLETS[c]) {
+      const b0 = Math.floor((u + 1e-9) / mi.beatUnits);
+      let off = u - b0 * mi.beatUnits;
+      for (const d of TUPLETS[c].durs) { out.push(syllable(b0, off, mi.beatUnits, TUPLETS[c].sub)); off += d; }
+      u += 4; continue;
+    }
     for (const x of v) {
       if (typeof x === 'string') { u += +x.slice(1); continue; }
       const bi = Math.floor((u + 1e-9) / mi.beatUnits);
@@ -310,7 +343,7 @@ function genPoly(meter, bars) {
   const bar = p => Array(mi.beats).fill(p).join(' ');
   const last = p => Array(mi.beats - 1).fill(p).concat(['B4']).join(' ');
   const line = p => Array(bars - 1).fill(bar(p)).concat([last(p)]).join(' | ');
-  const abc = `X:1\nM:${meter}\nL:1/16\n%%score RH LH\nV:RH clef=perc stafflines=1\nV:LH clef=perc stafflines=1\nK:C\n[V:RH] ${line(pat[0])} |]\n[V:LH] ${line(pat[1])} |]\n`;
+  const abc = `X:1\nM:${meter}\nL:1/16\n%%score RH LH\nV:RH clef=perc stafflines=1\nV:LH clef=perc stafflines=1\nK:C\n[V:RH] ${line(pat[0])} |]\n[V:LH] ${line(pat[1]).replace(/B/g, 'A')} |]\n`; // V9 : la main gauche sur A, sinon ses notes sur les temps se fondaient dans celles de la droite
   return { meter, mi, bars: [], labels: null, level: 10, abc, kind, explain: kind === '3:4' ? 'trois contre quatre' : 'deux contre trois' };
 }
 
@@ -483,7 +516,10 @@ class RhythmRun {
     const endAt = answerStart + (phraseQ + sc.beatQ) * spq;
     // clics pendant la réponse (ou rien : le décompte seul)
     if (o.clicks !== false) {
-      for (let t = answerStart + pick0, k = 0; t < endAt - beatSec * 0.5; t += beatSec, k++) this.clickNodes.push(audio.click(t, k % beatsPerBar === 0 ? 'accent' : 'beat'));
+      for (let t = answerStart + pick0, k = 0; t < endAt - beatSec * 0.5; t += beatSec, k++) {
+        if (o.clicks === 'bar' && k % beatsPerBar) continue; // V9 : la pulsation passe dans la main gauche, le clic s'allège
+        this.clickNodes.push(audio.click(t, k % beatsPerBar === 0 ? 'accent' : 'beat'));
+      }
     }
     for (const q of o.subClicks || []) this.clickNodes.push(audio.click(answerStart + q * spq, 'sub'));
     if (echo) for (const q of o.subClicks || []) this.clickNodes.push(audio.click(listenStart + q * spq, 'sub'));
@@ -550,7 +586,9 @@ function evaluate(run) {
   const okMs = clamp(0.1 * run.beatMs, 40, 70);
   const items = [];
   let extra = 0;
-  const extraQ = [];
+  const extraQ = [], extraBy = {};
+  // n-olets irréguliers (5, 7…) : la première note et le temps suivant jugés de près, les notes du milieu largement
+  const onGrid = t => { const f = ((t / sc.beatQ) % 1 + 1) % 1; return Math.abs(f * 12 - Math.round(f * 12)) < 0.05; };
   for (const hand of hands) {
     // attaques attendues (accords et notes simultanées comptent une fois ; ornements et petites notes exclus)
     const exp = [];
@@ -562,26 +600,34 @@ function evaluate(run) {
       if (last && Math.abs(last.t - e.t) < 0.02) { if (e.char != null) last.chars.push(e.char); continue; }
       exp.push({ t: e.t, chars: e.char != null ? [e.char] : [], hand });
     }
-    const taps = run.taps.filter(t => hands.length === 1 || t.hand === hand).map(t => ({ ...t, used: false }));
+    const taps = [];
+    for (const t of run.taps.filter(t => hands.length === 1 || t.hand === hand)) {
+      const last = taps[taps.length - 1];
+      if (last && last.hand === t.hand && t.time - last.time < 40) continue; // un accord = une attaque
+      taps.push({ ...t, used: false });
+    }
     exp.forEach((x, i) => {
       const target = run.zeroPerf + x.t * run.spqMs;
       const prevGap = i > 0 ? (x.t - exp[i - 1].t) * run.spqMs : Infinity;
       const nextGap = i + 1 < exp.length ? (exp[i + 1].t - x.t) * run.spqMs : Infinity;
-      const win = Math.min(260, 0.48 * Math.min(prevGap, nextGap));
+      const loose = o.lenient && !onGrid(x.t);
+      const win = loose ? 0.45 * run.beatMs : Math.min(260, 0.48 * Math.min(prevGap, nextGap));
       let best = -1, bd = Infinity;
       taps.forEach((tp, k) => { if (tp.used) return; const d = tp.time - target; if (Math.abs(d) <= win && Math.abs(d) < Math.abs(bd)) { bd = d; best = k; } });
-      if (best >= 0) { taps[best].used = true; items.push({ ...x, dt: bd, status: Math.abs(bd) <= okMs ? 'ok' : Math.abs(bd) <= 2 * okMs ? 'near' : 'late' }); }
+      if (best >= 0) { taps[best].used = true; items.push({ ...x, dt: bd, loose, status: loose || Math.abs(bd) <= okMs ? 'ok' : Math.abs(bd) <= 2 * okMs ? 'near' : 'late' }); }
       else items.push({ ...x, dt: null, status: 'miss' });
     });
     const unused = taps.filter(t => !t.used);
     extra += unused.length;
     for (const t of unused) extraQ.push((t.time - run.zeroPerf) / run.spqMs);
+    extraBy[hand] = unused.map(t => (t.time - run.zeroPerf) / run.spqMs);
   }
   items.sort((a, b) => a.t - b.t);
   const hit = items.filter(i => i.dt != null);
   const res = {
     total: items.length, ok: items.filter(i => i.status === 'ok').length, near: items.filter(i => i.status === 'near').length,
-    miss: items.filter(i => i.status === 'miss').length, extra, extraQ, items, okMs, spqMs: run.spqMs,
+    miss: items.filter(i => i.status === 'miss').length, extra, extraQ, extraBy, items, okMs, spqMs: run.spqMs,
+    tapsQ: run.taps.map(t => ({ q: (t.time - run.zeroPerf) / run.spqMs, hand: t.hand })),
     meanAbs: hit.length ? mean(hit.map(i => Math.abs(i.dt))) : 0, bias: hit.length ? median(hit.map(i => i.dt)) : 0,
   };
   res.score = res.total ? (res.ok + 0.5 * res.near) / res.total : 0;
@@ -727,7 +773,7 @@ export function mountRhythm(el, cfg = {}) {
     result.innerHTML = '';
     goBtn.textContent = 'Arrêter'; goBtn.classList.add('on');
     run = new RhythmRun(score, {
-      qpm: bpm * score.beatQ, echo, clicks, handFilter: cfg.handFilter,
+      qpm: bpm * score.beatQ, echo, clicks, handFilter: cfg.handFilter, lenient: !!levelById(levelId).lenient,
       hands: cfg.handFilter ? [cfg.handFilter] : null,
       subClicks: subQs(), countSub: countSub(),
       onTap: flash,
@@ -779,7 +825,7 @@ export function mountRhythm(el, cfg = {}) {
   nextBtn.addEventListener('click', newPhrase);
   const out = h('output', {}, `♩ = ${bpm}`);
   const rng = h('input', { type: 'range', min: 40, max: 140, value: bpm, step: 2, 'aria-label': 'Tempo' });
-  rng.addEventListener('input', () => { bpm = +rng.value; out.textContent = `${score && score.beatQ === 1.5 ? '♩.' : '♩'} = ${bpm}`; });
+  rng.addEventListener('input', () => { bpm = +rng.value; out.textContent = `${score && score.beatQ === 1.5 ? '♩.' : score && score.beatQ === 0.5 ? '♪' : '♩'} = ${bpm}`; });
   const echoBtn = h('button', { class: 'btn sm' + (echo ? ' on' : ''), type: 'button', title: 'Écouter d’abord, puis rejouer de mémoire' }, 'Écouter d’abord');
   echoBtn.addEventListener('click', () => { echo = !echo; echoBtn.classList.toggle('on', echo); setIdle(); });
   const clickBtn = h('button', { class: 'btn sm' + (clicks ? ' on' : ''), type: 'button', title: 'Clics pendant la lecture (sinon : décompte seulement)' }, 'Clic');
@@ -792,6 +838,7 @@ export function mountRhythm(el, cfg = {}) {
   ctrl2.append(helpBtn, subBtn, echoBtn, clickBtn);
   newPhrase();
   if (score && score.beatQ === 1.5) out.textContent = `♩. = ${bpm}`;
+  else if (score && score.beatQ === 0.5) out.textContent = `♪ = ${bpm}`;
   const api = { setLevel: id => { levelId = id; newPhrase(); }, destroy: () => stop() };
   el._rhythm = api;
   return () => stop();
@@ -1101,7 +1148,7 @@ export function mountRhythmMinute(el, opts = {}) {
   const results = h('div', { class: 'ns-results', hidden: true });
   body.append(idle, stage, results);
 
-  const unit = () => (L.compound ? '♩.' : '♩');
+  const unit = () => unitOf(L);
   const renderIdle = () => {
     info.innerHTML = `Niveau ${L.id} de l’outil Rythme (${esc(L.title.toLowerCase())}), ${unit()} = ${bpm}. Des rythmes d’une mesure, puis de deux : après le décompte, tape chaque note au clic en <b>comptant à voix haute</b> (« 1 et 2 et… »). Deux réussites de suite : le rythme s’allonge, puis le tempo monte.`;
   };
@@ -1198,4 +1245,325 @@ export function mountRhythmMinute(el, opts = {}) {
   stopBtn.addEventListener('click', () => finish(false));
   renderIdle();
   return () => stop();
+}
+
+/* ------------------------------------------------------------------ */
+/* V9 : le rythme à deux mains (« Tes 15 minutes », bloc A)             */
+/* ------------------------------------------------------------------ */
+// La main gauche tient la pulsation (une touche grave, puis la formule du cycle), la main droite lit le rythme.
+// Le même exercice entraîne la lecture du rythme et une main gauche qui ne se laisse pas entraîner. Trois étapes par
+// niveau : main gauche au temps avec le clic, clic au premier temps seul, la formule sans clic. Deux réussites de
+// suite : étape suivante ; après la troisième, niveau suivant. Par couches : les seules notes sur les temps, puis
+// celles du « et », puis tout. Après chaque passe : chaque main à part, la dérive du tempo, la main gauche entraînée.
+const HS = 'rhythm.hands';
+export const HANDS_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13];
+export const HANDS_STAGES = [
+  { id: 'clic', clicks: true, label: 'Main gauche au temps, avec le clic', lh: 'temps' },
+  { id: 'mesure', clicks: 'bar', label: 'Main gauche au temps, clic au premier temps seulement', lh: 'temps' },
+  { id: 'formule', clicks: false, label: 'Ta formule de main gauche, sans clic', lh: 'formule' },
+];
+const DEFAULT_BPM = { 1: 72, 2: 72, 3: 66, 4: 66, 5: 60, 6: 60, 7: 60, 8: 56, 9: 56, 11: 60, 12: 52, 13: 48 };
+export function handsState() {
+  return { level: 5, stage: 0, streak: 0, fails: 0, bpm: {}, hist: [], ...(store.get(HS) || {}) };
+}
+export function handsSummary() {
+  const s = handsState();
+  const L = levelById(s.level);
+  return { level: s.level, stage: s.stage, text: `niveau ${s.level} (${L.title.toLowerCase()}) · étape ${s.stage + 1} sur 3`, title: L.title };
+}
+/** Une passe réussie ou non : deux réussites → étape suivante, puis niveau suivant ; deux échecs → un cran en arrière. */
+export function handsApply(s0, ok, now = Date.now()) {
+  const s = { ...s0, bpm: { ...(s0.bpm || {}) }, hist: [...(s0.hist || []), { at: now, level: s0.level, stage: s0.stage, ok: !!ok }].slice(-120) };
+  let moved = null;
+  if (ok) {
+    s.streak = (s.streak || 0) + 1; s.fails = 0;
+    if (s.streak >= 2) {
+      s.streak = 0;
+      if (s.stage < HANDS_STAGES.length - 1) { s.stage++; moved = 'stage'; }
+      else {
+        const i = HANDS_LEVELS.indexOf(s.level);
+        if (i >= 0 && i < HANDS_LEVELS.length - 1) { s.level = HANDS_LEVELS[i + 1]; s.stage = 0; moved = 'level'; }
+        else moved = 'top';
+      }
+    }
+  } else {
+    s.fails = (s.fails || 0) + 1; s.streak = 0;
+    if (s.fails >= 2) {
+      s.fails = 0;
+      if (s.stage > 0) { s.stage--; moved = 'back'; }
+      else { s.bpm[s.level] = Math.max(40, (s.bpm[s.level] || DEFAULT_BPM[s.level] || 60) - 4); moved = 'slower'; }
+    }
+  }
+  return { s, moved };
+}
+
+/** Une couche d'une phrase (mesures simples) : 1 = les notes sur les temps, 2 = + celles du « et », 3 = toutes. */
+const VALUES16 = [16, 12, 8, 6, 4, 3, 2, 1];
+function splitDur(u) { const out = []; let r = u; while (r > 1e-6) { const v = VALUES16.find(x => x <= r + 1e-6) || 1; out.push(v); r -= v; } return out; }
+export function layerBody(phrase, layer) {
+  const mi = phrase.mi;
+  const all = phraseEvents(phrase.bars, mi).map(e => ({ u: Math.round(e.t * 4 * 1000) / 1000 }));
+  const keep = all.filter(e => layer >= 3 || (Math.abs(e.u / 4 - Math.round(e.u / 4)) < 1e-6) || (layer === 2 && Math.abs(e.u / 2 - Math.round(e.u / 2)) < 1e-6));
+  const total = phrase.bars.length * mi.barUnits;
+  const bars = Array.from({ length: phrase.bars.length }, () => []);
+  const put = (from, len, rest, tieFirst) => {
+    // découpe aux barres de mesure, avec liaisons
+    let u = from, left = len, first = true;
+    while (left > 1e-6) {
+      const b = Math.floor((u + 1e-6) / mi.barUnits);
+      const room = (b + 1) * mi.barUnits - u;
+      const seg = Math.min(left, room);
+      const parts = splitDur(seg);
+      parts.forEach((v, k) => {
+        const tie = !rest && (k < parts.length - 1 || left - seg > 1e-6);
+        bars[b].push(`${rest ? 'z' : 'B'}${v === 1 ? '' : v}${tie ? '-' : ''}`);
+      });
+      u += seg; left -= seg; first = false;
+    }
+  };
+  if (!keep.length) return null;
+  if (keep[0].u > 1e-6) put(0, keep[0].u, true);
+  keep.forEach((e, i) => put(e.u, (i + 1 < keep.length ? keep[i + 1].u : total) - e.u, false));
+  return bars.map(b => b.join(' ')).join(' | ');
+}
+/** La partition à deux voix : la main droite lit, la main gauche tient la pulsation (ou des croches pour l'arpège). */
+export function handsAbc(phrase, { layer = 3, lyrics = false, lhEighths = false } = {}) {
+  const mi = phrase.mi;
+  const rh = layer >= 3 ? phrase.bars.map(cells => cells.map(c => cellAbc(c)).join(' ')).join(' | ') : layerBody(phrase, layer);
+  // la main gauche sur une autre hauteur (A) : deux voix sur la même note au même instant se fondraient en une seule
+  const beatTok = lhEighths ? Array(mi.compound ? 3 : 2).fill('A2').join('') : `A${mi.beatUnits}`;
+  const lh = phrase.bars.map(() => Array(Math.round(mi.beats)).fill(beatTok).join(' ')).join(' | ');
+  const L = phrase.unit32 ? '1/32' : '1/16';
+  let abc = `X:1\nM:${phrase.meter}\nL:${L}\n%%score RH LH\nV:RH clef=perc stafflines=1\nV:LH clef=perc stafflines=1\nK:C\n[V:RH] ${rh} |]\n`;
+  if (lyrics && layer >= 3) abc += 'w: ' + phrase.bars.map(cells => barSyllables(cells, mi).join(' ')).join(' | ') + '\n';
+  abc += `[V:LH] ${lh} |]\n`;
+  return abc;
+}
+
+/** Dérive : pente des écarts (ms) sur la phrase, et moyenne par mesure, pour chaque main. */
+export function driftOf(res, sc) {
+  const out = {};
+  for (const hand of ['rh', 'lh']) {
+    const its = res.items.filter(i => i.hand === hand && i.dt != null && !i.loose);
+    if (its.length < 4) continue;
+    const xs = its.map(i => i.t), ys = its.map(i => i.dt);
+    const mx = mean(xs), my = mean(ys);
+    const sxx = xs.reduce((a, x) => a + (x - mx) ** 2, 0);
+    const slope = sxx ? xs.reduce((a, x, k) => a + (x - mx) * (ys[k] - my), 0) / sxx : 0;
+    const change = slope * (xs[xs.length - 1] - xs[0]);
+    const nb = Math.max(1, Math.ceil((sc.totalQ - (sc.pickupQ || 0)) / sc.barQ - 1e-6));
+    const bars = Array.from({ length: nb }, (_, b) => { const v = its.filter(i => Math.floor((i.t - (sc.pickupQ || 0)) / sc.barQ + 1e-6) === b).map(i => i.dt); return v.length ? mean(v) : null; });
+    out[hand] = { change, mean: my, bars };
+  }
+  return out;
+}
+function driftChart(drift) {
+  const W = 260, H = 64, M = 120;
+  const n = Math.max(...Object.values(drift).map(d => d.bars.length), 1);
+  const x = i => (n === 1 ? W / 2 : 10 + (i * (W - 20)) / (n - 1));
+  const y = v => H / 2 - Math.max(-1, Math.min(1, v / M)) * (H / 2 - 6); // en retard (écart positif) : au-dessus
+  const line = (bars, cls) => {
+    const pts = bars.map((v, i) => (v == null ? null : `${x(i).toFixed(1)},${y(v).toFixed(1)}`)).filter(Boolean);
+    return pts.length > 1 ? `<polyline class="${cls}" points="${pts.join(' ')}"/>` : pts.length ? `<circle class="${cls}" cx="${pts[0].split(',')[0]}" cy="${pts[0].split(',')[1]}" r="3"/>` : '';
+  };
+  const svg = `<svg class="rh-drift" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Avance et retard, mesure par mesure">`
+    + `<line class="zero" x1="0" x2="${W}" y1="${H / 2}" y2="${H / 2}"/><text x="2" y="10">retard</text><text x="2" y="${H - 3}">avance</text>`
+    + (drift.lh ? line(drift.lh.bars, 'lh') : '') + (drift.rh ? line(drift.rh.bars, 'rh') : '') + '</svg>';
+  return h('div', { class: 'rh-drift-box', html: svg + '<p class="small muted mb-0"><i class="lg-l lh"></i> main gauche <i class="lg-l rh"></i> main droite · au-dessus de la ligne : en retard sur le temps</p>' });
+}
+
+/**
+ * Le widget. opts : { formula ('basse-accord', 'valse', 'arpege'), formulaText (« do – mi sol », pour la consigne),
+ * onPass(ok, moved, state) }. Renvoie la fonction de nettoyage.
+ */
+export function mountRhythmHands(el, opts = {}) {
+  let s = handsState();
+  const formula = opts.formula || 'basse-accord';
+  const frame = h('div', { class: 'w-frame rhythm rhands' });
+  const sub = h('span', { class: 'w-sub' });
+  frame.append(h('div', { class: 'w-head' }, h('span', { class: 'w-title' }, 'Rythme à deux mains'), sub));
+  const chips = h('div', { class: 'lvl-chips rh-levels', role: 'group', 'aria-label': 'Niveau' });
+  const stageBox = h('div', { class: 'rh-stage' });
+  const toggles = h('div', { class: 'rh-toggles' });
+  const scoreHost = h('div', { class: 'rhythm-score rh-score' });
+  const gridHost = h('div', { class: 'rgrid-host', hidden: true });
+  const phaseBox = h('div', { class: 'rhythm-phase', 'aria-live': 'polite' });
+  const pads = h('div', { class: 'rhythm-pads two' });
+  const ctrl = h('div', { class: 'score-ctrl' });
+  const result = h('div', { class: 'rh-result', 'aria-live': 'polite' });
+  frame.append(h('div', { class: 'w-body' }, chips, stageBox, toggles, scoreHost, gridHost, phaseBox, pads, ctrl, result));
+  el.append(frame);
+
+  let phrase = null, score = null, run = null, player = null, grid = null, layer = 3, alive = true;
+  let help = !!store.get('ui.rhHelp');
+  let couches = !!store.get('ui.rhCouches');
+  const L = () => levelById(s.level);
+  const bpmOf = () => s.bpm[s.level] || DEFAULT_BPM[s.level] || 60;
+  const save = () => store.set(HS, s);
+  const meterFor = () => {
+    const Lv = L();
+    const st = HANDS_STAGES[s.stage];
+    if (st.lh === 'formule') {
+      if (formula === 'valse' && Lv.meters.includes('3/4')) return '3/4';
+      if (formula !== 'valse') { const m = Lv.meters.filter(x => x === '4/4' || x === '2/4'); if (m.length) return pick(m); }
+    }
+    return null;
+  };
+  const canLayer = () => !L().compound && !L().twoHands && ![12, 13].includes(s.level);
+
+  const renderChips = () => {
+    chips.innerHTML = '';
+    for (const id of HANDS_LEVELS) {
+      const b = h('button', { type: 'button', class: 'lvl-chip' + (id === s.level ? ' on' : ''), title: levelById(id).title }, String(id));
+      b.addEventListener('click', () => { if (run) return; s = { ...s, level: id, stage: 0, streak: 0, fails: 0 }; save(); syncTempo(); newPhrase(); });
+      chips.append(b);
+    }
+  };
+  const renderStage = () => {
+    const st = HANDS_STAGES[s.stage];
+    const lhText = st.lh === 'temps'
+      ? 'une touche grave, un coup par temps'
+      : formula === 'arpege' ? `ta formule en croches${opts.formulaText ? ` (${opts.formulaText})` : ''}` : `ta formule, une attaque par temps${opts.formulaText ? ` (${opts.formulaText})` : ''}`;
+    stageBox.innerHTML = '';
+    stageBox.append(...[
+      h('div', { class: 'rh-st-head' }, h('b', {}, `Étape ${s.stage + 1} sur 3 : ${st.label.charAt(0).toLowerCase()}${st.label.slice(1)}`), h('span', { class: 'small muted' }, s.streak ? ' · encore une réussite' : ' · deux réussites de suite pour avancer')),
+      h('p', { class: 'small mb-0' }, h('b', {}, 'Main gauche : '), lhText, '. ', h('b', {}, 'Main droite : '), 'une touche aiguë, le rythme écrit. Compte à voix haute.'),
+      couches && canLayer() ? h('p', { class: 'small mb-0 rh-layer' }, `Par couches : ${['', 'seulement les notes qui tombent sur les temps', 'les temps, puis les « et »', 'le rythme complet'][layer]} (couche ${layer} sur 3).`) : null].filter(Boolean));
+    sub.textContent = `niveau ${s.level} · ${L().title.toLowerCase()} · ${unitOf(L())} = ${bpmOf()}`;
+  };
+  const renderToggles = () => {
+    toggles.innerHTML = '';
+    const mk = (label, on, fn, title) => { const b = h('button', { type: 'button', class: 'btn sm ghost' + (on ? ' on' : ''), 'aria-pressed': String(on), title }, label); b.addEventListener('click', fn); return b; };
+    toggles.append(mk('Temps par temps', help, () => { help = !help; store.set('ui.rhHelp', help); renderScore(); renderToggles(); }, 'La grille des temps et les syllabes à dire sous chaque note'));
+    if (canLayer()) toggles.append(mk('Par couches', couches, () => { couches = !couches; store.set('ui.rhCouches', couches); layer = couches ? 1 : 3; renderScore(); renderStage(); renderToggles(); }, 'Les notes sur les temps, puis les « et », puis tout'));
+  };
+  const renderScore = () => {
+    if (!phrase) return;
+    stop();
+    scoreHost.innerHTML = '';
+    const abc = handsAbc(phrase, { layer: couches && canLayer() ? layer : 3, lyrics: help, lhEighths: HANDS_STAGES[s.stage].lh === 'formule' && formula === 'arpege' });
+    score = new Score(scoreHost, abc, { staffwidth: Math.min(640, Math.max(300, (scoreHost.clientWidth || 600) - 10)) });
+    player = new Player(score, {});
+    player.on((t, d) => { if (t === 'time' && grid) grid.cursor(d / (60 / (bpmOf() * score.beatQ))); if (t === 'stop') { grid?.cursor(null); listenBtn.textContent = 'Écouter'; } });
+    gridHost.hidden = !help;
+    grid = help ? renderGrid(gridHost, gridModel(score, { hands: ['rh', 'lh'] })) : null;
+    if (!help) gridHost.innerHTML = '';
+  };
+  const newPhrase = ({ keepResult = false } = {}) => {
+    stop();
+    const Lv = L();
+    phrase = genPhrase(s.level, { bars: Lv.id >= 9 ? 2 : 4, meter: meterFor() });
+    layer = couches && canLayer() ? 1 : 3;
+    if (!keepResult) result.innerHTML = '';
+    renderChips(); renderStage(); renderToggles(); renderScore(); setIdle();
+  };
+  const setIdle = () => { phaseBox.innerHTML = ''; phaseBox.dataset.k = ''; phaseBox.append(h('span', { class: 'small' }, `Après le décompte : la main gauche part au premier temps, la droite lit. ${HANDS_STAGES[s.stage].clicks === false ? 'Pas de clic : la main gauche est ta pulsation.' : HANDS_STAGES[s.stage].clicks === 'bar' ? 'Le clic ne marque que le premier temps.' : ''}`)); };
+  const mkPad = (hand, label) => {
+    const p = h('button', { class: 'tap-pad', type: 'button', 'data-hand': hand }, label);
+    p.addEventListener('pointerdown', e => { e.preventDefault(); if (run) run.tap((e.timeStamp > 0 ? e.timeStamp : performance.now()) - inputLatency('touch'), hand); });
+    return p;
+  };
+  pads.append(mkPad('lh', 'Main gauche (touche grave / F)'), mkPad('rh', 'Main droite (touche aiguë / J)'));
+  const flash = hand => { const p = pads.querySelector(`[data-hand="${hand}"]`); if (p) { p.classList.add('hit'); setTimeout(() => p.classList.remove('hit'), 90); } };
+  const showPhase = (phase, inf) => {
+    const key = `${phase}:${inf.waiting ? 'w' : inf.inBar}`;
+    if (phaseBox.dataset.k === key) return;
+    phaseBox.dataset.k = key;
+    phaseBox.innerHTML = '';
+    if (phase === 'count') phaseBox.append(h('span', { class: 'ph-label count' }, inf.waiting ? 'Prépare-toi' : 'Décompte'), h('span', { class: 'ph-beat' }, inf.waiting ? '…' : String(inf.inBar)));
+    else phaseBox.append(h('span', { class: 'ph-label play' }, 'À toi !'), h('span', { class: 'ph-beat' }, String(Math.max(1, inf.inBar || 1))));
+  };
+
+  const goBtn = h('button', { class: 'btn primary', type: 'button' }, 'Jouer');
+  const listenBtn = h('button', { class: 'btn', type: 'button' }, 'Écouter');
+  const nextBtn = h('button', { class: 'btn ghost', type: 'button' }, 'Autre rythme');
+  const out = h('output', {});
+  const rng = h('input', { type: 'range', min: 40, max: 140, step: 2, 'aria-label': 'Tempo' });
+  ctrl.append(goBtn, listenBtn, nextBtn, h('label', { class: 'range' }, 'Tempo', rng, out));
+  const syncTempo = () => { rng.value = String(bpmOf()); out.textContent = `${unitOf(L())} = ${bpmOf()}`; };
+  rng.addEventListener('input', () => { s.bpm = { ...s.bpm, [s.level]: +rng.value }; save(); syncTempo(); renderStage(); });
+  nextBtn.addEventListener('click', newPhrase);
+  listenBtn.addEventListener('click', async () => {
+    if (player?.playing) { player.stop(); return; }
+    stop();
+    player.set({ qpm: bpmOf() * score.beatQ, click: true, countIn: true, hands: 'both' });
+    try { await player.play(); listenBtn.textContent = 'Arrêter'; } catch (e) { phaseBox.textContent = 'Audio indisponible : ' + e.message; }
+  });
+  goBtn.addEventListener('click', async () => {
+    if (run) { stop(); setIdle(); return; }
+    player?.stop();
+    score.clear();
+    grid?.clearTaps();
+    result.innerHTML = '';
+    goBtn.textContent = 'Arrêter'; goBtn.classList.add('on');
+    const st = HANDS_STAGES[s.stage];
+    const sc = score;
+    run = new RhythmRun(sc, { qpm: bpmOf() * sc.beatQ, clicks: st.clicks, hands: ['rh', 'lh'], lenient: !!L().lenient, onTap: flash, onFrame: (ph, inf) => { showPhase(ph, inf); if (ph === 'play') grid?.cursor(inf.q); },
+      onDone: res => done(res, sc) });
+    await run.start();
+    if (!alive) run?.stop();
+  });
+  const stop = () => {
+    run?.stop(); run = null;
+    player?.stop();
+    grid?.cursor(null);
+    goBtn.textContent = 'Jouer'; goBtn.classList.remove('on');
+  };
+  const done = (res, sc) => {
+    run = null;
+    goBtn.textContent = 'Jouer'; goBtn.classList.remove('on');
+    grid?.cursor(null);
+    if (!alive) return;
+    for (const it of res.items) for (const c of it.chars) sc.mark(c, it.status === 'ok' ? 'n-ok' : it.status === 'near' ? 'n-late' : 'n-bad');
+    grid?.showTaps(res.items, res.spqMs, res.extraQ);
+    const part = hand => { const its = res.items.filter(i => i.hand === hand); const ok = its.filter(i => i.status === 'ok').length, near = its.filter(i => i.status === 'near').length; return { n: its.length, ok, near, score: its.length ? (ok + 0.5 * near) / its.length : 0, extra: (res.extraBy?.[hand] || []).length }; };
+    const R = part('rh'), G = part('lh');
+    // main gauche entraînée : une frappe en trop de la gauche avec une frappe de la droite
+    const rhQ = (res.tapsQ || []).filter(t => t.hand === 'rh').map(t => t.q);
+    const capt = (res.extraBy?.lh || []).filter(q => rhQ.some(x => Math.abs(x - q) < 0.1 * sc.beatQ));
+    const barOf = q => Math.floor((q - (sc.pickupQ || 0)) / sc.barQ + 1e-6) + 1;
+    const good = R.score >= 0.85 && R.extra <= 1 && G.score >= 0.9 && capt.length <= 1;
+    // couches : une couche réussie ouvre la suivante, seule la dernière compte
+    let layerMsg = null, counted = true;
+    if (couches && canLayer() && layer < 3) {
+      counted = false;
+      if (good) { layer++; layerMsg = `Couche ${layer - 1} réussie : la couche ${layer} ajoute ${layer === 2 ? 'les notes du « et »' : 'toutes les notes'}.`; }
+    }
+    let moved = null;
+    if (counted) {
+      const out2 = handsApply(s, good);
+      s = out2.s; moved = out2.moved; save();
+    }
+    const drift = driftOf(res, sc);
+    const driftLine = hand => { const d = drift[hand]; if (!d || Math.abs(d.change) < 40) return null; return `${hand === 'lh' ? 'Ta main gauche' : 'Ta main droite'} ${d.change < 0 ? 'accélère' : 'ralentit'} : ${Math.round(Math.abs(d.change))} ms d’écart entre le début et la fin.`; };
+    const MOVED = {
+      stage: `Étape suivante : ${HANDS_STAGES[s.stage].label.toLowerCase()}.`,
+      level: `Niveau suivant : ${s.level}, ${L().title.toLowerCase()}. On repart avec le clic.`,
+      top: 'Dernier niveau tenu sans clic : change de rythme, ou monte le tempo.',
+      back: 'Un cran en arrière : le clic revient, le temps de consolider.',
+      slower: `Deux passes difficiles : le tempo descend (${unitOf(L())} = ${bpmOf()}).${canLayer() && !couches ? ' Essaie « Par couches ».' : ''}`,
+    };
+    result.innerHTML = '';
+    result.append(...[
+      h('div', { class: 'ir-head ' + (good ? 'ok' : 'todo') }, good ? '✓ Réussi' : 'Pas encore'),
+      h('ul', { class: 'cp-checks' },
+        h('li', { class: R.score >= 0.85 && R.extra <= 1 ? 'ok' : 'todo' }, `Main droite (le rythme) : ${R.ok}/${R.n} à l’heure${R.near ? `, ${R.near} un peu à côté` : ''}${R.extra ? ` · ${R.extra} frappe${R.extra > 1 ? 's' : ''} en trop` : ''}.`),
+        h('li', { class: G.score >= 0.9 && !capt.length ? 'ok' : 'todo' }, `Main gauche (la pulsation) : ${G.ok}/${G.n} à l’heure${G.near ? `, ${G.near} un peu à côté` : ''}.`),
+        capt.length ? h('li', { class: capt.length > 1 ? 'todo' : 'ok' }, `M. ${barOf(capt[0])} : ta main gauche a frappé avec la droite${capt.length > 1 ? ` (${capt.length} fois)` : ''}. Elle ne bat que les temps.`) : null),
+      Object.keys(drift).length ? driftChart(drift) : null,
+      ...['lh', 'rh'].map(driftLine).filter(Boolean).map(t => h('p', { class: 'small' }, t)),
+      layerMsg ? h('p', { class: 'small rh-moved' }, layerMsg) : null,
+      moved ? h('p', { class: 'small rh-moved' }, MOVED[moved]) : null,
+      !good && R.score < 0.85 ? h('p', { class: 'small muted' }, advice({ ...res, items: res.items.filter(i => i.hand === 'rh'), total: R.n, miss: res.items.filter(i => i.hand === 'rh' && i.status === 'miss').length, score: R.score }, sc, help)) : null,
+    ].filter(Boolean));
+    opts.onPass?.(good, moved, s);
+    // la phrase suivante : nouvelle après une réussite comptée (ou un changement), la même sinon (la couche change)
+    if (moved === 'level' || moved === 'stage' || moved === 'back' || (good && counted)) newPhrase({ keepResult: true });
+    else if (layerMsg) { renderScore(); renderStage(); }
+    syncTempo();
+  };
+  renderChips(); syncTempo(); newPhrase();
+  // accès de test
+  frame.__rhands = { get state() { return s; }, get layer() { return layer; }, get run() { return run; } };
+  return () => { alive = false; stop(); };
 }

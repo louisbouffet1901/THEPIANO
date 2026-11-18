@@ -688,7 +688,187 @@ export const CHECKS = {
     if (rs.length < min) return { ok: false, line: `Va jusqu’au bout : ${min} imitations réussies sont demandées (${rs.length} jouées).` };
     return k >= min ? { ok: true, line: `${k} imitations justes sur ${rs.length} : l’oreille et les doigts suivent.` } : { ok: false, line: `${k} imitation${k > 1 ? 's' : ''} juste${k > 1 ? 's' : ''} sur ${rs.length} (il en faut ${min}) : chante bien la phrase avant de la rejouer.` };
   },
+  /* ---------------- V9 : échelle de coordination (Tes 15 minutes, bloc C) ---------------- */
+  /** La main gauche tient sa formule : chaque attaque attendue à sa place, sans se laisser entraîner par la droite. */
+  lhGrid(A, { formula = 'basse-accord', min = 0.85, tol = LH_TOL }) {
+    const D = lhGridDetail(A, { formula, tol });
+    if (D.none) return { ok: false, line: 'La main gauche n’a rien joué : c’est elle qui porte l’exercice.' };
+    if (D.expected < 4) return { ok: false, line: 'Trop peu de main gauche pour juger : joue la formule jusqu’au bout de la grille.' };
+    if (D.ok) {
+      const once = D.captured.length ? ` (entraînée une fois, m. ${D.captured[0].bar + 1})` : '';
+      return { ok: true, line: `Ta main gauche a tenu sa formule : ${D.hits}/${D.expected} attaques en place${once}.` };
+    }
+    if (D.captured.length > D.capMax) {
+      const c = D.captured[0];
+      return { ok: false, line: `M. ${c.bar + 1} : ta main gauche a suivi la droite (${c.size > 1 ? 'un accord' : 'une note'} sur son rythme)${D.captured.length > 1 ? `, ${D.captured.length} fois en tout` : ''}. Ralentis, et écoute ta main gauche pendant un tour.` };
+    }
+    if (D.shift) {
+      const a = Math.abs(D.shift), how = a < 0.3 ? 'd’un quart de temps' : a < 0.4 ? 'd’un tiers de temps' : 'de presque un demi-temps';
+      return { ok: false, line: `Ta main gauche est régulière, mais ${D.shift > 0 ? 'en retard' : 'en avance'} ${how} sur le clic : cale ta basse sur le clic, la droite suivra.` };
+    }
+    if (D.stopped.length) return { ok: false, line: `M. ${D.stopped[0].bar + 1} : ta main gauche s’est arrêtée pendant que la droite tenait sa note. Elle continue, quoi que fasse la droite.` };
+    const m = D.missing[0];
+    return { ok: false, line: `Main gauche : ${D.hits}/${D.expected} attaques en place (objectif ${pct(min)})${m ? ` ; la première manquée en mesure ${m.bar + 1}` : ''}.` };
+  },
+  /** Le rythme de la main droite demandé par le palier, par rapport aux temps. */
+  rhGrid(A, { v, min = 0.8 }) {
+    const mel = A.mel, m = A.meter;
+    if (mel.length < 2) return { ok: false, line: 'Joue la main droite avec la gauche : presque rien reçu.' };
+    const nb = Math.max(1, span(A).n);
+    const per = mel.length / nb;
+    const share = f => mel.filter(f).length / mel.length;
+    const barsWith = f => new Set(mel.filter(f).map(x => x.bar)).size;
+    const onPos = (x, list) => list.some(q => Math.abs(x.pos - q) < TOL);
+    const beat = x => x.near;
+    const frac = x => x.pos - Math.floor(x.pos);
+    if (v === 'ronde') {
+      const r = share(x => onPos(x, [0]));
+      const full = barsWith(x => onPos(x, [0])) / nb;
+      return r >= min && per <= 1.3 && full >= 0.75
+        ? { ok: true, line: `Une note par mesure, au premier temps : ${pct(r)} de tes attaques.` }
+        : { ok: false, line: per > 1.3 ? `Une seule note par mesure (${dec(per)} cette fois) : pose-la au premier temps et tiens-la.` : `Pose ta note au premier temps de chaque mesure, avec la basse (${pct(r)} y tombaient).` };
+    }
+    if (v === 'avecBasse') {
+      const pos = m === 4 ? [0, 2] : m === 3 ? [0, 2] : [0];
+      const r = share(x => onPos(x, pos));
+      const want = pos.length;
+      return r >= min && per >= want * 0.7 && per <= want + 0.6
+        ? { ok: true, line: `La droite avec la basse : ${pct(r)} de tes attaques sur ${m === 4 ? 'les 1er et 3e temps' : 'les temps prévus'}.` }
+        : { ok: false, line: `${m === 4 ? 'Deux notes par mesure, aux 1er et 3e temps' : 'Une blanche puis une noire, aux 1er et 3e temps'} (${dec(per)} notes par mesure, ${pct(r)} bien placées).` };
+    }
+    if (v === 'noires') {
+      const r = share(beat);
+      return r >= min && per >= 0.75 * m && per <= 1.3 * m
+        ? { ok: true, line: `Une note par temps : ${pct(r)} sur les temps.` }
+        : { ok: false, line: per < 0.75 * m ? `Une note sur chaque temps (${dec(per)} par mesure, il en faut ${m}).` : `Des noires : une note par temps, sur le temps (${pct(r)} sur les temps, ${dec(per)} par mesure).` };
+    }
+    if (v === 'croches') {
+      const grid = share(x => x.near || x.half), halves = share(x => x.half);
+      return grid >= min && halves >= 0.3 && per >= 1.4 * m
+        ? { ok: true, line: `Des croches : ${pct(halves)} de tes notes sur le « et ».` }
+        : { ok: false, line: per < 1.4 * m ? `Deux notes par temps : sur le temps et sur le « et » (${dec(per)} notes par mesure).` : `Reste sur la grille des croches : le temps et le « et » (${pct(grid)} cette fois).` };
+    }
+    if (v === 'contretemps') {
+      const halves = share(x => x.half), bars = barsWith(x => x.half) / nb;
+      return halves >= 0.5 && bars >= 0.6
+        ? { ok: true, line: `À contretemps : ${pct(halves)} de tes départs sur le « et ».` }
+        : { ok: false, line: `Pars sur le « et », tiens par-dessus le temps (${pct(halves)} de tes départs sur le « et », il en faut la moitié).` };
+    }
+    if (v === 'pointe') {
+      const dots = mel.filter(x => Math.abs(frac(x) - 0.75) < 0.12).length;
+      return dots >= 0.5 * nb
+        ? { ok: true, line: `Des rythmes pointés : ${dots} attaques sur le « a ».` }
+        : { ok: false, line: `Croche pointée et double croche : la double croche tombe juste avant le temps suivant (${dots} cette fois, il en faut une mesure sur deux).` };
+    }
+    return { ok: true, line: '' };
+  },
+  /** Une seule note à la main droite : seul le rythme compte. */
+  oneNote(A, { min = 0.85 }) {
+    const mel = A.mel;
+    if (mel.length < 3) return { ok: false, line: 'Joue ta note à la main droite pendant toute la grille.' };
+    const cnt = new Map();
+    for (const x of mel) cnt.set(pc(x.m), (cnt.get(pc(x.m)) || 0) + 1);
+    const [best, n] = [...cnt.entries()].sort((a, b) => b[1] - a[1])[0];
+    const r = n / mel.length;
+    return r >= min ? { ok: true, line: `Une seule note à la main droite (${nm(best, A.timeline[0])}) : l’attention reste au rythme.` }
+      : { ok: false, line: `Garde une seule note à la main droite (${pct(r)} sur la même) : ici, seul le rythme compte.` };
+  },
+  /** Les notes de l'accord en cours, à la main droite. */
+  chordTones(A, { min = 0.8 }) {
+    const mel = A.mel;
+    if (mel.length < 3) return { ok: false, line: 'Joue la main droite avec la gauche : presque rien reçu.' };
+    const ok = mel.filter(x => x.kind === 'chord').length;
+    const r = ok / mel.length;
+    return r >= min ? { ok: true, line: `Notes de l’accord : ${ok}/${mel.length}.` }
+      : { ok: false, line: `Notes de l’accord : ${ok}/${mel.length} (objectif ${pct(min)}). Reste sur les notes de l’accord en cours, affiché au-dessus du clavier.` };
+  },
 };
+
+/* ------------------------------------------------------------------ */
+/* V9 : la formule de main gauche, attaque par attaque                  */
+/* ------------------------------------------------------------------ */
+export const LH_TOL = 0.16; // en temps : ± 130 à 190 ms aux tempos de l'échelle (50 à 72)
+/** Attaques d'une formule dans un accord de `beats` temps (en temps depuis l'accord). */
+export function formulaSteps(formula, beats, meter) {
+  const out = [];
+  if (formula === 'plaque' || formula === 'basse') out.push({ b: 0, what: formula === 'plaque' ? 'accord' : 'basse' });
+  else if (formula === 'arpege' || formula === 'alberti') {
+    const len = (meter || beats) % 3 === 0 ? 6 : 4;
+    for (let k = 0; k < beats * 2; k++) out.push({ b: k / 2, what: formula === 'arpege' && k % len === 0 ? 'basse' : 'note' });
+  } else if (formula === 'valse') for (let b = 0; b < beats; b++) out.push({ b, what: b === 0 ? 'basse' : 'accord' });
+  else for (let b = 0; b < beats; b++) out.push({ b, what: formula === 'basse-accord' ? (b % 2 ? 'accord' : 'basse') : 'note' });
+  return out;
+}
+/** Attaques attendues de la main gauche sur toute la prise (en temps depuis le début de la grille). */
+export function lhExpected(A, formula) {
+  const out = [];
+  const loops = Math.max(1, Math.ceil((A.end - 0.01) / A.total));
+  for (let L = 0; L < loops; L++) {
+    for (const ch of A.timeline) {
+      const base = L * A.total + ch.at;
+      for (const s of formulaSteps(formula, ch.beats, A.meter)) {
+        const t = base + s.b;
+        out.push({ t, what: s.what, bar: Math.floor(t / A.meter + 1e-6) });
+      }
+    }
+  }
+  return out;
+}
+/**
+ * Détail de la main gauche : attaques en place, manquées, entraînées par la droite (une attaque hors grille, à
+ * moins de 0,12 temps d'une attaque de la droite), arrêtées (une attaque manquée pendant qu'une note de la droite
+ * est tenue), avance ou retard moyen. Grappes : les notes attaquées à moins de 0,1 temps l'une de l'autre.
+ */
+export function lhGridDetail(A, { formula = 'basse-accord', tol = LH_TOL, min = 0.85 } = {}) {
+  const on = [];
+  for (const n of A.lh) {
+    const g = on[on.length - 1];
+    if (g && n.b - g.b < 0.1) g.size++;
+    else on.push({ b: n.b, size: 1, used: false });
+  }
+  const empty = { expected: 0, hits: 0, rate: 0, captured: [], stopped: [], missing: [], stray: [], bias: 0, ok: false, capMax: 1, bars: [] };
+  if (!on.length) return { ...empty, none: true };
+  const tEnd = A.take?.end ?? A.end;
+  const gridEnd = Math.max(1, Math.ceil((tEnd - A.meter) / A.total)) * A.total; // une prise qui finit seule s'arrête un peu après la grille
+  const endB = Math.min(tEnd, gridEnd) - 0.3;
+  const endLH = on[on.length - 1].b + A.meter * 2;
+  const lastT = Math.min(endB, endLH);
+  const exp = lhExpected(A, formula).filter(e => e.t >= on[0].b - tol - 1e-6 && e.t <= Math.max(lastT, on[0].b));
+  for (const e of exp) {
+    let best = null, bd = Infinity;
+    for (const g of on) { if (g.used) continue; const d = Math.abs(g.b - e.t); if (d < bd) { bd = d; best = g; } }
+    if (best && bd <= tol) { best.used = true; e.hit = true; e.dt = best.b - e.t; }
+  }
+  const melB = A.mel.map(x => x.b);
+  const extra = on.filter(g => !g.used && g.b <= lastT + tol);
+  const captured = [], stray = [];
+  for (const g of extra) {
+    const bar = Math.floor(Math.max(0, g.b) / A.meter + 1e-6);
+    (melB.some(b => Math.abs(b - g.b) < 0.12) ? captured : stray).push({ b: g.b, bar, size: g.size });
+  }
+  const missing = exp.filter(e => !e.hit);
+  const stopped = missing.filter(e => !melB.some(b => Math.abs(b - e.t) < tol) && A.rh.some(n => n.b < e.t - 0.1 && n.b + (n.d || 0) > e.t + 0.05));
+  const hits = exp.length - missing.length;
+  const rate = exp.length ? hits / exp.length : 0;
+  const hitDt = exp.filter(e => e.hit).map(e => e.dt);
+  const bias = hitDt.length ? mean(hitDt) : 0;
+  const capMax = Math.max(1, Math.floor(exp.length / 16));
+  // main gauche régulière mais décalée d'un même écart (retard ou avance constants sur le clic)
+  let shift = 0;
+  if (rate < min && extra.length >= exp.length * 0.5) {
+    const offs = extra.map(g => { let bd = Infinity, d0 = 0; for (const e of exp) { const d = g.b - e.t; if (Math.abs(d) < bd) { bd = Math.abs(d); d0 = d; } } return d0; });
+    const md = median(offs);
+    const same = offs.filter(d => Math.sign(d) === Math.sign(md) && Math.abs(d - md) < 0.12).length / offs.length;
+    if (Math.abs(md) > tol && Math.abs(md) < 0.45 && same >= 0.7) shift = md;
+  }
+  // état mesure par mesure, pour l'affichage
+  const nBars = exp.length ? exp[exp.length - 1].bar + 1 : 0;
+  const bars = Array.from({ length: nBars }, () => ({ n: 0, hit: 0, cap: 0, stop: 0 }));
+  for (const e of exp) { const B = bars[e.bar]; if (B) { B.n++; if (e.hit) B.hit++; } }
+  for (const c of captured) if (bars[c.bar]) bars[c.bar].cap++;
+  for (const s of stopped) if (bars[s.bar]) bars[s.bar].stop++;
+  return { expected: exp.length, hits, rate, captured, stopped, missing, stray, bias, shift, capMax, ok: rate >= min && captured.length <= capMax, bars };
+}
 
 /** Unités du squelette (une par mesure, ou une par accord) jusqu'à la dernière note jouée. */
 function targetUnits(A, ctx) {
@@ -776,6 +956,10 @@ export function describeCheck(c) {
     case 'final': return 'la dernière note sur la tonique';
     case 'answers': return `${c.min ?? 3} réponses réussies sur ${c.of ?? 4}`;
     case 'echo': return `${c.min ?? 3} imitations justes sur 4`;
+    case 'lhGrid': return `ta main gauche tient sa formule : ${pct(c.min ?? 0.85)} des attaques en place, sans suivre la droite`;
+    case 'rhGrid': return { ronde: 'une note par mesure, au premier temps', avecBasse: 'la droite avec chaque basse', noires: 'une note par temps', croches: 'deux notes par temps', contretemps: 'des départs sur le « et »', pointe: 'des rythmes pointés' }[c.v] || '';
+    case 'oneNote': return 'une seule note à la main droite';
+    case 'chordTones': return `les notes de l’accord à la main droite (${pct(c.min ?? 0.8)})`;
     default: return '';
   }
 }

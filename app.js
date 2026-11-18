@@ -54,6 +54,7 @@ const NI = {
   book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/>',
   trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  quinze: '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M12 13.5l3 2M10 2.5h4M18.5 6.5l1.5-1.5"/>',
 };
 const ico = name => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${NI[name] || ''}</svg>`;
 
@@ -80,7 +81,7 @@ const routes = [
   [/^#\/outils\/metronome$/, () => toolPage('Métronome', 'Mesures muettes, accélération progressive, tempo tapé.', () => import('./tool-metronome-ui.js').then(m => el => m.mountMetronome(el, { title: false })), 'reglages')],
   [/^#\/outils\/lecture$/, pageLecture],
   [/^#\/maitrise$/, () => toolPage('Fiches et exercices', 'Les chapitres que tu as cochés « À apprendre par cœur » : pour chacun, une fiche pour relire l’essentiel et de petits exercices corrigés pour vérifier que tu le sais.', () => import('./tool-mastery.js').then(m => el => m.mountMastery(el)), 'theorie')],
-  [/^#\/outils\/rythme$/, () => toolPage('Rythme', 'Lire le rythme : compter, subdiviser, placer chaque attaque. Dix niveaux, des noires aux polyrythmies, et les rythmes de tes pièces.', () => Promise.all([import('./tool-rhythm.js'), ensureAbcjs()]).then(([m]) => el => m.mountRhythmPage(el)), 'lecture')],
+  [/^#\/outils\/rythme$/, () => toolPage('Rythme', 'Lire le rythme : compter, subdiviser, placer chaque attaque. Treize niveaux, des noires aux groupes irréguliers, et les rythmes de tes pièces.', () => Promise.all([import('./tool-rhythm.js'), ensureAbcjs()]).then(([m]) => el => m.mountRhythmPage(el)), 'lecture')],
   [/^#\/outils\/oreille(?:\/(jouer|parcours))?$/, pageEar],
   [/^#\/outils\/theorie$/, () => pagePresets('theorie')],
   [/^#\/outils\/analyseur$/, () => toolPage('Analyse technique', 'Pour les gammes, arpèges et exercices joués sans partition : régularité, legato, pédale, équilibre des mains. Pour un passage de tes pièces, utilise plutôt « Analyser » sous l’extrait : l’analyse compare alors ton jeu à la partition.', () => import('./tool-analyzer.js').then(m => el => m.mountAnalyzer(el, { modes: ['evenness', 'legato', 'pedal', 'balance', 'voicing', 'dynamics'] })), 'technique')],
@@ -93,6 +94,8 @@ const routes = [
   // V8 : loin du piano, et ton temps de piano
   [/^#\/loin(?:\/tete\/([\w-]+)\/([\w-]+))?$/, (piece, section) => toolPage('Loin du piano', 'Cinq à quinze minutes utiles sans clavier : ta pièce de tête, l’oreille, le rythme lu, la théorie. Ce travail prépare ta prochaine séance au piano ; il ne la remplace pas.', () => import('./tool-away.js').then(m => el => m.mountAway(el, { piece, section })))],
   [/^#\/temps$/, pageTemps],
+  // V9 : tes 15 minutes, avant tes morceaux
+  [/^#\/quinze$/, () => toolPage('Tes 15 minutes', 'Trois blocs de cinq minutes, avant tes morceaux. Le reste du temps est à toi.', () => import('./tool-quinze.js').then(m => el => m.mountQuinze(el)))],
 ];
 
 /** Jeton de navigation : une page asynchrone vérifie qu'elle est toujours affichée avant d'écrire. */
@@ -140,6 +143,7 @@ function router() {
 const MOD_HUB = { technique: 'technique', interpretation: 'interpretation', theorie: 'theorie', oreille: 'oreille', lecture: 'lecture', impro: 'impro' };
 export const HUBS = {
   home: { href: '#/', label: 'Accueil', icon: 'home' },
+  quinze: { href: '#/quinze', label: 'Tes 15 minutes', icon: 'quinze' },
   loin: { href: '#/loin', label: 'Loin du piano', icon: 'away' },
   pieces: { href: '#/pieces', label: 'Tes pièces', icon: 'piece' },
   technique: { href: '#/outils/technique', label: 'Technique', icon: 'technique' },
@@ -162,7 +166,7 @@ function hubOf(hash) {
   const mod = h0.match(/^#\/niveau\/n\d\/(\w+)/);
   if (mod) return MOD_HUB[mod[1]] || 'parcours';
   const rules = [
-    [/^#\/loin/, 'loin'], [/^#\/pieces?\b/, 'pieces'], [/^#\/temps/, 'temps'], [/^#\/(reglages|outils\/clavier)/, 'reglages'],
+    [/^#\/quinze/, 'quinze'], [/^#\/loin/, 'loin'], [/^#\/pieces?\b/, 'pieces'], [/^#\/temps/, 'temps'], [/^#\/(reglages|outils\/clavier)/, 'reglages'],
     [/^#\/(parcours|niveau\/|validation\/)/, 'parcours'], [/^#\/outils\/(technique|exercices|analyseur)/, 'technique'],
     [/^#\/outils\/(lecture|rythme)/, 'lecture'], [/^#\/outils\/(impro|composition)/, 'impro'], [/^#\/outils\/oreille/, 'oreille'],
     [/^#\/(outils\/theorie|maitrise|theorie\/)/, 'theorie'], [/^#\/interpretation/, 'interpretation'],
@@ -182,7 +186,7 @@ function renderNav(hash) {
     return `<a class="nav-link${cur === k ? ' active' : ''}" href="${x.href}"${cur === k ? ' aria-current="page"' : ''}>${ico(x.icon)}<span>${esc(x.label)}</span>${meta ? `<span class="meta${k === 'theorie' ? ' badge' : ''}"${k === 'theorie' ? ` title="${due} carte${due > 1 ? 's' : ''} à revoir"` : ''}>${esc(meta)}</span>` : ''}</a>`;
   };
   const sec = (title, keys) => `<div class="nav-section">${title ? `<div class="nav-title">${esc(title)}</div>` : ''}${keys.map(link).join('')}</div>`;
-  sidebar.innerHTML = sec('', ['home', 'loin'])
+  sidebar.innerHTML = sec('', ['home', 'quinze', 'loin'])
     + sec('Jouer', ['pieces', 'technique', 'interpretation', 'lecture', 'impro'])
     + sec('Entendre et comprendre', ['oreille', 'theorie'])
     + sec('Ton parcours', ['parcours', 'temps', 'reglages']);
@@ -528,6 +532,7 @@ function pageHome() {
   const page = h('div', { class: 'page' });
   page.innerHTML = `
     <div class="page-head home-head"><p class="home-date">${esc((d => d.charAt(0).toUpperCase() + d.slice(1))(new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })))}</p><h1>Bonjour Louis</h1><p class="lead">${homeLead()}</p></div>
+    <div id="quinzeBox" class="home-quinze"></div>
     <div id="paceBox"></div>
     <div id="sessionBox"></div>
     <div id="awayBox" class="home-away"></div>
@@ -560,6 +565,8 @@ function pageHome() {
       h('p', { class: 'small' }, 'Rien ne compte comme délaissé, et l’objectif de ta pièce sera décalé d’autant. Quelques minutes loin du piano gardent le contact : ta pièce de tête, l’oreille.'), h('div', { class: 'btn-row' }, back)));
     $('#sessionBox', page).before($('#awayBox', page)); // pendant une pause, « Loin du piano » d'abord
   }
+  // V9 : tes 15 minutes d'abord ; la séance (nouvelle séance ou séance en cours) reste dessous
+  import('./tool-quinze.js').then(m => { if (page.isConnected) { offs.push(m.mountQuinzeCard($('#quinzeBox', page))); frenchSpacing($('#quinzeBox', page)); } }).catch(e => console.warn(e));
   // la séance : nouvelle séance (cases à cocher) ou séance en cours
   offs.push(mountSessionBox($('#sessionBox', page), L));
   import('./tool-away.js').then(m => { if (page.isConnected) offs.push(m.mountAwayCard($('#awayBox', page))); }).catch(e => console.warn(e));
@@ -576,6 +583,7 @@ function pageHome() {
   $('#domGrid', page).append(...domainTiles(L));
   // nouveautés de la version, montrées une fois
   const NEWS = {
+    '9.0': '<ul><li><b>Tes 15 minutes</b>, en tête de l’accueil : trois blocs de cinq minutes avant tes morceaux, sur le matériel d’un cycle de trois semaines (le premier : les accords et la main gauche, en do majeur puis en la mineur). Un minuteur les enchaîne ; chaque bloc reprend le lendemain là où tu en étais.</li><li><b>A. Rythme à deux mains</b> : la main gauche tient le temps, puis joue sa formule ; la droite lit le rythme. L’appli vérifie chaque main et montre si tu accélères. Le clic s’allège par étapes ; « Temps par temps » et « Par couches » aident pour les rythmes serrés. Trois niveaux de plus : changer d’unité, sextolets, groupes irréguliers.</li><li><b>B. Réflexes et accords</b> : une minute de réflexes chronométrés (armure, degré à jouer, cadence entendue), une minute d’accords lus dans la tonalité (avec l’armure, renversés, leur degré affiché après ta réponse), puis un extrait de même armure. Un jour sur trois, ta pièce de lecture.</li><li><b>C. L’échelle de coordination</b> : improviser à deux mains, une difficulté à la fois. L’appli voit maintenant, mesure par mesure, une main gauche entraînée par la droite, arrêtée pendant une note tenue ou décalée.</li><li>« Le cycle en chiffres » : ton premier jour face à aujourd’hui. La séance et tout le reste de l’appli ne changent pas.</li></ul>',
     '8.6': '<ul><li><b>La pédale dessinée</b> sous la portée de fa : un trait tant qu’elle est enfoncée, une encoche pour la changer, un trait vertical pour la lever. Sur la partition complète de ton nocturne, sur ses extraits et dans les leçons ; l’écoute suit exactement le dessin. Le bouton « Pédale », dans « Options », la masque.</li><li>La pédale de l’op. 55 n° 1 est maintenant celle de la première édition (Leipzig, 1844). Celle de la V8.5 venait d’une édition moderne : elle ne levait pas la pédale après l’accord du 2e temps et différait aux mesures 16-17, 65-68 et dans la coda.</li><li><b>Demi-pédale</b> (pointillés, « demi ») aux mesures 16-17 et 32-33 : une suggestion pour piano moderne, que l’écoute imite (la basse continue de sonner, le reste s’éteint). Chopin ne note jamais la profondeur de la pédale.</li><li>Sur la partition complète : une légende et « La pédale, section par section », le geste de Chopin expliqué mesure par mesure.</li></ul>',
     '8.5': '<ul><li><b>La partition complète</b> de ton nocturne (op. 55 n° 1), ses 101 mesures : sur la page de la pièce, « La partition complète ». Tu peux l’écouter en entier (avec la pédale de Chopin, le Più mosso plus vite), choisir une section ou n’importe quelles mesures, la travailler en mode attente ou en rythme, et faire analyser ton jeu, comme pour les extraits.</li><li>Le texte est celui des premières éditions de 1844, vérifié note à note contre l’autographe ; les quelques choix là où les sources diffèrent sont expliqués sous la partition (« À savoir »).</li><li>Depuis chaque section de la pièce et depuis la séance : un lien vers ses mesures dans la partition complète.</li></ul>',
     '8.4': '<ul><li><b>L’oreille, refaite</b> autour d’un seul exercice, <b>Trouve la note</b>, inspiré des méthodes qui ont fait leurs preuves (méthode fonctionnelle de Benbassat, Kodály, Gordon, Lucy Green). Une cadence installe la tonalité, une note sonne, tu la cherches au clavier. Tes essais sont comptés, sans pénalité ; après une erreur, l’appli t’aide : plus haut ou plus bas, deux touches possibles, la touche. Puis la note rentre à la tonique : c’est ce chemin que l’oreille apprend.</li><li><b>Une tonalité par séance</b>, et une difficulté qui s’ajuste seule : tu commences avec trois notes (1, 3, 5) ; une note s’ajoute quand tu en réussis 9 sur 10 du premier coup, la dernière arrivée se retire si c’est trop dur. Ensuite, de courtes formules de deux à cinq notes. Ton progrès se lit en <b>essais par note</b>.</li><li><b>Plus d’aide</b> : les touches possibles numérotées, l’échelle des degrés, un bouton Indice (où est la note, sa couleur, deux touches, la touche), « Comment ça marche » et les stratégies pour ne plus tâtonner.</li><li><b>Le chant</b>, facultatif mais toujours là : à chaque note, le bouton « Chanter » ouvre le micro, qui te dit si tu chantes juste sans jamais nommer la note.</li><li><b>Mélodies d’oreille</b> : avant de jouer en rythme, tu cherches les notes une à une (la première est donnée, les touches de la phrase repérées), en boucle si tu veux, puis tu la joues d’un trait. L’appli te conseille celles dont tu entends déjà les notes.</li><li>Le parcours en seize étapes et les seize leçons d’oreille sont retirés ; tes résultats sont gardés. Quelques exercices de reconnaissance (accords, cadences, intervalles) restent, repliés, en bas de la page Oreille.</li></ul>',
@@ -629,8 +637,8 @@ function homeLead() {
   if (cp) return `En pause jusqu’au ${esc(dayLabel(cp.to))} : quelques minutes loin du piano gardent le contact.`;
   const n = pianoDays(7).filter(d => d.piano).length;
   const aw = awayStats(7);
-  if (!n && !aw.min) return 'Choisis ta séance : l’appli propose la suite de chaque domaine et les fait tourner d’une séance à l’autre, selon ton temps de piano.';
-  return `Ces sept derniers jours : ${n} séance${n > 1 ? 's' : ''} au piano sur les ${pace.days} prévues${aw.min ? `, et ${aw.min} min loin du piano` : ''}. ${n >= pace.days ? 'Le rythme est tenu.' : 'Choisis ta séance : la suite de chaque domaine t’attend.'}`;
+  if (!n && !aw.min) return 'Commence par tes 15 minutes, puis place à tes morceaux. La séance, dessous, propose la suite de chaque domaine.';
+  return `Ces sept derniers jours : ${n} séance${n > 1 ? 's' : ''} au piano sur les ${pace.days} prévues${aw.min ? `, et ${aw.min} min loin du piano` : ''}. ${n >= pace.days ? 'Le rythme est tenu.' : 'Tes 15 minutes d’abord, puis tes morceaux.'}`;
 }
 /** Les tuiles des domaines de l'accueil : la page du domaine, et où tu en es (rempli au fur et à mesure). */
 function domainTiles(L) {
@@ -1089,7 +1097,7 @@ function pageTheoryPlay(kind, sub = null) {
 function pageLecture() {
   const page = h('div', { class: 'page' });
   page.innerHTML = crumbs([{ label: 'Accueil', href: '#/' }, { label: 'Lecture à vue' }]) + hubHead('lecture', 'Trois minutes d’échauffement (le rythme, puis deux exercices d’une minute), puis de vrais extraits du répertoire (Bach, Diabelli, Burgmüller, Schumann…) : prépare-toi 30 secondes, puis joue sans t’arrêter. La difficulté s’ajuste à tes résultats.');
-  page.insertAdjacentHTML('beforeend', `<div class="hub-links">${hubLink('#/outils/rythme', 'rythme', 'Rythme', 'Dix niveaux, des noires aux polyrythmies, et les rythmes de tes pièces')}${hubLink('#cours-lecture', 'book', 'Les leçons', 'La méthode de lecture, niveau par niveau')}</div>`);
+  page.insertAdjacentHTML('beforeend', `<div class="hub-links">${hubLink('#/outils/rythme', 'rythme', 'Rythme', 'Treize niveaux, des noires aux groupes irréguliers, et les rythmes de tes pièces')}${hubLink('#cours-lecture', 'book', 'Les leçons', 'La méthode de lecture, niveau par niveau')}</div>`);
   const host = h('div', { class: 'w' });
   page.append(host);
   page.insertAdjacentHTML('beforeend', `<div class="section-title mt-3" id="cours-lecture"><h2>Les leçons de lecture à vue</h2></div>` + moduleIndexHTML('lecture'));
