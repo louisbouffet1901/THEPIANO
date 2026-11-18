@@ -2100,3 +2100,4 @@ h3.lesson-group { font-size: 14px; font-weight: 650; color: var(--text-2); margi
 .lg-l.rh { background: var(--rh); }
 .rh-moved { margin: 8px 0 0; font-weight: 600; color: var(--accent-strong); }
 .reflexes .rf-ear { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 15px; text-align: center; }
+.qz-where-list { margin: 4px 0 0; padding-left: 20px; }

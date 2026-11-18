@@ -95,6 +95,10 @@ export function mountQuinze(el) {
       h('p', { class: 'small' }, `Jours 1 à 6 : ${Q.keyLabel(k1)} ; 7 à 12 : ${Q.keyLabel(k2)} ; ensuite les deux, en alternance. Théorie du cycle : ${cyc.theory}. Un jour compte dès une minute de travail.`),
       cycleReport(Q.snapshot()),
       h('p', { class: 'small muted' }, 'Chaque mesure : sa première valeur dans le cycle, face à la dernière. L’échelle compte le palier et la liberté des notes ; les accords et les réflexes, ta dernière minute dans les tonalités du cycle.'));
+    // tes réponses à la question de la semaine, pour ce cycle
+    const where = (store.get('quinze.where') || []).filter(w => w.cycle === c.n && !w.skipped && ((w.where || []).length || w.text));
+    if (where.length) det.append(h('p', { class: 'small mb-0' }, h('b', {}, `Où tu as retrouvé ${cyc.notion} :`)),
+      h('ul', { class: 'small qz-where-list' }, ...where.map(w => h('li', {}, new Date(w.at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) + ' : ' + [(w.where || []).join(', '), w.text].filter(Boolean).join(' ; ')))));
     det.open = p.finished;
     head.append(det);
     if (p.finished) {
@@ -375,7 +379,7 @@ function whereCard(cyc) {
   const box = h('div', { class: 'card qz-where' }, h('div', { class: 'card-top' }, h('span', { class: 'eyebrow' }, 'Question de la semaine'), h('span', { class: 'small' }, 'facultative')),
     h('p', {}, `Où as-tu retrouvé ${cyc.notion} cette semaine ?`), chips, txt, h('div', { class: 'btn-row' }, save, skip));
   const close = msg => { box.replaceChildren(h('p', { class: 'small mb-0' }, msg)); };
-  save.addEventListener('click', () => { Q.saveWhere({ notion: cyc.notion, where: [...picked], text: txt.value.trim() }); close('C’est noté. Tu retrouveras tes réponses à la fin du cycle.'); });
+  save.addEventListener('click', () => { Q.saveWhere({ notion: cyc.notion, where: [...picked], text: txt.value.trim() }); close('C’est noté : tes réponses sont dans « Le cycle, en chiffres », en haut de la page.'); });
   skip.addEventListener('click', () => { Q.saveWhere({ notion: cyc.notion, where: [], text: '', skipped: true }); close('D’accord : la question reviendra la semaine prochaine.'); });
   return box;
 }
