@@ -17,7 +17,7 @@ const PIECE = { title: 'Satie, Gymnopédie n° 1', url: 'https://imslp.org/wiki/
 
 const TODO = {
   A: cyc => `La main gauche tient le temps sur une touche grave, puis joue sa formule (${cyc.formulaText}) ; la main droite tape le rythme écrit sur une touche aiguë. Aux premiers passages, dis « 1 e et a ».`,
-  B: () => 'Une minute de réflexes, une minute d’accords dans la tonalité du jour, puis un extrait de même armure : nomme les accords de la main gauche, puis joue sans t’arrêter.',
+  B: () => 'Une minute de réflexes (dont une note à retrouver d’oreille), une minute d’accords dans la tonalité du jour, puis un extrait de même armure : nomme les accords de la main gauche, puis joue sans t’arrêter.',
   C: cyc => `Improvise à deux mains sur ta formule (${cyc.formulaText}), une difficulté à la fois : on monte après deux tours propres, on redescend après deux échecs.`,
 };
 const WHY = {
@@ -30,6 +30,7 @@ const WHY = {
     'Tu comprends la théorie ; il reste à l’avoir sous les doigts. Relire donne l’impression de savoir ; ce qui installe une notion, c’est de devoir la retrouver, vite (Karpicke, Butler et Roediger, 2009). D’où des réponses chronométrées, au clavier.',
     'Chez les pianistes, reconnaître les accords d’un coup d’œil est la mesure la plus liée à la lecture à vue (Waters, Townsend et Underwood, 1998). On les lit dans une tonalité, avec l’armure, pour anticiper ce qui vient ; leur degré s’affiche après chaque réponse.',
     'L’extrait, de même armure, met les deux en pratique. Un jour sur trois, ta pièce de lecture remplace l’extrait : une pièce plus facile que tes morceaux, apprise sur la partition.',
+    'Une question sur cinq est d’oreille : l’accord de la tonique, puis une note à rejouer. Jouer d’oreille nourrit l’improvisation et la lecture, par la coordination entre l’oreille et la main (McPherson). On commence par les notes de l’accord (1, 5, 3) ; une note s’ajoute quand 8 des 10 dernières réponses sont justes.',
   ],
   C: [
     'Travailler chaque main seule, puis les réunir d’un coup, prépare mal au jeu à deux mains. Ce qui marche : la tâche entière, simplifiée, dont la difficulté monte selon tes réussites (Wenderoth et al., 2003 ; Wickens et al., 2013).',
@@ -56,7 +57,8 @@ function cycleReport(snap) {
       row('Échelle (impro à deux mains)', f.ech, l.ech, Q.echText, (x, y) => x > y),
       row('Rythme à deux mains', f.rhythm, l.rhythm, Q.rhythmText, (x, y) => x > y),
       row('Accords lus et joués', f.npm, l.npm, v => (v == null ? '—' : `${v} par minute`), (x, y) => x > y),
-      row('Réflexes : temps de réponse', f.refMs, l.refMs, fmtSec, (x, y) => x < y)));
+      row('Réflexes : temps de réponse', f.refMs, l.refMs, fmtSec, (x, y) => x < y),
+      row('Oreille : notes en jeu', f.ear, l.ear, v => (v == null ? '—' : `${v} sur 7`), (x, y) => x > y)));
 }
 
 /* ------------------------------------------------------------------ */

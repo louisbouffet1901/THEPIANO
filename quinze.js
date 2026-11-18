@@ -162,6 +162,7 @@ export function metrics(cyc = cycleDef(cycleState().n)) {
     npm: acc ? acc.npm : null,                               // accords lus et joués par minute
     refMs: ref && ref.avgMs ? ref.avgMs : null,              // temps moyen d'une réponse juste (réflexes)
     refOk: ref ? ref.ok : null,
+    ear: (store.get('reflexes.ear') || {}).n ?? null,       // V9.2 : degrés en jeu dans la note à retrouver d'oreille
   };
 }
 /** Garde les mesures du premier jour (chaque mesure : sa première valeur dans le cycle) et les dernières. */

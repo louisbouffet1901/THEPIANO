@@ -13,7 +13,7 @@ import { audio } from './audio.js';
 import { midi } from './midi.js';
 import { keyboard } from './diagrams.js';
 import { ensureAbcjs } from './lazy.js';
-import { parseNote, noteName, midiOf, triadOn, keySignature, relative, keyName } from './theory.js';
+import { parseNote, noteName, midiOf, triadOn, keySignature, relative, keyName, scale } from './theory.js';
 
 const ST = 'reflexes';
 const LETTERS_ABC = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
@@ -22,14 +22,15 @@ const ROM = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 const INV_NAMES = ['état fondamental', '1er renversement', '2e renversement', '3e renversement'];
 const QUAL_FR = { M: 'majeur', m: 'mineur', dim: 'diminué', aug: 'augmenté', '7': 'septième de dominante' };
 // cibles : réponse en moins de… (millisecondes)
-export const TARGETS = { armure: 2000, degre: 3000, cadence: 2000, accord: 3000 };
-export const TYPE_LABEL = { armure: 'armure → tonalité', degre: 'degré → accord joué', cadence: 'cadence entendue', accord: 'accord lu et joué' };
+export const TARGETS = { armure: 2000, degre: 3000, cadence: 2000, accord: 3000, oreille: 3000 };
+export const TYPE_LABEL = { armure: 'armure → tonalité', degre: 'degré → accord joué', cadence: 'cadence entendue', accord: 'accord lu et joué', oreille: 'note entendue → jouée' };
 // V9.1 : chaque réflexe renvoie à son chapitre, à relire seulement après une erreur (bilan, § 4.6)
 export const CHAPTER = {
   armure: { id: 'n1-th-armures', title: 'Armures et tonalités' },
   degre: { id: 'n1-th-fonctions', title: 'Degrés et fonctions' },
   cadence: { id: 'n1-th-cadences', title: 'Les cadences' },
   accord: { id: 'n1-th-renv', title: 'Renversements et chiffrage' },
+  oreille: { id: 'trouve-la-note', href: '#/outils/oreille', title: 'Trouve la note' },
 };
 
 /* ------------------------------------------------------------------ */
@@ -98,6 +99,43 @@ export function chordAbc(K, c) {
 const signatureAbc = (K, clef = 'treble') => `X:1\nL:1/4\nK:${K.abcKey} clef=${clef}\nx4|]`;
 
 /* ------------------------------------------------------------------ */
+/* V9.2 : une note à retrouver d'oreille                                */
+/* ------------------------------------------------------------------ */
+// Le point sur l'oreille (18 novembre) : aucune séance de « Trouve la note » en une semaine, faute de motivation pour une
+// catégorie à part. Une petite dose entre donc dans la minute de réflexes : l'accord de la tonique du jour, puis une
+// note de la tonalité à rejouer (n'importe quelle octave). Ordre d'arrivée de « Trouve la note » (earfind-engine.js),
+// sans les octaves : majeur 1, 5, 3, 6, 2, 4, 7 ; mineur (harmonique) 1, 5, 3, 4, 2, 7, 6. Départ : 1, 5, 3, les notes
+// de l'accord. Une note de plus quand 8 des 10 dernières réponses sont justes ; une de moins à 5 sur 10 ou moins.
+export const EAR_ORDER = { maj: [1, 5, 3, 6, 2, 4, 7], min: [1, 5, 3, 4, 2, 7, 6] };
+export const EAR_START = 3;
+export function earState() {
+  const e = store.get(ST + '.ear') || {};
+  return { n: EAR_START, hist: [], added: null, ...e };
+}
+/** Après une réponse : garde les 10 dernières, ajoute ou retire un degré. Renvoie { n, change: 'up' | 'down' | null }. */
+export function earUpdate(ok, e = earState()) {
+  const hist = (e.hist || []).concat(ok ? 1 : 0).slice(-10);
+  let n = e.n, change = null, added = e.added;
+  const good = hist.reduce((a, x) => a + x, 0);
+  if (hist.length >= 10 && good >= 8 && n < 7) { n++; change = 'up'; added = { k: n, left: 5 }; }
+  else if (hist.length >= 10 && good <= 5 && n > EAR_START) { n--; change = 'down'; added = null; }
+  else if (added) added = added.left > 1 ? { ...added, left: added.left - 1 } : null;
+  const out = { n, hist: change ? [] : hist, added };
+  store.set(ST + '.ear', out);
+  return { ...out, change };
+}
+/** La note d'un degré (orthographiée) et sa hauteur dans l'octave qui part de la tonique (tonique entre sol2 et fa♯3). */
+export function earNote(K, d) {
+  const sc = scale(K.tonic, K.mode === 'min' ? 'harmMin' : 'maj');
+  const n = sc[d - 1];
+  let t0 = midiOf({ ...K.tonic, o: 3 });
+  while (t0 > 66) t0 -= 12;
+  while (t0 < 55) t0 += 12;
+  const iv = ((midiOf({ ...n, o: 3 }) - midiOf({ ...K.tonic, o: 3 })) % 12 + 12) % 12;
+  return { d, note: n, name: noteName(n), midi: t0 + iv, pc: (t0 + iv) % 12, t0 };
+}
+
+/* ------------------------------------------------------------------ */
 /* Les questions                                                        */
 /* ------------------------------------------------------------------ */
 // armures connues (nombre d'altérations, dièses positifs) : majeures et relatives
@@ -107,8 +145,8 @@ const pickR = (arr, rnd) => arr[Math.floor(rnd() * arr.length)];
 function shuffleR(arr, rnd) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
 /** Une question de réflexe : { type, prompt, abc?, choices?, answer, chord? }. maxAcc : altérations des armures. */
-export function genReflex(K, { maxAcc = 4, cycleN = 1, last = null, rnd = Math.random, review = [] } = {}) {
-  const types = ['armure', 'degre', 'degre', 'cadence'].filter(t => t !== last || rnd() < 0.3);
+export function genReflex(K, { maxAcc = 4, cycleN = 1, last = null, rnd = Math.random, review = [], ear = null, lastDeg = null } = {}) {
+  const types = ['armure', 'degre', 'degre', 'cadence', ...(ear ? ['oreille'] : [])].filter(t => t !== last || rnd() < 0.3);
   const type = pickR(types, rnd);
   if (type === 'armure') {
     const f = Math.round(rnd() * 2 * maxAcc) - maxAcc;
@@ -116,6 +154,16 @@ export function genReflex(K, { maxAcc = 4, cycleN = 1, last = null, rnd = Math.r
     const choices = shuffleR([f, ...shuffleR([...new Set(near)], rnd).slice(0, 3)], rnd).map(pairOf);
     const KK = keyInfo({ tonic: MAJ_BY_FIFTHS[f], mode: 'maj' });
     return { type, prompt: 'Quelle tonalité ?', abc: signatureAbc(KK, rnd() < 0.5 ? 'treble' : 'bass'), choices, answer: pairOf(f), info: `${Math.abs(f)} ${f >= 0 ? 'dièse' : 'bémol'}${Math.abs(f) > 1 ? 's' : ''}` };
+  }
+  if (type === 'oreille') {
+    // les degrés en jeu ; le dernier arrivé revient plus souvent pendant cinq questions ; jamais deux fois de suite
+    const set = EAR_ORDER[K.mode].slice(0, Math.max(EAR_START, Math.min(7, ear.n || EAR_START)));
+    const fresh = ear.added && set.includes(EAR_ORDER[K.mode][ear.added.k - 1]) ? EAR_ORDER[K.mode][ear.added.k - 1] : null;
+    let d;
+    for (let k = 0; k < 10; k++) { d = fresh && rnd() < 0.4 ? fresh : pickR(set, rnd); if (d !== lastDeg) break; }
+    const e = earNote(K, d);
+    const tri = triadOn(K.tonic, K.mode, 1).notes.map(x => (((midiOf({ ...x, o: 3 }) - midiOf({ ...K.tonic, o: 3 })) % 12) + 12) % 12);
+    return { type, prompt: `L’accord de ${K.name}, puis une note : joue-la`, deg: d, pc: e.pc, midi: e.midi, chordMidis: [e.t0 - 12, ...tri.map(iv => e.t0 + iv)], answer: `le ${d} (${e.name})`, set };
   }
   if (type === 'degre') {
     // V9.1 : une fois sur trois, une tonalité d'un cycle passé (révision)
@@ -221,9 +269,9 @@ export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc =
 
   info.innerHTML = isChords
     ? `Les accords de <b>${esc(K.name)}</b> (I, IV, V7, vi, ii), écrits avec l’armure, renversés, à une main ou à l’autre. Joue-les à la bonne octave : leur degré s’affiche après chaque réponse. Lis la forme avant les notes : toutes sur des lignes, ou toutes dans des interlignes, c’est l’état fondamental (la note du bas est la fondamentale) ; sinon l’accord est renversé, et la fondamentale est la note du haut de la quarte (dans un accord de septième, la note du haut de la seconde).`
-    : `Une minute de questions mêlées, en <b>${esc(K.name)}</b> : une armure à reconnaître, un degré à jouer, une cadence à entendre. Chaque réponse est chronométrée : vise moins de 2 à 3 secondes. Une erreur montre la réponse, puis on enchaîne.`;
+    : `Une minute de questions mêlées, en <b>${esc(K.name)}</b> : une armure à reconnaître, un degré à jouer, une cadence à entendre, une note à retrouver d’oreille. Chaque réponse est chronométrée : vise moins de 2 à 3 secondes. Une erreur montre la réponse, puis on enchaîne.`;
 
-  let running = false, cur = null, shownAt = 0, locked = false, t0 = 0, raf = 0, timers = [], offMidi = null, played = null, session = null, lastType = null, audioEnd = 0;
+  let running = false, cur = null, shownAt = 0, locked = false, t0 = 0, raf = 0, timers = [], offMidi = null, played = null, session = null, lastType = null, audioEnd = 0, earReadyAt = 0;
   const draw = abc => {
     staff.innerHTML = '';
     if (!abc) return;
@@ -235,7 +283,7 @@ export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc =
   const next = () => {
     choicesBox.innerHTML = ''; fb.textContent = ''; fb.className = 'ns-fb';
     played = new Set(); locked = false;
-    cur = isChords ? genChordItem(K, { last: cur?.chord }) : genReflex(K, { maxAcc, cycleN, last: lastType, review });
+    cur = isChords ? genChordItem(K, { last: cur?.chord }) : genReflex(K, { maxAcc, cycleN, last: lastType, review, ear: earState(), lastDeg: cur?.deg ?? null });
     if (!cur) { finish(false); return; }
     lastType = cur.type;
     prompt.textContent = isChords ? '' : cur.prompt;
@@ -249,6 +297,24 @@ export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc =
       }
     }
     shownAt = performance.now();
+    if (cur.type === 'oreille') {
+      const q = cur;
+      const replay = h('button', { class: 'btn sm', type: 'button' }, 'Réécouter');
+      const listen = () => {
+        if (cur !== q || locked) return;
+        audio.stopAll('reflexes');
+        const t0 = audio.now() + 0.12;
+        q.chordMidis.forEach(m => { const v = audio.noteOn(m, 58, t0, { owner: 'reflexes' }); if (v) audio.noteOff(v, t0 + 0.85); });
+        const tn = t0 + 1.15;
+        const v = audio.noteOn(q.midi, 72, tn, { owner: 'reflexes' }); if (v) audio.noteOff(v, tn + 1.1);
+        earReadyAt = audio.ctxToPerf ? audio.ctxToPerf(tn) : performance.now() + 1300;
+        replay.disabled = true;
+        timers.push(setTimeout(() => { if (cur !== q) return; replay.disabled = false; shownAt = performance.now(); }, Math.max(0, earReadyAt - performance.now())));
+      };
+      replay.addEventListener('click', listen);
+      staff.replaceChildren(h('div', { class: 'rf-ear' }, h('span', { class: 'muted' }, 'Écoute la note après l’accord, chante-la si tu veux, puis trouve-la (n’importe quelle octave).'), replay));
+      listen();
+    }
     if (cur.type === 'cadence') {
       const q = cur;
       const replay = h('button', { class: 'btn sm', type: 'button' }, 'Réécouter');
@@ -277,16 +343,23 @@ export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc =
     locked = true;
     record(cur.type, ok, rt);
     session.items.push({ type: cur.type, ok, rt });
+    let earMsg = '';
+    if (cur.type === 'oreille') {
+      const r = earUpdate(ok);
+      if (r.change === 'up') earMsg = ` · <b>Nouvelle note : le ${EAR_ORDER[K.mode][r.n - 1]}</b>`;
+      if (r.change === 'down') earMsg = ' · une note de moins pour l’instant';
+      if (!ok) { const m0 = cur.midi; timers.push(setTimeout(() => { const v = audio.noteOn(m0, 72, audio.now() + 0.05, { owner: 'reflexes' }); if (v) audio.noteOff(v, audio.now() + 1); }, 250)); }
+    }
     if (ok) {
       session.ok++;
       const fast = rt <= TARGETS[cur.type];
-      fb.innerHTML = `✓ ${(rt / 1000).toFixed(1).replace('.', ',')} s${fast ? '' : ' <span class="muted">(vise moins de ' + TARGETS[cur.type] / 1000 + ' s)</span>'}${cur.type === 'accord' ? ` · <b>${esc(cur.answer)}</b>` : ''}`;
+      fb.innerHTML = `✓ ${(rt / 1000).toFixed(1).replace('.', ',')} s${fast ? '' : ' <span class="muted">(vise moins de ' + TARGETS[cur.type] / 1000 + ' s)</span>'}${cur.type === 'accord' || cur.type === 'oreille' ? ` · <b>${esc(cur.answer)}</b>` : ''}${earMsg}`;
       fb.className = 'ns-fb ok';
       timers.push(setTimeout(next, cur.type === 'accord' ? 900 : 450));
     } else {
       session.err++;
       const sp = cur.type === 'accord' ? ` (${esc(cur.spelling)})` : '';
-      fb.innerHTML = `C’était <b>${esc(cur.answer)}</b>${sp}${given ? ` ; ${esc(given)}` : ''}.`;
+      fb.innerHTML = `C’était <b>${esc(cur.answer)}</b>${sp}${given ? ` ; ${esc(given)}` : ''}.${earMsg}`;
       session.missed.add(cur.type);
       fb.className = 'ns-fb bad';
       choicesBox.querySelectorAll('button').forEach(b => { if (b.textContent === cur.answer) b.classList.add('right'); b.disabled = true; });
@@ -301,6 +374,11 @@ export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc =
       if (!want.has(m)) { answer(false, `tu as joué ${noteNameFr(m)}`); return; }
       played.add(m);
       if (played.size === want.size) answer(true);
+    } else if (cur.type === 'oreille') {
+      if (performance.now() < earReadyAt - 30) return; // la note n'a pas encore sonné
+      const p = ((m % 12) + 12) % 12;
+      if (p === cur.pc) answer(true);
+      else answer(false, `tu as joué ${noteNameFr(m, { octave: false })}`);
     } else if (cur.type === 'degre') {
       const p = ((m % 12) + 12) % 12;
       if (!cur.pcs.includes(p)) { answer(false, `${noteNameFr(m, { octave: false })} n’est pas dans l’accord`); return; }
@@ -377,13 +455,13 @@ export function mountReflexes(el, { mode = 'reflexes', key, cycleN = 1, maxAcc =
     if (prev) results.append(h('p', { class: 'small' }, isChords ? `La fois d’avant : ${prev.npm} par minute.` : `La fois d’avant : ${prev.ok} justes, ${prev.avgMs ? (prev.avgMs / 1000).toFixed(1).replace('.', ',') + ' s en moyenne' : ''}.`));
     // après une erreur seulement : le chapitre à relire (plus tard, pas maintenant)
     const ch = [...session.missed].map(t => CHAPTER[t]).filter(Boolean).filter((c, i, a) => a.findIndex(x => x.id === c.id) === i);
-    if (ch.length) results.append(h('p', { class: 'small rf-chap' }, 'À relire plus tard, pour ce qui t’a trompé : ', ...ch.flatMap((c, i) => [i ? ' ; ' : '', h('a', { href: `#/lecon/${c.id}` }, c.title)]), '.'));
+    if (ch.length) results.append(h('p', { class: 'small rf-chap' }, 'À revoir plus tard, pour ce qui t’a trompé : ', ...ch.flatMap((c, i) => [i ? ' ; ' : '', h('a', { href: c.href || `#/lecon/${c.id}` }, c.title)]), '.'));
     results.hidden = false;
     onFinish?.({ mode, npm, acc, avgMs, ok: session.ok });
   };
   startBtn.addEventListener('click', start);
   stopBtn.addEventListener('click', () => finish(false));
   // accès de test
-  frame.__reflexes = { get cur() { return cur; }, get running() { return running; }, answer: c => answer(c === cur?.answer, c) };
+  frame.__reflexes = { get cur() { return cur; }, get running() { return running; }, get earReadyAt() { return earReadyAt; }, answer: c => answer(c === cur?.answer, c) };
   return () => stop();
 }
